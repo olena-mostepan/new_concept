@@ -34,7 +34,7 @@ export function ProfileCompletenessSidebar({
 
   return (
     <aside className="flex h-fit flex-col lg:sticky lg:top-24">
-      <div className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-cq-border bg-white p-5 ">
         <p className="text-xs font-semibold text-cq-text-secondary">
           Profile completeness score
         </p>

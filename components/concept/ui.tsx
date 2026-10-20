@@ -125,7 +125,7 @@ export function Card({
   bodyClassName?: string
 }) {
   return (
-    <section className={cn('overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm', className)}>
+    <section className={cn('overflow-hidden rounded-xl border border-cq-border bg-white ', className)}>
       {(title || right) && (
         <header className="flex items-center justify-between gap-3 border-b border-cq-border-light px-5 py-4">
           {title && <h2 className="h7 text-text-primary">{title}</h2>}

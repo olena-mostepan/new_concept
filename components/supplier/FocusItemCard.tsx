@@ -23,7 +23,7 @@ export function FocusItemCard({ item }: { item: FocusItem }) {
   const noop = (msg: string) => () => toast.message(msg)
 
   return (
-    <div className="flex flex-col rounded-2xl border border-cq-border border-l-[3px] border-l-[var(--cq-green)] bg-white p-5 shadow-sm">
+    <div className="flex flex-col rounded-xl border border-cq-border border-l-[3px] border-l-[var(--cq-green)] bg-white p-5 ">
       <div className="mb-3 flex items-start justify-between gap-2">
         <span className={pillBase}>{kindPill(item.kind)}</span>
         <span className="flex shrink-0 items-center gap-2">

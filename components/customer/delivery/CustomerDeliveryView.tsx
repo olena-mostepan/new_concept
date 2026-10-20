@@ -244,7 +244,7 @@ export function CustomerDeliveryView({
         {payload.batches.map((batch) => (
           <section
             key={batch.id}
-            className={bare ? '' : 'overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm'}
+            className={bare ? '' : 'overflow-hidden rounded-xl border border-cq-border bg-white '}
           >
             {!bare ? (
             <header className="flex flex-wrap items-center justify-between gap-3 border-b border-cq-border bg-cq-bg/60 px-5 py-4 sm:px-6">

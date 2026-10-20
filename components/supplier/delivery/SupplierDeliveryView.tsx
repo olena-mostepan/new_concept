@@ -241,7 +241,7 @@ export function SupplierDeliveryView() {
 
       <section
         ref={listRef}
-        className="rounded-xl border border-cq-border bg-white shadow-sm"
+        className="rounded-xl border border-cq-border bg-white "
       >
         <header className="border-b border-cq-border px-5 py-4 sm:px-6">
           <h2 className={sectionTitleClass}>Your jobs — is this right?</h2>

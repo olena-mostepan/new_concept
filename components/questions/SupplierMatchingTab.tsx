@@ -31,7 +31,7 @@ export function SupplierMatchingTab({
           Fit scores from tender requirements vs submitted CapEx bids
         </p>
       </div>
-      <div className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-cq-border bg-white ">
         <ul className="divide-y divide-cq-border">
           {suppliers.map((s) => (
             <li

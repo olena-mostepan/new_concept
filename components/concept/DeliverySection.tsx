@@ -86,7 +86,7 @@ export function DeliverySection() {
         </button>
       </div>
       {contracts ? (
-        <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center shadow-sm">
+        <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center ">
           <p className="text-sm font-normal text-cq-text">Contracts — coming soon</p>
           <p className="mt-1 text-sm text-cq-text-secondary">Placeholder for the customer contracts view.</p>
         </div>
@@ -140,7 +140,7 @@ export function DeliverySection() {
               const folded = group.outcome && group.rows.length > 5 && !open
               const shown = folded ? [] : group.rows
               return (
-                <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+                <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
                   <header className="border-b border-cq-border-light px-5 py-4">
                     <h2 className={groupTitle}>{group.title} · {group.rows.length}</h2>
                   </header>

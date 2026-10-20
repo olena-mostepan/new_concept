@@ -25,7 +25,7 @@ export function TenderClarificationsPanel({
 
   if (groups.length === 0) {
     return (
-      <div className="rounded-xl border border-cq-border bg-white p-8 text-center shadow-sm">
+      <div className="rounded-xl border border-cq-border bg-white p-8 text-center ">
         <p className="text-base font-semibold text-cq-text">No clarifications for this tender</p>
         <p className="mt-2 text-sm text-cq-text-secondary">
           Raise a question from a supplier row using the help icon, or use Start new project in the
@@ -58,7 +58,7 @@ function TenderClarificationsSection({
       <h3 className="mb-3 text-sm font-semibold text-cq-text">
         {title} ({groups.length})
       </h3>
-      <div className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-cq-border bg-white ">
         <div className="divide-y divide-cq-border px-4 sm:px-5">
           {groups.map((group) => (
             <DispatchClarificationRow

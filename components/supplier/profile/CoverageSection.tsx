@@ -379,7 +379,7 @@ export function CoverageSection({
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
       <div className="flex items-center justify-between border-b border-cq-border bg-cq-bg px-5 py-3">
         <h3 className="tracking-[0.12em] text-cq-text-secondary s3">
           Coverage

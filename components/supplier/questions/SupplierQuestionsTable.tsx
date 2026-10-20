@@ -20,7 +20,7 @@ export function SupplierQuestionsTable({
   showProjectUnderQuestion?: boolean
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-cq-border bg-white ">
       <div className="overflow-x-auto">
         <table className="w-full table-fixed text-sm">
           <thead>

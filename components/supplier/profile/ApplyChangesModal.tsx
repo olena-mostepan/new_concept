@@ -41,7 +41,7 @@ function FieldChangeCard({
   onValueChange: (value: string) => void
 }) {
   return (
-    <div className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-cq-border bg-white p-5 ">
       <div className="flex items-start gap-3">
         <Checkbox
           checked={selected}
@@ -91,7 +91,7 @@ function CaseStudyCard({
   onToggle: () => void
 }) {
   return (
-    <div className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-cq-border bg-white p-5 ">
       <div className="flex items-start gap-3">
         <Checkbox
           checked={selected}

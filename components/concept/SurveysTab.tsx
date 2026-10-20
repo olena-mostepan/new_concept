@@ -104,7 +104,7 @@ export function SurveysTab() {
           const visits = filtered.reduce((n, w) => n + recordedVisits(w).filter((v) => v.state === bucket.id).length, 0)
           if (!rows.length && !visits) return null
           return (
-            <section key={bucket.id} className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+            <section key={bucket.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
               <header className="border-b border-cq-border-light px-5 py-4">
                 <h2 className={groupTitle}>
                   {bucket.title} · {visits}

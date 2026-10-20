@@ -15,7 +15,7 @@ function WhiteCard({
   children: ReactNode
 }) {
   return (
-    <article className="rounded-xl border border-cq-border bg-white px-5 py-5 shadow-sm">
+    <article className="rounded-xl border border-cq-border bg-white px-5 py-5 ">
       <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
         {label}
       </p>

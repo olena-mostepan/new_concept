@@ -14,7 +14,7 @@ export function MoneyLeverBanner({
   onSomethingsOff: () => void
 }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-[var(--cq-green)]/35 bg-gradient-to-br from-[var(--cq-accent-muted)] via-[var(--cq-accent-muted)]/50 to-white px-5 py-5 shadow-sm sm:px-6">
+    <section className="relative overflow-hidden rounded-xl border border-[var(--cq-green)]/35 bg-gradient-to-br from-[var(--cq-accent-muted)] via-[var(--cq-accent-muted)]/50 to-white px-5 py-5  sm:px-6">
       <div
         className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[var(--cq-green)]/15"
         aria-hidden

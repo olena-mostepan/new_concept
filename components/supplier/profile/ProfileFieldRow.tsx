@@ -50,7 +50,7 @@ export function ProfileSectionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
       <h3 className="border-b border-cq-border bg-cq-bg px-5 py-3 tracking-[0.12em] text-cq-text-secondary s3">
         {title}
       </h3>

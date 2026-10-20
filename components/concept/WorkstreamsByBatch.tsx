@@ -130,7 +130,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
           const done = rows.filter((w) => w.owner === 'done')
           const owner = batchOwner(account, b)
           return (
-            <section key={b.id} className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+            <section key={b.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
               <header className="flex flex-wrap items-start justify-between gap-4 border-b border-cq-border-light px-5 py-4">
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold text-cq-text">{b.name}</h2>

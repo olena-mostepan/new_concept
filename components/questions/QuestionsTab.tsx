@@ -58,7 +58,7 @@ export function QuestionsTab({
       )}
 
       {allQuestions.length === 0 ? (
-        <div className="rounded-xl border border-cq-border bg-white px-8 py-12 text-center shadow-sm">
+        <div className="rounded-xl border border-cq-border bg-white px-8 py-12 text-center ">
           <p className="text-base font-semibold text-cq-text">
             No questions yet · Ask the first question about this tender
           </p>
@@ -72,7 +72,7 @@ export function QuestionsTab({
           </button>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-cq-border bg-white px-8 py-10 text-center shadow-sm">
+        <div className="rounded-xl border border-cq-border bg-white px-8 py-10 text-center ">
           <p className="text-sm font-semibold text-cq-text">No questions match this filter</p>
           <button
             type="button"

@@ -207,7 +207,7 @@ export function CustomerProjectPage({ projectId }: { projectId: string }) {
   if (!project) {
     return (
       <div className="mx-auto w-full max-w-screen-2xl px-6 py-10 sm:px-8 lg:px-10">
-        <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center shadow-sm sm:px-6">
+        <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center  sm:px-6">
           <p className="text-sm font-normal text-cq-text">Project not found</p>
           <Link
             href="/customer/delivery"
@@ -335,7 +335,7 @@ export function CustomerProjectPage({ projectId }: { projectId: string }) {
             {project.id === 'solar-walter-scott' ? (
               <SupplierMatchingReview audience={matchingAudience} />
             ) : (
-              <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center shadow-sm">
+              <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center ">
                 <p className="text-sm font-normal text-cq-text">Supplier matching — coming soon</p>
                 <p className="mt-1 text-sm text-cq-text-secondary">
                   Placeholder for the customer supplier matching view.
@@ -350,7 +350,7 @@ export function CustomerProjectPage({ projectId }: { projectId: string }) {
               value={t.id}
               className="pt-6 outline-none"
             >
-              <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center shadow-sm">
+              <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center ">
                 <p className="text-sm font-normal text-cq-text">
                   {t.label} — coming soon
                 </p>

@@ -81,7 +81,7 @@ export function SupplierJobPage({ jobId }: { jobId: string }) {
 
   if (!job) {
     return (
-      <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center shadow-sm sm:px-6">
+      <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center  sm:px-6">
         <p className="text-sm font-normal text-cq-text">Job not found</p>
         <Link href="/supplier/delivery" className="btn-link mt-3 inline-flex">
           Back to Delivery
@@ -241,7 +241,7 @@ function PlaceholderTab({
 }) {
   const label = TABS.find((t) => t.id === tab)?.label ?? tab
   return (
-    <div className="rounded-xl border border-cq-border bg-white px-5 py-6 shadow-sm sm:px-6">
+    <div className="rounded-xl border border-cq-border bg-white px-5 py-6  sm:px-6">
       <h2 className={sectionTitleClass}>{label}</h2>
       <p className="mt-2 text-sm leading-relaxed text-cq-text-secondary">
         {label} for {title} — prototype placeholder. Delivery is the active

@@ -16,7 +16,7 @@ export function MoneyWashCard({
   return (
     <Tag
       className={cn(
-        'relative overflow-hidden rounded-xl border border-[var(--cq-green)]/35 bg-gradient-to-br from-[var(--cq-accent-muted)] via-[var(--cq-accent-muted)]/50 to-white px-5 py-5 shadow-sm sm:px-6',
+        'relative overflow-hidden rounded-xl border border-[var(--cq-green)]/35 bg-gradient-to-br from-[var(--cq-accent-muted)] via-[var(--cq-accent-muted)]/50 to-white px-5 py-5  sm:px-6',
         className,
       )}
     >

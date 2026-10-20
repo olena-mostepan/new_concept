@@ -29,7 +29,7 @@ export function CashComingUp() {
   })
 
   return (
-    <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
       <header className="border-b border-cq-border px-5 py-4 sm:px-6">
         <h2 className={sectionTitleClass}>Cash coming up</h2>
       </header>

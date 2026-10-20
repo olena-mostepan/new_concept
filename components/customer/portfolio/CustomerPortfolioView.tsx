@@ -34,7 +34,7 @@ import {
 
 function cardClass(className?: string) {
   return cn(
-    'overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm',
+    'overflow-hidden rounded-xl border border-cq-border bg-white ',
     className,
   )
 }

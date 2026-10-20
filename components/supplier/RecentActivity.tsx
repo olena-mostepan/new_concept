@@ -39,7 +39,7 @@ const ACTIVITIES: Array<{
 
 export function RecentActivity() {
   return (
-    <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
       <header className="flex items-center justify-between gap-3 border-b border-cq-border px-5 py-4 sm:px-6">
         <h2 className={sectionTitleClass}>Recent Activity</h2>
         <button type="button" className="btn-link">

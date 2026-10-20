@@ -72,7 +72,7 @@ export function OpsBatch({ id }: { id: string }) {
         actions={<Link href={hrefs.batch(batch.id)} className="btn-secondary">Customer view</Link>}
       />
       <div className="space-y-6">
-        <section className={cn('rounded-xl border bg-white p-5 shadow-sm', batch.planState === 'live' ? 'border-cq-border' : 'border-2 border-cq-text')}>
+        <section className={cn('rounded-xl border bg-white p-5 ', batch.planState === 'live' ? 'border-cq-border' : 'border-2 border-cq-text')}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">Plan</p>
@@ -88,7 +88,7 @@ export function OpsBatch({ id }: { id: string }) {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+        <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
           <header className="flex items-center justify-between gap-3 border-b border-cq-border-light px-5 py-4">
             <h2 className={groupTitle}>Workstreams ({streams.length})</h2>
             <button type="button" className="btn-secondary-sm" onClick={() => setQuery({ add: 'workstream', edit: null })}>
@@ -131,7 +131,7 @@ export function OpsBatch({ id }: { id: string }) {
                           <span className="text-sm text-cq-text-secondary">In plan</span>
                         ) : (
                           <OwnerPill owner={stream.owner} label={stream.owner === 'done' ? 'Done' : WITH[stream.owner]} className={stream.owner === 'you' ? 'bg-cq-text text-white': undefined} /> )} </div> <button type="button" className="shrink-0 text-sm font-semibold text-cq-text" onClick={() => setQuery({ add: null, edit: stream.id })}>Edit</button> <button type="button" className="shrink-0 text-sm text-cq-muted hover:text-cq-text" onClick={() => removeWorkstream(stream.id)}>Remove</button> </div> {open && ( <div className="bg-cq-bg px-5 py-4"> <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">Properties</p> <ul className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4"> {stream.projects.map((project) => { const building = getBuilding(account, project.buildingId)
-return ( <li key={project.buildingId} className="rounded-lg bg-white px-3 py-2"> <p className="text-sm font-semibold text-cq-text">{building.name}</p> <p className="text-sm text-cq-text-secondary">{building.city}</p> </li> ) })} </ul> </div> )} </li> ) })} </ul> )} </section> <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm"> <header className="flex items-center justify-between gap-3 border-b border-cq-border-light px-5 py-4"> <h2 className={groupTitle}>Properties ({batch.buildingIds.length})</h2> <Link href={`${hrefs.opsNewBatch}?batch=${batch.id}`} className="btn-secondary-sm">+ Add properties</Link> </header> <ul> {batch.buildingIds.map((buildingId) => { const building = getBuilding(account, buildingId)
+return ( <li key={project.buildingId} className="rounded-lg bg-white px-3 py-2"> <p className="text-sm font-semibold text-cq-text">{building.name}</p> <p className="text-sm text-cq-text-secondary">{building.city}</p> </li> ) })} </ul> </div> )} </li> ) })} </ul> )} </section> <section className="overflow-hidden rounded-xl border border-cq-border bg-white "> <header className="flex items-center justify-between gap-3 border-b border-cq-border-light px-5 py-4"> <h2 className={groupTitle}>Properties ({batch.buildingIds.length})</h2> <Link href={`${hrefs.opsNewBatch}?batch=${batch.id}`} className="btn-secondary-sm">+ Add properties</Link> </header> <ul> {batch.buildingIds.map((buildingId) => { const building = getBuilding(account, buildingId)
 const mine = streams.filter((stream) => stream.projects.some((project) => project.buildingId === buildingId))
 const reason = streams.map((stream) => exclusionLine(building.name, stream.solution, stream.exclusion)).find(Boolean)
 return ( <li key={buildingId} className="grid items-center gap-3 border-t border-cq-border-light px-5 py-3 first:border-t-0 md:grid-cols-[minmax(12rem,1fr)_minmax(0,1.2fr)_minmax(0,1.4fr)]"> <div className="min-w-0"> <p className="font-semibold text-cq-text">{building.name}</p> <p className="text-sm text-cq-text-secondary">{propertyMeta(building)}</p> </div> <p className="text-sm text-cq-muted">{reason}</p> <div className="flex flex-wrap justify-start gap-1.5 md:justify-end"> {mine.map((stream) => ( <span key={stream.id} className="rounded-md border border-cq-border px-2 py-1 text-xs text-cq-text"> {stream.name} · {serviceDef(stream.service).label} </span> ))} {mine.length === 0 && !reason && <span className="text-sm text-cq-muted">No workstream yet</span>} </div> </li> ) })} </ul> </section> </div> {drawer && ( <OpsWorkstreamDrawer key={editing?.id ??'new'}

@@ -67,7 +67,7 @@ export function PaymentStagesCard({
   const settled = job.confirmStatus === 'settled'
 
   return (
-    <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-cq-border px-5 py-4 sm:px-6">
         <div className="min-w-0">
           <h2 className={sectionTitleClass}>Payment stages &amp; dates</h2>

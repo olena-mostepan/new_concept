@@ -140,7 +140,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
           const folded = group.outcome && group.rows.length > 5 && !open
           const shown = folded ? [] : group.rows
           return (
-            <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+            <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
               <header className="border-b border-cq-border-light px-5 py-4">
                 <h2 className={groupTitle}>
                   {group.title} · {group.rows.length}

@@ -61,7 +61,7 @@ const TONE = {
 export function HeroStats() {
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
-      <div className="relative flex min-w-0 flex-col justify-center overflow-hidden rounded-xl border border-[var(--cq-green)]/30 bg-gradient-to-br from-[var(--cq-accent-muted)] via-white to-white px-6 py-6 shadow-sm lg:w-[340px] lg:shrink-0">
+      <div className="relative flex min-w-0 flex-col justify-center overflow-hidden rounded-xl border border-[var(--cq-green)]/30 bg-gradient-to-br from-[var(--cq-accent-muted)] via-white to-white px-6 py-6  lg:w-[340px] lg:shrink-0">
         <div
           className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[var(--cq-green)]/10"
           aria-hidden
@@ -94,7 +94,7 @@ export function HeroStats() {
           return (
             <div
               key={stat.label}
-              className="group rounded-xl border border-cq-border bg-white px-4 py-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[var(--cq-green)]/25 hover:shadow-md sm:px-5"
+              className="group rounded-xl border border-cq-border bg-white px-4 py-5  transition-all hover:-translate-y-0.5 hover:border-[var(--cq-green)]/25 hover:shadow-md sm:px-5"
             >
               <span
                 className={`mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg ${tone.iconWrap}`}

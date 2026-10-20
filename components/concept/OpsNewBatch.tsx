@@ -120,7 +120,7 @@ export function OpsNewBatch() {
         title="New batch"
       />
       <div className="space-y-6 pb-24">
-        <div className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-cq-border bg-white p-5 ">
           <Stepper step={step} />
         </div>
 
@@ -136,7 +136,7 @@ export function OpsNewBatch() {
                   key={item.id}
                   type="button"
                   onClick={() => setMode(item.id)}
-                  className={`rounded-xl border bg-white p-4 text-left shadow-sm ${mode === item.id ? 'border-2 border-cq-text' : 'border-cq-border'}`}
+                  className={`rounded-xl border bg-white p-4 text-left  ${mode === item.id ? 'border-2 border-cq-text' : 'border-cq-border'}`}
                 >
                   <p className="text-sm font-semibold text-cq-text">{item.title}</p>
                   <p className="mt-1 text-sm text-cq-text-secondary">{item.text}</p>
@@ -144,7 +144,7 @@ export function OpsNewBatch() {
               ))}
             </div>
 
-            <div className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+            <div className="rounded-xl border border-cq-border bg-white p-5 ">
               {mode === 'search' && (
                 <PropertySearch
                   query={query}
@@ -222,12 +222,12 @@ export function OpsNewBatch() {
               )}
             </div>
 
-            <section className="rounded-xl border border-cq-border bg-white shadow-sm">
+            <section className="rounded-xl border border-cq-border bg-white ">
               <header className="flex flex-wrap items-center justify-between gap-3 border-b border-cq-border-light px-5 py-4">
                 <h2 className={groupTitle}>In this batch · {chosen.length} {chosen.length === 1 ? 'property' : 'properties'}</h2> {summary && <p className="text-sm text-cq-text-secondary">{summary}</p>} </header> {chosen.length === 0 ? ( <p className="px-5 py-8 text-sm text-cq-text-secondary">No properties added yet.</p> ) : ( <ul className="grid sm:grid-cols-2"> {chosen.map((building) => ( <li key={building.id} className="flex items-start justify-between gap-3 border-t border-cq-border-light px-5 py-3"> <div> <p className="text-sm font-normal text-cq-text">{building.name}</p> <p className="text-sm text-cq-muted">{building.address || building.city}</p> </div> <button type="button" className="text-sm text-cq-muted hover:text-cq-text" onClick={() => toggle(building.id, picked[building.id])}>Remove</button> </li> ))} </ul> )} </section> </> ) : ( <> <div> <h2 className={groupTitle}>Name and goal</h2> <p className="mt-1 text-sm text-cq-text-secondary">In the customer's words. The goal is what they'll see at the top of the batch page.</p>
             </div>
             <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-              <section className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+              <section className="rounded-xl border border-cq-border bg-white p-5 ">
                 <h3 className="text-sm font-semibold text-cq-text">Batch</h3>
                 <div className="mt-4 space-y-4">
                   <label className="block">
@@ -245,7 +245,7 @@ export function OpsNewBatch() {
                   </label>
                 </div>
               </section>
-              <section className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+              <section className="rounded-xl border border-cq-border bg-white p-5 ">
                 <h3 className="text-sm font-semibold text-cq-text">Next</h3>
                 <ol className="mt-4 space-y-4 text-sm">
                   <li>

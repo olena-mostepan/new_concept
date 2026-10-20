@@ -53,7 +53,7 @@ function offerSummary(offers: OfferSplit) {
 
 function Soon({ label, noun }: { label: string; noun: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center shadow-sm">
+    <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center ">
       <p className="text-sm font-normal text-cq-text">{label} — coming soon</p>
       <p className="mt-1 text-sm text-cq-text-secondary">Placeholder for the customer {noun} view.</p>
     </div>

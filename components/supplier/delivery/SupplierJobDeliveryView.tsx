@@ -133,7 +133,7 @@ export function SupplierJobDeliveryPanel({
 
   if (!job || !claim) {
     return (
-      <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center shadow-sm sm:px-6">
+      <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center  sm:px-6">
         <p className="text-sm font-normal text-cq-text">Job not found</p>
         <Link href="/supplier/delivery" className="btn-link mt-3 inline-flex">
           Back to Delivery

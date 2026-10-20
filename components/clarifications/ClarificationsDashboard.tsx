@@ -26,7 +26,7 @@ export function ClarificationsDashboard({ perspective }: { perspective: Perspect
   if (visible.length === 0) {
     return (
       <div className="mx-auto w-full max-w-screen-2xl px-6 pb-20 pt-4 sm:px-8 lg:px-10">
-        <div className="rounded-xl border border-cq-border bg-white p-8 text-center shadow-sm">
+        <div className="rounded-xl border border-cq-border bg-white p-8 text-center ">
           <p className="text-base font-semibold text-cq-text">No clarifications in this view</p>
           <p className="mt-2 text-sm text-cq-text-secondary">
             {perspective === 'supplier' ? (
@@ -92,7 +92,7 @@ function DispatchDashboardSection({
       <h2 className="mb-4 text-base font-semibold text-cq-text">
         {title} ({groups.length})
       </h2>
-      <div className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-cq-border bg-white ">
         <div className="divide-y divide-cq-border px-4 sm:px-5">
           {groups.map((group) => (
             <DispatchClarificationRow

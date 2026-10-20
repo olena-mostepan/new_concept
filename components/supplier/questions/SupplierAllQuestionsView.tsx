@@ -67,11 +67,11 @@ export function SupplierAllQuestionsView() {
       ) : null}
 
       {allQuestions.length === 0 ? (
-        <div className="rounded-xl border border-cq-border bg-white px-8 py-12 text-center shadow-sm">
+        <div className="rounded-xl border border-cq-border bg-white px-8 py-12 text-center ">
           <p className="text-base font-normal text-cq-text">No questions yet</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-cq-border bg-white px-8 py-10 text-center shadow-sm">
+        <div className="rounded-xl border border-cq-border bg-white px-8 py-10 text-center ">
           <p className="text-sm font-normal text-cq-text">No questions match this filter</p>
           <button
             type="button"

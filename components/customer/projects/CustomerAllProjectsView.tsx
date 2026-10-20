@@ -83,7 +83,7 @@ export function CustomerAllProjectsView() {
         />
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
         <div className="flex flex-col gap-4 border-b border-cq-border px-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6">
           <div className="relative w-full sm:max-w-xs">
             <label htmlFor="project-search" className="sr-only">

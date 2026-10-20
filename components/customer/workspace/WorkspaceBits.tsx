@@ -15,7 +15,7 @@ export function WorkspaceStat({
   iconTone?: 'muted' | 'success'
 }) {
   return (
-    <div className="rounded-xl border border-cq-border bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-cq-border bg-white p-5 ">
       <span
         className={cn(
           'flex h-8 w-8 items-center justify-center rounded-lg',

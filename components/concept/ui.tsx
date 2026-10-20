@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { Check, ChevronRight, Circle } from 'lucide-react'
+import { Check, ChevronRight, Circle, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SERVICES, service as serviceDef, type Account, type Batch, type Need, type Owner, type ServiceId, type Workstream } from '@/lib/concept/model'
+import { OWNER_LABEL, SERVICES, service as serviceDef, type Account, type Batch, type Need, type Owner, type ServiceId, type Workstream } from '@/lib/concept/model'
 import { batchSlots, changedRecently, doneCount, activeProjects, short } from '@/lib/concept/derive'
 
 /* ------------------------------------------------------------------ type */
@@ -12,7 +12,7 @@ import { batchSlots, changedRecently, doneCount, activeProjects, short } from '@
 export const pageTitle = 'h4 text-text-primary'
 export const sectionTitle = 's3 text-text-tertiary'
 /** Group titles such as In progress, Needs your decision, Done. */
-export const groupTitle = 'h5 text-text-primary'
+export const groupTitle = 'h6 text-text-primary'
 export const th = 'px-4 py-2 pl-8 text-left s3 text-text-tertiary'
 export const td = 'px-4 py-3 pl-8 align-top p6 text-text-primary'
 export const dot = <span className="mx-2 text-cq-muted">·</span>
@@ -21,9 +21,9 @@ export function Page({ children }: { children: ReactNode }) {
   return <div className="mx-auto w-full max-w-screen-2xl px-6 pt-8 sm:px-8 lg:px-10">{children}</div>
 }
 
-export function ChangedKey() {
+export function ChangedKey({ className }: { className?: string }) {
   return (
-    <p className="flex items-center gap-2 text-cq-text-secondary p6">
+    <p className={cn('flex items-center gap-2', className ?? 'p6 text-cq-text-secondary')}>
       <span className="h-1.5 w-1.5 rounded-full bg-brand-6" aria-hidden />
       Changed in the last 7 days
     </p>
@@ -38,6 +38,141 @@ export function workstreamSummary(list: Array<{ batchId: string; owner: string }
   const workstreams = list.length === 1 ? 'workstream' : 'workstreams'
   const batchWord = batches === 1 ? 'batch' : 'batches'
   return `${list.length} ${workstreams} across ${batches} ${batchWord} · ${live} in progress · ${done} done`
+}
+
+export type SummaryState = '' | 'progress' | 'done'
+
+export function SummaryCards({
+  list,
+  state,
+  onState,
+}: {
+  list: Array<{ batchId: string; owner: string }>
+  state: SummaryState
+  onState: (next: SummaryState) => void
+}) {
+  const total = list.length
+  const done = list.filter((w) => w.owner === 'done').length
+  const live = total - done
+  const batches = new Set(list.map((w) => w.batchId)).size
+  const share = (n: number) => (total > 0 ? `${Math.round((n / total) * 100)}% of workstreams` : null)
+  return (
+    <div className="flex gap-4">
+      <SummaryCard label="Workstreams" number={total} line={total > 0 ? `across ${batches} ${batches === 1 ? 'batch' : 'batches'}` : null} />
+      <SummaryCard
+        label="In progress"
+        number={live}
+        line={share(live)}
+        pressed={state === 'progress'}
+        onClick={() => onState(state === 'progress' ? '' : 'progress')}
+      />
+      <SummaryCard
+        label="Done"
+        number={done}
+        line={share(done)}
+        pressed={state === 'done'}
+        onClick={() => onState(state === 'done' ? '' : 'done')}
+      />
+    </div>
+  )
+}
+
+function SummaryCard({
+  label,
+  number,
+  line,
+  pressed,
+  onClick,
+}: {
+  label: string
+  number: number
+  line: string | null
+  pressed?: boolean
+  onClick?: () => void
+}) {
+  const className = cn(
+    'w-80 rounded-[12px] bg-white px-4 py-[14px] text-left',
+    pressed ? 'border-[1.5px] border-black-7' : 'border border-border-dark',
+  )
+  const body = (
+    <>
+      <p className="p7 text-text-secondary">{label}</p>
+      <p className="mt-1 h4 tabular-nums text-text-primary">{number}</p>
+      {line && <p className="mt-0.5 p7 text-text-tertiary">{line}</p>}
+    </>
+  )
+  if (!onClick) return <div className={className}>{body}</div>
+  return (
+    <button type="button" className={className} aria-pressed={pressed} onClick={onClick}>
+      {body}
+    </button>
+  )
+}
+
+const SELECT_CHEVRON =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234d5761' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")"
+
+export const filterSearchClass =
+  'h-10 w-full rounded-lg border border-border-dark bg-white p6 pl-9 pr-3 text-text-primary outline-none placeholder:text-text-tertiary'
+
+export const filterSelectClass =
+  'h-10 w-full cursor-pointer appearance-none rounded-lg border border-border-dark bg-white bg-[length:16px] bg-[right_12px_center] bg-no-repeat p6 pl-4 pr-12 text-text-title outline-none data-[set=true]:border-black-6 data-[set=true]:text-text-primary'
+
+export function FilterSearch({
+  value,
+  onChange,
+  placeholder = 'Search workstreams or projects',
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+}) {
+  return (
+    <div className="relative w-full sm:w-80">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-icon-default" aria-hidden />
+      <input
+        type="search"
+        value={value}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className={filterSearchClass}
+      />
+    </div>
+  )
+}
+
+export function FilterSelect({
+  label,
+  value,
+  display,
+  onChange,
+  children,
+}: {
+  label: string
+  value: string
+  display?: string
+  onChange: (value: string) => void
+  children: ReactNode
+}) {
+  const text = value ? display || value : label
+  return (
+    <div className="relative inline-flex h-10 max-w-full flex-none items-center">
+      <span className="invisible whitespace-nowrap p6 pl-4 pr-14" aria-hidden>
+        {text}
+      </span>
+      <select
+        aria-label={label}
+        value={value}
+        data-set={value ? 'true' : undefined}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(filterSelectClass, 'absolute inset-0')}
+        style={{ backgroundImage: SELECT_CHEVRON }}
+      >
+        {children}
+      </select>
+    </div>
+  )
 }
 
 /** Count line at the far right, with the changed key directly under it. */
@@ -68,15 +203,17 @@ export function PageHeader({
   meta,
   actions,
   legend,
+  className,
 }: {
   crumbs?: Array<{ label: string; href?: string }>
   title: ReactNode
   meta?: ReactNode
   actions?: ReactNode
   legend?: ReactNode
+  className?: string
 }) {
   return (
-    <div className="mb-7">
+    <div className={className ?? 'mb-7'}>
       {crumbs && crumbs.length > 0 && (
         <nav className="mb-2 flex flex-wrap items-center gap-1 text-sm text-cq-text-secondary">
           {crumbs.map((c, i) => (
@@ -117,18 +254,20 @@ export function Card({
   children,
   className,
   bodyClassName,
+  titleClassName,
 }: {
   title?: ReactNode
   right?: ReactNode
   children: ReactNode
   className?: string
   bodyClassName?: string
+  titleClassName?: string
 }) {
   return (
     <section className={cn('overflow-hidden rounded-xl border border-border-dark bg-bg-container', className)}>
       {(title || right) && (
         <header className="flex items-center justify-between gap-3 border-b border-border-light px-4 py-3">
-          {title && <h2 className="h7 text-text-primary">{title}</h2>}
+          {title && <h2 className={titleClassName ?? 'h6 text-text-primary'}>{title}</h2>}
           {right && <div className="text-sm text-cq-text-secondary">{right}</div>}
         </header>
       )}
@@ -151,13 +290,6 @@ export function Empty({ children }: { children: ReactNode }) {
 
 /* --------------------------------------------------------------- status */
 
-const PILL_LABEL: Record<Owner, string> = {
-  you: 'With you',
-  cquel: 'With CQuel',
-  suppliers: 'With suppliers',
-  done: 'Done',
-}
-
 const OWNER_STYLE: Record<Owner, string> = {
   you: 'border border-brand-2 bg-bg-accent text-brand-7',
   cquel: 'border border-border-dark bg-black-1 text-text-secondary',
@@ -168,7 +300,7 @@ const OWNER_STYLE: Record<Owner, string> = {
 export function OwnerPill({ owner, label, className }: { owner: Owner; label?: string; className?: string }) {
   return (
     <span className={cn('inline-flex h-6 w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 h9', OWNER_STYLE[owner], className)}>
-      {label ?? PILL_LABEL[owner]}
+      {label ?? OWNER_LABEL[owner]}
     </span>
   )
 }

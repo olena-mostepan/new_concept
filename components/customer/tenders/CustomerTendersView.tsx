@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Building2, RefreshCw, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { OWNER_LABEL } from '@/lib/concept/model'
 import { PORTFOLIO_USER } from '@/lib/customer/portfolio/mock-data'
 import {
   CUSTOMER_TENDERS,
@@ -19,7 +20,7 @@ import {
 } from '@/components/customer/workspace/WorkspaceBits'
 
 const RESPONSIBILITY_LABEL = {
-  your_action: 'Your Action',
+  your_action: OWNER_LABEL.you,
   supplier_action: "Supplier's Action",
 } as const
 

@@ -1,4 +1,4 @@
-import { SERVICES, TODAY, service, type Account, type Batch, type Need, type Owner, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
+import { OWNER_LABEL, SERVICES, TODAY, service, type Account, type Batch, type Need, type Owner, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
 
 /** Customers only see batches once a plan has been shared with them */
 export const customerBatches = (a: Account) => a.batches.filter((b) => b.planState !== 'draft')
@@ -214,33 +214,29 @@ export function waitingCounts(a: Account) {
   }
 }
 
-const OWNER_ORDER: Owner[] = ['done', 'you', 'cquel', 'suppliers']
-const CELL_LABEL: Record<Owner, string> = {
-  done: 'done',
-  you: 'your action',
-  cquel: "CQuel's action",
-  suppliers: 'suppliers action',
-}
-
 export type BatchCell =
   | { service: ServiceId; kind: 'skip' }
   | { service: ServiceId; kind: 'planned' }
-  | { service: ServiceId; kind: 'live'; owners: Owner[]; lines: string[] }
+  | { service: ServiceId; kind: 'live'; total: number; done: number; you: number }
 
 export function batchCells(a: Account, b: Batch): BatchCell[] {
   return SERVICES.map((s) => {
     if (!b.route.includes(s.id)) return { service: s.id, kind: 'skip' }
     const ws = wsIn(a, b.id).filter((w) => w.service === s.id && !w.proposed)
     if (!ws.length) return { service: s.id, kind: 'planned' }
-    const owners = OWNER_ORDER.flatMap((o) => ws.filter((w) => w.owner === o).map(() => o))
-    const lines = OWNER_ORDER.filter((o) => ws.some((w) => w.owner === o)).map((o) => `${ws.filter((w) => w.owner === o).length} ${CELL_LABEL[o]}`)
-    return { service: s.id, kind: 'live', owners, lines }
+    return {
+      service: s.id,
+      kind: 'live',
+      total: ws.length,
+      done: ws.filter((w) => w.owner === 'done').length,
+      you: ws.filter((w) => w.owner === 'you').length,
+    }
   })
 }
 
 export function batchSummary(a: Account, b: Batch) {
-  const n = wsIn(a, b.id).length
-  const bits = [`${b.buildingIds.length} buildings`, noun(n, 'workstream', 'workstreams')]
+  const n = wsIn(a, b.id).filter((w) => !w.proposed).length
+  const bits = [noun(n, 'workstream', 'workstreams')]
   if (b.target) bits.push(`by ${b.target}`)
   return { goal: b.goal, meta: bits.join(' · '), line: [b.goal, ...bits].join(' · ') }
 }
@@ -440,7 +436,7 @@ export function routeAside(a: Account, b: Batch, variant: 'dashboard' | 'page') 
   const parts = (['you', 'cquel', 'suppliers'] as Owner[])
     .map((o) => ({ o, n: live.filter((w) => w.owner === o).length }))
     .filter((x) => x.n > 0)
-    .map((x) => `${x.n} ${CELL_LABEL[x.o]}`)
+    .map((x) => `${OWNER_LABEL[x.o]}: ${x.n}`)
   return parts.join(' · ')
 }
 

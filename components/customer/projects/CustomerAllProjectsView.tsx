@@ -4,6 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import { Calendar, Rocket, Search, Zap } from 'lucide-react'
 import { toast } from 'sonner'
+import { OWNER_LABEL } from '@/lib/concept/model'
 import { PORTFOLIO_USER } from '@/lib/customer/portfolio/mock-data'
 import {
   CUSTOMER_PROJECT_LIST,
@@ -18,8 +19,8 @@ import {
 } from '@/components/customer/workspace/WorkspaceBits'
 
 const RESPONSIBILITY_LABEL = {
-  your_action: 'Your Action',
-  supplier_action: 'Suppliers Action',
+  your_action: OWNER_LABEL.you,
+  supplier_action: OWNER_LABEL.suppliers,
 } as const
 
 function matches(

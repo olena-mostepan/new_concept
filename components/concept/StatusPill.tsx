@@ -1,12 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { Owner } from '@/lib/concept/model'
-
-const LABEL: Record<Owner, string> = {
-  you: 'With you',
-  cquel: 'With CQuel',
-  suppliers: 'With suppliers',
-  done: 'Done',
-}
+import { OWNER_LABEL, type Owner } from '@/lib/concept/model'
 
 const STYLE: Record<Owner, string> = {
   you: 'border border-brand-2 bg-bg-accent text-brand-7',
@@ -18,7 +11,7 @@ const STYLE: Record<Owner, string> = {
 export function StatusPill({ owner }: { owner: Owner }) {
   return (
     <span className={cn('inline-flex h-6 w-fit shrink-0 items-center whitespace-nowrap rounded-full px-2.5 h9', STYLE[owner])}>
-      {LABEL[owner]}
+      {OWNER_LABEL[owner]}
     </span>
   )
 }

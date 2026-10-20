@@ -2,8 +2,8 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { activeProjects, days, lastChangedOn, pipeline, rightNow } from '@/lib/concept/derive'
-import type { Account, Owner, Workstream } from '@/lib/concept/model'
-import { Card, CardLink } from './ui'
+import { OWNER_LABEL, type Account, type Workstream } from '@/lib/concept/model'
+import { Card, CardLink, sectionTitle } from './ui'
 import { BatchesCard } from './BatchesCard'
 import { RightNow } from './RightNow'
 import { hrefs } from './hrefs'
@@ -14,11 +14,11 @@ function Pipeline({ account }: { account: Account }) {
   const { segments, total, batches } = pipeline(account)
   const columns = segments.map((segment) => `minmax(7.5rem, ${segment.n}fr)`).join(' ')
   return (
-    <Card title="Pipeline" right={`${total} workstreams across ${batches} ${batches === 1 ? 'batch' : 'batches'}`}>
+    <Card title="Pipeline" titleClassName={sectionTitle} right={`${total} workstreams across ${batches} ${batches === 1 ? 'batch' : 'batches'}`}>
       <div className="overflow-x-auto">
         <div className="grid min-w-[720px] gap-y-2" style={{ gridTemplateColumns: columns }}>
           {segments.map((segment) => (
-            <p key={segment.id} className="truncate text-center text-xs text-cq-text-secondary">
+            <p key={segment.id} className="truncate text-center h7 text-text-primary">
               {segment.label}
             </p>
           ))}
@@ -42,12 +42,6 @@ function Pipeline({ account }: { account: Account }) {
       </div>
     </Card>
   )
-}
-
-const WAITING_ON: Record<Exclude<Owner, 'done'>, string> = {
-  you: 'With you',
-  cquel: 'With CQuel',
-  suppliers: 'With suppliers',
 }
 
 function waitedDays(w: Workstream): number {
@@ -97,12 +91,12 @@ function Waiting({ account }: { account: Account }) {
     { owner: 'suppliers' as const, n: live.progress.filter((w) => w.owner === 'suppliers').length },
   ]
   return (
-    <Card title="Who it's waiting on" bodyClassName="p-0" className="h-full">
+    <Card title="Who it's waiting on" titleClassName={sectionTitle} bodyClassName="p-0" className="h-full">
       <div className="grid grid-cols-3 gap-4 px-5 py-5">
         {counts.map((item) => (
           <div key={item.owner}>
             <p className="tabular-nums text-text-primary h4">{item.n}</p>
-            <p className="mt-1.5 text-sm text-cq-text-secondary">{WAITING_ON[item.owner]}</p>
+            <p className="mt-1.5 text-sm text-cq-text-secondary">{OWNER_LABEL[item.owner]}</p>
           </div>
         ))}
       </div>
@@ -110,7 +104,7 @@ function Waiting({ account }: { account: Account }) {
         {rows.map(({ w, days: waited }) => (
           <li key={w.id} className="flex items-center gap-6 border-t border-cq-border-light py-4 first:border-t-0">
             <span className="min-w-0 flex-1 truncate text-sm text-cq-text">{waitingLabel(w)}</span>
-            <span className="w-32 shrink-0 text-sm text-cq-text-secondary">{WAITING_ON[w.owner as Exclude<Owner, 'done'>]}</span>
+            <span className="w-32 shrink-0 text-sm text-cq-text-secondary">{OWNER_LABEL[w.owner]}</span>
             <span className="w-16 shrink-0 text-right text-sm font-semibold tabular-nums text-cq-text">
               {waited} {waited === 1 ? 'day' : 'days'}
             </span>
@@ -123,7 +117,7 @@ function Waiting({ account }: { account: Account }) {
 
 function Activity({ account }: { account: Account }) {
   return (
-    <Card title="Recent activity" right={<CardLink href={hrefs.workstreams()}>See all</CardLink>} className="h-full">
+    <Card title="Recent activity" titleClassName={sectionTitle} right={<CardLink href={hrefs.workstreams()}>See all</CardLink>} className="h-full">
       <ul className="space-y-6">
         {account.activity.slice(0, 4).map((item) => (
           <li key={`${item.date}-${item.title}`} className="flex justify-between gap-4">
@@ -142,7 +136,7 @@ function Activity({ account }: { account: Account }) {
 function Momentum({ account }: { account: Account }) {
   if (!account.momentum) return null
   return (
-    <Card title="Momentum" right="Workstreams started and finished">
+    <Card title="Momentum" titleClassName={sectionTitle} right="Workstreams started and finished">
       <div className="mb-3 flex gap-5 text-xs text-cq-text-secondary">
         <span className="inline-flex items-center gap-1.5">
           <svg width="18" height="4" aria-hidden>

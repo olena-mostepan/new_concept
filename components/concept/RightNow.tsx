@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { buildingProgress, byRecentChange, nextParts, rightNow } from '@/lib/concept/derive'
 import type { Account, Workstream } from '@/lib/concept/model'
-import { Card, CardLink, Bar, ChangedMark, groupTitle, td } from './ui'
+import { Card, CardLink, Bar, ChangedMark, groupTitle, sectionTitle, td } from './ui'
 import { ServiceTag } from './ServiceTag'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
@@ -66,7 +66,7 @@ export function RightNow({ account }: { account: Account }) {
   const groups = rightNow(account)
   const foldDone = groups.done.length > 5
   return (
-    <Card title="Right now" right={<CardLink href={hrefs.workstreams()}>All workstreams</CardLink>} bodyClassName="p-0">
+    <Card title="Right now" titleClassName={sectionTitle} right={<CardLink href={hrefs.workstreams()}>All workstreams</CardLink>} bodyClassName="p-0">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px]">
           <tbody>
@@ -83,7 +83,7 @@ export function RightNow({ account }: { account: Account }) {
             <Group label={foldDone ? undefined : `Done · ${groups.done.length}`}>
               {foldDone ? (
                 <tr className="border-t border-cq-border-light">
-                  <td colSpan={4} className="px-5 py-3">
+                  <td colSpan={4} className="py-3 pl-9 pr-5">
                     <div className="flex items-center justify-between gap-4 text-sm text-cq-text-secondary">
                       <span>{groups.done.length} workstreams done</span>
                       <CardLink href={hrefs.workstreams()}>See all</CardLink>
@@ -106,7 +106,7 @@ function Group({ label, children }: { label?: string; children: ReactNode }) {
     <>
       {label && (
         <tr>
-          <td colSpan={4} className="bg-cq-bg px-5 py-3">
+          <td colSpan={4} className="bg-cq-bg py-3 pl-9 pr-5">
             <h3 className={groupTitle}>{label}</h3>
           </td>
         </tr>

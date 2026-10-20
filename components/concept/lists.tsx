@@ -80,7 +80,7 @@ export function GroupedByBatch({ account, items, batches }: { account: Account; 
     <div className="space-y-6">
       {groups.map(({ b, ws }) => (
         <section key={b.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-          <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-cq-border-light px-5 py-4">
+          <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-cq-border-light py-4 pl-8 pr-5">
             <div>
               <Link href={hrefs.batch(b.id)} className="text-base font-semibold text-cq-text hover:text-cq-accent">
                 {b.name}

@@ -1,6 +1,7 @@
 "use client"
 
 import { Shield, Wrench, BarChart3, CheckCircle2, Phone, AlertCircle, Monitor, FileText, Clock, Users, ArrowRight, Check } from "lucide-react"
+import { OWNER_LABEL } from "@/lib/concept/model"
 
 interface OMApproachData {
   summary?: {
@@ -373,7 +374,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
                       </div>
                       {step.customerAction && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex-shrink-0">
-                          <p className="text-xs font-normal text-blue-900 mb-0.5">Your Action</p>
+                          <p className="text-xs font-normal text-blue-900 mb-0.5">{OWNER_LABEL.you}</p>
                           <p className="text-xs text-blue-700">{step.customerAction}</p>
                         </div>
                       )}

@@ -5,17 +5,14 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { OWNER_LABEL, SOLUTIONS, service, type Owner, type ServiceId, type SolutionId, type Workstream } from '@/lib/concept/model'
 import { byRecentChange, customerBatches, days, getBuilding, nextParts, presentedTotal, priceLine, sectionOutcome, splitLine, suppliersLine, surveyLine, wsIn } from '@/lib/concept/derive'
-import { ChangedMark, ChapterAside, PageHeader, groupTitle, td, th, workstreamSummary } from './ui'
+import { ChangedKey, ChangedMark, FilterSearch, FilterSelect, PageHeader, SummaryCards, groupTitle, td, th, type SummaryState } from './ui'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
 import { SurveysTab } from './SurveysTab'
 
-const fieldClass = 'h-10 rounded-lg border border-cq-border bg-white text-sm text-cq-text'
-const selectClass = `${fieldClass} min-w-0 flex-1 appearance-none bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat pl-3 pr-10`
-const selectStyle = {
-  backgroundImage:
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234d5761' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+function summaryState(value: string | null): SummaryState {
+  return value === 'progress' || value === 'done' ? value : ''
 }
 
 function rowsFor(serviceId: ServiceId, list: Workstream[]) {
@@ -45,6 +42,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   const solution = params.get('solution') ?? ''
   const responsibility = params.get('responsibility') ?? ''
   const supplier = params.get('supplier') ?? ''
+  const state = summaryState(params.get('state'))
 
   const write = (next: Record<string, string>) => {
     const sp = new URLSearchParams(params.toString())
@@ -68,71 +66,83 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
     const names = w.projects.map((p) => getBuilding(account, p.buildingId).name).join(' ')
     return `${w.name} ${names}`.toLowerCase().includes(needle)
   })
-  const groups = rowsFor(serviceId, filtered)
+  const shown = filtered.filter((w) => {
+    if (state === 'done') return w.owner === 'done'
+    if (state === 'progress') return w.owner !== 'done'
+    return true
+  })
+  const groups = rowsFor(serviceId, shown)
   const solutions = [...new Set(all.map((w) => w.solution))]
   const suppliers = [...new Set(all.map((w) => w.supplier).filter((name): name is string => Boolean(name)))]
   const visitTotal = account.workstreams.reduce((n, w) => n + w.projects.filter((p) => p.visit && p.visit.state !== 'skip').length, 0)
 
   return (
     <>
-      <PageHeader title={def.label} actions={<ChapterAside summary={workstreamSummary(filtered)} />} />
+      <PageHeader title={def.label} className="mb-4" />
+      <SummaryCards list={filtered} state={state} onState={(next) => write({ state: next })} />
       {serviceId === 'scope' && (
-        <div className="mb-6 flex gap-6 border-b border-cq-border-light">
-          <button type="button" onClick={() => write({ tab: '', q: '', batch: '', solution: '', responsibility: '', service: '', status: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal${surveys ? 'border-transparent text-cq-text-secondary' : 'border-cq-accent text-cq-text'}`}>
+        <div className="mt-4 flex gap-6 border-b border-cq-border-light">
+          <button type="button" onClick={() => write({ tab: '', q: '', batch: '', solution: '', responsibility: '', service: '', status: '', state: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal ${surveys ? 'border-transparent text-cq-text-secondary' : 'border-cq-accent text-cq-text'}`}>
             Workstreams ({all.length})
           </button>
-          <button type="button" onClick={() => write({ tab: 'surveys', q: '', batch: '', solution: '', responsibility: '', service: '', status: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal${surveys ? 'border-cq-accent text-cq-text' : 'border-transparent text-cq-text-secondary'}`}>
+          <button type="button" onClick={() => write({ tab: 'surveys', q: '', batch: '', solution: '', responsibility: '', service: '', status: '', state: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal ${surveys ? 'border-cq-accent text-cq-text' : 'border-transparent text-cq-text-secondary'}`}>
             Surveys ({visitTotal})
           </button>
         </div>
       )}
+      {serviceId === 'tender' && (
+        <div className="mt-4 flex gap-6 border-b border-cq-border-light">
+          <span className="-mb-px border-b-2 border-cq-accent pb-2 text-sm font-normal text-cq-text">
+            Workstreams ({all.length})
+          </span>
+          <span className="-mb-px cursor-default border-b-2 border-transparent pb-2 text-sm font-normal text-cq-text-secondary" aria-disabled="true">
+            Briefs ({all.length})
+          </span>
+        </div>
+      )}
       {surveys ? (
-        <SurveysTab />
+        <div className="mt-6">
+          <SurveysTab />
+        </div>
       ) : (
       <>
-      <div className="mb-6 flex flex-wrap gap-3">
-        <input
-          type="search"
-          value={q}
-          placeholder="Search workstreams or projects"
-          aria-label="Search workstreams or projects"
-          onChange={(e) => write({ q: e.target.value })}
-          className={`${fieldClass} w-full shrink-0 px-3 sm:w-72`}
-        />
-        <select aria-label="Batch" value={batch} onChange={(e) => write({ batch: e.target.value })} className={selectClass} style={selectStyle}>
+      <div className="mb-6 mt-6 flex flex-wrap items-center gap-2">
+        <FilterSearch value={q} onChange={(value) => write({ q: value })} />
+        <FilterSelect label="Batch" value={batch} display={batches.find((b) => b.id === batch)?.name} onChange={(value) => write({ batch: value })}>
           <option value="">Batch</option>
           {batches.filter((b) => wsIn(account, b.id).some((w) => w.service === serviceId)).map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
             </option>
           ))}
-        </select>
-        <select aria-label="Solution" value={solution} onChange={(e) => write({ solution: e.target.value })} className={selectClass} style={selectStyle}>
+        </FilterSelect>
+        <FilterSelect label="Solution" value={solution} display={solution ? SOLUTIONS[solution as SolutionId] : undefined} onChange={(value) => write({ solution: value })}>
           <option value="">Solution</option>
           {solutions.map((id) => (
             <option key={id} value={id}>
               {SOLUTIONS[id as SolutionId]}
             </option>
           ))}
-        </select>
+        </FilterSelect>
         {serviceId === 'pricing' && (
-          <select aria-label="Supplier" value={supplier} onChange={(e) => write({ supplier: e.target.value })} className={selectClass} style={selectStyle}>
+          <FilterSelect label="Supplier" value={supplier} display={supplier} onChange={(value) => write({ supplier: value })}>
             <option value="">Supplier</option>
             {suppliers.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         )}
-        <select aria-label="Responsibility" value={responsibility} onChange={(e) => write({ responsibility: e.target.value })} className={selectClass} style={selectStyle}>
+        <FilterSelect label="Responsibility" value={responsibility} display={responsibility ? OWNER_LABEL[responsibility as Owner] : undefined} onChange={(value) => write({ responsibility: value })}>
           <option value="">Responsibility</option>
           {(['you', 'cquel', 'suppliers', 'done'] as Owner[]).map((o) => (
             <option key={o} value={o}>
               {OWNER_LABEL[o]}
             </option>
           ))}
-        </select>
+        </FilterSelect>
+        <ChangedKey className="ml-auto p7 text-text-secondary" />
       </div>
       <div className="space-y-6">
         {groups.map((group) => {
@@ -141,7 +151,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
           const shown = folded ? [] : group.rows
           return (
             <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-              <header className="border-b border-cq-border-light px-5 py-4">
+              <header className="border-b border-cq-border-light py-4 pl-9 pr-5">
                 <h2 className={groupTitle}>
                   {group.title} · {group.rows.length}
                 </h2>
@@ -205,7 +215,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
                 </div>
               )}
               {folded && (
-                <div className="flex items-center justify-between gap-4 bg-cq-bg px-5 py-3 text-sm text-cq-text-secondary">
+                <div className="flex items-center justify-between gap-4 bg-cq-bg py-3 pl-9 pr-5 text-sm text-cq-text-secondary">
                   <p>
                     <span className="font-semibold uppercase tracking-wide">{group.rows.length} done</span>
                   </p>

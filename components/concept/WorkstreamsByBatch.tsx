@@ -6,18 +6,16 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { OWNER_LABEL, SERVICES, SOLUTIONS, type Owner, type ServiceId, type SolutionId, type Workstream } from '@/lib/concept/model'
 import { batchOwner, buildingProgress, byRecentChange, customerBatches, doneFold, getBuilding, nextParts } from '@/lib/concept/derive'
 import { useConcept } from './store'
-import { Bar, ChangedMark, ChapterAside, PageHeader, td, th, workstreamSummary } from './ui'
+import { Bar, ChangedKey, ChangedMark, FilterSearch, FilterSelect, PageHeader, SummaryCards, td, th, type SummaryState } from './ui'
 import { ServiceTag } from './ServiceTag'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 
-const fieldClass = 'h-10 rounded-lg border border-cq-border bg-white text-sm text-cq-text outline-none focus-visible:ring-2 focus-visible:ring-[var(--cq-accent)]/30'
-const selectClass = `${fieldClass} min-w-0 flex-1 appearance-none bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat pl-3 pr-10`
-const selectStyle = {
-  backgroundImage:
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234d5761' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-}
 const OWNERS: Owner[] = ['you', 'cquel', 'suppliers', 'done']
+
+function summaryState(value: string | null): SummaryState {
+  return value === 'progress' || value === 'done' ? value : ''
+}
 
 function matchesQuery(accountBuildings: (id: string) => string, w: Workstream, q: string) {
   if (!q) return true
@@ -36,17 +34,19 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
   const service = serviceId ?? ((params.get('service') as ServiceId | null) || '')
   const solution = (params.get('solution') as SolutionId | null) || ''
   const responsibility = (params.get('responsibility') as Owner | null) || ''
+  const state = summaryState(params.get('state'))
 
   const batches = customerBatches(account)
   const shared = account.workstreams.filter((w) => batches.some((b) => b.id === w.batchId))
 
-  const write = (patch: { q?: string; batch?: string; service?: string; solution?: string; responsibility?: string }) => {
+  const write = (patch: { q?: string; batch?: string; service?: string; solution?: string; responsibility?: string; state?: string }) => {
     const next = {
       q,
       batch: batchId,
       service: serviceId ?? (params.get('service') ?? ''),
       solution,
       responsibility,
+      state,
       ...patch,
     }
     const rest = new URLSearchParams()
@@ -72,66 +72,67 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
     if (responsibility && w.owner !== responsibility) return false
     return matchesQuery((id) => getBuilding(account, id).name, w, q)
   })
+  const shown = filtered.filter((w) => {
+    if (state === 'done') return w.owner === 'done'
+    if (state === 'progress') return w.owner !== 'done'
+    return true
+  })
 
   const solutions = [...new Set(shared.map((w) => w.solution))]
 
   return (
     <div>
-      <PageHeader title="Workstreams" actions={<ChapterAside summary={workstreamSummary(filtered)} />} />
+      <PageHeader title="Workstreams" className="mb-4" />
+      <SummaryCards list={filtered} state={state} onState={(next) => write({ state: next })} />
 
-      <div className="mb-6 flex flex-wrap gap-3">
-        <input
-          type="search"
-          value={q}
-          placeholder="Search workstreams or projects"
-          aria-label="Search workstreams or projects"
-          onChange={(e) => write({ q: e.target.value })}
-          className={`${fieldClass} w-full shrink-0 px-3 sm:w-72`}
-        />
-        <select aria-label="Batch" value={batchId} onChange={(e) => write({ batch: e.target.value })} className={selectClass} style={selectStyle}>
+      <div className="mb-6 mt-6 flex flex-wrap items-center gap-2">
+        <FilterSearch value={q} onChange={(value) => write({ q: value })} />
+        <FilterSelect label="Batch" value={batchId} display={batches.find((b) => b.id === batchId)?.name} onChange={(value) => write({ batch: value })}>
           <option value="">Batch</option>
           {batches.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
             </option>
           ))}
-        </select>
-        <select aria-label="Service" value={service} onChange={(e) => write({ service: e.target.value })} className={selectClass} style={selectStyle}>
+        </FilterSelect>
+        <FilterSelect label="Service" value={service} display={SERVICES.find((s) => s.id === service)?.label} onChange={(value) => write({ service: value })}>
           <option value="">Service</option>
           {SERVICES.map((s) => (
             <option key={s.id} value={s.id}>
               {s.label}
             </option>
           ))}
-        </select>
-        <select aria-label="Solution" value={solution} onChange={(e) => write({ solution: e.target.value })} className={selectClass} style={selectStyle}>
+        </FilterSelect>
+        <FilterSelect label="Solution" value={solution} display={solution ? SOLUTIONS[solution] : undefined} onChange={(value) => write({ solution: value })}>
           <option value="">Solution</option>
           {solutions.map((id) => (
             <option key={id} value={id}>
               {SOLUTIONS[id]}
             </option>
           ))}
-        </select>
-        <select aria-label="Responsibility" value={responsibility} onChange={(e) => write({ responsibility: e.target.value })} className={selectClass} style={selectStyle}>
+        </FilterSelect>
+        <FilterSelect label="Responsibility" value={responsibility} display={responsibility ? OWNER_LABEL[responsibility] : undefined} onChange={(value) => write({ responsibility: value })}>
           <option value="">Responsibility</option>
           {OWNERS.map((o) => (
             <option key={o} value={o}>
               {OWNER_LABEL[o]}
             </option>
           ))}
-        </select>
+        </FilterSelect>
+        <ChangedKey className="ml-auto p7 text-text-secondary" />
       </div>
 
       <div className="space-y-6">
         {batches.map((b) => {
-          const rows = filtered.filter((w) => w.batchId === b.id)
+          const rows = shown.filter((w) => w.batchId === b.id)
           if (!rows.length) return null
           const live = byRecentChange(rows.filter((w) => w.owner !== 'done'))
           const done = rows.filter((w) => w.owner === 'done')
           const owner = batchOwner(account, b)
+          const expanded = open[b.id] || state === 'done'
           return (
             <section key={b.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-              <header className="flex flex-wrap items-start justify-between gap-4 border-b border-cq-border-light px-5 py-4">
+              <header className="flex flex-wrap items-start justify-between gap-4 border-b border-cq-border-light py-4 pl-9 pr-5">
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold text-cq-text">{b.name}</h2>
                   <p className="mt-1 text-sm text-cq-text-secondary">
@@ -139,13 +140,13 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
-                  <StatusPill owner={owner} />
+                  {owner !== 'you' && <StatusPill owner={owner} />}
                   <Link href={hrefs.batch(b.id)} className="btn-secondary-sm">
                     View batch
                   </Link>
                 </div>
               </header>
-              {(live.length > 0 || open[b.id]) && (
+              {(live.length > 0 || expanded) && (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[880px]">
                     <thead className="border-b border-cq-border-light">
@@ -160,7 +161,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-cq-border-light">
-                      {(open[b.id] ? [...live, ...done] : live).map((w) => {
+                      {(expanded ? [...live, ...done] : live).map((w) => {
                         const progress = buildingProgress(w)
                         const parts = nextParts(w)
                         return (
@@ -199,8 +200,8 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                   </table>
                 </div>
               )}
-              {done.length > 0 && (
-                <div className="flex items-center justify-between gap-4 border-t border-cq-border-light bg-cq-bg px-5 py-3 text-sm text-cq-text-secondary">
+              {done.length > 0 && state === '' && (
+                <div className="flex items-center justify-between gap-4 border-t border-cq-border-light bg-cq-bg py-3 pl-9 pr-5 text-sm text-cq-text-secondary">
                   <p>
                     <span className="font-semibold uppercase tracking-wide">Done · {done.length}</span> {doneFold(done)}
                   </p>

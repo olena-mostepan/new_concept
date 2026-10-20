@@ -100,9 +100,9 @@ export const SOLUTIONS: Record<SolutionId, string> = {
 }
 
 export const OWNER_LABEL: Record<Owner, string> = {
-  you: 'Your Action',
-  cquel: "CQuel's Action",
-  suppliers: 'Suppliers Action',
+  you: 'Your action',
+  cquel: "CQuel's action",
+  suppliers: "Suppliers' action",
   done: 'Done',
 }
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
-import { service as serviceDef, type Batch, type Owner, type SolutionId } from '@/lib/concept/model'
+import { OWNER_LABEL, service as serviceDef, type Batch, type Owner, type SolutionId } from '@/lib/concept/model'
 import { getBuilding, openNeeds, short, wsIn } from '@/lib/concept/derive'
 import { OwnerPill, Page, PageHeader, groupTitle } from './ui'
 import { PlanSteps } from './ops-bits'
@@ -16,8 +16,8 @@ import { cn } from '@/lib/utils'
 
 const WITH: Record<Exclude<Owner, 'done'>, string> = {
   you: 'With customer',
-  cquel: 'With CQuel',
-  suppliers: 'With suppliers',
+  cquel: OWNER_LABEL.cquel,
+  suppliers: OWNER_LABEL.suppliers,
 }
 
 function propertyMeta(building: { city: string; postcode?: string; type?: string }) {

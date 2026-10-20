@@ -197,7 +197,7 @@ function SupplierProjectPageInner() {
           </div>
         )}
 
-        <div className={cn(screenTab !== 'questions' && 'rounded-xl border border-cq-border bg-white p-6 shadow-sm')}>
+        <div className={cn(screenTab !== 'questions' && 'rounded-xl border border-cq-border bg-white p-6 ')}>
           {screenTab === 'questions' && mounted ? (
             <SupplierQuestionsTab
               projectId={projectId}

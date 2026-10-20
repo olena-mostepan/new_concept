@@ -7,7 +7,7 @@ import { OWNER_LABEL, SOLUTIONS, type Owner, type SolutionId } from '@/lib/conce
 import { byRecentChange, customerBatches, days, deliveryLine, getBuilding, needsAttention, nextParts, sectionOutcome, splitLine, wsIn } from '@/lib/concept/derive'
 import { splitDeliveryId, toDeliveryPayload } from '@/lib/concept/delivery'
 import { CustomerDeliveryView } from '@/components/customer/delivery/CustomerDeliveryView'
-import { ChangedMark, ChapterAside, PageHeader, groupTitle, td, th, workstreamSummary } from './ui'
+import { ChangedMark, PageHeader, SummaryCards, groupTitle, td, th, type SummaryState } from './ui'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
@@ -29,6 +29,8 @@ export function DeliverySection() {
   const solution = params.get('solution') ?? ''
   const supplier = params.get('supplier') ?? ''
   const responsibility = params.get('responsibility') ?? ''
+  const rawState = params.get('state')
+  const state: SummaryState = rawState === 'progress' || rawState === 'done' ? rawState : ''
   const [open, setOpen] = useState(false)
 
   const write = (next: Record<string, string>) => {
@@ -62,9 +64,14 @@ export function DeliverySection() {
     const names = w.projects.map((p) => getBuilding(account, p.buildingId).name).join(' ')
     return `${w.name} ${names}`.toLowerCase().includes(needle)
   })
-  const attention = byRecentChange(filtered.filter(needsAttention))
-  const progress = byRecentChange(filtered.filter((w) => w.owner !== 'done' && !needsAttention(w)))
-  const done = filtered.filter((w) => w.owner === 'done').sort((a, b) => days(a.completedOn || '19 Oct 2026') - days(b.completedOn || '19 Oct 2026'))
+  const listed = filtered.filter((w) => {
+    if (state === 'done') return w.owner === 'done'
+    if (state === 'progress') return w.owner !== 'done'
+    return true
+  })
+  const attention = byRecentChange(listed.filter(needsAttention))
+  const progress = byRecentChange(listed.filter((w) => w.owner !== 'done' && !needsAttention(w)))
+  const done = listed.filter((w) => w.owner === 'done').sort((a, b) => days(a.completedOn || '19 Oct 2026') - days(b.completedOn || '19 Oct 2026'))
   const groups = [
     { id: 'attention', title: 'Needs attention', rows: attention, outcome: false },
     { id: 'progress', title: 'In progress', rows: progress, outcome: false },
@@ -76,12 +83,13 @@ export function DeliverySection() {
 
   return (
     <>
-      <PageHeader title="Delivery" actions={<ChapterAside summary={workstreamSummary(filtered)} />} />
-      <div className="mb-6 flex gap-6 border-b border-cq-border-light">
-        <button type="button" onClick={() => write({ tab: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal${contracts ? 'border-transparent text-cq-text-secondary' : 'border-cq-accent text-cq-text'}`}>
+      <PageHeader title="Delivery" className="mb-4" />
+      <SummaryCards list={filtered} state={state} onState={(next) => write({ state: next })} />
+      <div className="mt-4 flex gap-6 border-b border-cq-border-light">
+        <button type="button" onClick={() => write({ tab: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal ${contracts ? 'border-transparent text-cq-text-secondary' : 'border-cq-accent text-cq-text'}`}>
           Workstreams ({all.length})
         </button>
-        <button type="button" onClick={() => write({ tab: 'contracts' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal${contracts ? 'border-cq-accent text-cq-text' : 'border-transparent text-cq-text-secondary'}`}>
+        <button type="button" onClick={() => write({ tab: 'contracts' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal ${contracts ? 'border-cq-accent text-cq-text' : 'border-transparent text-cq-text-secondary'}`}>
           Contracts (21)
         </button>
       </div>
@@ -141,7 +149,7 @@ export function DeliverySection() {
               const shown = folded ? [] : group.rows
               return (
                 <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-                  <header className="border-b border-cq-border-light px-5 py-4">
+                  <header className="border-b border-cq-border-light py-4 pl-9 pr-5">
                     <h2 className={groupTitle}>{group.title} · {group.rows.length}</h2>
                   </header>
                   {shown.length > 0 && (
@@ -191,7 +199,7 @@ export function DeliverySection() {
                     </div>
                   )}
                   {folded && (
-                    <button type="button" className="btn-link px-5 py-3" onClick={() => setOpen(true)}>
+                    <button type="button" className="btn-link py-3 pl-9 pr-5" onClick={() => setOpen(true)}>
                       Show {group.rows.length} done
                     </button>
                   )}

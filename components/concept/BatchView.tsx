@@ -95,7 +95,7 @@ export function BatchView({ account, batch, variant }: { account: Account; batch
           ))}
         </ul>
         {variant === 'page' && done.length > 0 && (
-          <div className="flex items-center justify-between gap-4 border-t border-cq-border-light bg-cq-bg px-5 py-3 text-sm text-cq-text-secondary">
+          <div className="flex items-center justify-between gap-4 border-t border-cq-border-light bg-cq-bg py-3 pl-9 pr-5 text-sm text-cq-text-secondary">
             <p>
               <span className="font-semibold uppercase tracking-wide">Done · {done.length}</span> {doneFold(done)}
             </p>

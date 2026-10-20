@@ -105,7 +105,7 @@ export function SurveysTab() {
           if (!rows.length && !visits) return null
           return (
             <section key={bucket.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-              <header className="border-b border-cq-border-light px-5 py-4">
+              <header className="border-b border-cq-border-light py-4 pl-8 pr-5">
                 <h2 className={groupTitle}>
                   {bucket.title} · {visits}
                 </h2>

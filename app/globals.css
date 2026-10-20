@@ -271,7 +271,7 @@
     @apply inline-flex h-8 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border-dark bg-bg-container px-3 text-sm font-semibold text-text-primary outline-none transition-colors hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-6 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
   }
   .btn-link {
-    @apply inline-flex items-center p6 text-text-primary underline underline-offset-2 transition-colors hover:text-text-secondary;
+    @apply inline-flex items-center text-sm font-normal text-text-primary underline underline-offset-2 transition-colors hover:text-text-secondary;
   }
 
   .h3, .h4, .h5, .h6, .h7, .h8, .h9, .p6, .p7, .s3, .l1, .l1-strong {

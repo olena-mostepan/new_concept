@@ -74,7 +74,7 @@ export function SupplierCompanyProfile({
     <div className="flex flex-col h-full max-h-[85vh] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between shrink-0 pb-4 border-b border-cq-border">
-        <h2 className="text-xl font-bold text-cq-text">{data.companyName}</h2>
+        <h2 className="text-xl font-semibold text-cq-text">{data.companyName}</h2>
         <button
           onClick={onClose}
           className="p-2 rounded-md text-cq-text-secondary hover:text-cq-text hover:bg-cq-bg transition-colors"
@@ -106,8 +106,8 @@ export function SupplierCompanyProfile({
                 </svg>
               )}
             </div>
-            <p className="font-bold text-cq-text mt-2">{data.contactName}</p>
-            <p className="text-sm text-cq-text-secondary font-medium">{data.contactTitle}</p>
+            <p className="font-semibold text-cq-text mt-2">{data.contactName}</p>
+            <p className="text-sm text-cq-text-secondary font-normal">{data.contactTitle}</p>
           </div>
           <div className="rounded-lg border border-cq-border px-4 py-3 flex-1 min-w-0">
             <p className="text-lg text-cq-text-secondary italic">&ldquo;{data.bio}&rdquo;</p>
@@ -129,7 +129,7 @@ export function SupplierCompanyProfile({
                     <span
                       className={cn(
                         'flex items-center gap-2 text-right tabular-nums',
-                        isEmpty ? 'text-cq-muted' : 'font-bold text-cq-text'
+                        isEmpty ? 'text-cq-muted' : 'font-semibold text-cq-text'
                       )}
                     >
                       {Icon && !isEmpty ? (

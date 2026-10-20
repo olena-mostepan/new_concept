@@ -1,0 +1,217 @@
+'use client'
+
+import type { ReactNode } from 'react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { ArrowLeft, ChevronDown, Globe, Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { getWorkstream } from '@/lib/concept/derive'
+import { ConceptStoreProvider, useConcept } from './store'
+import { CUSTOMER_NAV, OPS, counterpart, hrefs, type NavItem } from './hrefs'
+
+function AccountToggle() {
+  const router = useRouter()
+  const pathname = usePathname() ?? ''
+  const { accounts, account, setAccountId } = useConcept()
+  const ops = pathname.startsWith(OPS)
+  return (
+    <div className="border-b border-cq-border bg-cq-bg">
+      <div className="mx-auto flex w-full max-w-screen-2xl items-center gap-3 px-6 py-2 sm:px-8 lg:px-10">
+        <span className="text-xs font-normal text-cq-muted">Dashboard</span>
+        <div className="inline-flex rounded-lg border border-cq-border bg-white p-0.5" role="tablist" aria-label="Dashboard">
+          {accounts.map((a) => {
+            const on = a.id === account.id
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => {
+                  if (on) return
+                  setAccountId(a.id)
+                  router.push(ops ? hrefs.ops : hrefs.portfolio)
+                }}
+                className={cn('rounded-md px-3 py-1 text-sm font-normal transition-colors', on ? 'bg-cq-text text-white' : 'text-cq-text-secondary hover:text-cq-text')}
+              >
+                {a.kind === 'pilot' ? 'Pilot' : 'Mature'}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ViewToggle({ ops }: { ops: boolean }) {
+  const router = useRouter()
+  const pathname = usePathname() ?? ''
+  return (
+    <div className="inline-flex rounded-lg border border-cq-border bg-white p-0.5" role="tablist" aria-label="View">
+      {[
+        { id: false, label: 'Customer' },
+        { id: true, label: 'Ops' },
+      ].map((o) => (
+        <button
+          key={o.label}
+          type="button"
+          onClick={() => o.id !== ops && router.push(counterpart(pathname))}
+          className={cn('rounded-md px-3 py-1 text-sm font-normal transition-colors', ops === o.id ? 'bg-cq-text text-white' : 'text-cq-text-secondary hover:text-cq-text')}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Nav({ items, path }: { items: NavItem[]; path: string }) {
+  return (
+    <nav className="border-t border-cq-border bg-white" aria-label="Sections">
+      <div className="mx-auto flex max-w-screen-2xl gap-12 overflow-x-auto px-6 sm:px-8 lg:px-10">
+        {items.map((it) => (
+          <Link
+            key={it.id}
+            href={it.href}
+            className={cn(
+              'relative shrink-0 whitespace-nowrap border-b-2 py-3 text-sm font-normal transition-colors',
+              it.match(path) ? 'border-cq-accent text-text-primary' : 'border-transparent text-cq-text-secondary hover:text-cq-text',
+            )}
+          >
+            {it.label}
+          </Link>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
+function Avatar({ letter }: { letter: string }) {
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cq-border bg-cq-bg text-xs font-semibold text-cq-text">
+      {letter}
+    </span>
+  )
+}
+
+function AppHeader({ ops, path }: { ops: boolean; path: string }) {
+  const { account } = useConcept()
+  const nav = ops
+    ? CUSTOMER_NAV.map((item) =>
+        item.id === 'portfolio'
+          ? { ...item, href: hrefs.ops, match: (p: string) => p === OPS || p === `${OPS}/` }
+          : item,
+      )
+    : CUSTOMER_NAV
+  return (
+    <header className="border-b border-cq-border bg-white">
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-wrap items-center justify-between gap-3 px-6 py-3.5 sm:px-8 lg:px-10">
+        <Link href={ops ? hrefs.ops : hrefs.portfolio} className="flex min-w-0 items-center gap-3 hover:opacity-80">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cq-accent text-sm font-semibold text-white" aria-hidden>
+            C
+          </span>
+          <span className="shrink-0 rounded-full border border-cq-border bg-cq-bg px-2.5 py-1 text-xs font-normal text-cq-text-secondary">Powered by CQuel</span>
+          <span className="truncate text-cq-text h5">{account.customer}</span>
+        </Link>
+        <div className="flex items-center gap-4 sm:gap-5">
+          <Link href="/clarifications" className="text-sm font-normal text-cq-text hover:text-cq-accent">
+            Questions
+          </Link>
+          {ops && (
+            <Link href={hrefs.opsNewBatch} className="btn-primary-sm">
+              <Plus className="h-4 w-4" aria-hidden /> Create batch
+            </Link>
+          )}
+          <ViewToggle ops={ops} />
+          <Avatar letter={account.user[0]} />
+        </div>
+      </div>
+      <Nav items={nav} path={path} />
+    </header>
+  )
+}
+
+/** Batch, workstream, project, and ops batch screens. Section pages keep the full header. */
+function isInside(pathname: string) {
+  return (
+    /^\/concept\/batches\/[^/]+/.test(pathname) ||
+    /^\/concept\/workstreams\/[^/]+/.test(pathname) ||
+    /^\/concept\/projects\//.test(pathname) ||
+    /^\/concept\/ops\/batches\//.test(pathname)
+  )
+}
+
+function backHref(pathname: string, serviceHref?: string) {
+  const project = pathname.match(/^\/concept\/projects\/([^/]+)/)
+  if (project) return hrefs.workstream(project[1])
+  const workstream = pathname.match(/^\/concept\/workstreams\/([^/]+)/)
+  if (workstream) return serviceHref ?? hrefs.workstreams()
+  if (pathname.startsWith(`${OPS}/batches`)) return hrefs.ops
+  return hrefs.portfolio
+}
+
+function InsideHeader({ pathname }: { pathname: string }) {
+  const { account } = useConcept()
+  const match = pathname.match(/^\/concept\/(?:workstreams|projects)\/([^/]+)/)
+  const workstream = match ? getWorkstream(account, match[1]) : undefined
+  return (
+    <header className="border-b border-cq-border bg-white">
+      <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-3 px-6 py-3.5 sm:px-8 lg:px-10">
+        <Link href={backHref(pathname, workstream ? hrefs.service(workstream.service) : undefined)} className="inline-flex items-center gap-1.5 text-sm font-normal text-cq-text hover:opacity-80">
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Back
+        </Link>
+        <div className="flex items-center gap-4 sm:gap-5">
+          <button type="button" className="inline-flex h-9 items-center rounded-lg border border-cq-accent bg-white px-3.5 text-sm font-normal text-cq-accent">
+            Create projects
+          </button>
+          <span className="inline-flex items-center gap-1.5 text-sm text-cq-text-secondary">
+            <Globe className="h-4 w-4" aria-hidden />
+            EN
+          </span>
+          <span className="inline-flex items-center gap-1 text-cq-text-secondary">
+            <Avatar letter={account.user[0]} />
+            <ChevronDown className="h-4 w-4" aria-hidden />
+          </span>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function Shell({ children }: { children: ReactNode }) {
+  const pathname = usePathname() ?? ''
+  const { account } = useConcept()
+  const ops = pathname.startsWith(OPS)
+  const inside = isInside(pathname)
+
+  let path = pathname
+  const m = pathname.match(/^\/concept\/(?:workstreams|projects)\/([^/?]+)/)
+  if (m) {
+    const w = getWorkstream(account, m[1])
+    if (w) path = hrefs.service(w.service)
+  }
+
+  return (
+    <div className="min-h-screen bg-cq-bg">
+      <div className="sticky top-0 z-40">
+        {inside ? (
+          <InsideHeader pathname={pathname} />
+        ) : (
+          <>
+            <AccountToggle />
+            <AppHeader ops={ops} path={path} />
+          </>
+        )}
+      </div>
+      <main>{children}</main>
+    </div>
+  )
+}
+
+export function ConceptChrome({ children }: { children: ReactNode }) {
+  return (
+    <ConceptStoreProvider>
+      <Shell>{children}</Shell>
+    </ConceptStoreProvider>
+  )
+}

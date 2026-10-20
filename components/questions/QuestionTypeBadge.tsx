@@ -21,7 +21,7 @@ export function QuestionTypeBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-md border border-cq-border bg-white px-2 py-0.5 text-xs font-bold text-cq-text',
+        'inline-flex items-center gap-1 rounded-md border border-cq-border bg-white px-2 py-0.5 text-xs font-semibold text-cq-text',
         className,
       )}
     >

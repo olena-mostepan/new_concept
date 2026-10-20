@@ -85,7 +85,7 @@ export function UploadInvoiceModal({
       }}
     >
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-cq-text">Stage</span>
+        <span className="text-sm font-normal text-cq-text">Stage</span>
         <select
           value={stageName}
           onChange={(e) => setStageName(e.target.value)}
@@ -100,7 +100,7 @@ export function UploadInvoiceModal({
       </label>
 
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-cq-text">Invoice amount</span>
+        <span className="text-sm font-normal text-cq-text">Invoice amount</span>
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-cq-muted">
             £
@@ -172,7 +172,7 @@ export function UploadInvoiceModal({
           }}
         >
           <FileUp className="h-5 w-5 text-[var(--cq-green)]" aria-hidden />
-          <span className="text-sm font-medium text-cq-text">
+          <span className="text-sm font-normal text-cq-text">
             Drop invoice or browse
           </span>
           <span className="text-xs text-cq-text-secondary">

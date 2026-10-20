@@ -49,7 +49,7 @@ function StatusPill({ supplier }: { supplier: InvitedSupplier }) {
   return (
     <span
       className={cn(
-        'inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium',
+        'inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-xs font-normal',
         BID_STATUS_PILL[supplier.bidStatus],
       )}
     >
@@ -61,7 +61,7 @@ function StatusPill({ supplier }: { supplier: InvitedSupplier }) {
 function DatedCell({ primary, supporting }: { primary: string; supporting: string }) {
   return (
     <div>
-      <p className="text-sm font-medium text-cq-text">{primary}</p>
+      <p className="text-sm font-normal text-cq-text">{primary}</p>
       {supporting ? (
         <p className="mt-0.5 text-xs text-cq-text-secondary">{supporting}</p>
       ) : null}
@@ -137,7 +137,7 @@ function Stepper({ steps, current }: { steps: MatchingStep[]; current: number })
                   <div className="flex items-center gap-1">
                     <p
                       className={cn(
-                        'truncate text-sm font-medium',
+                        'truncate text-sm font-normal',
                         state === 'current' && 'text-[var(--cq-green)]',
                         state === 'done' && 'text-cq-text',
                         state === 'upcoming' && 'text-cq-text-secondary',
@@ -205,7 +205,7 @@ function OverviewCard({
         <h2 className={sectionTitleClass}>Tender overview</h2>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {audience === 'internal' && overdueCount > 0 ? (
-            <span className="inline-flex w-fit shrink-0 rounded-full border border-[var(--cq-link)]/30 bg-[var(--cq-link)]/10 px-2.5 py-1 text-xs font-medium text-[var(--cq-link)]">
+            <span className="inline-flex w-fit shrink-0 rounded-full border border-[var(--cq-link)]/30 bg-[var(--cq-link)]/10 px-2.5 py-1 text-xs font-normal text-[var(--cq-link)]">
               {overdueCount === 1 ? '1 response overdue' : `${overdueCount} responses overdue`}
             </span>
           ) : null}
@@ -235,7 +235,7 @@ function OverviewCard({
           >
             <p
               className={cn(
-                'truncate text-xs font-medium transition-colors sm:text-sm',
+                'truncate text-xs font-normal transition-colors sm:text-sm',
                 hovered === entry.status ? 'text-[var(--cq-green)]' : 'text-cq-text-secondary',
               )}
             >
@@ -287,7 +287,7 @@ function OverviewCard({
                   hideArrow
                   className="max-w-[240px] border border-cq-border bg-white px-3 py-2.5 text-left text-cq-text shadow-md"
                 >
-                  <p className="text-sm font-medium text-cq-text">
+                  <p className="text-sm font-normal text-cq-text">
                     {BID_STATUS_LABEL[entry.status]}
                     <span className="ml-1.5 tabular-nums text-cq-text-secondary">{entry.count}</span>
                   </p>
@@ -303,10 +303,10 @@ function OverviewCard({
 
       {audience === 'internal' ? (
         <div className="mt-4 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-          <p className="font-medium text-cq-text">{tender.contacted} suppliers contacted</p>
-          <p className="font-medium text-cq-text">{tender.metRequirements} met the requirements</p>
+          <p className="font-normal text-cq-text">{tender.contacted} suppliers contacted</p>
+          <p className="font-normal text-cq-text">{tender.metRequirements} met the requirements</p>
           <p className="text-cq-text">
-            <span className="font-medium">{tender.suppliers.length} invited to tender</span>
+            <span className="font-normal">{tender.suppliers.length} invited to tender</span>
             <span className="text-cq-text-secondary"> · </span>
             <button type="button" onClick={onOpenExclusions} className="font-semibold text-cq-link underline underline-offset-2">
               See why {excluded} were excluded
@@ -337,7 +337,7 @@ function FactorRows({ factors }: { factors: ScoreFactor[] }) {
           {factor.missing ? (
             <AlertCircle className="col-span-3 mb-2 h-4 w-4 text-amber-600" aria-hidden />
           ) : null}
-          <p className="font-medium text-cq-text">{factorLabel(factor.id)}</p>
+          <p className="font-normal text-cq-text">{factorLabel(factor.id)}</p>
           <p className="tabular-nums font-semibold text-cq-text">{formatScore(factor.score)}</p>
           <div className="min-w-0">
             <p className="text-cq-text-secondary">{factor.reason}</p>
@@ -392,7 +392,7 @@ function ExclusionsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-black">
+          <DialogTitle className="text-xl font-semibold text-text-primary">
             Why {excludedCount(tender)} suppliers were excluded
           </DialogTitle>
           <DialogDescription className="text-sm text-cq-text-secondary">
@@ -453,7 +453,7 @@ function ExclusionsDialog({
                     <p className="text-sm font-semibold text-cq-text">{supplier.name}</p>
                     <p className="mt-0.5 text-sm text-cq-text-secondary">{supplier.missing}</p>
                   </div>
-                  <span className="inline-flex shrink-0 rounded-full border border-[var(--cq-link)]/30 bg-[var(--cq-link)]/10 px-2.5 py-1 text-xs font-medium text-[var(--cq-link)]">
+                  <span className="inline-flex shrink-0 rounded-full border border-[var(--cq-link)]/30 bg-[var(--cq-link)]/10 px-2.5 py-1 text-xs font-normal text-[var(--cq-link)]">
                     Not assessed
                   </span>
                 </li>
@@ -528,7 +528,7 @@ function ScoresDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-black">
+          <DialogTitle className="text-xl font-semibold text-text-primary">
             How these scores are calculated
           </DialogTitle>
           <DialogDescription className="text-sm text-cq-text-secondary">
@@ -577,7 +577,7 @@ export function ProjectCriteria() {
         {WALTER_SCOTT_CRITERIA.map((item) => (
           <li
             key={item}
-            className="inline-flex rounded-full border border-cq-border bg-white px-2.5 py-1 text-sm font-medium text-cq-text"
+            className="inline-flex rounded-full border border-cq-border bg-white px-2.5 py-1 text-sm font-normal text-cq-text"
           >
             {item}
           </li>
@@ -725,10 +725,10 @@ export function SupplierMatchingReview({
                       <td className="py-3 px-3 align-top">
                         <DatedCell primary={due.primary} supporting={due.supporting} />
                       </td>
-                      <td className="py-3 px-3 align-top tabular-nums font-medium text-cq-text">
+                      <td className="py-3 px-3 align-top tabular-nums font-normal text-cq-text">
                         {formatScore(supplier.relevanceScore)}
                       </td>
-                      <td className="py-3 px-3 align-top tabular-nums font-medium text-cq-text">
+                      <td className="py-3 px-3 align-top tabular-nums font-normal text-cq-text">
                         {formatScore(supplier.companyScore)}
                       </td>
                       <td className="py-3 pl-3 pr-4 text-right align-top">

@@ -47,7 +47,7 @@ export function StartBidModal({
               }}
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff0f0]">
-                <span className="text-xs font-extrabold text-cq-text">{profileScore}%</span>
+                <span className="text-xs font-semibold text-cq-text">{profileScore}%</span>
               </div>
             </div>
             <p className="min-w-0 flex-1 pr-2 text-sm leading-snug text-cq-text sm:pr-4">
@@ -73,8 +73,8 @@ export function StartBidModal({
             Review the questions you will need to answer to submit your bid for {projectName}.
           </DialogDescription>
 
-          <p className="text-base font-bold text-cq-text">{projectName}</p>
-          <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-cq-text sm:text-[1.75rem]">
+          <p className="text-base font-semibold text-cq-text">{projectName}</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-cq-text sm:text-[1.75rem]">
             Start Your Bid
           </h2>
           <p className="mt-2 text-sm text-cq-text-secondary">
@@ -88,7 +88,7 @@ export function StartBidModal({
                 aria-hidden
               />
               <div>
-                <p className="text-sm font-bold text-[var(--cq-link)]">Before you submit</p>
+                <p className="text-sm font-semibold text-[var(--cq-link)]">Before you submit</p>
                 <ul className="mt-2 list-disc space-y-1 pl-4 text-sm leading-relaxed text-cq-text">
                   <li>Please ensure your answers are accurate</li>
                   <li>
@@ -111,7 +111,7 @@ export function StartBidModal({
                 <ul className="mt-2">
                   {section.questions.map((question) => (
                     <li key={question.id} className="px-1 py-2.5">
-                      <p className="text-sm font-medium leading-snug text-cq-text">
+                      <p className="text-sm font-normal leading-snug text-cq-text">
                         {question.label}
                         {!question.required ? (
                           <span className="ml-1 font-normal text-cq-muted">(optional)</span>

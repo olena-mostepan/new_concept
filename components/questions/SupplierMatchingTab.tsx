@@ -26,7 +26,7 @@ export function SupplierMatchingTab({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-extrabold text-cq-text">Supplier matching</h3>
+        <h3 className="text-lg font-semibold text-cq-text">Supplier matching</h3>
         <p className="mt-1 text-sm text-cq-text-secondary">
           Fit scores from tender requirements vs submitted CapEx bids
         </p>
@@ -39,7 +39,7 @@ export function SupplierMatchingTab({
               className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
-                <p className="font-bold text-cq-text">{s.name}</p>
+                <p className="font-semibold text-cq-text">{s.name}</p>
                 <p className="text-sm text-cq-text-secondary">
                   {currencySymbol}
                   {s.perUnit.toLocaleString('en-GB')} {s.unitLabel}
@@ -47,7 +47,7 @@ export function SupplierMatchingTab({
               </div>
               <span
                 className={cn(
-                  'inline-flex w-fit rounded-md border px-2.5 py-1 text-xs font-bold',
+                  'inline-flex w-fit rounded-md border px-2.5 py-1 text-xs font-semibold',
                   s.quality === 1 && 'border-cq-green/40 bg-cq-green/10 text-cq-green',
                   s.quality === 2 && 'border-amber-500/40 bg-amber-500/10 text-amber-800',
                   s.quality === 3 && 'border-cq-border bg-cq-bg text-cq-text-secondary',

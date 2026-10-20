@@ -42,7 +42,7 @@ function DetailValue({ value, onRead }: { value: string; onRead: () => void }) {
       const width = box.clientWidth
       if (width <= 0) return
       const probe = document.createElement('p')
-      probe.className = 'text-sm font-medium leading-5'
+      probe.className = 'text-sm font-normal leading-5'
       probe.style.cssText = `position:absolute;visibility:hidden;width:${width}px;left:0;top:0;`
       box.appendChild(probe)
 
@@ -84,14 +84,14 @@ function DetailValue({ value, onRead }: { value: string; onRead: () => void }) {
 
   return (
     <div ref={boxRef}>
-      <p className="text-sm font-medium leading-5 text-cq-text">
+      <p className="text-sm font-normal leading-5 text-cq-text">
         {display}
         {needsMore ? (
           <>
             {' '}
             <button
               type="button"
-              className="text-sm font-medium leading-5 text-black underline underline-offset-2"
+              className="text-sm font-normal leading-5 text-text-primary underline underline-offset-2"
               onClick={onRead}
             >
               More
@@ -122,7 +122,7 @@ function ProjectDetailFields({ fields }: { fields: CustomerProjectDetail[] }) {
       <Dialog open={openField != null} onOpenChange={(open) => { if (!open) setOpenLabel(null) }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-black">{openField?.label}</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-text-primary">{openField?.label}</DialogTitle>
             <DialogDescription className="text-sm leading-relaxed text-cq-text">
               {openField?.value}
             </DialogDescription>
@@ -164,9 +164,9 @@ function tabFromQuery(value: string | null): CustomerProjectTab {
 }
 
 const tabTriggerClass = cn(
-  'shrink-0 whitespace-nowrap border-b-2 border-transparent px-0.5 py-3 text-sm font-medium outline-none transition-colors',
+  'shrink-0 whitespace-nowrap border-b-2 border-transparent px-0.5 py-3 text-sm font-normal outline-none transition-colors',
   'text-cq-text-secondary hover:text-cq-text',
-  'data-[state=active]:border-[var(--cq-green)] data-[state=active]:text-black',
+  'data-[state=active]:border-[var(--cq-green)] data-[state=active]:text-text-primary',
 )
 
 export function CustomerProjectPage({ projectId }: { projectId: string }) {
@@ -208,7 +208,7 @@ export function CustomerProjectPage({ projectId }: { projectId: string }) {
     return (
       <div className="mx-auto w-full max-w-screen-2xl px-6 py-10 sm:px-8 lg:px-10">
         <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center shadow-sm sm:px-6">
-          <p className="text-sm font-medium text-cq-text">Project not found</p>
+          <p className="text-sm font-normal text-cq-text">Project not found</p>
           <Link
             href="/customer/delivery"
             className="btn-link mt-3 inline-flex"
@@ -225,7 +225,7 @@ export function CustomerProjectPage({ projectId }: { projectId: string }) {
       <header className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <h1 className="min-w-0 text-xl font-semibold tracking-tight text-black md:text-2xl">
+            <h1 className="min-w-0 text-xl font-semibold tracking-tight text-text-primary md:text-2xl">
               {project.name}
             </h1>
             <p className="mt-1.5 text-sm text-cq-text-secondary">
@@ -336,7 +336,7 @@ export function CustomerProjectPage({ projectId }: { projectId: string }) {
               <SupplierMatchingReview audience={matchingAudience} />
             ) : (
               <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center shadow-sm">
-                <p className="text-sm font-medium text-cq-text">Supplier matching — coming soon</p>
+                <p className="text-sm font-normal text-cq-text">Supplier matching — coming soon</p>
                 <p className="mt-1 text-sm text-cq-text-secondary">
                   Placeholder for the customer supplier matching view.
                 </p>
@@ -351,7 +351,7 @@ export function CustomerProjectPage({ projectId }: { projectId: string }) {
               className="pt-6 outline-none"
             >
               <div className="rounded-xl border border-dashed border-cq-border bg-white px-5 py-10 text-center shadow-sm">
-                <p className="text-sm font-medium text-cq-text">
+                <p className="text-sm font-normal text-cq-text">
                   {t.label} — coming soon
                 </p>
                 <p className="mt-1 text-sm text-cq-text-secondary">

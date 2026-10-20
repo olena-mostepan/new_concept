@@ -55,7 +55,7 @@ export function CustomerAllProjectsView() {
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl space-y-5 px-6 py-8 sm:px-8 lg:px-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-black md:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
         Welcome back, {PORTFOLIO_USER}
       </h1>
 
@@ -130,14 +130,14 @@ export function CustomerAllProjectsView() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] text-left text-sm">
             <thead>
-              <tr className="border-b border-cq-border bg-cq-bg/50 text-xs font-medium text-cq-text-secondary">
-                <th className="px-5 py-3 font-medium sm:px-6">Project Name</th>
-                <th className="px-3 py-3 font-medium">Location</th>
-                <th className="px-3 py-3 font-medium">Project Type</th>
-                <th className="px-3 py-3 font-medium">Project Delivery</th>
-                <th className="px-3 py-3 font-medium">Next Step</th>
-                <th className="px-3 py-3 font-medium">Responsibility</th>
-                <th className="px-5 py-3 text-right font-medium sm:px-6">Actions</th>
+              <tr className="border-b border-cq-border bg-cq-bg/50 text-xs font-normal text-cq-text-secondary">
+                <th className="px-5 py-3 font-normal sm:px-6">Project Name</th>
+                <th className="px-3 py-3 font-normal">Location</th>
+                <th className="px-3 py-3 font-normal">Project Type</th>
+                <th className="px-3 py-3 font-normal">Project Delivery</th>
+                <th className="px-3 py-3 font-normal">Next Step</th>
+                <th className="px-3 py-3 font-normal">Responsibility</th>
+                <th className="px-5 py-3 text-right font-normal sm:px-6">Actions</th>
               </tr>
             </thead>
             <tbody>

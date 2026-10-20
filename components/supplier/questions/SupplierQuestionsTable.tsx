@@ -47,7 +47,7 @@ export function SupplierQuestionsTable({
               return (
                 <tr key={row.id} className="transition-colors hover:bg-cq-bg/60">
                   <td className="px-4 py-4 align-top">
-                    <p className="font-medium text-cq-text">{row.questionText}</p>
+                    <p className="font-normal text-cq-text">{row.questionText}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <QuestionDirectionBadge direction={row.direction} />
                       <span className="text-xs text-cq-text-secondary">

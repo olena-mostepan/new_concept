@@ -34,17 +34,17 @@ export function ClarificationsTopChrome() {
           <div className="flex min-w-0 flex-1 items-center gap-3 md:flex-[1_1_0%]">
             <Link
               href="/"
-              className="text-xl font-extrabold tracking-tight text-cq-text hover:opacity-80 md:text-2xl"
+              className="text-xl font-semibold tracking-tight text-cq-text hover:opacity-80 md:text-2xl"
             >
               LEVEL
             </Link>
-            <span className="rounded-full border border-cq-border bg-cq-bg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-cq-text-secondary">
+            <span className="rounded-full border border-cq-border bg-cq-bg px-2.5 py-1 text-cq-text-secondary s3">
               Powered by CQuel
             </span>
           </div>
 
           <div className="order-last flex w-full justify-center md:order-none md:w-auto md:flex-none md:px-4">
-            <h1 className="text-center text-lg font-extrabold text-cq-text md:text-xl">
+            <h1 className="text-center text-lg font-semibold text-cq-text md:text-xl">
               Projects Dashboard
             </h1>
           </div>
@@ -60,7 +60,7 @@ export function ClarificationsTopChrome() {
               Start new project
             </button>
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cq-border bg-cq-bg text-xs font-bold text-cq-text"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cq-border bg-cq-bg text-xs font-semibold text-cq-text"
               title="Profile"
             >
               P

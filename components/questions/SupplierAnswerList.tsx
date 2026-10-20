@@ -121,7 +121,7 @@ export function SupplierAnswerList({
                         className="h-3.5 w-3.5 shrink-0 text-cq-text-secondary"
                         aria-hidden
                       />
-                      <span className="min-w-0 truncate font-medium text-cq-text">
+                      <span className="min-w-0 truncate font-normal text-cq-text">
                         {file.name}
                       </span>
                       <span className="shrink-0 tabular-nums text-cq-text-secondary">

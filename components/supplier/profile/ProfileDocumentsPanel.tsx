@@ -49,7 +49,7 @@ export function ProfileDocumentsPanel({
               {doc.filename}
             </span>
             {doc.extracted && (
-              <span className="shrink-0 rounded bg-[var(--cq-accent-muted)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--cq-green)]">
+              <span className="shrink-0 rounded bg-[var(--cq-accent-muted)] px-1.5 py-0.5 text-[var(--cq-green)] p7">
                 Parsed
               </span>
             )}
@@ -101,8 +101,8 @@ export function ProfileDocumentsPanel({
           }`}
         >
           <Upload className="h-5 w-5 text-[var(--cq-green)]" aria-hidden />
-          <span className="text-sm font-bold text-[var(--cq-green)]">Upload Files</span>
-          <span className="text-[11px] leading-relaxed text-cq-text-secondary">
+          <span className="text-sm font-semibold text-[var(--cq-green)]">Upload Files</span>
+          <span className="text-cq-text-secondary p7">
             PDF, CSV, TXT, DOC, DOCX, XLS, XLSX, PPTX, JPG, JPEG, or PNG up to 50MB · max 50 files
           </span>
         </button>

@@ -12,9 +12,9 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 
 const btnGhost =
-  'rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-bold text-cq-text hover:bg-cq-bg'
+  'rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-semibold text-cq-text hover:bg-cq-bg'
 const btnGreenFilled =
-  'rounded-lg bg-[var(--cq-green)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--cq-green-hover)] disabled:opacity-50'
+  'rounded-lg bg-[var(--cq-green)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--cq-green-hover)] disabled:opacity-50'
 
 const SUGGESTIONS = [
   'When is the tender deadline?',
@@ -67,7 +67,7 @@ export function SupplierAskQuestionModal({
         className="max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto border-cq-border p-6 sm:max-w-[520px]"
       >
         <DialogHeader className="space-y-2 text-left">
-          <DialogTitle className="text-xl font-bold text-cq-text">
+          <DialogTitle className="text-xl font-semibold text-cq-text">
             Ask a question
           </DialogTitle>
           <p className="text-sm text-cq-text-secondary">
@@ -79,7 +79,7 @@ export function SupplierAskQuestionModal({
           <div className="space-y-1.5">
             <label
               htmlFor="ask-question-project"
-              className="text-sm font-bold text-cq-text"
+              className="text-sm font-semibold text-cq-text"
             >
               Which tender is this about?
             </label>
@@ -112,7 +112,7 @@ export function SupplierAskQuestionModal({
               key={s}
               type="button"
               onClick={() => setQuestion(s)}
-              className="rounded-lg border border-cq-border bg-cq-bg/50 px-2.5 py-1 text-left text-xs font-medium text-cq-text hover:border-cq-green/50"
+              className="rounded-lg border border-cq-border bg-cq-bg/50 px-2.5 py-1 text-left text-xs font-normal text-cq-text hover:border-cq-green/50"
             >
               {s}
             </button>

@@ -8,7 +8,7 @@ export function AccountVerifiedBadge() {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
       <BadgeCheck className="h-3.5 w-3.5 text-emerald-600" aria-hidden />
-      <span className="text-xs font-bold text-emerald-800">Profile verified</span>
+      <span className="text-xs font-semibold text-emerald-800">Profile verified</span>
     </span>
   )
 }
@@ -34,7 +34,7 @@ export function ProfileCompanyHeader({
           />
         ) : (
           <div
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-cq-border bg-cq-bg text-xl font-extrabold text-cq-text-secondary"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-cq-border bg-cq-bg text-xl font-semibold text-cq-text-secondary"
             aria-hidden
           >
             {name.charAt(0).toUpperCase()}

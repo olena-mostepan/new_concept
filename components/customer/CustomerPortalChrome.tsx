@@ -13,11 +13,11 @@ function EnergiseMark() {
       href="/customer"
       className="flex shrink-0 flex-col leading-tight hover:opacity-80"
     >
-      <span className="text-sm font-extrabold tracking-tight text-cq-text">
+      <span className="text-sm font-semibold tracking-tight text-cq-text">
         Energise
       </span>
       <span className="text-xs text-cq-text-secondary">
-        Powered by <span className="font-extrabold text-cq-text">CQuel</span>
+        Powered by <span className="font-semibold text-cq-text">CQuel</span>
       </span>
     </Link>
   )
@@ -28,7 +28,7 @@ function HeaderActions() {
     <div className="flex flex-wrap items-center justify-end gap-5 sm:gap-7">
       <Link
         href="/customer/delivery"
-        className="text-sm font-medium text-cq-text-secondary hover:text-cq-text"
+        className="text-sm font-normal text-cq-text-secondary hover:text-cq-text"
       >
         Questions
       </Link>

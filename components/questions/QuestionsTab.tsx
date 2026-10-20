@@ -59,13 +59,13 @@ export function QuestionsTab({
 
       {allQuestions.length === 0 ? (
         <div className="rounded-xl border border-cq-border bg-white px-8 py-12 text-center shadow-sm">
-          <p className="text-base font-bold text-cq-text">
+          <p className="text-base font-semibold text-cq-text">
             No questions yet · Ask the first question about this tender
           </p>
           <button
             type="button"
             onClick={openAskModal}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-cq-green px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-cq-green-hover"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-cq-green px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-cq-green-hover"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Ask question
@@ -73,14 +73,14 @@ export function QuestionsTab({
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-cq-border bg-white px-8 py-10 text-center shadow-sm">
-          <p className="text-sm font-bold text-cq-text">No questions match this filter</p>
+          <p className="text-sm font-semibold text-cq-text">No questions match this filter</p>
           <button
             type="button"
             onClick={() => {
               setFilter('all')
               setSearch('')
             }}
-            className="mt-3 text-sm font-bold text-cq-link underline"
+            className="mt-3 text-sm font-semibold text-cq-link underline"
           >
             Clear filters
           </button>

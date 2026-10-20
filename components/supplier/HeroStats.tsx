@@ -69,18 +69,18 @@ export function HeroStats() {
         <h2 className={sectionTitleClass}>Through CQuel this year</h2>
         <div className="relative mt-4 grid grid-cols-2 gap-5">
           <div>
-            <p className="text-3xl font-semibold tracking-tight text-black sm:text-4xl">
+            <p className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
               £1.24m
             </p>
-            <p className="mt-1 text-sm font-medium text-cq-text-secondary">
+            <p className="mt-1 text-sm font-normal text-cq-text-secondary">
               agreed
             </p>
           </div>
           <div>
-            <p className="text-3xl font-semibold tracking-tight text-black sm:text-4xl">
+            <p className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
               £1.24m
             </p>
-            <p className="mt-1 text-sm font-medium text-cq-text-secondary">
+            <p className="mt-1 text-sm font-normal text-cq-text-secondary">
               signed
             </p>
           </div>
@@ -106,7 +106,7 @@ export function HeroStats() {
               >
                 {stat.value}
               </p>
-              <p className="mt-1.5 text-sm font-medium text-cq-text-secondary">
+              <p className="mt-1.5 text-sm font-normal text-cq-text-secondary">
                 {stat.label}
               </p>
             </div>

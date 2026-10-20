@@ -57,7 +57,7 @@ export function CustomerNav({ pathname }: { pathname: string }) {
             return (
               <span
                 key={tab.id}
-                className="relative shrink-0 cursor-default whitespace-nowrap border-b-2 border-transparent py-3 text-sm font-medium text-cq-text-secondary"
+                className="relative shrink-0 cursor-default whitespace-nowrap border-b-2 border-transparent py-3 text-sm font-normal text-cq-text-secondary"
                 title="Prototype: tab not wired"
               >
                 {tab.label}
@@ -71,8 +71,8 @@ export function CustomerNav({ pathname }: { pathname: string }) {
               className={cn(
                 'relative shrink-0 whitespace-nowrap border-b-2 py-3 text-sm transition-colors',
                 active
-                  ? 'border-[var(--cq-green)] font-medium text-black'
-                  : 'border-transparent font-medium text-cq-text-secondary hover:text-cq-text',
+                  ? 'border-[var(--cq-green)] font-normal text-text-primary'
+                  : 'border-transparent font-normal text-cq-text-secondary hover:text-cq-text',
               )}
             >
               {tab.label}

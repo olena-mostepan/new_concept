@@ -37,9 +37,9 @@ function rowContextLine(c: Clarification): string {
 }
 
 const btnGhost =
-  'inline-flex shrink-0 items-center justify-center rounded-lg border border-cq-border bg-white px-3 py-1.5 text-xs font-bold text-cq-text hover:bg-cq-bg/70'
+  'inline-flex shrink-0 items-center justify-center rounded-lg border border-cq-border bg-white px-3 py-1.5 text-xs font-semibold text-cq-text hover:bg-cq-bg/70'
 const btnPrimaryDark =
-  'inline-flex shrink-0 items-center justify-center rounded-lg bg-cq-text px-3 py-1.5 text-xs font-bold text-white hover:opacity-90'
+  'inline-flex shrink-0 items-center justify-center rounded-lg bg-cq-text px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90'
 
 export function ClarificationRow({
   item,
@@ -69,7 +69,7 @@ export function ClarificationRow({
     <div className="flex flex-col gap-3 py-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6 lg:py-4">
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-bold leading-snug text-cq-text">{item.title}</p>
+          <p className="font-semibold leading-snug text-cq-text">{item.title}</p>
           <CourtBadge
             label={badgeLabel}
             variant={perspective === 'supplier' ? 'supplier' : 'ops'}

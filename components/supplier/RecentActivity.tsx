@@ -62,7 +62,7 @@ export function RecentActivity() {
                 <Icon className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-cq-text">{item.text}</p>
+                <p className="text-sm font-normal text-cq-text">{item.text}</p>
                 <p className="mt-0.5 text-xs text-cq-text-secondary">{item.when}</p>
               </div>
               <Link href={item.href} className="btn-link shrink-0 pt-0.5">

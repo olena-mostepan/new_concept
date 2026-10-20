@@ -74,7 +74,7 @@ export default function HomePage() {
       <header className="bg-white border-b border-[#F3F4F6]">
         <div className="w-full max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-6 flex flex-col gap-2">
           <p className="text-sm text-[#4D5761] font-semibold uppercase tracking-wide">CQuel Prototype Library</p>
-          <h1 className="text-[32px] font-extrabold text-[#1E2832] leading-tight">
+          <h1 className="text-[32px] font-semibold text-[#1E2832] leading-tight">
             Pick a scenario to explore
           </h1>
           <p className="text-base text-[#4D5761] max-w-3xl">
@@ -84,8 +84,19 @@ export default function HomePage() {
       </header>
 
       <main className="w-full max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-10 space-y-12">
+        <Link
+          href="/concept"
+          className="flex items-center justify-between gap-6 rounded-xl border-2 border-[var(--cq-accent)] bg-white p-6 shadow-sm hover:bg-[var(--cq-accent-muted)]"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-accent)]">New concept</p>
+            <p className="mt-1 text-lg font-semibold text-[#1E2832]">Workstreams in batches — customer side</p>
+            <p className="text-sm text-[#4D5761]">Portfolio, batches, workstreams and both navigation options, on one example portfolio.</p>
+          </div>
+          <span className="btn-primary">Open concept</span>
+        </Link>
         <section>
-          <h2 className="mb-1 text-lg font-extrabold text-[#1E2832]">Portals</h2>
+          <h2 className="mb-1 text-lg font-semibold text-[#1E2832]">Portals</h2>
           <p className="mb-4 max-w-2xl text-sm text-[#4D5761]">
             Supplier (Arin Power) and customer (Energise) delivery workflows — separate shells, shared design tokens.
           </p>
@@ -102,7 +113,7 @@ export default function HomePage() {
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4D5761]">
                     Supplier
                   </p>
-                  <h3 className="mb-2 text-xl font-extrabold text-[#1E2832]">
+                  <h3 className="mb-2 text-xl font-semibold text-[#1E2832]">
                     {supplierPortal.title}
                   </h3>
                   <p className="text-sm text-[#4D5761]">{supplierPortal.description}</p>
@@ -124,7 +135,7 @@ export default function HomePage() {
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4D5761]">
                     Customer
                   </p>
-                  <h3 className="mb-2 text-xl font-extrabold text-[#1E2832]">
+                  <h3 className="mb-2 text-xl font-semibold text-[#1E2832]">
                     {customerPortal.title}
                   </h3>
                   <p className="text-sm text-[#4D5761]">{customerPortal.description}</p>
@@ -138,7 +149,7 @@ export default function HomePage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-extrabold text-[#1E2832] mb-4">Tender comparison</h2>
+          <h2 className="text-lg font-semibold text-[#1E2832] mb-4">Tender comparison</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-5xl">
             {projects.map((project) => (
               <Link
@@ -158,7 +169,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-[#4D5761] uppercase tracking-wide mb-1">Project</p>
-                    <h3 className="text-2xl font-extrabold text-[#1E2832] mb-2">{project.title}</h3>
+                    <h3 className="text-2xl font-semibold text-[#1E2832] mb-2">{project.title}</h3>
                     <p className="text-sm text-[#4D5761]">{project.description}</p>
                   </div>
                 </div>
@@ -171,7 +182,7 @@ export default function HomePage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-extrabold text-[#1E2832] mb-1">Ops collaboration</h2>
+          <h2 className="text-lg font-semibold text-[#1E2832] mb-1">Ops collaboration</h2>
           <p className="text-sm text-[#4D5761] mb-4 max-w-2xl">
             Buyer-side clarifications and the older supplier inbox for the same mock loop.
           </p>
@@ -192,7 +203,7 @@ export default function HomePage() {
                       <p className="text-xs font-semibold text-[#4D5761] uppercase tracking-wide mb-1">
                         Workflow
                       </p>
-                      <h3 className="text-2xl font-extrabold text-[#1E2832] mb-2">{w.title}</h3>
+                      <h3 className="text-2xl font-semibold text-[#1E2832] mb-2">{w.title}</h3>
                       <p className="text-sm text-[#4D5761]">{w.description}</p>
                     </div>
                   </div>

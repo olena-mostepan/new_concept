@@ -125,7 +125,7 @@ export function EditPaymentPlanModal({
       }}
     >
       <div className="space-y-2">
-        <p className="text-sm font-medium text-cq-text">Payment model</p>
+        <p className="text-sm font-normal text-cq-text">Payment model</p>
         <p className="text-sm text-cq-text-secondary">
           A model is a best-guess split — stage £ re-derives from GMV × %. Dates
           stay as they are.
@@ -185,7 +185,7 @@ export function EditPaymentPlanModal({
                 <p className="text-sm font-semibold text-cq-text">Custom</p>
                 <p
                   className={cn(
-                    'text-xs font-medium',
+                    'text-xs font-normal',
                     customDelta.ok
                       ? 'text-emerald-700'
                       : 'text-[var(--cq-green)]',
@@ -234,7 +234,7 @@ export function EditPaymentPlanModal({
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-cq-text">
+        <legend className="text-sm font-normal text-cq-text">
           Apply this plan to
         </legend>
         <label className="flex cursor-pointer items-start gap-2 text-sm text-cq-text">
@@ -284,7 +284,7 @@ export function EditPaymentPlanModal({
                     checked={selectedJobIds.includes(j.id)}
                     onChange={() => toggleJob(j.id)}
                   />
-                  <span className={j.isCurrent ? 'font-medium' : undefined}>
+                  <span className={j.isCurrent ? 'font-normal' : undefined}>
                     {j.label}
                     {j.isCurrent ? (
                       <span className="font-normal text-cq-muted">

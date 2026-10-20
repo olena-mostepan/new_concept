@@ -41,9 +41,9 @@ function tabFromQuery(value: string | null): JobPageTab {
 }
 
 const tabTriggerClass = cn(
-  'shrink-0 whitespace-nowrap border-b-2 border-transparent px-0.5 py-3 text-sm font-medium outline-none transition-colors',
+  'shrink-0 whitespace-nowrap border-b-2 border-transparent px-0.5 py-3 text-sm font-normal outline-none transition-colors',
   'text-cq-text-secondary hover:text-cq-text',
-  'data-[state=active]:border-[var(--cq-green)] data-[state=active]:text-black',
+  'data-[state=active]:border-[var(--cq-green)] data-[state=active]:text-text-primary',
 )
 
 export function SupplierJobPage({ jobId }: { jobId: string }) {
@@ -82,7 +82,7 @@ export function SupplierJobPage({ jobId }: { jobId: string }) {
   if (!job) {
     return (
       <div className="rounded-xl border border-cq-border bg-white px-5 py-10 text-center shadow-sm sm:px-6">
-        <p className="text-sm font-medium text-cq-text">Job not found</p>
+        <p className="text-sm font-normal text-cq-text">Job not found</p>
         <Link href="/supplier/delivery" className="btn-link mt-3 inline-flex">
           Back to Delivery
         </Link>
@@ -95,7 +95,7 @@ export function SupplierJobPage({ jobId }: { jobId: string }) {
       <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
         <div className="min-w-0 flex-1">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-            <h1 className="min-w-0 text-xl font-semibold tracking-tight text-black md:text-2xl">
+            <h1 className="min-w-0 text-xl font-semibold tracking-tight text-text-primary md:text-2xl">
               {jobTitle(job)}
             </h1>
             <div className="flex shrink-0 flex-row flex-nowrap items-center gap-2">
@@ -138,7 +138,7 @@ export function SupplierJobPage({ jobId }: { jobId: string }) {
           <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
             <div>
               <dt className="text-xs text-cq-text-secondary">Type</dt>
-              <dd className="mt-0.5 text-sm font-medium text-cq-text">
+              <dd className="mt-0.5 text-sm font-normal text-cq-text">
                 {job.overview.type}
               </dd>
             </div>
@@ -146,13 +146,13 @@ export function SupplierJobPage({ jobId }: { jobId: string }) {
               <dt className="text-xs text-cq-text-secondary">
                 Size of installation
               </dt>
-              <dd className="mt-0.5 text-sm font-medium text-cq-text">
+              <dd className="mt-0.5 text-sm font-normal text-cq-text">
                 {job.overview.sizeOfInstallation}
               </dd>
             </div>
             <div>
               <dt className="text-xs text-cq-text-secondary">Roof covering</dt>
-              <dd className="mt-0.5 text-sm font-medium text-cq-text">
+              <dd className="mt-0.5 text-sm font-normal text-cq-text">
                 {job.overview.roofCovering}
               </dd>
             </div>
@@ -160,7 +160,7 @@ export function SupplierJobPage({ jobId }: { jobId: string }) {
               <dt className="text-xs text-cq-text-secondary">
                 Usable roof area
               </dt>
-              <dd className="mt-0.5 text-sm font-medium text-cq-text">
+              <dd className="mt-0.5 text-sm font-normal text-cq-text">
                 {job.overview.usableRoofArea}
               </dd>
             </div>
@@ -207,9 +207,9 @@ export function SupplierJobPage({ jobId }: { jobId: string }) {
             <span
               key={item.id}
               className={cn(
-                'shrink-0 whitespace-nowrap border-b-2 py-3 text-sm font-medium',
+                'shrink-0 whitespace-nowrap border-b-2 py-3 text-sm font-normal',
                 item.id === 'delivery'
-                  ? 'border-[var(--cq-green)] text-black'
+                  ? 'border-[var(--cq-green)] text-text-primary'
                   : 'border-transparent text-cq-text-secondary',
               )}
             >

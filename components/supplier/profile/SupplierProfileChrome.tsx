@@ -8,7 +8,7 @@ function ProfileAvatar() {
   return (
     <button
       type="button"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cq-border bg-cq-bg text-xs font-bold text-cq-text"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cq-border bg-cq-bg text-xs font-semibold text-cq-text"
       title="Account menu"
     >
       P

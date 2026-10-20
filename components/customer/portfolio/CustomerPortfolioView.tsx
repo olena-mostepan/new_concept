@@ -58,7 +58,7 @@ function PipelineCard() {
             >
               <p
                 className={cn(
-                  'truncate text-xs font-medium transition-colors sm:text-sm',
+                  'truncate text-xs font-normal transition-colors sm:text-sm',
                   hoveredId === stage.id
                     ? 'text-[var(--cq-green)]'
                     : 'text-cq-text-secondary',
@@ -116,7 +116,7 @@ function PipelineCard() {
                   hideArrow
                   className="max-w-[240px] border border-cq-border bg-white px-3 py-2.5 text-left text-cq-text shadow-md"
                 >
-                  <p className="text-sm font-medium text-cq-text">
+                  <p className="text-sm font-normal text-cq-text">
                     {stage.valueLabel}
                   </p>
                   <p className="mt-0.5 text-xs text-cq-text-secondary">
@@ -137,14 +137,14 @@ function PipelineCard() {
                 aria-hidden
               />
               <p className="leading-snug text-cq-text">
-                <span className="font-medium">{insight.text}</span>
+                <span className="font-normal">{insight.text}</span>
                 <span className="text-cq-text-secondary">
                   {' '}
                   ·{' '}
                   <span
                     className={
                       insight.warn
-                        ? 'font-medium text-[var(--cq-green)]'
+                        ? 'font-normal text-[var(--cq-green)]'
                         : undefined
                     }
                   >
@@ -210,7 +210,7 @@ function MomentumTooltip({
 
   return (
     <div className="max-w-[220px] rounded-md border border-cq-border bg-white px-3 py-2.5 text-left shadow-md">
-      <p className="text-sm font-medium text-cq-text">{label}</p>
+      <p className="text-sm font-normal text-cq-text">{label}</p>
       <ul className="mt-1.5 space-y-1">
         {payload.map((entry) => {
           const series = MOMENTUM_SERIES.find((s) => s.key === entry.dataKey)
@@ -253,7 +253,7 @@ function isMomentumEmpty(points: readonly MomentumPoint[]): boolean {
 function MomentumEmptyState() {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
-      <p className="text-base font-medium text-cq-text-secondary">
+      <p className="text-base font-normal text-cq-text-secondary">
         No projects to track yet
       </p>
       <p className="mt-1.5 max-w-[320px] text-sm text-cq-muted">
@@ -443,7 +443,7 @@ function DaysInStageCard() {
                         className={cn(
                           'whitespace-nowrap text-right text-sm tabular-nums transition-colors',
                           active
-                            ? 'font-medium text-[var(--cq-green)]'
+                            ? 'font-normal text-[var(--cq-green)]'
                             : 'text-cq-text-secondary',
                         )}
                       >
@@ -461,7 +461,7 @@ function DaysInStageCard() {
                     hideArrow
                     className="max-w-[240px] border border-cq-border bg-white px-3 py-2.5 text-left text-cq-text shadow-md"
                   >
-                    <p className="text-sm font-medium text-cq-text">
+                    <p className="text-sm font-normal text-cq-text">
                       {row.days}d average
                     </p>
                     <p className="mt-0.5 text-xs text-cq-text-secondary">
@@ -528,7 +528,7 @@ function BatchesCard() {
                         hideArrow
                         className="max-w-[220px] border border-cq-border bg-white px-3 py-2.5 text-left text-cq-text shadow-md"
                       >
-                        <p className="text-sm font-medium text-cq-text">
+                        <p className="text-sm font-normal text-cq-text">
                           {seg.label}
                           <span className="ml-1.5 text-cq-text-secondary">
                             {seg.count}
@@ -563,7 +563,7 @@ export function CustomerPortfolioView() {
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl space-y-5 px-6 py-8 sm:px-8 lg:px-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-black md:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
         Welcome back {PORTFOLIO_USER}
       </h1>
 

@@ -112,7 +112,7 @@ export function ImproveProfileModal({
         showCloseButton
       >
         <DialogHeader className="space-y-0 px-8 pb-2 pt-8 text-left">
-          <DialogTitle className="text-2xl font-extrabold tracking-tight text-cq-text">
+          <DialogTitle className="text-2xl font-semibold tracking-tight text-cq-text">
             Get more from your profile
           </DialogTitle>
           <DialogDescription className="mt-3 max-w-xl text-sm leading-relaxed text-cq-text-secondary">
@@ -128,10 +128,10 @@ export function ImproveProfileModal({
                 key={stat.value}
                 className="rounded-[8px] border border-[rgba(28,117,188,0.25)] bg-[rgba(28,117,188,0.09)] px-5 py-5"
               >
-                <p className="text-[2rem] font-extrabold leading-none tracking-tight text-cq-text">
+                <p className="text-[2rem] font-semibold leading-none tracking-tight text-cq-text">
                   {stat.value}
                 </p>
-                <p className="mt-2 text-sm font-medium leading-snug text-cq-text">
+                <p className="mt-2 text-sm font-normal leading-snug text-cq-text">
                   {stat.label}
                 </p>
               </div>
@@ -185,7 +185,7 @@ export function ImproveProfileModal({
             {isProcessing ? (
               <>
                 <Loader2 className="h-8 w-8 animate-spin text-[var(--cq-green)]" aria-hidden />
-                <p className="text-sm font-bold text-cq-text">
+                <p className="text-sm font-semibold text-cq-text">
                   Reading {processingFiles.length} file{processingFiles.length === 1 ? '' : 's'}…
                 </p>
                 <ul className="mt-1 space-y-1">
@@ -199,7 +199,7 @@ export function ImproveProfileModal({
             ) : (
               <>
                 <Upload className="h-8 w-8 text-[var(--cq-green)]" strokeWidth={2} aria-hidden />
-                <span className="text-base font-bold text-[var(--cq-green)]">Upload files</span>
+                <span className="text-base font-semibold text-[var(--cq-green)]">Upload files</span>
                 <span className="text-xs text-cq-text-secondary">
                   PDF, DOC, XLS, JPG · up to 50 MB · max 50 files
                 </span>
@@ -214,7 +214,7 @@ export function ImproveProfileModal({
 
           {(documents.length > 0 || stagedFiles.length > 0) && !isProcessing && (
             <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-cq-text-secondary">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
                 Uploaded files
               </p>
               <ul className="max-h-40 divide-y divide-cq-border-light overflow-y-auto rounded-[8px] border border-cq-border">
@@ -224,7 +224,7 @@ export function ImproveProfileModal({
                     <span className="min-w-0 flex-1 truncate text-sm text-cq-text" title={file.name}>
                       {file.name}
                     </span>
-                    <span className="shrink-0 rounded bg-cq-bg px-1.5 py-0.5 text-[10px] font-bold text-cq-text-secondary">
+                    <span className="shrink-0 rounded bg-cq-bg px-1.5 py-0.5 text-cq-text-secondary p7">
                       Ready
                     </span>
                   </li>
@@ -236,7 +236,7 @@ export function ImproveProfileModal({
                       {doc.filename}
                     </span>
                     {doc.extracted && (
-                      <span className="shrink-0 rounded bg-[rgba(28,117,188,0.09)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--cq-link)]">
+                      <span className="shrink-0 rounded bg-[rgba(28,117,188,0.09)] px-1.5 py-0.5 text-[var(--cq-link)] p7">
                         Parsed
                       </span>
                     )}

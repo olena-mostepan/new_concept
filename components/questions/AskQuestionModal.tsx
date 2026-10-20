@@ -78,7 +78,7 @@ export function AskQuestionModal({
         className="max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto border-cq-border p-6 sm:max-w-[520px]"
       >
         <DialogHeader className="space-y-0 text-left">
-          <DialogTitle className="text-xl font-bold text-cq-text">
+          <DialogTitle className="text-xl font-semibold text-cq-text">
             Ask a question
           </DialogTitle>
         </DialogHeader>
@@ -106,7 +106,7 @@ export function AskQuestionModal({
                   key={s}
                   type="button"
                   onClick={() => setQuestion(s)}
-                  className="rounded-lg border border-cq-border bg-cq-bg/50 px-2.5 py-1 text-left text-xs font-medium text-cq-text hover:border-cq-green/50"
+                  className="rounded-lg border border-cq-border bg-cq-bg/50 px-2.5 py-1 text-left text-xs font-normal text-cq-text hover:border-cq-green/50"
                 >
                   {s}
                 </button>
@@ -126,7 +126,7 @@ export function AskQuestionModal({
             {destination === 'supplier' && (
               <button
                 type="button"
-                className="text-sm font-bold text-cq-link underline"
+                className="text-sm font-semibold text-cq-link underline"
                 onClick={() =>
                   setAllChecked(!(allIds.every((id) => selected.has(id)) && selected.size > 0))
                 }
@@ -153,7 +153,7 @@ export function AskQuestionModal({
                   />
                   <label
                     htmlFor={`ask-supplier-${s.id}`}
-                    className="cursor-pointer text-sm font-medium text-cq-text"
+                    className="cursor-pointer text-sm font-normal text-cq-text"
                   >
                     {s.name}
                   </label>
@@ -176,7 +176,7 @@ export function AskQuestionModal({
                   : 'border-cq-border bg-white hover:bg-cq-bg',
               )}
             >
-              <span className="flex items-center gap-1.5 text-sm font-bold text-cq-text">
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-cq-text">
                 <Sparkles className="h-4 w-4 text-cq-green" />
                 Ask CQuel Agent
               </span>
@@ -194,7 +194,7 @@ export function AskQuestionModal({
                   : 'border-cq-border bg-white hover:bg-cq-bg',
               )}
             >
-              <span className="flex items-center gap-1.5 text-sm font-bold text-cq-text">
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-cq-text">
                 <MessageCircle className="h-4 w-4 text-cq-text-secondary" />
                 Ask supplier
               </span>

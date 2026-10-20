@@ -6,7 +6,7 @@ import type { FocusItem } from '@/lib/clarifications/types'
 import { cn } from '@/lib/utils'
 
 const pillBase =
-  'inline-flex rounded-md border border-cq-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cq-text-secondary'
+  'inline-flex rounded-md border border-cq-border px-2 py-0.5 text-cq-text-secondary s3'
 
 function kindPill(kind: FocusItem['kind']) {
   if (kind === 'question') return 'QUESTION'
@@ -28,14 +28,14 @@ export function FocusItemCard({ item }: { item: FocusItem }) {
         <span className={pillBase}>{kindPill(item.kind)}</span>
         <span className="flex shrink-0 items-center gap-2">
           {item.overdue ? (
-            <span className="rounded-md bg-cq-amber-bg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cq-text">
+            <span className="rounded-md bg-cq-amber-bg px-2 py-0.5 text-cq-text s3">
               Overdue
             </span>
           ) : null}
           <span className="text-xs font-semibold text-cq-text-secondary">{item.ageLabel}</span>
         </span>
       </div>
-      <p className="text-base font-bold leading-snug text-cq-text">{item.title}</p>
+      <p className="text-base font-semibold leading-snug text-cq-text">{item.title}</p>
       <p className="mt-1 text-sm text-cq-text-secondary">{item.contextLine}</p>
 
       <div className={cn('mt-6 flex gap-2', item.kind !== 'question' && 'flex-col')}>

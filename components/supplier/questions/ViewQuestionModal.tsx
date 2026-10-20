@@ -32,14 +32,14 @@ export function ViewQuestionModal({
             <QuestionDirectionBadge direction={question.direction} />
             <span className="text-xs text-cq-text-secondary">{question.ageLabel}</span>
           </div>
-          <DialogTitle className="text-lg font-bold leading-snug text-cq-text">
+          <DialogTitle className="text-lg font-semibold leading-snug text-cq-text">
             {question.questionText}
           </DialogTitle>
           <p className="text-sm text-cq-text-secondary">Asked by {question.askedBy}</p>
         </DialogHeader>
 
         <div className="rounded-lg border border-cq-border bg-cq-bg/40 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-cq-text-secondary">
+          <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
             Status
           </p>
           <div className="mt-2">

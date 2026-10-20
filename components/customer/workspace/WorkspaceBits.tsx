@@ -30,7 +30,7 @@ export function WorkspaceStat({
           icon
         )}
       </span>
-      <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight text-black">
+      <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight text-text-primary">
         {value}
       </p>
       <p className="mt-0.5 text-sm text-cq-text-secondary">{label}</p>
@@ -48,7 +48,7 @@ export function ResponsibilityPill({
   return (
     <span
       className={cn(
-        'inline-flex w-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-medium',
+        'inline-flex w-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-normal',
         responsibility === 'your_action'
           ? 'bg-[var(--cq-accent-muted)] text-[var(--cq-green)]'
           : 'bg-[var(--cq-link)]/10 text-[var(--cq-link)]',
@@ -71,7 +71,7 @@ export function ProjectName({
   )
   if (!href) {
     return (
-      <span className="inline-flex items-center gap-1.5 font-medium text-cq-text">
+      <span className="inline-flex items-center gap-1.5 font-normal text-cq-text">
         {name}
         {icon}
       </span>
@@ -80,7 +80,7 @@ export function ProjectName({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1.5 font-medium text-cq-text hover:text-[var(--cq-green)]"
+      className="inline-flex items-center gap-1.5 font-normal text-cq-text hover:text-[var(--cq-green)]"
     >
       {name}
       <span className="sr-only">Open project</span>
@@ -109,7 +109,7 @@ export function FilterSelect({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full appearance-none rounded-lg border border-cq-border bg-white bg-[length:16px] bg-[right_0.6rem_center] bg-no-repeat py-2 pl-3 pr-8 text-sm font-medium text-cq-text focus:border-[var(--cq-green)] focus:outline-none focus:ring-1 focus:ring-[var(--cq-green)]"
+        className="w-full appearance-none rounded-lg border border-cq-border bg-white bg-[length:16px] bg-[right_0.6rem_center] bg-no-repeat py-2 pl-3 pr-8 text-sm font-normal text-cq-text focus:border-[var(--cq-green)] focus:outline-none focus:ring-1 focus:ring-[var(--cq-green)]"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234d5761' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",

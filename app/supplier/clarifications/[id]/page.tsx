@@ -41,7 +41,7 @@ export default function SupplierAnswerPage() {
         <p className="text-cq-text-secondary">This clarification could not be found.</p>
         <Link
           href="/supplier/clarifications"
-          className="mt-4 inline-block font-bold text-cq-link underline"
+          className="mt-4 inline-block font-semibold text-cq-link underline"
         >
           Back to clarifications
         </Link>
@@ -73,7 +73,7 @@ export default function SupplierAnswerPage() {
             <Building2 className="h-6 w-6 text-cq-text-secondary" aria-hidden />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl font-extrabold leading-tight text-cq-text sm:text-2xl">
+            <h1 className="text-xl font-semibold leading-tight text-cq-text sm:text-2xl">
               {item.project}
             </h1>
             <p className="mt-1 text-sm text-cq-text-secondary">{submittedLine}</p>
@@ -81,7 +81,7 @@ export default function SupplierAnswerPage() {
         </header>
 
         <section className="rounded-xl border border-[rgba(28,117,188,0.12)] bg-[rgba(28,117,188,0.06)] px-5 py-4 sm:p-6">
-          <p className="text-sm font-bold text-cq-text">
+          <p className="text-sm font-semibold text-cq-text">
             Sent {item.raisedAgo} by {item.raisedBy}:
           </p>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-cq-text">
@@ -91,7 +91,7 @@ export default function SupplierAnswerPage() {
 
         <section className="rounded-xl border border-cq-border bg-white p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <h2 className="text-base font-bold text-cq-text">Context</h2>
+            <h2 className="text-base font-semibold text-cq-text">Context</h2>
             {canAnswer && !inlineReply ? (
               <AnswerActionMenu
                 onUploadFiles={() => setUploadOpen(true)}
@@ -129,7 +129,7 @@ export default function SupplierAnswerPage() {
                     <dt className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
                       {label}
                     </dt>
-                    <dd className="mt-0.5 text-sm font-medium text-cq-text">
+                    <dd className="mt-0.5 text-sm font-normal text-cq-text">
                       {value}
                       {linked ? (
                         <span className="ml-2 font-normal text-cq-text-secondary">
@@ -157,7 +157,7 @@ export default function SupplierAnswerPage() {
         <div className="flex justify-start">
           <Link
             href="/supplier/clarifications"
-            className="rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-bold text-cq-text hover:bg-cq-bg"
+            className="rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-semibold text-cq-text hover:bg-cq-bg"
           >
             Back to clarifications
           </Link>

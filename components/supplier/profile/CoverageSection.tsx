@@ -50,8 +50,8 @@ function CoverageEntryRow({
       style={showDivider ? { borderTop: '0.5px solid var(--cq-border)' } : undefined}
     >
       <div className="flex items-start justify-between gap-3">
-        <h4 className="text-base font-extrabold text-cq-text">{entry.category}</h4>
-        <div className="flex shrink-0 items-center gap-2 text-sm font-bold">
+        <h4 className="text-base font-semibold text-cq-text">{entry.category}</h4>
+        <div className="flex shrink-0 items-center gap-2 text-sm font-semibold">
           <button
             type="button"
             onClick={onEdit}
@@ -292,7 +292,7 @@ function CoverageForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-cq-border bg-white px-5 py-2.5 text-sm font-bold text-cq-text hover:bg-white/80"
+            className="rounded-lg border border-cq-border bg-white px-5 py-2.5 text-sm font-semibold text-cq-text hover:bg-white/80"
           >
             Cancel
           </button>
@@ -300,7 +300,7 @@ function CoverageForm({
             type="button"
             disabled={!draft.category.trim()}
             onClick={onSave}
-            className="rounded-lg bg-[#D85A30] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#c24f29] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-[#D85A30] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#c24f29] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Save
           </button>
@@ -381,14 +381,14 @@ export function CoverageSection({
   return (
     <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-cq-border bg-cq-bg px-5 py-3">
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-cq-text-secondary">
+        <h3 className="tracking-[0.12em] text-cq-text-secondary s3">
           Coverage
         </h3>
         {!formOpen && (
           <button
             type="button"
             onClick={openAdd}
-            className="text-sm font-bold text-[var(--cq-green)] hover:underline"
+            className="text-sm font-semibold text-[var(--cq-green)] hover:underline"
           >
             + Add
           </button>

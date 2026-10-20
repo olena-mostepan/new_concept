@@ -31,7 +31,7 @@ export function AiQuestionDetailHeader({ question }: { question: TenderQuestion 
             <QuestionTypeBadge type="ai" />
             <p className="text-sm font-semibold text-cq-text">
               {answered} of {visible.length} suppliers answered
-              <span className="font-medium text-cq-text-secondary">
+              <span className="font-normal text-cq-text-secondary">
                 {' '}
                 · Extracted from bids
               </span>

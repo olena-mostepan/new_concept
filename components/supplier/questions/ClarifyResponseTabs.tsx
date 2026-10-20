@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils'
 import type { ClarifyResponseTab } from '@/lib/supplier/questions/types'
 
 const btnGhost =
-  'rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-bold text-cq-text hover:bg-cq-bg'
+  'rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-semibold text-cq-text hover:bg-cq-bg'
 const btnGreenFilled =
-  'rounded-lg bg-[var(--cq-green)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--cq-green-hover)] disabled:opacity-50'
+  'rounded-lg bg-[var(--cq-green)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--cq-green-hover)] disabled:opacity-50'
 
 export function ClarifyResponseTabs({
   activeTab,
@@ -51,7 +51,7 @@ export function ClarifyResponseTabs({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm font-bold text-cq-text">Your response</p>
+        <p className="text-sm font-semibold text-cq-text">Your response</p>
         <div
           className="mt-2 inline-flex rounded-lg border border-cq-border bg-cq-bg p-1"
           role="tablist"
@@ -126,7 +126,7 @@ export function ClarifyResponseTabs({
                 : 'flex h-[160px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-cq-border bg-cq-bg transition-colors'
             }
           >
-            <span className="text-sm font-bold text-[var(--cq-green)]">Upload a file</span>
+            <span className="text-sm font-semibold text-[var(--cq-green)]">Upload a file</span>
             <span className="mt-1 text-sm text-cq-text">or drag and drop</span>
             <span className="mt-2 text-xs text-cq-text-secondary">
               PDF, DOCX, JPG or PNG up to 10MB
@@ -141,7 +141,7 @@ export function ClarifyResponseTabs({
                   className="flex items-center gap-2 rounded-lg border border-cq-border bg-white px-3 py-2 text-sm"
                 >
                   <FileIcon className="h-4 w-4 shrink-0 text-cq-text-secondary" />
-                  <span className="min-w-0 flex-1 truncate font-medium text-cq-text">
+                  <span className="min-w-0 flex-1 truncate font-normal text-cq-text">
                     {f.name}
                   </span>
                   <button

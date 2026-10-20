@@ -19,7 +19,7 @@ function WhiteCard({
       <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
         {label}
       </p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-black">
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-text-primary">
         {value}
       </p>
       <div className="mt-2 text-sm text-cq-text-secondary">{children}</div>
@@ -63,7 +63,7 @@ export function CustomerDeliveryCards({
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-green)]">
           {highlightLabel}
         </p>
-        <p className="mt-3 text-2xl font-semibold tracking-tight text-black">
+        <p className="mt-3 text-2xl font-semibold tracking-tight text-text-primary">
           {highlightValue}
         </p>
         <p className="mt-2 text-sm text-cq-text-secondary">{highlightDetail}</p>

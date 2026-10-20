@@ -3,9 +3,9 @@
 import * as React from 'react'
 
 const btnGhost =
-  'rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-bold text-cq-text hover:bg-cq-bg'
+  'rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-semibold text-cq-text hover:bg-cq-bg'
 const btnGreen =
-  'rounded-lg bg-[var(--cq-green)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--cq-green-hover)]'
+  'rounded-lg bg-[var(--cq-green)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--cq-green-hover)]'
 
 export function AddDetailsForm({
   onCancel,
@@ -18,7 +18,7 @@ export function AddDetailsForm({
 
   return (
     <div className="space-y-3 rounded-lg border border-cq-border bg-white p-4">
-      <label className="block text-sm font-bold text-cq-text" htmlFor="supplier-reply">
+      <label className="block text-sm font-semibold text-cq-text" htmlFor="supplier-reply">
         Your reply
       </label>
       <textarea

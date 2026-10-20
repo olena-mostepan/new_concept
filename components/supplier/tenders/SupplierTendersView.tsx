@@ -59,13 +59,13 @@ function TenderIcon({ icon }: { icon: SupplierTender['icon'] }) {
 function BidStatusBadge({ status }: { status: SupplierTender['bidStatus'] }) {
   if (status === 'submitted') {
     return (
-      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
         Submitted
       </span>
     )
   }
   return (
-    <span className="inline-flex rounded-full border border-cq-border bg-cq-bg px-2.5 py-0.5 text-xs font-bold text-cq-text-secondary">
+    <span className="inline-flex rounded-full border border-cq-border bg-cq-bg px-2.5 py-0.5 text-xs font-semibold text-cq-text-secondary">
       Not started
     </span>
   )
@@ -170,14 +170,14 @@ export function SupplierTendersView() {
                     <div className="flex items-center gap-3">
                       <TenderIcon icon={tender.icon} />
                       <div className="min-w-0">
-                        <p className="font-bold text-cq-text">{tender.name}</p>
+                        <p className="font-semibold text-cq-text">{tender.name}</p>
                         <p className="mt-0.5 text-sm text-cq-text-secondary">
                           {tender.propertyLabel}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm font-medium text-cq-text">
+                  <td className="px-4 py-4 text-sm font-normal text-cq-text">
                     {tender.deadlineLabel}
                   </td>
                   <td className="px-4 py-4">

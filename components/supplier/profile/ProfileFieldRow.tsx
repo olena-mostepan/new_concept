@@ -51,7 +51,7 @@ export function ProfileSectionCard({
 }) {
   return (
     <section className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm">
-      <h3 className="border-b border-cq-border bg-cq-bg px-5 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-cq-text-secondary">
+      <h3 className="border-b border-cq-border bg-cq-bg px-5 py-3 tracking-[0.12em] text-cq-text-secondary s3">
         {title}
       </h3>
       <div>{children}</div>

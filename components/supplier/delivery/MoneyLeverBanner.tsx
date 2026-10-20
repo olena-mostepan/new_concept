@@ -28,13 +28,13 @@ export function MoneyLeverBanner({
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-green)]">
             Cash picture
           </p>
-          <p className="text-base font-medium text-cq-text sm:text-lg">
+          <p className="text-base font-semibold text-cq-text sm:text-lg">
             Based on this picture, you&apos;ll invoice{' '}
-            <span className="font-semibold text-black">
+            <span className="font-semibold text-text-primary">
               {formatGbp(sumProjected)}
             </span>{' '}
             over the next 3 months and owe CQuel{' '}
-            <span className="font-semibold text-black">
+            <span className="font-semibold text-text-primary">
               {formatGbp(commission)}
             </span>{' '}
             commission.

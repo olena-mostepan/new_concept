@@ -474,7 +474,7 @@ export function SupplierComparisonTable({
       <div className="w-full max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-8">
         {/* Header */}
         <header className="mb-6">
-          <h1 className="text-xl font-extrabold text-cq-text leading-tight">
+          <h1 className="text-xl font-semibold text-cq-text leading-tight">
             Supplier Price Comparison
           </h1>
         </header>
@@ -491,7 +491,7 @@ export function SupplierComparisonTable({
                 className="flex-shrink-0 rounded-lg"
               />
               <div>
-                <h2 className="text-xl font-extrabold text-cq-text leading-tight">
+                <h2 className="text-xl font-semibold text-cq-text leading-tight">
                   {projectType === 'led'
                     ? 'Project 310 — Alexanderstraße 1/3/5'
                     : projectType === 'led-rostock'
@@ -514,7 +514,7 @@ export function SupplierComparisonTable({
             ).map((tag) => (
               <span
                 key={tag}
-                className="px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-cq-border-light text-cq-text-secondary"
+                className="px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider bg-cq-border-light text-cq-text-secondary"
               >
                 {tag}
               </span>
@@ -538,19 +538,19 @@ export function SupplierComparisonTable({
           <div className="mb-6 flex flex-col items-start gap-4 p-4 rounded-lg border border-cq-border bg-white">
             {/* Header row: title left, metadata + badge + show/hide right */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
-              <div className="font-bold text-cq-text">Tender Overview:</div>
+              <div className="font-semibold text-cq-text">Tender Overview:</div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <span className="text-sm text-cq-text-secondary">
-                  Tender closed: <span className="font-bold text-cq-text">{overview.closedDate}</span>
+                  Tender closed: <span className="font-semibold text-cq-text">{overview.closedDate}</span>
                   <span className="mx-2 text-cq-border">|</span>
-                  Duration: <span className="font-bold text-cq-text">{overview.duration}</span>
+                  Duration: <span className="font-semibold text-cq-text">{overview.duration}</span>
                 </span>
-                <div className="flex items-center px-3 py-1 rounded-[20px] bg-[#F59E0B] text-white text-sm font-bold">
+                <div className="flex items-center px-3 py-1 rounded-[20px] bg-[#F59E0B] text-white text-sm font-semibold">
                   Closed
                 </div>
                 <button
                   onClick={() => setShowOverviewDetails((v) => !v)}
-                  className="text-sm text-[#1C75BC] hover:underline font-bold flex items-center gap-1 shrink-0"
+                  className="text-sm text-[#1C75BC] hover:underline font-semibold flex items-center gap-1 shrink-0"
                 >
                   {showOverviewDetails ? (
                     <>
@@ -588,7 +588,7 @@ export function SupplierComparisonTable({
                                 className="w-2.5 h-2.5 rounded-sm shrink-0"
                                 style={{ backgroundColor: STATUS_CHART_COLORS[i % STATUS_CHART_COLORS.length] }}
                               />
-                              <span className="text-cq-text font-medium">{row.name}</span>
+                              <span className="text-cq-text font-normal">{row.name}</span>
                               <span className="text-cq-text-secondary tabular-nums">{row.pct}%</span>
                             </div>
                           ))}
@@ -656,7 +656,7 @@ export function SupplierComparisonTable({
                   <button
                     type="button"
                     onClick={openAskModal}
-                    className="mb-1 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-cq-green px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-cq-green-hover sm:mb-0"
+                    className="mb-1 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-cq-green px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-cq-green-hover sm:mb-0"
                   >
                     <Plus className="h-4 w-4" aria-hidden />
                     Ask question
@@ -721,7 +721,7 @@ export function SupplierComparisonTable({
                   key={value}
                   value={value}
                   className={cn(
-                    'px-4 py-2 text-sm font-bold transition-colors',
+                    'px-4 py-2 text-sm font-semibold transition-colors',
                     viewMode === value
                       ? 'bg-white text-cq-green border border-cq-green'
                       : 'bg-transparent text-cq-text border border-cq-border hover:bg-cq-border/50'
@@ -969,7 +969,7 @@ export function SupplierComparisonTable({
                                   {row.badge && (
                                     <span
                                       className={cn(
-                                        'text-xs font-medium text-cq-green',
+                                        'text-xs font-normal text-cq-green',
                                         hasBreakdown && 'pl-[calc(1rem+0.25rem)]'
                                       )}
                                     >
@@ -978,7 +978,7 @@ export function SupplierComparisonTable({
                                   )}
                                 </div>
                               </div>
-                              <div className="py-3 px-3 text-left tabular-nums font-bold text-cq-text">
+                              <div className="py-3 px-3 text-left tabular-nums font-semibold text-cq-text">
                                 {currency === 'eur' ? '€' : '£'}
                                 {row.perKwp.toLocaleString()}
                               </div>
@@ -997,7 +997,7 @@ export function SupplierComparisonTable({
                               <div className="py-3 pl-8 pr-8 min-w-0 max-w-full">
                                 <div className="flex flex-wrap items-center gap-2">
                                   {row.hasEstimates && intelligenceOn && (
-                                    <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-cq-green/20 text-cq-green">
+                                    <span className="inline-flex px-2 py-0.5 rounded text-xs font-normal bg-cq-green/20 text-cq-green">
                                       has estimates
                                     </span>
                                   )}
@@ -1041,7 +1041,7 @@ export function SupplierComparisonTable({
                                 </button>
                                 <Link
                                   href={`${basePath}/${row.id}`}
-                                  className="font-bold text-cq-link hover:underline inline-block whitespace-nowrap"
+                                  className="font-semibold text-cq-link hover:underline inline-block whitespace-nowrap"
                                 >
                                   View
                                 </Link>

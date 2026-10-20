@@ -28,7 +28,7 @@ export function CustomerPhaseStepperCompact({
                     <button
                       type="button"
                       className={cn(
-                        'flex h-7 w-7 items-center justify-center rounded-full border text-[11px] outline-none',
+                        'flex h-7 w-7 items-center justify-center rounded-full border outline-none p7',
                         phase.status === 'done' &&
                           'border-[var(--cq-green)] bg-[var(--cq-green)] text-white',
                         phase.status === 'current' &&
@@ -48,13 +48,13 @@ export function CustomerPhaseStepperCompact({
                   <TooltipContent
                     side="top"
                     sideOffset={6}
-                    className="border border-cq-border bg-white px-2.5 py-1.5 text-xs font-medium text-cq-text shadow-sm"
+                    className="border border-cq-border bg-white px-2.5 py-1.5 text-xs font-normal text-cq-text shadow-sm"
                   >
                     {phase.label}
                   </TooltipContent>
                 </Tooltip>
                 {phase.status === 'current' ? (
-                  <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-[var(--cq-green)]">
+                  <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap text-[var(--cq-green)] p7">
                     {phase.overdue ? 'overdue' : 'confirm ›'}
                   </span>
                 ) : null}

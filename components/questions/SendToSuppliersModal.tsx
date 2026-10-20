@@ -86,7 +86,7 @@ export function SendToSuppliersModal() {
         className="max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto border-cq-border p-6 sm:max-w-[520px]"
       >
         <DialogHeader className="space-y-0 text-left">
-          <DialogTitle className="text-xl font-bold text-cq-text">
+          <DialogTitle className="text-xl font-semibold text-cq-text">
             Ask suppliers
           </DialogTitle>
           <p className="pt-1 text-sm text-cq-text-secondary">
@@ -111,7 +111,7 @@ export function SendToSuppliersModal() {
               <Label className="text-sm font-semibold text-cq-text">Suppliers</Label>
               <button
                 type="button"
-                className="text-sm font-bold text-cq-link underline"
+                className="text-sm font-semibold text-cq-link underline"
                 onClick={() =>
                   setSelected(allSelected ? new Set() : new Set(allIds))
                 }
@@ -130,7 +130,7 @@ export function SendToSuppliersModal() {
                   />
                   <label
                     htmlFor={`send-supplier-${s.id}`}
-                    className="cursor-pointer text-sm font-medium text-cq-text"
+                    className="cursor-pointer text-sm font-normal text-cq-text"
                   >
                     {s.name}
                   </label>

@@ -13,7 +13,7 @@ export function QuestionDirectionBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md border border-cq-border px-2 py-0.5 text-xs font-medium text-cq-text-secondary',
+        'inline-flex items-center rounded-md border border-cq-border px-2 py-0.5 text-xs font-normal text-cq-text-secondary',
       )}
     >
       {isYou ? 'You' : 'CQuel'}

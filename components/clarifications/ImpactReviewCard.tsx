@@ -9,13 +9,13 @@ export function ImpactReviewCard({
 }) {
   return (
     <div className="rounded-xl border border-cq-border bg-white p-4">
-      <h3 className="mb-4 text-base font-bold text-cq-text">Impact review</h3>
+      <h3 className="mb-4 text-base font-semibold text-cq-text">Impact review</h3>
       <div className="overflow-hidden rounded-lg border border-cq-border">
         <div className="grid grid-cols-[minmax(0,7rem)_1fr] divide-y divide-cq-border md:grid-cols-[10rem_1fr]">
           <div className="bg-cq-bg/80 px-3 py-2 text-xs font-semibold text-cq-text-secondary">
             Context
           </div>
-          <div className="px-3 py-2 text-sm font-medium text-cq-text">{impact.fieldLabel}</div>
+          <div className="px-3 py-2 text-sm font-normal text-cq-text">{impact.fieldLabel}</div>
 
           <div className="bg-cq-bg/80 px-3 py-2 text-xs font-semibold text-cq-text-secondary">
             Current value
@@ -47,13 +47,13 @@ export function ImpactReviewCard({
           <ul className="mt-2 list-disc space-y-1 pl-5 text-cq-text-secondary">
             <li>
               Record this answer as <code className="text-cq-text">final_answer</code> on the{' '}
-              <span className="font-medium text-cq-text">{impact.fieldLabel}</span> field,
+              <span className="font-normal text-cq-text">{impact.fieldLabel}</span> field,
               with source attribution
             </li>
             <li>Regenerate the tender comparison view for this project</li>
             <li>
               Notify{' '}
-              <span className="font-medium text-cq-text">
+              <span className="font-normal text-cq-text">
                 {supplierAnswerName ?? 'the supplier'} that their answer was accepted
               </span>
             </li>

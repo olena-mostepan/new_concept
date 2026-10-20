@@ -46,7 +46,7 @@ function CQuelMark() {
   return (
     <Link href="/supplier" className="shrink-0 hover:opacity-80">
       <span className="text-sm text-cq-text-secondary">Powered by </span>
-      <span className="text-sm font-extrabold text-cq-text">CQuel</span>
+      <span className="text-sm font-semibold text-cq-text">CQuel</span>
     </Link>
   )
 }
@@ -72,7 +72,7 @@ function CompanyProfileRing({
           : `Company profile · ${percent}% complete`
       }
     >
-      <span className="text-sm font-medium text-cq-text-secondary group-hover:text-cq-text">
+      <span className="text-sm font-normal text-cq-text-secondary group-hover:text-cq-text">
         Company Profile
       </span>
       <span className="relative shrink-0">
@@ -83,7 +83,7 @@ function CompanyProfileRing({
           }}
           aria-hidden
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-text-primary p7">
             {percent}%
           </span>
         </span>
@@ -103,7 +103,7 @@ function LanguageAndAccount() {
     <>
       <button
         type="button"
-        className="inline-flex items-center gap-2 text-sm font-medium text-cq-text-secondary hover:text-cq-text"
+        className="inline-flex items-center gap-2 text-sm font-normal text-cq-text-secondary hover:text-cq-text"
         title="Language"
       >
         <Globe className="h-4 w-4" aria-hidden />

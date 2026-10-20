@@ -78,7 +78,7 @@ export function SupplierClarifyModal({
         className="max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto border-cq-border p-0 sm:max-w-[640px]"
       >
         <DialogHeader className="border-b border-cq-border px-6 pb-4 pt-6 text-left">
-          <DialogTitle className="text-lg font-extrabold text-cq-text">{title}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-cq-text">{title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 px-6 py-5">
@@ -93,12 +93,12 @@ export function SupplierClarifyModal({
 
           {question.bidContext ? (
             <section className="rounded-xl border border-cq-border bg-white p-5">
-              <h3 className="text-sm font-bold text-cq-text">Your bid — context</h3>
+              <h3 className="text-sm font-semibold text-cq-text">Your bid — context</h3>
               <div className="mt-3 rounded-r-md border-l-2 border-[var(--cq-green)] bg-cq-bg/50 py-2 pl-3 pr-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
                   {question.bidContext.field}
                 </p>
-                <p className="mt-0.5 text-sm font-medium text-cq-text">
+                <p className="mt-0.5 text-sm font-normal text-cq-text">
                   {question.bidContext.submittedValue}
                   <span className="ml-2 font-normal text-cq-text-secondary">
                     ← question is about this

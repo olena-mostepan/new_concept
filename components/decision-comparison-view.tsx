@@ -105,14 +105,14 @@ export function DecisionComparisonView({
       <div className="w-full max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-4">
         <Link
           href={basePath}
-          className="inline-block mb-2 text-sm font-bold text-cq-link hover:underline"
+          className="inline-block mb-2 text-sm font-semibold text-cq-link hover:underline"
         >
           ← Back to all suppliers
         </Link>
         {/* 1. Header */}
         <div className="flex items-center justify-between gap-4 mb-4">
           <header>
-            <h1 className="text-xl font-extrabold text-cq-text leading-tight">
+            <h1 className="text-xl font-semibold text-cq-text leading-tight">
               Supplier Price Comparison
             </h1>
             <p className="text-sm text-cq-text-secondary mt-0.5">
@@ -146,15 +146,15 @@ export function DecisionComparisonView({
                             className="object-contain rounded-lg flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-14 h-14 rounded-lg bg-cq-border-light flex items-center justify-center text-sm font-bold text-cq-text-secondary flex-shrink-0">
+                          <div className="w-14 h-14 rounded-lg bg-cq-border-light flex items-center justify-center text-sm font-semibold text-cq-text-secondary flex-shrink-0">
                             {s.name.slice(0, 2).toUpperCase()}
                           </div>
                         )}
                         <div>
-                          <div className="font-bold text-cq-text text-sm whitespace-nowrap">{s.name}</div>
+                          <div className="font-semibold text-cq-text text-sm whitespace-nowrap">{s.name}</div>
                           <Link
                             href={`${basePath}/${s.id}`}
-                            className="inline-flex items-center justify-center mt-2 px-8 py-1.5 rounded-lg border border-cq-border bg-white text-cq-text font-bold text-sm hover:bg-cq-bg hover:border-cq-green transition-colors min-w-[100px]"
+                            className="inline-flex items-center justify-center mt-2 px-8 py-1.5 rounded-lg border border-cq-border bg-white text-cq-text font-semibold text-sm hover:bg-cq-bg hover:border-cq-green transition-colors min-w-[100px]"
                           >
                             View
                           </Link>
@@ -169,7 +169,7 @@ export function DecisionComparisonView({
                 <tr>
                   <td
                     colSpan={suppliers.length + 1}
-                    className="py-1.5 px-4 font-extrabold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm"
+                    className="py-1.5 px-4 font-semibold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm"
                   >
                     What am I paying
                   </td>
@@ -181,7 +181,7 @@ export function DecisionComparisonView({
                   {suppliers.map((s) => (
                     <td
                       key={s.id}
-                      className="py-2 px-4 font-bold text-cq-text tabular-nums"
+                      className="py-2 px-4 font-semibold text-cq-text tabular-nums"
                     >
                       {currency}{s.perKwp.toLocaleString()}
                     </td>
@@ -216,7 +216,7 @@ export function DecisionComparisonView({
                   <td
                     colSpan={suppliers.length + 1}
                     className={cn(
-                      'py-1.5 px-4 font-extrabold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm',
+                      'py-1.5 px-4 font-semibold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm',
                       'cursor-pointer hover:bg-cq-border-light/50 transition-colors'
                     )}
                     onClick={() => setWhatAmIGettingExpanded((v) => !v)}
@@ -340,7 +340,7 @@ export function DecisionComparisonView({
                 <tr>
                   <td
                     colSpan={suppliers.length + 1}
-                    className="py-1.5 px-4 font-extrabold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm"
+                    className="py-1.5 px-4 font-semibold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm"
                   >
                     Can I trust this number
                   </td>
@@ -407,7 +407,7 @@ export function DecisionComparisonView({
                   <td
                     colSpan={suppliers.length + 1}
                     className={cn(
-                      'py-1.5 px-4 font-extrabold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm',
+                      'py-1.5 px-4 font-semibold text-cq-text text-center bg-cq-bg border-b border-cq-border text-sm',
                       'cursor-pointer hover:bg-cq-border-light/50 transition-colors'
                     )}
                     onClick={() => setWhatHappensAfterExpanded((v) => !v)}

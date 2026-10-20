@@ -31,9 +31,9 @@ export function QuestionsTable({ rows }: { rows: TenderQuestion[] }) {
       <div className="overflow-x-auto">
         <table className="w-full table-fixed text-sm">
           <thead>
-            <tr className="border-b border-cq-border bg-cq-bg/50 text-left text-xs font-bold uppercase tracking-wide text-cq-text-secondary">
-              <th className="w-[30%] px-4 py-3 font-bold">Question</th>
-              <th className="w-[70%] px-4 py-3 font-bold">{answersColumnLabel}</th>
+            <tr className="border-b border-cq-border bg-cq-bg/50 text-left text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
+              <th className="w-[30%] px-4 py-3 font-semibold">Question</th>
+              <th className="w-[70%] px-4 py-3 font-semibold">{answersColumnLabel}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-cq-border">
@@ -49,7 +49,7 @@ export function QuestionsTable({ rows }: { rows: TenderQuestion[] }) {
                   onClick={() => canNavigate && handleRowNavigate(row)}
                 >
                   <td className="px-4 py-4 align-top">
-                    <p className="font-bold text-cq-text">{row.questionText}</p>
+                    <p className="font-semibold text-cq-text">{row.questionText}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <QuestionTypeBadge type={row.type} direction={row.direction} />
                       {row.askedByLabel ? (

@@ -8,7 +8,7 @@ import type { Clarification } from '@/lib/clarifications/types'
 import { clarificationSiteAddress } from '@/lib/clarifications/site-address'
 
 const btnNav =
-  'inline-flex items-center gap-1.5 rounded-lg border border-cq-border bg-white px-3 py-2 text-sm font-bold text-cq-text hover:bg-cq-bg disabled:pointer-events-none disabled:opacity-40'
+  'inline-flex items-center gap-1.5 rounded-lg border border-cq-border bg-white px-3 py-2 text-sm font-semibold text-cq-text hover:bg-cq-bg disabled:pointer-events-none disabled:opacity-40'
 
 function NavButtons({
   prev,
@@ -86,7 +86,7 @@ export function ClarificationReviewHeader({
                 <span className="text-cq-text-secondary"> · </span>
                 {item.supplier}
                 {!item.reply ? (
-                  <span className="font-medium text-cq-text-secondary"> (no reply yet)</span>
+                  <span className="font-normal text-cq-text-secondary"> (no reply yet)</span>
                 ) : null}
               </p>
             ) : (

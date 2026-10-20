@@ -33,13 +33,13 @@ export function AttachmentsAccordion({
               className="flex items-center gap-3 text-sm text-cq-text"
             >
               <FileText className="h-4 w-4 shrink-0 text-cq-text-secondary" />
-              <span className="min-w-0 flex-1 truncate font-medium">{a.name}</span>
+              <span className="min-w-0 flex-1 truncate font-normal">{a.name}</span>
               <span className="tabular-nums text-cq-text-secondary">
                 {a.sizeLabel}
               </span>
               <button
                 type="button"
-                className="shrink-0 rounded-md border border-cq-border px-2 py-1 text-xs font-bold text-cq-text hover:bg-cq-bg"
+                className="shrink-0 rounded-md border border-cq-border px-2 py-1 text-xs font-semibold text-cq-text hover:bg-cq-bg"
               >
                 Download
               </button>

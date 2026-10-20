@@ -49,7 +49,7 @@ export function MovedFurtherModal({
       }}
     >
       <div className="space-y-2">
-        <p className="text-sm font-medium text-cq-text">
+        <p className="text-sm font-normal text-cq-text">
           Which stage is it at now?
         </p>
         <ul className="space-y-2">
@@ -74,7 +74,7 @@ export function MovedFurtherModal({
                     onChange={() => setNewStage(stage.name)}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2 text-sm font-medium text-cq-text">
+                    <span className="flex items-center gap-2 text-sm font-normal text-cq-text">
                       {stage.name}
                       {isDoneBefore ? (
                         <Check

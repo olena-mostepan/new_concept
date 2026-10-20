@@ -108,7 +108,7 @@ export function RaiseClarificationModal() {
         className="max-h-[calc(100dvh-2rem)] gap-6 overflow-y-auto border-cq-border p-6 sm:max-w-[480px]"
       >
         <DialogHeader className="space-y-0 text-left">
-          <DialogTitle className="text-xl font-bold text-cq-text">
+          <DialogTitle className="text-xl font-semibold text-cq-text">
             Raise clarification
           </DialogTitle>
         </DialogHeader>
@@ -183,7 +183,7 @@ export function RaiseClarificationModal() {
             type="button"
             disabled={!canSend}
             onClick={onSend}
-            className="inline-flex w-full shrink-0 items-center justify-center rounded-lg bg-[var(--cq-green)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--cq-green-hover)] disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+            className="inline-flex w-full shrink-0 items-center justify-center rounded-lg bg-[var(--cq-green)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--cq-green-hover)] disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
           >
             Send
           </button>
@@ -194,4 +194,4 @@ export function RaiseClarificationModal() {
 }
 
 const bidCancelClass =
-  'rounded-lg border border-cq-border bg-white px-4 py-2.5 text-sm font-bold text-cq-text hover:bg-cq-bg'
+  'rounded-lg border border-cq-border bg-white px-4 py-2.5 text-sm font-semibold text-cq-text hover:bg-cq-bg'

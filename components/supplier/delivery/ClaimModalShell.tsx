@@ -42,7 +42,7 @@ export function ClaimModalShell({
         }
       >
         <DialogHeader className="space-y-1 border-b border-cq-border px-6 py-5 text-left">
-          <DialogTitle className="text-xl font-semibold text-black">
+          <DialogTitle className="text-xl font-semibold text-text-primary">
             {title}
           </DialogTitle>
           <p className="text-sm text-cq-text-secondary">{subtitle}</p>

@@ -19,7 +19,7 @@ function SourceTag({ filename }: { filename: string }) {
   return (
     <p className="mt-3 text-right text-xs text-cq-text-secondary">
       from{' '}
-      <span className="inline-flex items-center gap-1 font-medium text-cq-text">
+      <span className="inline-flex items-center gap-1 font-normal text-cq-text">
         <FileText className="h-3.5 w-3.5 text-[var(--cq-green)]" aria-hidden />
         {filename}
       </span>
@@ -49,11 +49,11 @@ function FieldChangeCard({
           className="mt-0.5 border-cq-border data-[state=checked]:border-[var(--cq-green)] data-[state=checked]:bg-[var(--cq-green)]"
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-extrabold leading-snug text-cq-text">{change.label}</p>
+          <p className="text-sm font-semibold leading-snug text-cq-text">{change.label}</p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
             <div>
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-cq-text-secondary">
+              <p className="mb-1.5 text-cq-text-secondary s3">
                 Current
               </p>
               <div className="rounded-[8px] bg-cq-bg px-3 py-2.5 text-sm text-cq-text">
@@ -62,7 +62,7 @@ function FieldChangeCard({
             </div>
             <ArrowRight className="hidden h-4 w-4 shrink-0 text-cq-muted sm:mb-3 sm:block" aria-hidden />
             <div>
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-cq-text-secondary">
+              <p className="mb-1.5 text-cq-text-secondary s3">
                 Suggested
               </p>
               <input
@@ -101,7 +101,7 @@ function CaseStudyCard({
         <div className="min-w-0 flex-1 space-y-4">
           {study.fields.map((field) => (
             <div key={field.label}>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-cq-text-secondary">
+              <p className="text-cq-text-secondary s3">
                 {field.label}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-cq-text">{field.value}</p>
@@ -174,7 +174,7 @@ export function ApplyChangesModal({
             Back
           </button>
           <DialogHeader className="space-y-2 text-left">
-            <DialogTitle className="text-2xl font-extrabold tracking-tight text-cq-text">
+            <DialogTitle className="text-2xl font-semibold tracking-tight text-cq-text">
               Review profile changes
             </DialogTitle>
             <DialogDescription className="max-w-2xl text-sm leading-relaxed text-cq-text-secondary">
@@ -185,7 +185,7 @@ export function ApplyChangesModal({
           </DialogHeader>
 
           <div className="mt-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-cq-text-secondary">
+            <p className="tracking-[0.12em] text-cq-text-secondary s3">
               Documents analysed
             </p>
             <ul className="mt-2 flex flex-wrap gap-2">
@@ -228,7 +228,7 @@ export function ApplyChangesModal({
           {session.caseStudies.length > 0 && (
             <section>
               <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="text-lg font-extrabold text-cq-text">Case studies</h3>
+                <h3 className="text-lg font-semibold text-cq-text">Case studies</h3>
                 <p className="text-sm text-cq-text-secondary">
                   0 current → {session.caseStudies.length} suggestions
                 </p>
@@ -256,7 +256,7 @@ export function ApplyChangesModal({
 
         <div className="flex shrink-0 items-center justify-between gap-4 border-t border-cq-border bg-white px-6 py-4 sm:px-8">
           <p className="text-sm text-cq-text-secondary">
-            <span className="font-extrabold text-cq-text">{selectedCount}</span> of{' '}
+            <span className="font-semibold text-cq-text">{selectedCount}</span> of{' '}
             {totalItems} changes selected
           </p>
           <div className="flex items-center gap-3">

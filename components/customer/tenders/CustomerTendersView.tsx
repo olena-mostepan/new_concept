@@ -99,7 +99,7 @@ export function CustomerTendersView() {
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl space-y-5 px-6 py-8 sm:px-8 lg:px-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-black md:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
         Welcome back, {PORTFOLIO_USER}
       </h1>
 

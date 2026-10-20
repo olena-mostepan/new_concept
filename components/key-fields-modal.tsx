@@ -15,7 +15,7 @@ export function KeyFieldsModal({ open, fieldExplanations, onOpenChange }: KeyFie
         style={{ width: '778px', padding: '32px', gap: '20px' }}
       >
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Key Fields Explained</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Key Fields Explained</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-start w-full overflow-y-auto" style={{ gap: '12px' }}>
           {Object.entries(fieldExplanations).map(([key, explanation]) => (
@@ -24,7 +24,7 @@ export function KeyFieldsModal({ open, fieldExplanations, onOpenChange }: KeyFie
               className="flex flex-col items-start self-stretch rounded-lg border border-[#F3F4F6] bg-[#F9FAFB]"
               style={{ padding: '16px', gap: '8px' }}
             >
-              <div className="font-bold text-sm">
+              <div className="font-semibold text-sm">
                 {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
               </div>
               <div className="text-sm text-gray-700">{explanation}</div>

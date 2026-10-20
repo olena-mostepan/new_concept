@@ -83,7 +83,7 @@ export function ClaimStageDiagram({
               </span>
               <span
                 className={cn(
-                  'mt-1.5 w-full text-center text-[11px] font-medium leading-snug sm:text-xs',
+                  'mt-1.5 w-full text-center p7',
                   'line-clamp-2',
                   active ? 'text-[var(--cq-green)]' : 'text-cq-text-secondary',
                 )}
@@ -92,7 +92,7 @@ export function ClaimStageDiagram({
               </span>
               <span
                 className={cn(
-                  'mt-0.5 w-full text-center text-[10px] tabular-nums leading-tight sm:text-[11px]',
+                  'mt-0.5 w-full text-center tabular-nums p7',
                   active ? 'text-[var(--cq-green)]' : 'text-cq-text-secondary',
                 )}
               >

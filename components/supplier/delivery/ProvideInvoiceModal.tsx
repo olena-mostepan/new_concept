@@ -92,7 +92,7 @@ export function ProvideInvoiceModal({
         <span className="flex h-10 w-10 items-center justify-center rounded-full border border-cq-border bg-white text-cq-text-secondary">
           <FileUp className="h-5 w-5" aria-hidden />
         </span>
-        <p className="text-sm font-medium text-cq-text">
+        <p className="text-sm font-normal text-cq-text">
           Drop invoice here, or browse
         </p>
         <p className="text-xs text-cq-text-secondary">PDF or image · mock upload</p>
@@ -100,7 +100,7 @@ export function ProvideInvoiceModal({
 
       {file ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-cq-border bg-white px-3 py-2.5">
-          <p className="min-w-0 truncate text-sm font-medium text-cq-text">
+          <p className="min-w-0 truncate text-sm font-normal text-cq-text">
             {file.name}
           </p>
           <button

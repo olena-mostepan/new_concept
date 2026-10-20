@@ -10,9 +10,9 @@ import {
 import { sectionFromPerspective, type Perspective } from '@/lib/clarifications/perspective'
 
 const btnGhost =
-  'inline-flex shrink-0 items-center justify-center rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-bold text-cq-text hover:bg-cq-bg/70'
+  'inline-flex shrink-0 items-center justify-center rounded-lg border border-cq-border bg-white px-4 py-2 text-sm font-semibold text-cq-text hover:bg-cq-bg/70'
 const btnReview =
-  'inline-flex shrink-0 items-center justify-center rounded-lg bg-cq-text px-4 py-2 text-sm font-bold text-white hover:opacity-90'
+  'inline-flex shrink-0 items-center justify-center rounded-lg bg-cq-text px-4 py-2 text-sm font-semibold text-white hover:opacity-90'
 
 export function DispatchClarificationRow({
   group,
@@ -36,7 +36,7 @@ export function DispatchClarificationRow({
   return (
     <div className="grid grid-cols-1 items-center gap-4 py-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_auto] sm:gap-6 lg:py-5">
       <div className="min-w-0 space-y-1">
-        <p className="font-bold leading-snug text-cq-text">{group.title}</p>
+        <p className="font-semibold leading-snug text-cq-text">{group.title}</p>
         <p className="text-sm">
           <span className="font-semibold text-cq-link">{group.project}</span>
           <span className="text-cq-text-secondary"> · {group.raisedAgo}</span>

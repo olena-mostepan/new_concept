@@ -32,7 +32,7 @@ function ClaimActions({
 
   if (claim.status === 'confirmed' || claim.status === 'settled') {
     return (
-      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium capitalize text-emerald-800">
+      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-normal capitalize text-emerald-800">
         paid
       </span>
     )
@@ -159,7 +159,7 @@ export function ClaimRow({
           </div>
           <p
             className={cn(
-              'text-sm font-medium',
+              'text-sm font-normal',
               claim.status === 'settled' || claim.status === 'confirmed'
                 ? 'text-cq-text-secondary'
                 : 'text-cq-text',

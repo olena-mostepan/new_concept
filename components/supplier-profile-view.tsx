@@ -288,7 +288,7 @@ function ProportionBar({
               style={{ left: `${Math.min(medianPercent, 99)}%` }}
             />
           </div>
-          <span className="text-sm font-bold tabular-nums text-cq-text shrink-0">{supplierPercent}%</span>
+          <span className="text-sm font-semibold tabular-nums text-cq-text shrink-0">{supplierPercent}%</span>
           <span className="text-xs text-cq-text-secondary shrink-0">vs {medianPercent}%</span>
         </div>
       </TooltipTrigger>
@@ -343,7 +343,7 @@ function CategoryBreakdownChart({
                 className="w-2.5 h-2.5 rounded-sm shrink-0"
                 style={{ backgroundColor: d.fill }}
               />
-              <span className="text-cq-text font-medium">{d.name}</span>
+              <span className="text-cq-text font-normal">{d.name}</span>
               <span className="text-cq-text-secondary tabular-nums">{d.proportion}%</span>
             </div>
           ))}
@@ -444,7 +444,7 @@ export function SupplierProfileView({
     <div className="min-h-screen bg-cq-bg">
       <div className="w-full max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-8">
         {/* 1. Header */}
-        <nav className="flex items-center gap-1.5 text-sm text-cq-text-secondary mb-4 font-medium">
+        <nav className="flex items-center gap-1.5 text-sm text-cq-text-secondary mb-4 font-normal">
           <Link
             href={basePath}
             className="hover:text-cq-link hover:underline"
@@ -452,7 +452,7 @@ export function SupplierProfileView({
             Supplier Price Comparison
           </Link>
           <ChevronRight className="w-4 h-4 text-cq-muted" />
-          <span className="text-cq-text font-medium">
+          <span className="text-cq-text font-normal">
             {shortlist.find((s) => s.id === currentId)?.name ?? ALL_SUPPLIER_NAMES[currentId] ?? data.name}
           </span>
         </nav>
@@ -471,7 +471,7 @@ export function SupplierProfileView({
                     className="object-contain rounded-lg w-16 h-16"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-lg bg-cq-border-light flex items-center justify-center text-sm font-bold text-cq-text-secondary">
+                  <div className="w-16 h-16 rounded-lg bg-cq-border-light flex items-center justify-center text-sm font-semibold text-cq-text-secondary">
                     {(shortlist.find((s) => s.id === currentId)?.name ?? ALL_SUPPLIER_NAMES[currentId] ?? data.name)
                       .slice(0, 2)
                       .toUpperCase()}
@@ -479,12 +479,12 @@ export function SupplierProfileView({
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3 mb-3">
-                <h1 className="text-[28px] font-extrabold text-cq-text leading-tight">
+                <h1 className="text-cq-text h4">
                   {shortlist.find((s) => s.id === currentId)?.name ?? ALL_SUPPLIER_NAMES[currentId] ?? data.name}
                 </h1>
                 <div className="flex flex-wrap items-center gap-2">
                   <QualityBadge quality={data.quality} />
-                  <span className="text-xs font-bold uppercase tracking-wider text-cq-text-secondary">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-cq-text-secondary">
                     {clusterLabel}
                   </span>
                 </div>
@@ -498,7 +498,7 @@ export function SupplierProfileView({
             </div>
             <div className="w-full max-w-[340px] min-w-0">
               <div className="flex items-center justify-between gap-4 mb-2">
-                <h3 className="text-base font-bold text-cq-text">Source Documents</h3>
+                <h3 className="text-base font-semibold text-cq-text">Source Documents</h3>
                 {data.sourceDocuments && data.sourceDocuments.length >= 2 && (
                   <Button variant="outline" size="sm" asChild className="border-cq-border bg-white hover:bg-cq-bg text-cq-text shrink-0 ml-auto">
                     <a href="#">Download all</a>
@@ -510,7 +510,7 @@ export function SupplierProfileView({
                   {data.sourceDocuments.map((doc, i) => (
                     <div key={i} className="flex items-center gap-3 text-sm flex-wrap">
                       <FileText className="w-3.5 h-3.5 text-cq-text-secondary shrink-0" />
-                      <Button variant="link" size="sm" asChild className="h-auto p-0 font-medium text-cq-link hover:text-cq-green shrink-0">
+                      <Button variant="link" size="sm" asChild className="h-auto p-0 font-normal text-cq-link hover:text-cq-green shrink-0">
                         <a href="#">{doc.filename}</a>
                       </Button>
                       <span className="text-cq-muted text-xs tabular-nums shrink-0">{doc.size}</span>
@@ -556,7 +556,7 @@ export function SupplierProfileView({
                   <Icon className="w-4 h-4 text-cq-text-secondary mt-0.5 shrink-0" />
                   <div>
                     <p className="text-xs text-cq-text-secondary mb-0.5">{label}</p>
-                    <p className="font-medium text-cq-text">{value}</p>
+                    <p className="font-normal text-cq-text">{value}</p>
                   </div>
                 </div>
               ))}
@@ -579,7 +579,7 @@ export function SupplierProfileView({
                   <div className="rounded-xl border border-cq-border bg-white p-4 min-h-[100px]">
                     <p className="text-xs font-semibold uppercase tracking-wider text-cq-text-secondary mb-1">Total</p>
                     <div className="flex items-center gap-4">
-                      <p className="text-2xl font-bold text-cq-text tabular-nums shrink-0">
+                      <p className="text-2xl font-semibold text-cq-text tabular-nums shrink-0">
                         {isLedLike ? formatEur(data.totalPounds) : formatPounds(data.totalPounds)}
                       </p>
                       <div className="flex-1 min-w-0">
@@ -595,7 +595,7 @@ export function SupplierProfileView({
                       {isLedLike ? '€/luminaire' : '£/kWp'}
                     </p>
                     <div className="flex items-center gap-4">
-                      <p className="text-2xl font-bold text-cq-text tabular-nums shrink-0">
+                      <p className="text-2xl font-semibold text-cq-text tabular-nums shrink-0">
                         {isLedLike ? formatPerLuminaire(data.perKwp) : formatKwp(data.perKwp)}
                       </p>
                       <div className="flex-1 min-w-0">
@@ -629,7 +629,7 @@ export function SupplierProfileView({
                 key={value}
                 value={value}
                 className={cn(
-                  'px-4 py-2 text-sm font-bold transition-colors',
+                  'px-4 py-2 text-sm font-semibold transition-colors',
                   viewMode === value
                     ? 'bg-white text-cq-green border border-cq-green'
                     : 'bg-transparent text-cq-text border border-cq-border hover:bg-cq-border/50'
@@ -675,7 +675,7 @@ export function SupplierProfileView({
               >
                 {/* Category header row */}
                 <div className="flex flex-wrap items-center gap-3 gap-y-2 px-4 py-3 bg-cq-bg">
-                  <span className={cn('font-bold text-cq-text whitespace-nowrap w-48 shrink-0', cat.dimmed && 'text-cq-muted')}>
+                  <span className={cn('font-semibold text-cq-text whitespace-nowrap w-48 shrink-0', cat.dimmed && 'text-cq-muted')}>
                     {cat.name}
                   </span>
                   {cat.flag && (
@@ -690,7 +690,7 @@ export function SupplierProfileView({
                         medianPercent={cat.medianPercent}
                       />
                     )}
-                    <div className="text-right tabular-nums font-bold text-cq-text w-20 shrink-0">
+                    <div className="text-right tabular-nums font-semibold text-cq-text w-20 shrink-0">
                       {cat.totalAmount != null ? formatAmount(cat.totalAmount) : '—'}
                     </div>
                   </div>
@@ -702,7 +702,7 @@ export function SupplierProfileView({
                     key={subIdx}
                     className="flex flex-wrap items-start gap-2 sm:gap-4 px-4 py-2 border-t border-cq-border/50"
                   >
-                    <span className={cn('text-sm font-medium text-cq-text w-48 shrink-0 whitespace-nowrap', cat.dimmed && 'text-cq-muted')}>
+                    <span className={cn('text-sm font-normal text-cq-text w-48 shrink-0 whitespace-nowrap', cat.dimmed && 'text-cq-muted')}>
                       {sub.name}
                     </span>
                     <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
@@ -710,7 +710,7 @@ export function SupplierProfileView({
                         {sub.description}
                       </span>
                       {sub.tag === 'provisional' && (
-                        <span className="text-xs font-medium text-cq-amber shrink-0">provisional</span>
+                        <span className="text-xs font-normal text-cq-amber shrink-0">provisional</span>
                       )}
                       {sub.tag === 'bundled' && (
                         <span className="text-xs text-cq-muted shrink-0">bundled</span>

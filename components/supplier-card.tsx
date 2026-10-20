@@ -33,7 +33,7 @@ export function SupplierCard({ supplier, onViewDetails }: SupplierCardProps) {
       {/* Header: name on left, logo and actions on right */}
       <div className="flex items-start justify-between w-full">
         <div className="flex-1">
-          <h3 className="text-lg font-bold mb-1 text-[#1E2832]">{supplier.name}</h3>
+          <h3 className="text-lg font-semibold mb-1 text-[#1E2832]">{supplier.name}</h3>
         </div>
         <div className="flex flex-col justify-center items-start gap-2.5 h-10">
           <Image
@@ -53,7 +53,7 @@ export function SupplierCard({ supplier, onViewDetails }: SupplierCardProps) {
           <>
             <div className="flex flex-col items-start gap-2 flex-1 p-3 rounded-lg border border-[#F3F4F6] bg-[#F9FAFB]">
               <div className="text-xs text-[#4D5761] font-normal">Price</div>
-              <div className="text-base font-bold text-[#1E2832]">
+              <div className="text-base font-semibold text-[#1E2832]">
                 {formatPrice(supplier.price, (supplier.fields.totalLamps !== undefined || supplier.fields.systemLifespanYears !== undefined) ? '€' : '£')}
               </div>
             </div>
@@ -127,7 +127,7 @@ export function SupplierCard({ supplier, onViewDetails }: SupplierCardProps) {
           <>
             <div className="flex flex-col items-start gap-2 flex-1 p-3 rounded-lg border border-[#F3F4F6] bg-[#F9FAFB]">
               <div className="text-xs text-[#4D5761] font-normal">Price</div>
-              <div className="text-base font-bold text-[#1E2832]">{formatPrice(supplier.price)}</div>
+              <div className="text-base font-semibold text-[#1E2832]">{formatPrice(supplier.price)}</div>
             </div>
             <div className="flex flex-col items-start gap-2 flex-1 p-3 rounded-lg border border-[#F3F4F6] bg-[#F9FAFB]">
               <div className="text-xs text-[#4D5761] font-normal">Equipment removal</div>

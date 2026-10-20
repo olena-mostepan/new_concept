@@ -111,14 +111,14 @@ export function TenderComparisonPage({ config }: TenderComparisonPageProps) {
             </div>
             <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-[28px] font-extrabold text-[#1E2832] leading-tight">
+              <h1 className="text-[#1E2832] h4">
                 {config.title}
               </h1>
             </div>
             <div className="text-sm text-[#4D5761] mb-3">{config.location}</div>
             <div className="flex items-center gap-2 flex-wrap">
               {config.tags.map((tag) => (
-                <span key={tag} className="px-3 py-1 bg-gray-100 text-xs font-medium rounded">
+                <span key={tag} className="px-3 py-1 bg-gray-100 text-xs font-normal rounded">
                   {tag}
                 </span>
               ))}
@@ -131,31 +131,31 @@ export function TenderComparisonPage({ config }: TenderComparisonPageProps) {
                   {config.projectDetails.type && (
                     <div>
                       <div className="text-xs text-[#4D5761] mb-1">Type</div>
-                      <div className="text-sm font-medium text-[#1E2832]">{config.projectDetails.type}</div>
+                      <div className="text-sm font-normal text-[#1E2832]">{config.projectDetails.type}</div>
                     </div>
                   )}
                   {config.projectDetails.expectedStartDate && (
                     <div>
                       <div className="text-xs text-[#4D5761] mb-1">Expected start date</div>
-                      <div className="text-sm font-medium text-[#1E2832]">{config.projectDetails.expectedStartDate}</div>
+                      <div className="text-sm font-normal text-[#1E2832]">{config.projectDetails.expectedStartDate}</div>
                     </div>
                   )}
                   {config.projectDetails.sizeOfInstallation && (
                     <div>
                       <div className="text-xs text-[#4D5761] mb-1">Size of installation</div>
-                      <div className="text-sm font-medium text-[#1E2832]">{config.projectDetails.sizeOfInstallation}</div>
+                      <div className="text-sm font-normal text-[#1E2832]">{config.projectDetails.sizeOfInstallation}</div>
                     </div>
                   )}
                   {config.projectDetails.usableRoofArea && (
                     <div>
                       <div className="text-xs text-[#4D5761] mb-1">Usable roof area</div>
-                      <div className="text-sm font-medium text-[#1E2832]">{config.projectDetails.usableRoofArea}</div>
+                      <div className="text-sm font-normal text-[#1E2832]">{config.projectDetails.usableRoofArea}</div>
                     </div>
                   )}
                   {config.projectDetails.totalEnergyDemand && (
                     <div>
                       <div className="text-xs text-[#4D5761] mb-1">Total energy demand</div>
-                      <div className="text-sm font-medium text-[#1E2832]">{config.projectDetails.totalEnergyDemand}</div>
+                      <div className="text-sm font-normal text-[#1E2832]">{config.projectDetails.totalEnergyDemand}</div>
                     </div>
                   )}
                 </div>
@@ -185,10 +185,10 @@ export function TenderComparisonPage({ config }: TenderComparisonPageProps) {
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between w-full">
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-4 mb-2">
-                <div className="font-bold text-[#1E2832]">Tender Overview:</div>
+                <div className="font-semibold text-[#1E2832]">Tender Overview:</div>
                 <button
                   onClick={() => setShowOverviewDetails((v) => !v)}
-                  className="text-sm text-[#1C75BC] hover:underline font-bold flex items-center gap-1"
+                  className="text-sm text-[#1C75BC] hover:underline font-semibold flex items-center gap-1"
                   style={{ fontSize: "14px", lineHeight: "normal" }}
                 >
                   {showOverviewDetails ? (
@@ -226,7 +226,7 @@ export function TenderComparisonPage({ config }: TenderComparisonPageProps) {
             </div>
             <div className="md:ml-6">
               <div
-                className="flex h-6 px-3 items-center gap-1 rounded-[20px] border border-[#1C75BC] bg-[#1C75BC] text-white font-bold"
+                className="flex h-6 px-3 items-center gap-1 rounded-[20px] border border-[#1C75BC] bg-[#1C75BC] text-white font-semibold"
                 style={{ fontSize: "14px", lineHeight: "normal" }}
               >
                 Closed: {config.overview.closedDate}
@@ -242,7 +242,7 @@ export function TenderComparisonPage({ config }: TenderComparisonPageProps) {
           style={{ padding: "32px 24px 16px 24px" }}
         >
           <div className="w-full flex items-center justify-between">
-            <h2 className="text-[#1E2832] font-extrabold" style={{ fontSize: "20px", lineHeight: "normal" }}>
+            <h2 className="text-[#1E2832] font-semibold" style={{ fontSize: "20px", lineHeight: "normal" }}>
               Comparison overview
             </h2>
             <div className="flex items-center gap-3">
@@ -303,7 +303,7 @@ export function TenderComparisonPage({ config }: TenderComparisonPageProps) {
       {selectedSupplier && (
         <a
           href={`/supplier-comparison/${selectedSupplier.id}`}
-          className="fixed bottom-24 right-8 z-50 flex h-12 px-5 items-center gap-2 rounded-full bg-[var(--cq-green)] text-white font-bold shadow-xl hover:bg-[var(--cq-green-hover)] no-underline"
+          className="fixed bottom-24 right-8 z-50 flex h-12 px-5 items-center gap-2 rounded-full bg-[var(--cq-green)] text-white font-semibold shadow-xl hover:bg-[var(--cq-green-hover)] no-underline"
         >
           Supplier profile
         </a>

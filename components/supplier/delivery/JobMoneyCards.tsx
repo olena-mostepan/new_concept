@@ -24,7 +24,7 @@ function WhiteMoneyCard({
       <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
         {label}
       </p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-black">
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-text-primary">
         {amount}
       </p>
       <div className="mt-2 text-sm text-cq-text-secondary">{children}</div>
@@ -48,7 +48,7 @@ export function JobMoneyCards({ job }: { job: JobDeliveryDetail }) {
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-green)]">
           Invoiceable now
         </p>
-        <p className="mt-3 text-2xl font-semibold tracking-tight text-black">
+        <p className="mt-3 text-2xl font-semibold tracking-tight text-text-primary">
           {formatGbp(job.dueNow)}
         </p>
         <p className="mt-2 text-sm text-cq-text-secondary">

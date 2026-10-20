@@ -120,7 +120,7 @@ export function CustomerProjectDeliveryView({
                 key={label}
                 className="grid grid-cols-1 gap-2 px-5 py-4 sm:grid-cols-[1fr_10rem_auto_1fr] sm:items-center sm:gap-x-4 sm:px-6"
               >
-                <p className="text-sm font-medium text-cq-text">{label}</p>
+                <p className="text-sm font-normal text-cq-text">{label}</p>
                 <p className="text-left text-sm text-cq-text-secondary">
                   {entry.date
                     ? entry.state === 'estimate'
@@ -130,7 +130,7 @@ export function CustomerProjectDeliveryView({
                 </p>
                 <span
                   className={cn(
-                    'inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium capitalize',
+                    'inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-xs font-normal capitalize',
                     pill.className,
                   )}
                 >

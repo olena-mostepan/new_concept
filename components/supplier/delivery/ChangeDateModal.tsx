@@ -96,7 +96,7 @@ export function ChangeDateModal({
       }}
     >
       <div className="space-y-1.5">
-        <p className="text-sm font-medium text-cq-text">
+        <p className="text-sm font-normal text-cq-text">
           {focusStage
             ? `When did '${focusStage}' actually happen?`
             : 'When did it actually happen?'}
@@ -113,9 +113,9 @@ export function ChangeDateModal({
                 }
               }}
               className={cn(
-                'rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors',
+                'rounded-md px-3 py-1.5 text-sm font-normal capitalize transition-colors',
                 precision === mode
-                  ? 'bg-white text-black shadow-sm'
+                  ? 'bg-white text-text-primary shadow-sm'
                   : 'text-cq-text-secondary hover:text-cq-text',
               )}
             >
@@ -171,13 +171,13 @@ export function ChangeDateModal({
                 key={row.stage}
                 className="flex flex-wrap items-baseline justify-between gap-2 text-sm"
               >
-                <span className="font-medium capitalize text-cq-text">
+                <span className="font-normal capitalize text-cq-text">
                   {row.stage}
                 </span>
                 <span className="text-cq-text-secondary">
                   {formatShortDate(row.projectedDate)}
                   <span className="mx-1.5 text-cq-muted">→</span>
-                  <span className="font-medium text-black">
+                  <span className="font-normal text-text-primary">
                     {formatShortDate(row.newDate)}
                   </span>
                 </span>

@@ -4,10 +4,10 @@ import { cn } from '@/lib/utils'
 import type { ProfileNudgeItem } from '@/lib/supplier/profile/nudge-items'
 
 const btnCoralOutline =
-  'shrink-0 rounded-md border border-[var(--cq-green)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--cq-green)] hover:bg-[var(--cq-accent-muted)]'
+  'shrink-0 rounded-md border border-[var(--cq-green)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--cq-green)] hover:bg-[var(--cq-accent-muted)]'
 
 const btnGreyOutline =
-  'shrink-0 rounded-md border border-cq-border bg-white px-3 py-1.5 text-xs font-bold text-cq-text hover:bg-cq-bg'
+  'shrink-0 rounded-md border border-cq-border bg-white px-3 py-1.5 text-xs font-semibold text-cq-text hover:bg-cq-bg'
 
 export function ProfileNudgeBlock({
   items,
@@ -21,10 +21,10 @@ export function ProfileNudgeBlock({
   return (
     <section className="overflow-hidden rounded-lg border border-[var(--cq-green)]/20 bg-[var(--cq-accent-muted)]">
       <div className="flex items-center justify-between gap-2 px-4 py-2.5">
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--cq-green)]">
+        <h3 className="tracking-[0.12em] text-[var(--cq-green)] s3 text-text-tertiary">
           Your profile needs attention
         </h3>
-        <span className="inline-flex shrink-0 rounded-full border border-cq-border bg-cq-bg px-2 py-0.5 text-[11px] font-bold text-cq-text-secondary">
+        <span className="inline-flex shrink-0 rounded-full border border-cq-border bg-cq-bg px-2 py-0.5 text-cq-text-secondary p7">
           {items.length} incomplete
         </span>
       </div>
@@ -39,16 +39,16 @@ export function ProfileNudgeBlock({
               <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    'text-[13px] leading-snug',
+                    'p6',
                     item.priority === 'high'
-                      ? 'font-bold text-cq-text'
-                      : 'font-medium text-cq-text-secondary',
+                      ? 'font-semibold text-cq-text'
+                      : 'font-normal text-cq-text-secondary',
                   )}
                 >
                   {item.label}
                 </p>
                 {item.subtitle ? (
-                  <p className="mt-0.5 text-[11px] leading-snug text-cq-text-secondary">{item.subtitle}</p>
+                  <p className="mt-0.5 text-cq-text-secondary p7">{item.subtitle}</p>
                 ) : null}
               </div>
               <button

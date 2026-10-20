@@ -348,12 +348,12 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
   return (
     <div className="flex flex-col items-start gap-4 self-stretch rounded-lg border border-[#F3F4F6] bg-white" style={{ padding: '32px 24px 16px 24px' }}>
       <div className="flex items-center justify-between gap-3 w-full">
-        <h2 className="text-[#1E2832] font-extrabold" style={{ fontSize: '20px', lineHeight: 'normal' }}>Detailed Comparison</h2>
+        <h2 className="text-[#1E2832] font-semibold" style={{ fontSize: '20px', lineHeight: 'normal' }}>Detailed Comparison</h2>
         <div className="flex items-center gap-6">
           {onShowKeyFields && (
             <button
               onClick={onShowKeyFields}
-              className="flex items-center gap-1 text-sm text-[#1C75BC] hover:underline font-bold"
+              className="flex items-center gap-1 text-sm text-[#1C75BC] hover:underline font-semibold"
               style={{ fontSize: '14px', lineHeight: 'normal' }}
             >
               <Info className="h-4 w-4" />
@@ -379,7 +379,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
         <div className="flex gap-2">
           <button
             onClick={() => setActiveFilter("relevance")}
-            className={`px-4 py-2 rounded-lg text-[14px] font-bold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-[14px] font-semibold transition-colors ${
               activeFilter === "relevance"
                 ? 'bg-white text-[var(--cq-green)] border border-[var(--cq-green)]'
                 : 'bg-[#F9FAFB] text-[#1E2832] border border-[#D3D7DC]'
@@ -389,7 +389,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
           </button>
           <button
             onClick={() => setActiveFilter("financial")}
-            className={`px-4 py-2 rounded-lg text-[14px] font-bold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-[14px] font-semibold transition-colors ${
               activeFilter === "financial"
                 ? 'bg-white text-[var(--cq-green)] border border-[var(--cq-green)]'
                 : 'bg-[#F9FAFB] text-[#1E2832] border border-[#D3D7DC]'
@@ -399,7 +399,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
           </button>
           <button
             onClick={() => setActiveFilter("speed")}
-            className={`px-4 py-2 rounded-lg text-[14px] font-bold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-[14px] font-semibold transition-colors ${
               activeFilter === "speed"
                 ? 'bg-white text-[var(--cq-green)] border border-[var(--cq-green)]'
                 : 'bg-[#F9FAFB] text-[#1E2832] border border-[#D3D7DC]'
@@ -409,7 +409,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
           </button>
           <button
             onClick={() => setActiveFilter("technical")}
-            className={`px-4 py-2 rounded-lg text-[14px] font-bold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-[14px] font-semibold transition-colors ${
               activeFilter === "technical"
                 ? 'bg-white text-[var(--cq-green)] border border-[var(--cq-green)]'
                 : 'bg-[#F9FAFB] text-[#1E2832] border border-[#D3D7DC]'
@@ -430,7 +430,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                   {/* Category header row */}
                   <tr className="border-b border-gray-200 bg-gray-50">
                     <td
-                      className="p-3 pl-4 border-r border-gray-200 sticky font-bold text-sm cursor-pointer select-none text-[#1E2832]"
+                      className="p-3 pl-4 border-r border-gray-200 sticky font-semibold text-sm cursor-pointer select-none text-[#1E2832]"
                       style={{ minWidth: '200px', width: '200px', left: '0', position: 'sticky', backgroundColor: '#f9fafb', zIndex: 30, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}
                     onClick={() => toggleCategory(category.name)}
                   >
@@ -470,7 +470,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                          {/* Score Results row - first in each category */}
                          {isExpanded && (
                            <tr className="border-b border-gray-200 bg-white hover:bg-blue-50 group">
-                      <td className="p-3 pl-8 border-r border-gray-200 sticky group-hover:bg-blue-50 text-sm leading-tight font-medium text-[#4D5761]"
+                      <td className="p-3 pl-8 border-r border-gray-200 sticky group-hover:bg-blue-50 text-sm leading-tight font-normal text-[#4D5761]"
                           style={{ minWidth: '200px', width: '200px', left: '0', position: 'sticky', backgroundColor: 'white', zIndex: 30, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}>
                         Score Results
                       </td>
@@ -482,7 +482,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                         >
                           <button
                             onClick={() => openScoreModal(category.name, supplier.name)}
-                            className="text-[#1C75BC] hover:text-[#1C75BC] hover:underline cursor-pointer font-bold"
+                            className="text-[#1C75BC] hover:text-[#1C75BC] hover:underline cursor-pointer font-semibold"
                             style={{ fontSize: '14px', lineHeight: 'normal' }}
                           >
                             {getScore(category.name, supplier.id)}/5
@@ -495,7 +495,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                   {/* Field rows */}
                          {isExpanded && category.fields.map((field, fieldIndex) => (
                            <tr key={`${category.name}-${field.key}-${fieldIndex}`} className="border-b border-gray-200 bg-white hover:bg-blue-50 group">
-                             <td className="p-3 pl-8 border-r border-gray-200 sticky group-hover:bg-blue-50 text-sm leading-tight font-medium text-[#4D5761]"
+                             <td className="p-3 pl-8 border-r border-gray-200 sticky group-hover:bg-blue-50 text-sm leading-tight font-normal text-[#4D5761]"
                                  style={{ minWidth: '200px', width: '200px', left: '0', position: 'sticky', backgroundColor: 'white', zIndex: 30, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}>
                                <div className="flex items-center gap-1">
                                  <span>{field.label}</span>
@@ -568,7 +568,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                                    style={{ minWidth: '180px', width: '180px', maxWidth: '180px', borderRight: index === orderedSuppliers.length - 1 ? 'none' : '1px solid #e5e7eb' }}
                                  >
                                    {field.key === "price" && typeof value === "number" ? (
-                                     <span className="font-bold text-[#1E2832]"
+                                     <span className="font-semibold text-[#1E2832]"
                                        style={{ fontSize: '14px', lineHeight: 'normal' }}
                                      >
                                        £{value.toLocaleString()}
@@ -589,7 +589,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                                        </span>
                                        <button
                                          onClick={() => setSelectedOMApproach({ supplierName: supplier.name, text: value as string })}
-                                         className="text-[#1C75BC] hover:underline font-bold text-left text-sm self-start"
+                                         className="text-[#1C75BC] hover:underline font-semibold text-left text-sm self-start"
                                          style={{ fontSize: '14px', lineHeight: 'normal' }}
                                        >
                                          Read more
@@ -629,7 +629,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
             })}
             {/* General score row */}
             <tr className="border-b border-gray-200 bg-white hover:bg-blue-50 text-sm group">
-              <td className="p-3 pl-8 border-r border-gray-200 sticky group-hover:bg-blue-50 text-sm leading-tight font-medium text-[#4D5761]"
+              <td className="p-3 pl-8 border-r border-gray-200 sticky group-hover:bg-blue-50 text-sm leading-tight font-normal text-[#4D5761]"
                   style={{ minWidth: '200px', width: '200px', left: '0', position: 'sticky', backgroundColor: 'white', zIndex: 30, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}>General score</td>
               {orderedSuppliers.map((supplier, index) => (
                 <td key={`general-score-${supplier.id}`} className="p-3 border-r border-gray-200 text-sm leading-tight"
@@ -639,7 +639,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                       const categoryName = activeFilter === "relevance" ? "Supplier relevance" : activeFilter === "financial" ? "Financial scope" : activeFilter === "speed" ? "Speed" : "Technical scope"
                       setSelectedScoreModal({ category: categoryName, supplier: supplier.name, isGeneralScore: true })
                     }}
-                    className="text-[#1C75BC] hover:text-[#1C75BC] hover:underline cursor-pointer font-bold"
+                    className="text-[#1C75BC] hover:text-[#1C75BC] hover:underline cursor-pointer font-semibold"
                     style={{ fontSize: '14px', lineHeight: 'normal' }}
                   >
                     {getGeneralScore(supplier.id)}/5
@@ -649,7 +649,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
             </tr>
                    {/* Contact CTA row */}
                    <tr className="border-b border-gray-200 bg-white text-sm group">
-                     <td className="p-3 pl-8 border-r border-gray-200 sticky text-sm leading-tight font-medium text-[#4D5761]"
+                     <td className="p-3 pl-8 border-r border-gray-200 sticky text-sm leading-tight font-normal text-[#4D5761]"
                          style={{ minWidth: '200px', width: '200px', left: '0', position: 'sticky', backgroundColor: 'white', zIndex: 30, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}>Contact</td>
                      {orderedSuppliers.map((supplier, index) => (
                        <td key={`contact-${supplier.id}`} className="p-3 border-r border-gray-200 text-sm leading-tight"
@@ -676,7 +676,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
         >
           <DialogHeader>
             <DialogTitle 
-              className="font-extrabold text-[#1E2832]"
+              className="font-semibold text-[#1E2832]"
               style={{ fontSize: '20px', lineHeight: 'normal' }}
             >
               {selectedScoreModal?.supplier}'s Score for {selectedScoreModal?.category}
@@ -691,7 +691,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                 style={{ padding: '16px', gap: '16px' }}
               >
                 <h3 
-                  className="font-bold text-[#1E2832]"
+                  className="font-semibold text-[#1E2832]"
                   style={{ fontSize: '18px', lineHeight: 'normal' }}
                 >
                   Why this has scored {getScore(selectedScoreModal.category, suppliers.find(s => s.name === selectedScoreModal.supplier)?.id || "1")}/5.
@@ -714,22 +714,22 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                           <>
                             <div className="flex justify-between">
                               <span className="text-[#4D5761]">Supplier</span>
-                              <span className="font-bold text-[#1E2832]">65%</span>
+                              <span className="font-semibold text-[#1E2832]">65%</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-[#4D5761]">Bid</span>
-                              <span className="font-bold text-[#1E2832]">35%</span>
+                              <span className="font-semibold text-[#1E2832]">35%</span>
                             </div>
                           </>
                         ) : (
                           <>
                             <div className="flex justify-between">
                               <span className="text-[#4D5761]">Supplier</span>
-                              <span className="font-bold text-[#1E2832]">35%</span>
+                              <span className="font-semibold text-[#1E2832]">35%</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-[#4D5761]">Bid</span>
-                              <span className="font-bold text-[#1E2832]">65%</span>
+                              <span className="font-semibold text-[#1E2832]">65%</span>
                             </div>
                           </>
                         )}
@@ -742,7 +742,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
               {/* Score Results section */}
               <div className="flex flex-col items-start self-stretch">
                 <h4 
-                  className="font-bold text-[#1E2832] mb-3"
+                  className="font-semibold text-[#1E2832] mb-3"
                   style={{ fontSize: '18px', lineHeight: 'normal' }}
                 >
                   Score Results
@@ -758,7 +758,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                         <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                         <span className="text-sm">{supplier.name}</span>
                       </div>
-                      <span className="text-sm font-bold">
+                      <span className="text-sm font-semibold">
                         {getScore(selectedScoreModal.category, supplier.id)}/5
                       </span>
                     </div>
@@ -774,7 +774,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center text-xs">?</div>
                   <h4 
-                    className="font-bold text-[#004B75]"
+                    className="font-semibold text-[#004B75]"
                     style={{ fontSize: '14px', lineHeight: 'normal' }}
                   >
                     What does this score mean?
@@ -797,7 +797,7 @@ export function ComparisonTable({ suppliers, categories, onSupplierClick, onShow
         >
           <DialogHeader>
             <DialogTitle 
-              className="font-extrabold text-[#1E2832]"
+              className="font-semibold text-[#1E2832]"
               style={{ fontSize: '20px', lineHeight: 'normal' }}
             >
               O&M Approach - {selectedOMApproach?.supplierName}

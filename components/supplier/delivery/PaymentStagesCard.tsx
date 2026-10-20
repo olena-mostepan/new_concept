@@ -73,7 +73,7 @@ export function PaymentStagesCard({
           <h2 className={sectionTitleClass}>Payment stages &amp; dates</h2>
           <p className="mt-1 text-sm text-cq-text-secondary">
             From the{' '}
-            <span className="font-medium text-cq-text">{job.model.name}</span>{' '}
+            <span className="font-normal text-cq-text">{job.model.name}</span>{' '}
             payment plan
           </p>
         </div>
@@ -140,7 +140,7 @@ export function PaymentStagesCard({
           return (
             <li key={stage.name} className="px-5 py-4 sm:px-6">
               <div className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1.15fr)_2.75rem_minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,0.95fr)_minmax(5.5rem,auto)_minmax(4.5rem,auto)] sm:items-center sm:gap-x-4 sm:gap-y-2">
-                <p className="text-sm font-medium text-cq-text">{stage.name}</p>
+                <p className="text-sm font-normal text-cq-text">{stage.name}</p>
                 <p
                   className={cn(
                     'text-sm',
@@ -156,7 +156,7 @@ export function PaymentStagesCard({
                     'text-sm',
                     isComplete || stage.pct <= 0
                       ? 'text-cq-muted'
-                      : 'font-semibold text-black',
+                      : 'font-semibold text-text-primary',
                   )}
                 >
                   {isComplete || stage.pct <= 0
@@ -183,7 +183,7 @@ export function PaymentStagesCard({
                   type="button"
                   className={cn(
                     'inline-flex w-fit items-center gap-1.5 text-sm text-cq-text-secondary transition-colors',
-                    overdue && 'font-medium text-cq-text',
+                    overdue && 'font-normal text-cq-text',
                     settled ? 'cursor-default' : 'hover:text-cq-text',
                   )}
                   onClick={() => !settled && onEditDate(stage)}
@@ -201,7 +201,7 @@ export function PaymentStagesCard({
                   ) : (
                     <span
                       className={cn(
-                        'inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium capitalize',
+                        'inline-flex w-fit shrink-0 rounded-full border px-2.5 py-1 text-xs font-normal capitalize',
                         overdue
                           ? 'border-red-200 bg-red-50 text-red-700'
                           : pill.className,

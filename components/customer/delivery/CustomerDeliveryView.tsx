@@ -29,10 +29,40 @@ function buildConfirmQueue(projects: CustomerProject[]): string[] {
   return projects.filter(needsDateConfirm).map((p) => p.id)
 }
 
-export function CustomerDeliveryView() {
-  const [payload, setPayload] = React.useState<CustomerDeliveryPayload>(
+export function CustomerDeliveryView({
+  payload: payloadProp,
+  onPayloadChange,
+  projectHref,
+  embedded = false,
+  showBanner = true,
+  showList = true,
+  showCity = false,
+  conceptRows = false,
+  bare = false,
+  bannerDetail,
+}: {
+  payload?: CustomerDeliveryPayload
+  onPayloadChange?: (next: CustomerDeliveryPayload) => void
+  projectHref?: (project: CustomerProject) => string
+  embedded?: boolean
+  showBanner?: boolean
+  showList?: boolean
+  showCity?: boolean
+  conceptRows?: boolean
+  bare?: boolean
+  bannerDetail?: string
+} = {}) {
+  const [uncontrolled, setUncontrolled] = React.useState<CustomerDeliveryPayload>(
     INITIAL_CUSTOMER_DELIVERY,
   )
+  const payload = payloadProp ?? uncontrolled
+  const setPayload = (
+    value: CustomerDeliveryPayload | ((prev: CustomerDeliveryPayload) => CustomerDeliveryPayload),
+  ) => {
+    const next = typeof value === 'function' ? value(payload) : value
+    if (onPayloadChange) onPayloadChange(next)
+    else setUncontrolled(next)
+  }
   const [confirmProjectId, setConfirmProjectId] = React.useState<string | null>(
     null,
   )
@@ -161,17 +191,19 @@ export function CustomerDeliveryView() {
     confirmProject?.phases.find((p) => p.id === confirmProject.currentPhaseId)
       ?.label ?? null
 
+  const listOn = showList || reviewMode
+
   return (
-    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-6 py-8 sm:px-8 lg:px-10">
-      {payload.datesNeedingConfirm > 0 && !reviewMode ? (
+    <div className={embedded ? 'space-y-6' : 'mx-auto w-full max-w-screen-2xl space-y-6 px-6 py-8 sm:px-8 lg:px-10'}>
+      {showBanner && payload.datesNeedingConfirm > 0 && !reviewMode ? (
         <MoneyWashCard>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
             <div className="min-w-0 flex-1 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-green)]">
                 Dates to confirm
               </p>
-              <p className="text-base font-medium text-cq-text sm:text-lg">
-                <span className="font-semibold text-black">
+              <p className="text-base font-semibold text-cq-text sm:text-lg">
+                <span className="font-semibold text-text-primary">
                   {payload.datesNeedingConfirm}{' '}
                   {payload.datesNeedingConfirm === 1 ? 'date' : 'dates'}
                 </span>{' '}
@@ -180,8 +212,8 @@ export function CustomerDeliveryView() {
                   : 'need confirming'}
               </p>
               <p className="text-sm text-cq-text-secondary">
-                If a start date or phase is wrong, project tracking will be off
-                too — so check them below.
+                {bannerDetail ??
+                  'If a start date or phase is wrong, project tracking will be off too — so check them below.'}
               </p>
             </div>
             <button
@@ -198,7 +230,7 @@ export function CustomerDeliveryView() {
 
       {reviewMode ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--cq-green)]/30 bg-[var(--cq-accent-muted)]/60 px-4 py-3">
-          <p className="text-sm font-medium text-cq-text">
+          <p className="text-sm font-normal text-cq-text">
             Let&apos;s confirm dates — {activeQueue.length} to check
           </p>
           <button type="button" className="btn-link text-sm" onClick={exitReview}>
@@ -207,15 +239,17 @@ export function CustomerDeliveryView() {
         </div>
       ) : null}
 
+      {listOn ? (
       <div ref={listRef} className="space-y-8">
         {payload.batches.map((batch) => (
           <section
             key={batch.id}
-            className="overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm"
+            className={bare ? '' : 'overflow-hidden rounded-xl border border-cq-border bg-white shadow-sm'}
           >
+            {!bare ? (
             <header className="flex flex-wrap items-center justify-between gap-3 border-b border-cq-border bg-cq-bg/60 px-5 py-4 sm:px-6">
               <div className="min-w-0">
-                <h3 className="text-base font-semibold text-black">
+                <h3 className="text-base font-semibold text-text-primary">
                   {batch.name}
                 </h3>
                 <p className="mt-0.5 text-sm text-cq-text-secondary">
@@ -224,15 +258,16 @@ export function CustomerDeliveryView() {
                 </p>
               </div>
               {batch.toConfirmCount > 0 ? (
-                <span className="inline-flex rounded-full border border-[var(--cq-link)]/30 bg-[var(--cq-link)]/10 px-2.5 py-1 text-xs font-medium text-[var(--cq-link)]">
+                <span className="inline-flex rounded-full border border-[var(--cq-link)]/30 bg-[var(--cq-link)]/10 px-2.5 py-1 text-xs font-normal text-[var(--cq-link)]">
                   {batch.toConfirmCount} to confirm
                 </span>
               ) : (
-                <span className="inline-flex rounded-full border border-[var(--cq-green)]/30 bg-[var(--cq-green)]/10 px-2.5 py-1 text-xs font-medium text-[var(--cq-green)]">
+                <span className="inline-flex rounded-full border border-[var(--cq-green)]/30 bg-[var(--cq-green)]/10 px-2.5 py-1 text-xs font-normal text-[var(--cq-green)]">
                   All confirmed
                 </span>
               )}
             </header>
+            ) : null}
 
             <div className="overflow-x-auto">
               <table className="w-full min-w-[960px] text-left text-sm">
@@ -297,13 +332,16 @@ export function CustomerDeliveryView() {
                       >
                         <td className="min-w-[240px] px-5 py-4 align-middle sm:min-w-[280px] sm:px-6">
                           <Link
-                            href={`/customer/projects/${project.id}`}
-                            className="font-medium text-cq-text hover:text-[var(--cq-green)] hover:underline"
+                            href={projectHref ? projectHref(project) : `/customer/projects/${project.id}`}
+                            className="font-normal text-cq-text hover:text-[var(--cq-green)] hover:underline"
                           >
                             {project.name}
+                            {showCity && project.location ? (
+                              <span className="ml-2 font-normal text-cq-text-secondary">{project.location}</span>
+                            ) : null}
                           </Link>
                           <p className="mt-0.5 text-xs text-cq-text-secondary">
-                            {project.supplier} · {project.valueLabel}
+                            {project.supplier}{project.valueLabel !== '—' ? ` · ${project.valueLabel}` : ''}
                           </p>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 align-middle">
@@ -325,8 +363,9 @@ export function CustomerDeliveryView() {
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 align-middle text-right sm:px-6">
-                          <div className="flex justify-end">
-                            {needsDateConfirm(project) ? (
+                          <div className="flex items-center justify-end gap-3">
+                            {conceptRows ? <span className="text-sm text-cq-text">{project.insightLabel}</span> : null}
+                            {(conceptRows ? project.needsConfirm : needsDateConfirm(project)) ? (
                               <button
                                 type="button"
                                 className="btn-primary-sm"
@@ -337,11 +376,16 @@ export function CustomerDeliveryView() {
                               >
                                 Confirm date
                               </button>
-                            ) : (
-                              <span className="inline-flex w-fit rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium capitalize text-emerald-800">
+                            ) : conceptRows ? null : (
+                              <span className="inline-flex w-fit rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-normal capitalize text-emerald-800">
                                 confirmed
                               </span>
                             )}
+                            {conceptRows && projectHref ? (
+                              <Link href={projectHref(project)} className="btn-secondary-sm">
+                                View
+                              </Link>
+                            ) : null}
                           </div>
                         </td>
                       </tr>
@@ -353,6 +397,7 @@ export function CustomerDeliveryView() {
           </section>
         ))}
       </div>
+      ) : null}
 
       <CustomerChangeDateModal
         open={Boolean(confirmProject)}

@@ -54,7 +54,7 @@ export function CustomerChangeDateModal({
         className="gap-0 overflow-hidden border-cq-border p-0 sm:max-w-[480px]"
       >
         <DialogHeader className="space-y-1 border-b border-cq-border px-6 py-5 text-left">
-          <DialogTitle className="text-xl font-semibold text-black">
+          <DialogTitle className="text-xl font-semibold text-text-primary">
             {title}
           </DialogTitle>
           <p className="text-sm text-cq-text-secondary">
@@ -70,14 +70,14 @@ export function CustomerChangeDateModal({
               <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
                 Stage
               </p>
-              <p className="mt-0.5 text-sm font-semibold text-black">
+              <p className="mt-0.5 text-sm font-semibold text-text-primary">
                 {stageLabel}
               </p>
             </div>
           ) : null}
 
           <div className="space-y-1.5">
-            <p className="text-sm font-medium text-cq-text">
+            <p className="text-sm font-normal text-cq-text">
               What is the correct date for {stageLabel ?? 'this stage'}?
             </p>
             <div className="inline-flex rounded-lg border border-cq-border bg-cq-bg p-1">
@@ -94,9 +94,9 @@ export function CustomerChangeDateModal({
                     }
                   }}
                   className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors',
+                    'rounded-md px-3 py-1.5 text-sm font-normal capitalize transition-colors',
                     precision === mode
-                      ? 'bg-white text-black shadow-sm'
+                      ? 'bg-white text-text-primary shadow-sm'
                       : 'text-cq-text-secondary hover:text-cq-text',
                   )}
                 >
@@ -109,7 +109,7 @@ export function CustomerChangeDateModal({
           <div className="space-y-1.5">
             <label
               htmlFor="customer-change-date"
-              className="text-sm font-medium text-cq-text"
+              className="text-sm font-normal text-cq-text"
             >
               Date
             </label>

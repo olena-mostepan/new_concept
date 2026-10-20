@@ -248,7 +248,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
       {/* Summary Section */}
       {data.summary && (
         <div className="bg-gradient-to-r from-[var(--cq-green)]/10 to-[var(--cq-green)]/5 rounded-lg p-5 border border-[var(--cq-green)]/20">
-          <h3 className="text-lg font-bold text-[#1E2832] mb-2">
+          <h3 className="text-lg font-semibold text-[#1E2832] mb-2">
             {data.summary.title}
           </h3>
           <p className="text-sm text-[#4D5761] leading-relaxed">
@@ -260,7 +260,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
       {/* What's Included Section */}
       {data.whatsIncluded && data.whatsIncluded.length > 0 && (
         <div>
-          <h3 className="text-base font-bold text-[#1E2832] mb-3 flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[#1E2832] mb-3 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-[var(--cq-green)]" />
             What's Included
           </h3>
@@ -278,7 +278,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
       {/* Support Features Grid */}
       {data.supportFeatures && data.supportFeatures.length > 0 && (
         <div>
-          <h3 className="text-base font-bold text-[#1E2832] mb-3">
+          <h3 className="text-base font-semibold text-[#1E2832] mb-3">
             Support Features
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -308,7 +308,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
       {/* Monitoring Process */}
       {data.monitoringProcess && data.monitoringProcess.length > 0 && (
         <div>
-          <h3 className="text-base font-bold text-[#1E2832] mb-3 flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[#1E2832] mb-3 flex items-center gap-2">
             <Monitor className="w-5 h-5 text-[var(--cq-green)]" />
             Monitoring Process
           </h3>
@@ -322,7 +322,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
                   {process.phase}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-[#1E2832] font-medium mb-1">
+                  <p className="text-sm text-[#1E2832] font-normal mb-1">
                     {process.action}
                   </p>
                   <span className="text-xs text-[#4D5761]">
@@ -339,7 +339,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
       {data.issueResolution && data.issueResolution.steps && data.issueResolution.steps.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-bold text-[#1E2832] flex items-center gap-2">
+            <h3 className="text-base font-semibold text-[#1E2832] flex items-center gap-2">
               <Wrench className="w-5 h-5 text-[var(--cq-green)]" />
               Issue Resolution Process
             </h3>
@@ -358,7 +358,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
             <div className="space-y-4">
               {data.issueResolution.steps.map((step, index) => (
                 <div key={index} className="relative flex items-start gap-4">
-                  <div className="bg-[var(--cq-green)] text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 z-10 font-bold text-sm">
+                  <div className="bg-[var(--cq-green)] text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 z-10 font-semibold text-sm">
                     {step.number}
                   </div>
                   <div className="flex-1 bg-white border border-[#E5E7EB] rounded-lg p-4">
@@ -368,12 +368,12 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
                           {step.action}
                         </h4>
                         <p className="text-xs text-[#4D5761]">
-                          Handled by: <span className="font-medium text-[var(--cq-green)]">{step.who}</span>
+                          Handled by: <span className="font-normal text-[var(--cq-green)]">{step.who}</span>
                         </p>
                       </div>
                       {step.customerAction && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex-shrink-0">
-                          <p className="text-xs font-medium text-blue-900 mb-0.5">Your Action</p>
+                          <p className="text-xs font-normal text-blue-900 mb-0.5">Your Action</p>
                           <p className="text-xs text-blue-700">{step.customerAction}</p>
                         </div>
                       )}
@@ -390,7 +390,7 @@ export function OMApproachDisplay({ text, structuredData }: OMApproachDisplayPro
       {data.responsibilities && (
         (data.responsibilities.customer?.length > 0 || data.responsibilities.supplier?.length > 0) && (
           <div>
-            <h3 className="text-base font-bold text-[#1E2832] mb-3 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-[#1E2832] mb-3 flex items-center gap-2">
               <Users className="w-5 h-5 text-[var(--cq-green)]" />
               Responsibilities
             </h3>

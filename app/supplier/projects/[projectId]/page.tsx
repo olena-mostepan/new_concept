@@ -103,7 +103,7 @@ function SupplierProjectPageInner() {
         <p className="text-cq-text-secondary">This project could not be found.</p>
         <Link
           href="/supplier"
-          className="mt-4 inline-block font-bold text-cq-link underline"
+          className="mt-4 inline-block font-semibold text-cq-link underline"
         >
           Back to Focus
         </Link>

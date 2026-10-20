@@ -42,7 +42,7 @@ export function UploadFilesModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[480px] gap-0 p-0 sm:max-w-[480px]" showCloseButton>
         <DialogHeader className="border-b border-cq-border px-6 pb-4 pt-6">
-          <DialogTitle className="text-lg font-extrabold text-cq-text">Upload Files</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-cq-text">Upload Files</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-1 px-6 pt-4">
@@ -88,7 +88,7 @@ export function UploadFilesModal({
                 : 'flex h-[200px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-cq-border bg-cq-bg transition-colors'
             }
           >
-            <span className="text-sm font-bold text-[var(--cq-green)]">Upload a file</span>
+            <span className="text-sm font-semibold text-[var(--cq-green)]">Upload a file</span>
             <span className="mt-1 text-sm text-cq-text">or drag and drop</span>
             <span className="mt-2 text-xs text-cq-text-secondary">
               PDF, DOCX, JPG or PNG up to 10MB
@@ -104,7 +104,7 @@ export function UploadFilesModal({
                 className="flex items-center gap-2 rounded-lg border border-cq-border bg-white px-3 py-2 text-sm"
               >
                 <FileIcon className="h-4 w-4 shrink-0 text-cq-text-secondary" />
-                <span className="min-w-0 flex-1 truncate font-medium text-cq-text">{f.name}</span>
+                <span className="min-w-0 flex-1 truncate font-normal text-cq-text">{f.name}</span>
                 <span className="shrink-0 text-xs text-cq-text-secondary">
                   {(f.size / 1024).toFixed(0)} KB
                 </span>

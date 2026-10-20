@@ -15,7 +15,7 @@ import { useClarifications } from '@/lib/clarifications/store'
 import { toast } from 'sonner'
 
 const btnGhost =
-  'rounded-lg border border-cq-border bg-white px-4 py-2.5 text-sm font-bold text-cq-text hover:bg-cq-bg'
+  'rounded-lg border border-cq-border bg-white px-4 py-2.5 text-sm font-semibold text-cq-text hover:bg-cq-bg'
 
 export default function ClarificationReviewPage() {
   const router = useRouter()
@@ -28,7 +28,7 @@ export default function ClarificationReviewPage() {
     return (
       <div className="mx-auto max-w-2xl px-6 py-16 text-center">
         <p className="text-cq-text-secondary">This clarification could not be found.</p>
-        <Link href="/clarifications" className="mt-4 inline-block font-bold text-cq-link underline">
+        <Link href="/clarifications" className="mt-4 inline-block font-semibold text-cq-link underline">
           Back to clarifications
         </Link>
       </div>
@@ -58,7 +58,7 @@ export default function ClarificationReviewPage() {
 
         {item.reply ? (
           <section className="rounded-xl border border-cq-border bg-white p-5 sm:p-6">
-            <h2 className="text-base font-bold text-cq-text">Supplier answer</h2>
+            <h2 className="text-base font-semibold text-cq-text">Supplier answer</h2>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-cq-text">
               {item.reply.text}
             </p>
@@ -122,7 +122,7 @@ export default function ClarificationReviewPage() {
                 })
                 router.push('/clarifications')
               }}
-              className="order-1 rounded-lg bg-[var(--cq-green)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[var(--cq-green-hover)] sm:order-none"
+              className="order-1 rounded-lg bg-[var(--cq-green)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--cq-green-hover)] sm:order-none"
             >
               Accept change
             </button>

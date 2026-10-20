@@ -43,7 +43,7 @@ export function NotStartedModal({
       <div className="space-y-1.5">
         <label
           htmlFor="not-started-date"
-          className="text-sm font-medium text-cq-text"
+          className="text-sm font-normal text-cq-text"
         >
           When will this start?
         </label>

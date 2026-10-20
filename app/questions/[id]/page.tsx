@@ -10,10 +10,10 @@ import { SupplierAnswerList } from '@/components/questions/SupplierAnswerList'
 import { useQuestions } from '@/lib/questions/store'
 
 const btnGhost =
-  'rounded-lg border border-cq-border bg-white px-4 py-2.5 text-sm font-bold text-cq-text hover:bg-cq-bg'
+  'rounded-lg border border-cq-border bg-white px-4 py-2.5 text-sm font-semibold text-cq-text hover:bg-cq-bg'
 
 const btnSecondaryBlack =
-  'rounded-lg bg-cq-text px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50'
+  'rounded-lg bg-cq-text px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50'
 
 const backHref = '/supplier-comparison?tab=questions'
 
@@ -35,7 +35,7 @@ export default function AiQuestionDetailPage() {
         <p className="text-cq-text-secondary">This question could not be found.</p>
         <Link
           href={backHref}
-          className="mt-4 inline-block font-bold text-cq-link underline"
+          className="mt-4 inline-block font-semibold text-cq-link underline"
         >
           Back to Questions
         </Link>
@@ -67,7 +67,7 @@ export default function AiQuestionDetailPage() {
 
         {visible.length > 0 ? (
           <section className="rounded-xl border border-cq-border bg-white p-5 sm:p-6">
-            <h2 className="text-base font-bold text-cq-text">Supplier answers</h2>
+            <h2 className="text-base font-semibold text-cq-text">Supplier answers</h2>
             <div className="mt-3">
               <SupplierAnswerList
                 answers={question.answers}

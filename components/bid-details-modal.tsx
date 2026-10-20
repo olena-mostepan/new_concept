@@ -52,7 +52,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="flex items-center justify-between mb-2">
             <div>
               <SheetTitle 
-                className="text-[#1E2832] font-extrabold block"
+                className="text-[#1E2832] font-semibold block"
                 style={{ fontSize: '24px', lineHeight: 'normal' }}
               >
                 {supplier.name}
@@ -73,7 +73,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
               href={`/supplier-comparison/${supplier.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-10 flex-1 min-w-[120px] px-4 justify-center items-center gap-2 rounded-lg bg-[var(--cq-green)] text-white hover:bg-[var(--cq-green-hover)] font-bold no-underline"
+              className="flex h-10 flex-1 min-w-[120px] px-4 justify-center items-center gap-2 rounded-lg bg-[var(--cq-green)] text-white hover:bg-[var(--cq-green-hover)] font-semibold no-underline"
               style={{ boxShadow: '0 2px 0 0 rgba(0, 0, 0, 0.02)', fontSize: '14px', lineHeight: 'normal' }}
             >
               <Building2 className="w-4 h-4" />
@@ -134,7 +134,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
               <div className="border-0">
                 <button
                   onClick={() => toggleSection("Company Info")}
-                  className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-extrabold hover:opacity-70 transition-opacity"
+                  className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
                   style={{ fontSize: '20px', lineHeight: 'normal' }}
                 >
                   <span>Company Info</span>
@@ -197,7 +197,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
                                 )}
                               </div>
                             </div>
-                            <div className="text-2xl font-extrabold text-[#1E2832]">
+                            <div className="text-2xl font-semibold text-[#1E2832]">
                               {supplier.supplierRelevance.generalScore}<span className="text-lg text-[#4D5761]">/5</span>
                             </div>
                             <div className="text-xs text-[#4D5761] mt-1">
@@ -205,7 +205,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
                             </div>
                           </div>
                           <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[var(--cq-green)] text-white ml-4">
-                            <span className="text-2xl font-extrabold">{supplier.supplierRelevance.generalScore}</span>
+                            <span className="text-2xl font-semibold">{supplier.supplierRelevance.generalScore}</span>
                           </div>
                         </div>
                       </div>
@@ -213,17 +213,17 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
 
                     {/* Experience */}
                     <div>
-                      <div className="font-bold text-base text-[#1E2832] mb-2">Experience</div>
+                      <div className="font-semibold text-base text-[#1E2832] mb-2">Experience</div>
                       <p className="text-sm text-[#4D5761]">
-                        <span className="font-bold">18+ years</span> in the solar industry.
+                        <span className="font-semibold">18+ years</span> in the solar industry.
                       </p>
                     </div>
 
                     {/* Projects Delivered */}
                     <div>
-                      <div className="font-bold text-base text-[#1E2832] mb-2">Projects Delivered</div>
+                      <div className="font-semibold text-base text-[#1E2832] mb-2">Projects Delivered</div>
                       <p className="text-sm text-[#4D5761] mb-2">
-                        <span className="font-bold">80+ commercial projects</span>, including:
+                        <span className="font-semibold">80+ commercial projects</span>, including:
                       </p>
                       <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                         <li>Inverter servicing.</li>
@@ -234,17 +234,17 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
 
                     {/* Client Focus */}
                     <div>
-                      <div className="font-bold text-base text-[#1E2832] mb-2">Client Focus</div>
+                      <div className="font-semibold text-base text-[#1E2832] mb-2">Client Focus</div>
                       <p className="text-sm text-[#4D5761]">
-                        <span className="font-bold">90%</span> of projects are large-scale commercial installations
+                        <span className="font-semibold">90%</span> of projects are large-scale commercial installations
                       </p>
                     </div>
 
                     {/* Team */}
                     <div>
-                      <div className="font-bold text-base text-[#1E2832] mb-2">Team</div>
+                      <div className="font-semibold text-base text-[#1E2832] mb-2">Team</div>
                       <p className="text-sm text-[#4D5761] mb-2">
-                        <span className="font-bold">120 staff members</span>, including:
+                        <span className="font-semibold">120 staff members</span>, including:
                       </p>
                       <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                         <li>40 certified engineers</li>
@@ -254,7 +254,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
 
                     {/* Credentials */}
                     <div>
-                      <div className="font-bold text-base text-[#1E2832] mb-2">Credentials</div>
+                      <div className="font-semibold text-base text-[#1E2832] mb-2">Credentials</div>
                       <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                         <li>NABCEP-certified installers</li>
                         <li>ISO 9001-certified for quality management</li>
@@ -263,11 +263,11 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
 
                     {/* Financial Stability */}
                     <div>
-                      <div className="font-bold text-base text-[#1E2832] mb-2">Financial Stability</div>
+                      <div className="font-semibold text-base text-[#1E2832] mb-2">Financial Stability</div>
                       <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
-                        <li>Annual turnover: <span className="font-bold">£15 million</span></li>
-                        <li><span className="font-bold">5% growth</span> over the last three years</li>
-                        <li>Net assets: <span className="font-bold">£2 million</span></li>
+                        <li>Annual turnover: <span className="font-semibold">£15 million</span></li>
+                        <li><span className="font-semibold">5% growth</span> over the last three years</li>
+                        <li>Net assets: <span className="font-semibold">£2 million</span></li>
                       </ul>
                     </div>
                   </div>
@@ -278,7 +278,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
               <div className="border-0 border-t border-[#F3F4F6] pt-4">
                 <button
                   onClick={() => toggleSection("Case Studies")}
-                  className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-extrabold hover:opacity-70 transition-opacity"
+                  className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
                   style={{ fontSize: '20px', lineHeight: 'normal' }}
                 >
                   <span>Case Studies</span>
@@ -301,9 +301,9 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
                           </div>
                         </div>
                         <div className="p-4">
-                          <h4 className="font-bold text-base text-[#1E2832] mb-1">Skyscraper of London</h4>
+                          <h4 className="font-semibold text-base text-[#1E2832] mb-1">Skyscraper of London</h4>
                           <p className="text-sm text-[#4D5761] mb-2">Made on 23.02.2024</p>
-                          <p className="text-xl font-bold text-[var(--cq-green)]">£300,000</p>
+                          <p className="text-xl font-semibold text-[var(--cq-green)]">£300,000</p>
                         </div>
                       </div>
 
@@ -317,9 +317,9 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
                           </div>
                         </div>
                         <div className="p-4">
-                          <h4 className="font-bold text-base text-[#1E2832] mb-1">Students Housing in Leeds</h4>
+                          <h4 className="font-semibold text-base text-[#1E2832] mb-1">Students Housing in Leeds</h4>
                           <p className="text-sm text-[#4D5761] mb-2">Made on 12.12.2024</p>
-                          <p className="text-xl font-bold text-[var(--cq-green)]">£279,000</p>
+                          <p className="text-xl font-semibold text-[var(--cq-green)]">£279,000</p>
                         </div>
                       </div>
                     </div>
@@ -336,12 +336,12 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="border-0">
             <button
               onClick={() => toggleSection("Price")}
-              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-bold hover:opacity-70 transition-opacity"
+              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
               style={{ fontSize: '18px', lineHeight: 'normal' }}
             >
               <span>Price</span>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-extrabold">£{supplier.price.toLocaleString()}</span>
+                <span className="text-2xl font-semibold">£{supplier.price.toLocaleString()}</span>
                 {expandedSections.includes("Price") ? (
                   <ChevronUp className="h-5 w-5" />
                 ) : (
@@ -363,9 +363,9 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
                 </ul>
                 <div className="mt-4 p-3 bg-[#E8F1F8] border border-[#D2E3F2] rounded-lg">
                   <div className="flex items-start gap-2">
-                    <span className="text-[#004B75] font-bold text-sm">⚡</span>
+                    <span className="text-[#004B75] font-semibold text-sm">⚡</span>
                 <div>
-                      <div className="font-bold text-sm text-[#1E2832]">How do they compare?</div>
+                      <div className="font-semibold text-sm text-[#1E2832]">How do they compare?</div>
                       <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761] mt-2">
                         <li>Mid-range price, approximately 9% higher than lowest bid from Carraldo Energy</li>
                         <li>Higher cost likely due to extended warranties and Historic Environment England consultation support</li>
@@ -381,7 +381,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="border-0 border-t border-[#F3F4F6] pt-4">
             <button
               onClick={() => toggleSection("Activities")}
-              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-bold hover:opacity-70 transition-opacity"
+              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
               style={{ fontSize: '18px', lineHeight: 'normal' }}
             >
               <span>Activities</span>
@@ -406,7 +406,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="border-0 border-t border-[#F3F4F6] pt-4">
             <button
               onClick={() => toggleSection("Further information")}
-              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-bold hover:opacity-70 transition-opacity"
+              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
               style={{ fontSize: '18px', lineHeight: 'normal' }}
             >
               <span>Further information</span>
@@ -432,7 +432,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="border-0 border-t border-[#F3F4F6] pt-4">
             <button
               onClick={() => toggleSection("Maintenance Offering")}
-              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-bold hover:opacity-70 transition-opacity"
+              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
               style={{ fontSize: '18px', lineHeight: 'normal' }}
             >
               <span>Maintenance Offering</span>
@@ -457,7 +457,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="border-0 border-t border-[#F3F4F6] pt-4">
             <button
               onClick={() => toggleSection("Equipment")}
-              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-bold hover:opacity-70 transition-opacity"
+              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
               style={{ fontSize: '18px', lineHeight: 'normal' }}
             >
               <span>Equipment</span>
@@ -470,13 +470,13 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
             {expandedSections.includes("Equipment") && (
               <div className="pt-3 pb-4 space-y-4">
                 <div>
-                  <div className="font-bold text-sm text-[#1E2832] mb-2">Solar Panels</div>
+                  <div className="font-semibold text-sm text-[#1E2832] mb-2">Solar Panels</div>
                   <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                     <li>Total System Capacity: 85 kWp</li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-[#1E2832] mb-2">Lifespan</div>
+                  <div className="font-semibold text-sm text-[#1E2832] mb-2">Lifespan</div>
                   <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                     <li>No specific degradation standards provided</li>
                   </ul>
@@ -489,7 +489,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="border-0 border-t border-[#F3F4F6] pt-4">
             <button
               onClick={() => toggleSection("Warranty")}
-              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-bold hover:opacity-70 transition-opacity"
+              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
               style={{ fontSize: '18px', lineHeight: 'normal' }}
             >
               <span>Warranty</span>
@@ -502,7 +502,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
             {expandedSections.includes("Warranty") && (
               <div className="pt-3 pb-4 space-y-4">
                 <div>
-                  <div className="font-bold text-sm text-[#1E2832] mb-2">Panel Warranty</div>
+                  <div className="font-semibold text-sm text-[#1E2832] mb-2">Panel Warranty</div>
                   <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                     <li>30 years (Covers defects in materials and workmanship)</li>
                   </ul>
@@ -511,7 +511,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-[#1E2832] mb-2">Inverter Warranty</div>
+                  <div className="font-semibold text-sm text-[#1E2832] mb-2">Inverter Warranty</div>
                   <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                     <li>12 years (Covers manufacturing defects and operational issues)</li>
                   </ul>
@@ -520,7 +520,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-[#1E2832] mb-2">Installation Warranty</div>
+                  <div className="font-semibold text-sm text-[#1E2832] mb-2">Installation Warranty</div>
                   <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                     <li>10 years (Protects against any issues related to installation quality)</li>
                   </ul>
@@ -536,7 +536,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
           <div className="border-0 border-t border-[#F3F4F6] pt-4">
             <button
               onClick={() => toggleSection("Timelines")}
-              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-bold hover:opacity-70 transition-opacity"
+              className="w-full py-3 px-0 flex items-center justify-between text-[#1E2832] font-semibold hover:opacity-70 transition-opacity"
               style={{ fontSize: '18px', lineHeight: 'normal' }}
             >
               <span>Timelines</span>
@@ -549,7 +549,7 @@ export function BidDetailsModal({ supplier, open, onOpenChange, companyProfile }
             {expandedSections.includes("Timelines") && (
               <div className="pt-3 pb-4 space-y-4">
                 <div>
-                  <div className="font-bold text-sm text-[#1E2832] mb-2">Delivery time:</div>
+                  <div className="font-semibold text-sm text-[#1E2832] mb-2">Delivery time:</div>
                   <ul className="list-disc list-inside space-y-1 text-sm text-[#4D5761]">
                     <li>38 days Lead time: 5.4 weeks</li>
                   </ul>

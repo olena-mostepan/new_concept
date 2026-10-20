@@ -99,7 +99,7 @@ export function CustomerDeliveryPhasesStepper({
               >
                 <p
                   className={cn(
-                    'text-sm font-medium',
+                    'text-sm font-normal',
                     kind === 'upcoming'
                       ? 'text-cq-text-secondary'
                       : 'text-cq-text',
@@ -109,7 +109,7 @@ export function CustomerDeliveryPhasesStepper({
                 </p>
 
                 {isCurrent && phase.daysInPhase != null ? (
-                  <p className="mt-0.5 text-sm font-semibold text-black">
+                  <p className="mt-0.5 text-sm font-semibold text-text-primary">
                     {phase.daysInPhase}d in stage
                     {phase.overdue ? ' · overdue' : ''}
                   </p>
@@ -152,7 +152,7 @@ export function CustomerDeliveryPhasesStepper({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="center" className="w-56">
                           <DropdownMenuItem
-                            className="cursor-pointer font-medium"
+                            className="cursor-pointer font-normal"
                             onClick={onYes}
                           >
                             Yes — looks right

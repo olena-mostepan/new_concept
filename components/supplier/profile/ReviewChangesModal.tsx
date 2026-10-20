@@ -57,7 +57,7 @@ export function ReviewChangesModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg gap-0 p-0 sm:max-w-lg" showCloseButton>
         <DialogHeader className="space-y-0 border-b border-cq-border px-6 pb-4 pt-6 text-left">
-          <DialogTitle className="text-lg font-extrabold text-cq-text">
+          <DialogTitle className="text-lg font-semibold text-cq-text">
             Verify your account
           </DialogTitle>
           <DialogDescription className="text-sm text-cq-text-secondary">
@@ -73,12 +73,12 @@ export function ReviewChangesModal({
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-cq-text-secondary">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-cq-text-secondary">
                     {change.section}
                   </p>
-                  <p className="mt-0.5 font-extrabold text-cq-text">{change.label}</p>
+                  <p className="mt-0.5 font-semibold text-cq-text">{change.label}</p>
                 </div>
-                <span className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-[10px] font-semibold text-cq-text-secondary">
+                <span className="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-cq-text-secondary p7">
                   <FileText className="h-3 w-3" />
                   {change.sourceDocument.length > 24
                     ? `${change.sourceDocument.slice(0, 24)}…`
@@ -89,7 +89,7 @@ export function ReviewChangesModal({
               <div className="mt-3 flex items-center gap-3 text-sm">
                 <span className="text-cq-muted line-through">{change.currentValue}</span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-[var(--cq-green)]" aria-hidden />
-                <span className="font-bold text-cq-text">{change.suggestedValue}</span>
+                <span className="font-semibold text-cq-text">{change.suggestedValue}</span>
               </div>
 
               <div className="mt-4 flex gap-2">

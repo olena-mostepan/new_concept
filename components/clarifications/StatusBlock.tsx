@@ -25,7 +25,7 @@ export function StatusBlock({
 
   return (
     <div className={align === 'left' ? 'text-left sm:text-right' : 'text-right'}>
-      <p className="text-sm font-medium text-cq-text">{primary}</p>
+      <p className="text-sm font-normal text-cq-text">{primary}</p>
       {subLine ? (
         <p className="text-xs text-cq-text-secondary">{subLine}</p>
       ) : null}

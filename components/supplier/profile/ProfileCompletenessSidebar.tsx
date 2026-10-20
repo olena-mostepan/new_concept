@@ -47,14 +47,14 @@ export function ProfileCompletenessSidebar({
             }}
           >
             <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white">
-              <span className="text-lg font-extrabold text-cq-text">{score.overall}%</span>
+              <span className="text-lg font-semibold text-cq-text">{score.overall}%</span>
             </div>
           </div>
           <div className="min-w-0 pt-1">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <p className="text-2xl font-extrabold leading-tight text-cq-text">{label}</p>
+              <p className="text-2xl font-semibold leading-tight text-cq-text">{label}</p>
               {showDelta && (
-                <span className="inline-flex items-center gap-0.5 text-xs font-extrabold text-[var(--cq-green)]">
+                <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-[var(--cq-green)]">
                   <ArrowUp className="h-3 w-3 stroke-[2.5]" aria-hidden />
                   {scoreDelta} pts
                 </span>
@@ -83,7 +83,7 @@ export function ProfileCompletenessSidebar({
               <div key={section.section}>
                 <div className="mb-1.5 flex items-center justify-between gap-2">
                   <span className="text-sm text-cq-text-secondary">{section.label}</span>
-                  <span className="text-sm font-extrabold text-cq-text">{section.percent}%</span>
+                  <span className="text-sm font-semibold text-cq-text">{section.percent}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-cq-border-light">
                   <div
@@ -101,7 +101,7 @@ export function ProfileCompletenessSidebar({
             {INSIGHTS.map(({ id, text, stat }) => (
               <p key={id}>
                 {text}
-                <strong className="font-extrabold text-cq-text">{stat}</strong>
+                <strong className="font-semibold text-cq-text">{stat}</strong>
               </p>
             ))}
           </div>

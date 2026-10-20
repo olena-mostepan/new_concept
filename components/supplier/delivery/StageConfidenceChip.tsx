@@ -47,7 +47,7 @@ export function StageConfidenceChip({
         <TooltipTrigger asChild>
           <span
             className={cn(
-              'inline-flex w-fit cursor-default rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize',
+              'inline-flex w-fit cursor-default rounded-full border px-2 py-0.5 capitalize p7',
               chip.className,
               className,
             )}

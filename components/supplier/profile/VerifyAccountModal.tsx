@@ -35,7 +35,7 @@ function VerifyFieldRow({ label, value, isEmpty }: { label: string; value: strin
       <span
         className={cn(
           'text-right text-sm',
-          isEmpty ? 'font-medium italic text-cq-muted' : 'font-semibold text-cq-text',
+          isEmpty ? 'font-normal italic text-cq-muted' : 'font-semibold text-cq-text',
         )}
       >
         {isEmpty ? 'Not provided' : value}
@@ -134,7 +134,7 @@ export function VerifyAccountModal({
         showCloseButton
       >
         <DialogHeader className="shrink-0 space-y-2 border-b border-cq-border px-6 py-5 text-left sm:px-8">
-          <DialogTitle className="text-2xl font-extrabold tracking-tight text-cq-text">
+          <DialogTitle className="text-2xl font-semibold tracking-tight text-cq-text">
             Verify profile
           </DialogTitle>
           <DialogDescription className="max-w-xl text-sm leading-relaxed text-cq-text-secondary">
@@ -143,7 +143,7 @@ export function VerifyAccountModal({
           </DialogDescription>
           {emptyCount > 0 && (
             <p className="text-sm text-cq-text">
-              <span className="font-extrabold text-[var(--cq-green)]">{emptyCount}</span> fields
+              <span className="font-semibold text-[var(--cq-green)]">{emptyCount}</span> fields
               still need information
             </p>
           )}
@@ -152,7 +152,7 @@ export function VerifyAccountModal({
         <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5 sm:px-8">
           {groups.map((group) => (
             <section key={group.section}>
-              <h3 className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-cq-text-secondary">
+              <h3 className="mb-2 tracking-[0.12em] text-cq-text-secondary s3">
                 {group.label}
               </h3>
               <div className="space-y-1">
@@ -169,7 +169,7 @@ export function VerifyAccountModal({
           ))}
 
           <section className="rounded-xl border border-cq-border bg-cq-bg p-4">
-            <p className="text-sm font-bold text-cq-text">Upload documents to fill gaps</p>
+            <p className="text-sm font-semibold text-cq-text">Upload documents to fill gaps</p>
             <p className="mt-1 text-xs leading-relaxed text-cq-text-secondary">
               PDF, DOC, XLS, or JPG — we&apos;ll read them and suggest profile updates.
             </p>
@@ -221,14 +221,14 @@ export function VerifyAccountModal({
               {isProcessing ? (
                 <>
                   <Loader2 className="h-6 w-6 animate-spin text-[var(--cq-green)]" aria-hidden />
-                  <p className="text-sm font-bold text-cq-text">
+                  <p className="text-sm font-semibold text-cq-text">
                     Reading {processingFiles.length} file{processingFiles.length === 1 ? '' : 's'}…
                   </p>
                 </>
               ) : (
                 <>
                   <Upload className="h-6 w-6 text-[var(--cq-green)]" strokeWidth={2} aria-hidden />
-                  <span className="text-sm font-bold text-[var(--cq-green)]">Upload files</span>
+                  <span className="text-sm font-semibold text-[var(--cq-green)]">Upload files</span>
                   {stagedFiles.length > 0 && (
                     <span className="text-xs text-cq-text-secondary">
                       {stagedFiles.length} file{stagedFiles.length === 1 ? '' : 's'} ready

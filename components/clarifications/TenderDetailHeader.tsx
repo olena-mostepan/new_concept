@@ -25,7 +25,7 @@ export function TenderDetailHeader({
           <Building2 className="h-5 w-5" strokeWidth={2.25} />
         </span>
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-extrabold leading-tight text-cq-text sm:text-3xl">
+          <h1 className="text-2xl font-semibold leading-tight text-cq-text sm:text-3xl">
             {project}
           </h1>
           <p className="mt-1 text-sm text-cq-text-secondary">{address}</p>

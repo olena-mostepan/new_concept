@@ -54,14 +54,14 @@ export function CashComingUp() {
                   {row.overdue ? (
                     <>
                       {' '}
-                      <span className="font-medium text-[var(--cq-green)]">
+                      <span className="font-normal text-[var(--cq-green)]">
                         overdue
                       </span>
                     </>
                   ) : null}
                 </p>
               </div>
-              <p className="shrink-0 text-sm font-semibold text-black sm:text-right">
+              <p className="shrink-0 text-sm font-semibold text-text-primary sm:text-right">
                 {row.amount}
               </p>
             </li>

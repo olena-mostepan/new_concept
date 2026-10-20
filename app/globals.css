@@ -271,6 +271,22 @@
     @apply inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-cq-border bg-white px-3.5 py-2 text-sm font-semibold text-cq-text outline-none transition-colors hover:bg-cq-bg focus-visible:ring-2 focus-visible:ring-[var(--cq-green)]/30 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-link {
-    @apply inline-flex items-center text-sm font-medium text-cq-text-secondary underline underline-offset-2 transition-colors hover:text-cq-text;
+    @apply inline-flex items-center text-sm font-normal text-cq-text-secondary underline underline-offset-2 transition-colors hover:text-cq-text;
   }
+
+  .h3, .h4, .h5, .h6, .h7, .h8, .h9, .p6, .p7, .s3, .l1, .l1-strong {
+    font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  }
+  .h3 { font-size: 32px; line-height: 40px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .h4 { font-size: 24px; line-height: 32px; font-weight: 600; }
+  .h5 { font-size: 20px; line-height: 28px; font-weight: 600; }
+  .h6 { font-size: 18px; line-height: 26px; font-weight: 600; }
+  .h7 { font-size: 16px; line-height: 20px; font-weight: 600; }
+  .h8 { font-size: 14px; line-height: 20px; font-weight: 600; }
+  .p6 { font-size: 14px; line-height: 20px; font-weight: 400; }
+  .h9 { font-size: 12px; line-height: 16px; font-weight: 600; }
+  .p7 { font-size: 12px; line-height: 16px; font-weight: 400; }
+  .s3 { font-size: 12px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .l1 { font-size: 13px; line-height: 18px; font-weight: 400; }
+  .l1-strong { font-size: 13px; line-height: 18px; font-weight: 600; }
 }

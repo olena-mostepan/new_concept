@@ -200,7 +200,7 @@ export function DeliveryPhasesStepper({
               >
                 <p
                   className={cn(
-                    'text-sm font-medium',
+                    'text-sm font-normal',
                     kind === 'upcoming' ? 'text-cq-text-secondary' : 'text-cq-text',
                   )}
                 >
@@ -214,7 +214,7 @@ export function DeliveryPhasesStepper({
                 ) : null}
 
                 {stage.name !== 'Complete' && stage.pct > 0 ? (
-                  <p className="mt-1 text-sm font-semibold text-black">
+                  <p className="mt-1 text-sm font-semibold text-text-primary">
                     <span className="text-cq-text-secondary">
                       {formatPct(stage.pct)}
                     </span>
@@ -259,7 +259,7 @@ export function DeliveryPhasesStepper({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="center" className="w-56">
                           <DropdownMenuItem
-                            className="cursor-pointer font-medium"
+                            className="cursor-pointer font-normal"
                             onClick={onChangeDate}
                           >
                             Change date
@@ -307,7 +307,7 @@ export function DeliveryPhasesStepper({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="center" className="w-56">
                           <DropdownMenuItem
-                            className="cursor-pointer font-medium"
+                            className="cursor-pointer font-normal"
                             onClick={onYes}
                           >
                             Yes — raise it

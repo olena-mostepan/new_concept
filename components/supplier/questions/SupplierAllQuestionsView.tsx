@@ -68,18 +68,18 @@ export function SupplierAllQuestionsView() {
 
       {allQuestions.length === 0 ? (
         <div className="rounded-xl border border-cq-border bg-white px-8 py-12 text-center shadow-sm">
-          <p className="text-base font-medium text-cq-text">No questions yet</p>
+          <p className="text-base font-normal text-cq-text">No questions yet</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-cq-border bg-white px-8 py-10 text-center shadow-sm">
-          <p className="text-sm font-medium text-cq-text">No questions match this filter</p>
+          <p className="text-sm font-normal text-cq-text">No questions match this filter</p>
           <button
             type="button"
             onClick={() => {
               setFilter('all')
               setSearch('')
             }}
-            className="mt-3 text-sm font-medium text-cq-link underline"
+            className="mt-3 text-sm font-normal text-cq-link underline"
           >
             Clear filters
           </button>

@@ -59,7 +59,7 @@ export function AlreadyInvoicedModal({
           <label
             key={opt.id}
             className={cn(
-              'flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm font-medium transition-colors',
+              'flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm font-normal transition-colors',
               status === opt.id
                 ? 'border-[var(--cq-green)] bg-[var(--cq-accent-muted)] text-cq-text'
                 : 'border-cq-border bg-white text-cq-text hover:bg-cq-bg/60',

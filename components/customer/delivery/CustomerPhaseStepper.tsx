@@ -29,12 +29,9 @@ export function CustomerPhaseStepperCompact({
                       type="button"
                       className={cn(
                         'flex h-7 w-7 items-center justify-center rounded-full border outline-none p7',
-                        phase.status === 'done' &&
-                          'border-[var(--cq-green)] bg-[var(--cq-green)] text-white',
-                        phase.status === 'current' &&
-                          'border-[var(--cq-green)] bg-white text-[var(--cq-green)]',
-                        phase.status === 'upcoming' &&
-                          'border-cq-border bg-white text-cq-text-secondary',
+                        phase.status === 'done' && 'border-black-2 bg-black-2 text-black-5',
+                        phase.status === 'current' && 'border-black-7 bg-bg-container text-text-primary shadow-[var(--halo-current)]',
+                        phase.status === 'upcoming' && 'border-black-2 bg-bg-container text-text-tertiary',
                       )}
                       aria-label={phase.label}
                     >
@@ -54,7 +51,7 @@ export function CustomerPhaseStepperCompact({
                   </TooltipContent>
                 </Tooltip>
                 {phase.status === 'current' ? (
-                  <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap text-[var(--cq-green)] p7">
+                  <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap h9 text-brand-7">
                     {phase.overdue ? 'overdue' : 'confirm ›'}
                   </span>
                 ) : null}
@@ -63,9 +60,7 @@ export function CustomerPhaseStepperCompact({
                 <div
                   className={cn(
                     'mx-1 h-0.5 w-5 sm:w-7',
-                    phase.status === 'done'
-                      ? 'bg-[var(--cq-green)]'
-                      : 'bg-cq-border',
+                    phase.status === 'done' ? 'bg-black-3' : 'bg-black-2',
                   )}
                 />
               ) : null}

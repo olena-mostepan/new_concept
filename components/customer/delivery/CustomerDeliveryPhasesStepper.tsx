@@ -54,7 +54,7 @@ export function CustomerDeliveryPhasesStepper({
                   className={cn(
                     'pointer-events-none absolute hidden lg:block',
                     'left-1/2 top-4 z-0 h-px w-full',
-                    lineFilled ? 'bg-[var(--cq-green)]' : 'bg-cq-border',
+                    lineFilled ? 'bg-black-3' : 'bg-black-2',
                   )}
                   aria-hidden
                 />
@@ -64,7 +64,7 @@ export function CustomerDeliveryPhasesStepper({
                 <span
                   className={cn(
                     'pointer-events-none absolute left-4 top-8 z-0 h-[calc(100%+0.5rem)] w-px lg:hidden',
-                    lineFilled ? 'bg-[var(--cq-green)]' : 'bg-cq-border',
+                    lineFilled ? 'bg-black-3' : 'bg-black-2',
                   )}
                   aria-hidden
                 />
@@ -74,12 +74,9 @@ export function CustomerDeliveryPhasesStepper({
                 <span
                   className={cn(
                     'flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold',
-                    kind === 'done' &&
-                      'border-[var(--cq-green)] bg-[var(--cq-green)] text-white',
-                    kind === 'current' &&
-                      'border-[var(--cq-green)] bg-white text-[var(--cq-green)] ring-4 ring-[var(--cq-accent-muted)]',
-                    kind === 'upcoming' &&
-                      'border-cq-border bg-cq-bg text-cq-muted',
+                    kind === 'done' && 'border-black-2 bg-black-2 text-black-5',
+                    kind === 'current' && 'border-black-7 bg-bg-container text-text-primary shadow-[var(--halo-current)]',
+                    kind === 'upcoming' && 'border-black-2 bg-bg-container text-text-tertiary',
                   )}
                 >
                   {kind === 'done' ? (
@@ -93,8 +90,7 @@ export function CustomerDeliveryPhasesStepper({
               <div
                 className={cn(
                   'relative z-10 min-w-0 flex-1 lg:w-full lg:flex-none lg:text-center',
-                  isConfirmNode &&
-                    'rounded-lg border border-[var(--cq-green)]/40 bg-[var(--cq-accent-muted)]/50 px-3 py-3 lg:mt-1 lg:px-2',
+                  isConfirmNode && 'lg:mt-1',
                 )}
               >
                 <p
@@ -136,8 +132,9 @@ export function CustomerDeliveryPhasesStepper({
 
                 {isConfirmNode ? (
                   <div className="mt-3 flex flex-col items-stretch gap-2 lg:items-center">
-                    <p className="text-xs text-cq-text-secondary">
-                      Is this right?
+                    <p className="inline-flex items-center gap-1 h9 text-brand-7">
+                      <span className="h-1.5 w-1.5 rounded-full bg-brand-6" aria-hidden />
+                      Confirm dates
                     </p>
                     {mounted ? (
                       <DropdownMenu>

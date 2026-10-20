@@ -10,16 +10,10 @@ import { hrefs } from './hrefs'
 import { StatusPill } from './StatusPill'
 
 function Bar({ state }: { state: RouteStage['state'] }) {
-  if (state === 'done') return <div className="h-2 rounded-full bg-cq-text" />
-  if (state === 'now') {
-    return (
-      <div className="h-2 overflow-hidden rounded-full border border-cq-text">
-        <div className="h-full w-1/2 bg-cq-text" />
-      </div>
-    )
-  }
-  if (state === 'skip') return <div className="h-2 rounded-full border border-dashed border-cq-muted" />
-  return <div className="h-2 rounded-full bg-cq-border-light" />
+  if (state === 'done') return <div className="h-1.5 rounded-full bg-black-3" />
+  if (state === 'now') return <div className="h-1.5 rounded-full bg-black-7" />
+  if (state === 'skip') return <div className="h-1.5 rounded-full border border-dashed border-black-3" />
+  return <div className="h-1.5 rounded-full bg-black-2" />
 }
 
 function Mark({ tone }: { tone: PanelItem['tone'] }) {
@@ -29,24 +23,24 @@ function Mark({ tone }: { tone: PanelItem['tone'] }) {
 }
 
 function Caption({ stage, workstreams }: { stage: RouteStage; workstreams: Workstream[] }) {
-  const className = cn('mt-2 text-xs', stage.state === 'now' ? 'font-semibold text-cq-text' : 'text-cq-text-secondary')
+  const className = cn('mt-1 p7 text-text-tertiary')
   const mine = workstreams.filter((w) => w.service === stage.id && !w.proposed)
   const items = [...byRecentChange(mine.filter((w) => w.owner !== 'done')), ...mine.filter((w) => w.owner === 'done')]
   if (!stage.caption.includes('workstream') || !items.length) return <p className={className}>{stage.caption}</p>
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className={cn(className, 'inline-flex cursor-pointer items-center gap-1 hover:text-cq-accent')}>
+        <button type="button" className={cn(className, 'inline-flex cursor-pointer items-center gap-1 hover:text-text-primary')}>
           {stage.caption}
           <ChevronDown className="h-3 w-3" aria-hidden />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 border-cq-border bg-white p-1.5 text-cq-text shadow-md">
+      <PopoverContent align="start" className="w-72 border-border-dark bg-bg-container p-1.5 text-text-primary shadow-floating">
         <ul>
           {items.map((w) => (
             <li key={w.id}>
               <Link href={hrefs.workstream(w.id)} className="group flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-cq-bg">
-                <span className="text-sm font-normal group-hover:text-cq-accent">{w.name}</span>
+                <span className="p6 group-hover:text-text-primary">{w.name}</span>
                 <StatusPill owner={w.owner} />
               </Link>
             </li>
@@ -139,13 +133,11 @@ export function RouteWithNeeds({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[880px]">
-        <div className="grid grid-cols-6 gap-x-4">
+        <div className="grid grid-cols-6 gap-x-3">
           {stages.map((stage) => (
             <div key={stage.id}>
-              <p className={cn('text-sm font-normal', stage.state === 'skip' ? 'text-cq-muted' : 'text-cq-text')}>{stage.label}</p>
-              <div className="mt-2">
-                <Bar state={stage.state} />
-              </div>
+              <Bar state={stage.state} />
+              <p className={cn('mt-2', stage.state === 'now' ? 'l1-strong text-text-primary' : 'l1 text-text-secondary', stage.state === 'skip' && 'text-text-tertiary')}>{stage.label}</p>
               <Caption stage={stage} workstreams={workstreams} />
               {showFoot && (
                 <div className="mt-4">

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { OWNER_LABEL, SERVICES, service as serviceDef, type Account, type Batch, type Need, type Owner, type ServiceId, type Workstream } from '@/lib/concept/model'
+import { SERVICES, service as serviceDef, type Account, type Batch, type Need, type Owner, type ServiceId, type Workstream } from '@/lib/concept/model'
 import { batchSlots, changedRecently, doneCount, activeProjects, short } from '@/lib/concept/derive'
 
 /* ------------------------------------------------------------------ type */
@@ -13,8 +13,8 @@ export const pageTitle = 'h4 text-text-primary'
 export const sectionTitle = 's3 text-text-tertiary'
 /** Group titles such as In progress, Needs your decision, Done. */
 export const groupTitle = 'h5 text-text-primary'
-export const th = 'px-5 py-3 text-left s3 text-text-tertiary'
-export const td = 'px-5 py-3.5 align-top text-sm text-cq-text'
+export const th = 'px-4 py-2 pl-8 text-left s3 text-text-tertiary'
+export const td = 'px-4 py-3 pl-8 align-top p6 text-text-primary'
 export const dot = <span className="mx-2 text-cq-muted">·</span>
 
 export function Page({ children }: { children: ReactNode }) {
@@ -24,7 +24,7 @@ export function Page({ children }: { children: ReactNode }) {
 export function ChangedKey() {
   return (
     <p className="flex items-center gap-2 text-cq-text-secondary p6">
-      <span className="h-[7px] w-[7px] rounded-full bg-cq-accent" aria-hidden />
+      <span className="h-1.5 w-1.5 rounded-full bg-brand-6" aria-hidden />
       Changed in the last 7 days
     </p>
   )
@@ -55,7 +55,7 @@ export function ChangedMark({ w, children }: { w: Workstream; children: ReactNod
   return (
     <span className="relative inline-flex items-center">
       {changedRecently(w) && (
-        <span role="img" aria-label="Changed in the last 7 days" className="absolute right-full top-1/2 mr-3 h-[7px] w-[7px] -translate-y-1/2 rounded-full bg-cq-accent" />
+        <span role="img" aria-label="Changed in the last 7 days" className="absolute right-full top-1/2 mr-4 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-brand-6" />
       )}
       {children}
     </span>
@@ -125,14 +125,14 @@ export function Card({
   bodyClassName?: string
 }) {
   return (
-    <section className={cn('overflow-hidden rounded-xl border border-cq-border bg-white ', className)}>
+    <section className={cn('overflow-hidden rounded-xl border border-border-dark bg-bg-container', className)}>
       {(title || right) && (
-        <header className="flex items-center justify-between gap-3 border-b border-cq-border-light px-5 py-4">
+        <header className="flex items-center justify-between gap-3 border-b border-border-light px-4 py-3">
           {title && <h2 className="h7 text-text-primary">{title}</h2>}
           {right && <div className="text-sm text-cq-text-secondary">{right}</div>}
         </header>
       )}
-      <div className={cn('p-5', bodyClassName)}>{children}</div>
+      <div className={cn('p-4', bodyClassName)}>{children}</div>
     </section>
   )
 }
@@ -151,18 +151,24 @@ export function Empty({ children }: { children: ReactNode }) {
 
 /* --------------------------------------------------------------- status */
 
+const PILL_LABEL: Record<Owner, string> = {
+  you: 'With you',
+  cquel: 'With CQuel',
+  suppliers: 'With suppliers',
+  done: 'Done',
+}
+
 const OWNER_STYLE: Record<Owner, string> = {
-  you: 'bg-[var(--cq-accent-muted)] text-[var(--cq-accent)]',
-  cquel: 'border border-[var(--cq-owner-cquel-border)] bg-[var(--cq-owner-cquel-bg)] text-cq-owner-cquel',
-  suppliers: 'bg-[var(--cq-link)]/10 text-[var(--cq-link)]',
-  done: 'bg-cq-bg text-cq-text-secondary',
+  you: 'border border-brand-2 bg-bg-accent text-brand-7',
+  cquel: 'border border-border-dark bg-black-1 text-text-secondary',
+  suppliers: 'border border-border-dark bg-black-1 text-text-secondary',
+  done: 'bg-black-2 text-text-secondary',
 }
 
 export function OwnerPill({ owner, label, className }: { owner: Owner; label?: string; className?: string }) {
   return (
-    <span className={cn('inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-normal', OWNER_STYLE[owner], className)}>
-      {owner === 'done' && <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden />}
-      {label ?? OWNER_LABEL[owner]}
+    <span className={cn('inline-flex h-6 w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 h9', OWNER_STYLE[owner], className)}>
+      {label ?? PILL_LABEL[owner]}
     </span>
   )
 }
@@ -188,8 +194,8 @@ export function Tag({ children }: { children: ReactNode }) {
 export function Bar({ done, total, tone = 'ink', className }: { done: number; total: number; tone?: 'ink' | 'accent'; className?: string }) {
   const pct = total ? Math.round((done / total) * 100) : 0
   return (
-    <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-cq-border-light', className)}>
-      <div className={cn('h-full rounded-full', tone === 'ink' ? 'bg-cq-text' : 'bg-cq-accent')} style={{ width: `${pct}%` }} />
+    <div className={cn('h-1 w-full overflow-hidden rounded-full bg-black-2', className)}>
+      <div className="h-full rounded-full bg-black-6" style={{ width: `${pct}%` }} />
     </div>
   )
 }

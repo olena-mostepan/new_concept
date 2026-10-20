@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Check, ChevronRight, Circle, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { OWNER_LABEL, SERVICES, service as serviceDef, type Account, type Batch, type Need, type Owner, type ServiceId, type Workstream } from '@/lib/concept/model'
@@ -40,38 +40,55 @@ export function workstreamSummary(list: Array<{ batchId: string; owner: string }
   return `${list.length} ${workstreams} across ${batches} ${batchWord} · ${live} in progress · ${done} done`
 }
 
-export type SummaryState = '' | 'progress' | 'done'
+/** Responsibility value set by the "CQuel's or suppliers' action" card. */
+export const BOTH_ACTIONS = 'cquel,suppliers'
+
+export function matchesResponsibility(owner: string, responsibility: string) {
+  if (!responsibility) return true
+  if (responsibility === BOTH_ACTIONS) return owner === 'cquel' || owner === 'suppliers'
+  return owner === responsibility
+}
 
 export function SummaryCards({
   list,
-  state,
-  onState,
+  responsibility,
+  onResponsibility,
 }: {
   list: Array<{ batchId: string; owner: string }>
-  state: SummaryState
-  onState: (next: SummaryState) => void
+  responsibility: string
+  onResponsibility: (next: string) => void
 }) {
   const total = list.length
+  const you = list.filter((w) => w.owner === 'you').length
+  const shared = list.filter((w) => w.owner === 'cquel' || w.owner === 'suppliers').length
   const done = list.filter((w) => w.owner === 'done').length
-  const live = total - done
   const batches = new Set(list.map((w) => w.batchId)).size
   const share = (n: number) => (total > 0 ? `${Math.round((n / total) * 100)}% of workstreams` : null)
+  const toggle = (value: string) => onResponsibility(responsibility === value ? '' : value)
   return (
-    <div className="flex gap-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <SummaryCard label="Workstreams" number={total} line={total > 0 ? `across ${batches} ${batches === 1 ? 'batch' : 'batches'}` : null} />
       <SummaryCard
-        label="In progress"
-        number={live}
-        line={share(live)}
-        pressed={state === 'progress'}
-        onClick={() => onState(state === 'progress' ? '' : 'progress')}
+        label="Your action"
+        mark
+        number={you}
+        line={share(you)}
+        pressed={responsibility === 'you'}
+        onClick={() => toggle('you')}
+      />
+      <SummaryCard
+        label="CQuel's or suppliers' action"
+        number={shared}
+        line={share(shared)}
+        pressed={responsibility === BOTH_ACTIONS}
+        onClick={() => toggle(BOTH_ACTIONS)}
       />
       <SummaryCard
         label="Done"
         number={done}
         line={share(done)}
-        pressed={state === 'done'}
-        onClick={() => onState(state === 'done' ? '' : 'done')}
+        pressed={responsibility === 'done'}
+        onClick={() => toggle('done')}
       />
     </div>
   )
@@ -81,22 +98,27 @@ function SummaryCard({
   label,
   number,
   line,
+  mark,
   pressed,
   onClick,
 }: {
   label: string
   number: number
   line: string | null
+  mark?: boolean
   pressed?: boolean
   onClick?: () => void
 }) {
   const className = cn(
-    'w-80 rounded-[12px] bg-white px-4 py-[14px] text-left',
+    'w-full rounded-[12px] bg-white px-5 py-4 text-left',
     pressed ? 'border-[1.5px] border-black-7' : 'border border-border-dark',
   )
   const body = (
     <>
-      <p className="p7 text-text-secondary">{label}</p>
+      <p className="flex items-center gap-1.5 p7 text-text-secondary">
+        {mark && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6" aria-hidden />}
+        {label}
+      </p>
       <p className="mt-1 h4 tabular-nums text-text-primary">{number}</p>
       {line && <p className="mt-0.5 p7 text-text-tertiary">{line}</p>}
     </>
@@ -116,25 +138,45 @@ export const filterSearchClass =
   'h-10 w-full rounded-lg border border-border-dark bg-white p6 pl-9 pr-3 text-text-primary outline-none placeholder:text-text-tertiary'
 
 export const filterSelectClass =
-  'h-10 w-full cursor-pointer appearance-none rounded-lg border border-border-dark bg-white bg-[length:16px] bg-[right_12px_center] bg-no-repeat p6 pl-4 pr-12 text-text-title outline-none data-[set=true]:border-black-6 data-[set=true]:text-text-primary'
+  'h-10 w-full min-w-0 cursor-pointer appearance-none rounded-lg border border-border-dark bg-white bg-[length:16px] bg-[right_10px_center] bg-no-repeat p6 pl-3 pr-8 text-text-title outline-none data-[set=true]:border-black-6 data-[set=true]:text-text-primary'
+
+export function FilterField({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+  return (
+    <label className={cn('flex min-w-0 flex-col gap-1', className)}>
+      <span className="h9 text-text-title">{label}</span>
+      {children}
+    </label>
+  )
+}
+
+/** Search is 1.5fr, each select is 1fr, Clear filters is the last auto column. One column on phones. */
+export function FilterBar({ selects, children }: { selects: number; children: ReactNode }) {
+  return (
+    <div
+      className="mb-6 mt-6 grid grid-cols-1 items-end gap-4 lg:[grid-template-columns:var(--filter-cols)]"
+      style={{ '--filter-cols': `1.5fr repeat(${selects}, minmax(0, 1fr)) auto` } as CSSProperties}
+    >
+      {children}
+    </div>
+  )
+}
 
 export function FilterSearch({
   value,
   onChange,
-  placeholder = 'Search workstreams or projects',
+  placeholder = 'Workstream or project name',
 }: {
   value: string
   onChange: (value: string) => void
   placeholder?: string
 }) {
   return (
-    <div className="relative w-full sm:w-80">
+    <div className="relative w-full">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-icon-default" aria-hidden />
       <input
         type="search"
         value={value}
         placeholder={placeholder}
-        aria-label={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={filterSearchClass}
       />
@@ -143,35 +185,32 @@ export function FilterSearch({
 }
 
 export function FilterSelect({
-  label,
   value,
-  display,
   onChange,
   children,
 }: {
-  label: string
   value: string
-  display?: string
   onChange: (value: string) => void
   children: ReactNode
 }) {
-  const text = value ? display || value : label
   return (
-    <div className="relative inline-flex h-10 max-w-full flex-none items-center">
-      <span className="invisible whitespace-nowrap p6 pl-4 pr-14" aria-hidden>
-        {text}
-      </span>
-      <select
-        aria-label={label}
-        value={value}
-        data-set={value ? 'true' : undefined}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(filterSelectClass, 'absolute inset-0')}
-        style={{ backgroundImage: SELECT_CHEVRON }}
-      >
-        {children}
-      </select>
-    </div>
+    <select
+      value={value}
+      data-set={value ? 'true' : undefined}
+      onChange={(e) => onChange(e.target.value)}
+      className={filterSelectClass}
+      style={{ backgroundImage: SELECT_CHEVRON }}
+    >
+      {children}
+    </select>
+  )
+}
+
+export function ClearFilters({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="h8 whitespace-nowrap text-text-primary underline underline-offset-[3px] decoration-border-dark">
+      Clear filters
+    </button>
   )
 }
 

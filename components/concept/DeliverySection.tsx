@@ -7,7 +7,7 @@ import { OWNER_LABEL, SOLUTIONS, type Owner, type SolutionId } from '@/lib/conce
 import { byRecentChange, customerBatches, days, deliveryLine, getBuilding, needsAttention, nextParts, sectionOutcome, splitLine, wsIn } from '@/lib/concept/derive'
 import { splitDeliveryId, toDeliveryPayload } from '@/lib/concept/delivery'
 import { CustomerDeliveryView } from '@/components/customer/delivery/CustomerDeliveryView'
-import { ChangedMark, PageHeader, SummaryCards, groupTitle, td, th, type SummaryState } from './ui'
+import { ChangedMark, PageHeader, SummaryCards, groupTitle, matchesResponsibility, td, th } from './ui'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
@@ -29,8 +29,6 @@ export function DeliverySection() {
   const solution = params.get('solution') ?? ''
   const supplier = params.get('supplier') ?? ''
   const responsibility = params.get('responsibility') ?? ''
-  const rawState = params.get('state')
-  const state: SummaryState = rawState === 'progress' || rawState === 'done' ? rawState : ''
   const [open, setOpen] = useState(false)
 
   const write = (next: Record<string, string>) => {
@@ -59,16 +57,11 @@ export function DeliverySection() {
     if (batch && w.batchId !== batch) return false
     if (solution && w.solution !== solution) return false
     if (supplier && w.supplier !== supplier) return false
-    if (responsibility && w.owner !== responsibility) return false
     if (!needle) return true
     const names = w.projects.map((p) => getBuilding(account, p.buildingId).name).join(' ')
     return `${w.name} ${names}`.toLowerCase().includes(needle)
   })
-  const listed = filtered.filter((w) => {
-    if (state === 'done') return w.owner === 'done'
-    if (state === 'progress') return w.owner !== 'done'
-    return true
-  })
+  const listed = filtered.filter((w) => matchesResponsibility(w.owner, responsibility))
   const attention = byRecentChange(listed.filter(needsAttention))
   const progress = byRecentChange(listed.filter((w) => w.owner !== 'done' && !needsAttention(w)))
   const done = listed.filter((w) => w.owner === 'done').sort((a, b) => days(a.completedOn || '19 Oct 2026') - days(b.completedOn || '19 Oct 2026'))
@@ -84,7 +77,7 @@ export function DeliverySection() {
   return (
     <>
       <PageHeader title="Delivery" className="mb-4" />
-      <SummaryCards list={filtered} state={state} onState={(next) => write({ state: next })} />
+      <SummaryCards list={filtered} responsibility={responsibility} onResponsibility={(next) => write({ responsibility: next, state: '' })} />
       <div className="mt-4 flex gap-6 border-b border-cq-border-light">
         <button type="button" onClick={() => write({ tab: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal ${contracts ? 'border-transparent text-cq-text-secondary' : 'border-cq-accent text-cq-text'}`}>
           Workstreams ({all.length})

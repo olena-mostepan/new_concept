@@ -6,16 +6,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { OWNER_LABEL, SERVICES, SOLUTIONS, type Owner, type ServiceId, type SolutionId, type Workstream } from '@/lib/concept/model'
 import { batchOwner, buildingProgress, byRecentChange, customerBatches, doneFold, getBuilding, nextParts } from '@/lib/concept/derive'
 import { useConcept } from './store'
-import { Bar, ChangedKey, ChangedMark, FilterSearch, FilterSelect, PageHeader, SummaryCards, td, th, type SummaryState } from './ui'
+import { BOTH_ACTIONS, Bar, ChangedKey, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, SummaryCards, matchesResponsibility, td, th } from './ui'
 import { ServiceTag } from './ServiceTag'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 
 const OWNERS: Owner[] = ['you', 'cquel', 'suppliers', 'done']
-
-function summaryState(value: string | null): SummaryState {
-  return value === 'progress' || value === 'done' ? value : ''
-}
 
 function matchesQuery(accountBuildings: (id: string) => string, w: Workstream, q: string) {
   if (!q) return true
@@ -33,20 +29,18 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
   const batchId = params.get('batch') ?? ''
   const service = serviceId ?? ((params.get('service') as ServiceId | null) || '')
   const solution = (params.get('solution') as SolutionId | null) || ''
-  const responsibility = (params.get('responsibility') as Owner | null) || ''
-  const state = summaryState(params.get('state'))
+  const responsibility = params.get('responsibility') ?? ''
 
   const batches = customerBatches(account)
   const shared = account.workstreams.filter((w) => batches.some((b) => b.id === w.batchId))
 
-  const write = (patch: { q?: string; batch?: string; service?: string; solution?: string; responsibility?: string; state?: string }) => {
+  const write = (patch: { q?: string; batch?: string; service?: string; solution?: string; responsibility?: string }) => {
     const next = {
       q,
       batch: batchId,
       service: serviceId ?? (params.get('service') ?? ''),
       solution,
       responsibility,
-      state,
       ...patch,
     }
     const rest = new URLSearchParams()
@@ -69,58 +63,67 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
     if (service && w.service !== service) return false
     if (batchId && w.batchId !== batchId) return false
     if (solution && w.solution !== solution) return false
-    if (responsibility && w.owner !== responsibility) return false
     return matchesQuery((id) => getBuilding(account, id).name, w, q)
   })
-  const shown = filtered.filter((w) => {
-    if (state === 'done') return w.owner === 'done'
-    if (state === 'progress') return w.owner !== 'done'
-    return true
-  })
+  const shown = filtered.filter((w) => matchesResponsibility(w.owner, responsibility))
+  const filtering = Boolean(q || batchId || service || solution || responsibility)
 
   const solutions = [...new Set(shared.map((w) => w.solution))]
 
   return (
     <div>
-      <PageHeader title="Workstreams" className="mb-4" />
-      <SummaryCards list={filtered} state={state} onState={(next) => write({ state: next })} />
+      <PageHeader title="Workstreams" className="mb-4" actions={<ChangedKey className="p7 text-text-secondary" />} />
+      <SummaryCards list={filtered} responsibility={responsibility} onResponsibility={(next) => write({ responsibility: next })} />
 
-      <div className="mb-6 mt-6 flex flex-wrap items-center gap-2">
-        <FilterSearch value={q} onChange={(value) => write({ q: value })} />
-        <FilterSelect label="Batch" value={batchId} display={batches.find((b) => b.id === batchId)?.name} onChange={(value) => write({ batch: value })}>
-          <option value="">Batch</option>
-          {batches.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="Service" value={service} display={SERVICES.find((s) => s.id === service)?.label} onChange={(value) => write({ service: value })}>
-          <option value="">Service</option>
-          {SERVICES.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="Solution" value={solution} display={solution ? SOLUTIONS[solution] : undefined} onChange={(value) => write({ solution: value })}>
-          <option value="">Solution</option>
-          {solutions.map((id) => (
-            <option key={id} value={id}>
-              {SOLUTIONS[id]}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="Responsibility" value={responsibility} display={responsibility ? OWNER_LABEL[responsibility] : undefined} onChange={(value) => write({ responsibility: value })}>
-          <option value="">Responsibility</option>
-          {OWNERS.map((o) => (
-            <option key={o} value={o}>
-              {OWNER_LABEL[o]}
-            </option>
-          ))}
-        </FilterSelect>
-        <ChangedKey className="ml-auto p7 text-text-secondary" />
-      </div>
+      <FilterBar selects={4}>
+        <FilterField label="Search">
+          <FilterSearch value={q} onChange={(value) => write({ q: value })} />
+        </FilterField>
+        <FilterField label="Batch">
+          <FilterSelect value={batchId} onChange={(value) => write({ batch: value })}>
+            <option value="">All batches</option>
+            {batches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Service">
+          <FilterSelect value={service} onChange={(value) => write({ service: value })}>
+            <option value="">All services</option>
+            {SERVICES.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Solution">
+          <FilterSelect value={solution} onChange={(value) => write({ solution: value })}>
+            <option value="">All solutions</option>
+            {solutions.map((id) => (
+              <option key={id} value={id}>
+                {SOLUTIONS[id]}
+              </option>
+            ))}
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Responsibility">
+          <FilterSelect value={responsibility} onChange={(value) => write({ responsibility: value })}>
+            <option value="">All</option>
+            {responsibility === BOTH_ACTIONS && <option value={BOTH_ACTIONS}>CQuel's or suppliers' action</option>}
+            {OWNERS.map((o) => (
+              <option key={o} value={o}>
+                {OWNER_LABEL[o]}
+              </option>
+            ))}
+          </FilterSelect>
+        </FilterField>
+        {filtering && (
+          <ClearFilters onClick={() => write({ q: '', batch: '', service: serviceId ? service : '', solution: '', responsibility: '' })} />
+        )}
+      </FilterBar>
 
       <div className="space-y-6">
         {batches.map((b) => {
@@ -129,7 +132,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
           const live = byRecentChange(rows.filter((w) => w.owner !== 'done'))
           const done = rows.filter((w) => w.owner === 'done')
           const owner = batchOwner(account, b)
-          const expanded = open[b.id] || state === 'done'
+          const expanded = open[b.id] || responsibility === 'done'
           return (
             <section key={b.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
               <header className="flex flex-wrap items-start justify-between gap-4 border-b border-cq-border-light py-4 pl-9 pr-5">
@@ -200,7 +203,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                   </table>
                 </div>
               )}
-              {done.length > 0 && state === '' && (
+              {done.length > 0 && responsibility === '' && (
                 <div className="flex items-center justify-between gap-4 border-t border-cq-border-light bg-cq-bg py-3 pl-9 pr-5 text-sm text-cq-text-secondary">
                   <p>
                     <span className="font-semibold uppercase tracking-wide">Done · {done.length}</span> {doneFold(done)}

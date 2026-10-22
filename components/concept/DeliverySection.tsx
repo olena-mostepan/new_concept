@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { OWNER_LABEL, SOLUTIONS, type Owner, type SolutionId } from '@/lib/concept/model'
+import { SOLUTIONS, type SolutionId } from '@/lib/concept/model'
 import { byRecentChange, customerBatches, days, deliveryLine, getBuilding, needsAttention, nextParts, sectionOutcome, splitLine, wsIn } from '@/lib/concept/derive'
 import { splitDeliveryId, toDeliveryPayload } from '@/lib/concept/delivery'
 import { CustomerDeliveryView } from '@/components/customer/delivery/CustomerDeliveryView'
-import { ChangedMark, PageHeader, SummaryCards, groupTitle, matchesResponsibility, td, th } from './ui'
+import { ChangedMark, PageHeader, SummaryCards, YourActionOnly, groupTitle, matchesResponsibility, td, th } from './ui'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
@@ -28,7 +28,7 @@ export function DeliverySection() {
   const batch = params.get('batch') ?? ''
   const solution = params.get('solution') ?? ''
   const supplier = params.get('supplier') ?? ''
-  const responsibility = params.get('responsibility') ?? ''
+  const responsibility = params.get('responsibility') === 'you' ? 'you' : ''
   const [open, setOpen] = useState(false)
 
   const write = (next: Record<string, string>) => {
@@ -128,12 +128,7 @@ export function DeliverySection() {
                 <option key={name} value={name}>{name}</option>
               ))}
             </select>
-            <select aria-label="Responsibility" value={responsibility} onChange={(e) => write({ responsibility: e.target.value })} className={selectClass} style={selectStyle}>
-              <option value="">Responsibility</option>
-              {(['you', 'cquel', 'suppliers', 'done'] as Owner[]).map((o) => (
-                <option key={o} value={o}>{OWNER_LABEL[o]}</option>
-              ))}
-            </select>
+            <YourActionOnly checked={responsibility === 'you'} onChange={(checked) => write({ responsibility: checked ? 'you' : '' })} />
           </div>
           <div className="space-y-6">
             {groups.map((group) => {

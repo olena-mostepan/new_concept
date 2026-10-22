@@ -590,13 +590,13 @@ const halvering: Account = {
     },
   ],
   activity: [
-    { date: '15 Oct', title: 'Heat pumps', text: 'Estimates ready for 3 more buildings.', batchId: 'offices' },
-    { date: '9 Oct', title: 'Solar PV FR/BE · Solvarek', text: 'Rue Belvaux 22 completed.', batchId: 'offices' },
-    { date: '8 Oct', title: 'LED', text: 'Kelmsdorfer Straße 41 not proceeding — payback over 12 years.', batchId: 'flagship' },
-    { date: '8 Oct', title: 'Solar PV DE', text: 'Halverkamp 19: survey confirmed the roof can take panels.', batchId: 'flagship' },
-    { date: '6 Oct', title: 'LED', text: '3 estimates presented.', batchId: 'flagship' },
-    { date: '3 Oct', title: 'Offices DE, FR and BE', text: '6 buildings joined the batch.', batchId: 'offices' },
-    { date: '2 Oct', title: 'Solar PV · Missing roof data', text: 'Roof drawings requested for 7 buildings.', batchId: 'flagship' },
+    { date: '15 Oct', title: 'Heat pumps', text: 'Estimates ready for 3 more buildings', batchId: 'offices' },
+    { date: '9 Oct', title: 'Solar PV FR/BE · Solvarek', text: 'Rue Belvaux 22 completed', batchId: 'offices' },
+    { date: '8 Oct', title: 'LED', text: 'Kelmsdorfer Straße 41 not proceeding · payback over 12 years', batchId: 'flagship' },
+    { date: '8 Oct', title: 'Solar PV DE', text: 'Halverkamp 19 · roof can take panels', batchId: 'flagship' },
+    { date: '6 Oct', title: 'LED', text: '3 estimates presented', batchId: 'flagship' },
+    { date: '3 Oct', title: 'Offices DE, FR and BE', text: '6 buildings joined', batchId: 'offices' },
+    { date: '2 Oct', title: 'Solar PV · Missing roof data', text: 'Roof drawings requested for 7 buildings', batchId: 'flagship' },
   ],
   documents: [],
   momentum: [
@@ -636,7 +636,7 @@ const showcase: Account = {
     {
       id: 'pilot',
       name: 'Pilot · 8 cinemas',
-      goal: 'find out what EV charging and solar would cost across 8 cinemas',
+      goal: 'cost of EV charging and solar across 8 cinemas',
       lead: 'Tamsin Quarrell',
       filesSummary: 'Site plans and 12 months of electricity bills',
       buildingIds: CINEMAS.map((x) => x.id),
@@ -651,6 +651,11 @@ const showcase: Account = {
       planState: 'proposed',
       filesReceived: '9 Oct 2026',
       filesCount: 23,
+      received: [
+        { label: 'Site plans', date: '9 Oct' },
+        { label: 'Drawings', date: '9 Oct' },
+        { label: 'Electricity bills, 12 months', date: '9 Oct' },
+      ],
       planProposed: '14 Oct 2026',
       upcoming: [
         { stage: 'scope', label: 'Roof surveys — 5 sites', why: "We'll book them if you go ahead with solar", owner: 'cquel' },
@@ -671,8 +676,8 @@ const showcase: Account = {
       owner: 'you', proposed: true, now: '',
       gives: 'cost and payback per site',
       needs: [
-        { label: 'Half-hourly electricity data, 12 months — all 8 sites', why: 'Sizes chargers to spare capacity', owner: 'you', since: '14 Oct 2026' },
-        { label: 'Car park ownership — Leeds, Reading', why: 'Leased car parks need landlord consent', owner: 'you', since: '14 Oct 2026' },
+        { label: 'Half-hourly electricity data, 12 months', scope: '8 sites', why: 'to size chargers', owner: 'you', since: '14 Oct 2026' },
+        { label: 'Car park ownership', scope: 'Leeds, Reading', why: 'landlord consent', owner: 'you', since: '14 Oct 2026' },
       ],
       projects: rows(c(1, 2, 3, 4, 5, 6, 7, 8), 0), lead: 'Tamsin Quarrell',
     },
@@ -682,19 +687,19 @@ const showcase: Account = {
       gives: 'system size, cost and payback per roof',
       exclusion: 'Leeds, Nottingham and Reading left out — pitched or shared roofs',
       needs: [
-        { label: 'Roof age or last re-roof — 5 sites', why: 'A roof due for replacement changes the payback', owner: 'you', since: '14 Oct 2026' },
+        { label: 'Roof age or last re-roof', scope: '5 sites', why: 'affects payback', owner: 'you', since: '14 Oct 2026' },
       ],
       projects: rows(c(1, 3, 5, 6, 8), 0), lead: 'Tamsin Quarrell',
     },
   ],
   activity: [
-    { date: '14 Oct', title: 'Plan proposed', text: '2 workstreams: EV Charging on 8 sites, Solar PV on 5.', batchId: 'pilot' },
-    { date: '9 Oct', title: 'Files received', text: '23 files — site plans, drawings, electricity bills.', batchId: 'pilot' },
-    { date: '8 Oct', title: 'Pilot set up', text: '8 cinemas added by Tamsin Quarrell.', batchId: 'pilot' },
+    { date: '14 Oct', title: 'Plan proposed', text: 'EV charging · 8 sites, Solar PV · 5 sites', batchId: 'pilot' },
+    { date: '9 Oct', title: 'Files received', text: '23 files', batchId: 'pilot' },
+    { date: '8 Oct', title: 'Pilot set up', text: '8 cinemas', batchId: 'pilot' },
   ],
   documents: [
-    { name: 'Plan — pilot, 8 cinemas', meta: 'PDF · 14 Oct', action: 'Download', batchId: 'pilot' },
-    { name: 'Files you sent', meta: '23 files · site plans, drawings, 12 months of bills · 9 Oct', action: 'View', batchId: 'pilot' },
+    { name: 'Pilot plan', meta: 'PDF · 14 Oct', action: 'Download', batchId: 'pilot' },
+    { name: 'Your files', meta: '23 files · 9 Oct', action: 'View', batchId: 'pilot' },
     { name: 'Indicative estimates', meta: 'After Indicative pricing', batchId: 'pilot' },
   ],
 }

@@ -99,6 +99,18 @@ export const SOLUTIONS: Record<SolutionId, string> = {
   ashp: 'Heat pumps',
 }
 
+/** One short line under each stage on the pilot route. */
+export const SERVICE_LABEL: Record<'start' | ServiceId, string> = {
+  start: 'Pilot plan',
+  indicative: 'Cost and payback from your data',
+  scope: 'Surveys and site checks',
+  tender: 'Supplier bids from our network',
+  pricing: 'Price from your existing supplier',
+  delivery: 'Installation to handover',
+}
+
+export const pricingNotNeeded = 'No existing supplier'
+
 export const OWNER_LABEL: Record<Owner, string> = {
   you: 'Your action',
   cquel: "CQuel's action",
@@ -149,6 +161,8 @@ export interface Need {
   label: string
   /** One line: where it comes from or why it's needed */
   why: string
+  /** Sites the need covers, when the label doesn't already say. */
+  scope?: string
   owner: Exclude<Owner, 'done'>
   /** When it was asked for (drives "waiting N days") */
   since?: string
@@ -184,6 +198,8 @@ export interface Batch {
   lead?: string
   /** One received bundle, shown under the stage that will use it */
   filesSummary?: string
+  /** Files already in, one row each. */
+  received?: Array<{ label: string; date: string }>
   /** Things we'll need at a later stage — signalled, not asked yet */
   upcoming?: Array<Need & { stage: ServiceId }>
   known?: Known[]

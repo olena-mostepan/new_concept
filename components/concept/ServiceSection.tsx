@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { OWNER_LABEL, SOLUTIONS, service, type Owner, type ServiceId, type SolutionId, type Workstream } from '@/lib/concept/model'
+import { SOLUTIONS, service, type ServiceId, type SolutionId, type Workstream } from '@/lib/concept/model'
 import { byRecentChange, customerBatches, days, getBuilding, nextParts, presentedTotal, priceLine, sectionOutcome, splitLine, suppliersLine, surveyLine, wsIn } from '@/lib/concept/derive'
-import { BOTH_ACTIONS, ChangedKey, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, SummaryCards, groupTitle, matchesResponsibility, td, th } from './ui'
+import { ChangedKey, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, SummaryCards, YourActionOnly, groupTitle, matchesResponsibility, td, th } from './ui'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
@@ -36,7 +36,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   const q = params.get('q') ?? ''
   const batch = params.get('batch') ?? ''
   const solution = params.get('solution') ?? ''
-  const responsibility = params.get('responsibility') ?? ''
+  const responsibility = params.get('responsibility') === 'you' ? 'you' : ''
   const supplier = params.get('supplier') ?? ''
 
   const write = (next: Record<string, string>) => {
@@ -97,7 +97,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
         </div>
       ) : (
       <>
-      <FilterBar selects={serviceId === 'pricing' ? 4 : 3}>
+      <FilterBar selects={serviceId === 'pricing' ? 3 : 2}>
         <FilterField label="Search">
           <FilterSearch value={q} onChange={(value) => write({ q: value })} />
         </FilterField>
@@ -133,17 +133,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
             </FilterSelect>
           </FilterField>
         )}
-        <FilterField label="Responsibility">
-          <FilterSelect value={responsibility} onChange={(value) => write({ responsibility: value })}>
-            <option value="">All</option>
-            {responsibility === BOTH_ACTIONS && <option value={BOTH_ACTIONS}>CQuel's or suppliers' action</option>}
-            {(['you', 'cquel', 'suppliers', 'done'] as Owner[]).map((o) => (
-              <option key={o} value={o}>
-                {OWNER_LABEL[o]}
-              </option>
-            ))}
-          </FilterSelect>
-        </FilterField>
+        <YourActionOnly checked={responsibility === 'you'} onChange={(checked) => write({ responsibility: checked ? 'you' : '' })} />
         {filtering && (
           <ClearFilters onClick={() => write({ q: '', batch: '', solution: '', responsibility: '', supplier: '', state: '' })} />
         )}

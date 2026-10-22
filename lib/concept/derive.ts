@@ -1,4 +1,4 @@
-import { OWNER_LABEL, SERVICES, TODAY, service, type Account, type Batch, type Need, type Owner, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
+import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Need, type Owner, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
 
 /** Customers only see batches once a plan has been shared with them */
 export const customerBatches = (a: Account) => a.batches.filter((b) => b.planState !== 'draft')
@@ -63,7 +63,7 @@ export const days = (d: string) => Math.round((parse(TODAY) - parse(d)) / 864000
 /** "14 Oct 2026" → "14 Oct" */
 export const short = (d?: string) => (d ? d.split(' ').slice(0, 2).join(' ') : '')
 
-const noun = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+export const noun = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 /** Next line for a live workstream. Days and building counts come from the data. */
 export function nextLine(w: Workstream): string {
@@ -182,18 +182,60 @@ export function buildingProgress(w: Workstream) {
   return { done, total: w.projects.length }
 }
 
-/** Portfolio pipeline: live workstreams per service, plus done workstreams. */
-export function pipeline(a: Account) {
-  const shared = a.workstreams.filter((w) => !w.proposed)
-  const segments = [
-    ...SERVICES.map((s) => ({
+function projectKey(w: Workstream, buildingId: string) {
+  return `${buildingId}:${w.solution}`
+}
+
+function projectKeys(w: Workstream) {
+  return activeProjects(w).map((p) => projectKey(w, p.buildingId))
+}
+
+/** The dashboard calls LED by that name. The solution list calls it Lighting. */
+function solutionCaption(id: SolutionId) {
+  return id === 'led' ? 'LED' : SOLUTIONS[id]
+}
+
+export type ServiceCount = {
+  id: ServiceId
+  label: string
+  projects: number
+  workstreams: number
+  you: number
+  byBatch: Array<{ batchId: string; name: string; projects: number }>
+}
+
+/** Live projects per service, for the mature dashboard. */
+export function servicePipeline(a: Account) {
+  const batches = customerBatches(a)
+  const ids = new Set(batches.map((b) => b.id))
+  const live = a.workstreams.filter((w) => !w.proposed && w.owner !== 'done' && ids.has(w.batchId))
+  const services: ServiceCount[] = SERVICES.map((s) => {
+    const ws = live.filter((w) => w.service === s.id)
+    const byBatch = batches.flatMap((b) => {
+      const mine = ws.filter((w) => w.batchId === b.id)
+      const projects = new Set(mine.flatMap(projectKeys)).size
+      return projects > 0 ? [{ batchId: b.id, name: b.name, projects }] : []
+    })
+    return {
       id: s.id,
       label: s.label,
-      n: shared.filter((w) => w.service === s.id && w.owner !== 'done').length,
-    })),
-    { id: 'done', label: 'Done', n: shared.filter((w) => w.owner === 'done').length },
-  ].filter((s) => s.n > 0)
-  return { segments, total: shared.length, batches: customerBatches(a).length }
+      projects: new Set(ws.flatMap(projectKeys)).size,
+      workstreams: ws.length,
+      you: ws.filter((w) => w.owner === 'you').length,
+      byBatch,
+    }
+  })
+  const finished = a.workstreams.filter((w) => w.service === 'delivery' && w.owner === 'done' && !w.proposed && ids.has(w.batchId))
+  return {
+    services,
+    completed: {
+      projects: new Set(finished.flatMap(projectKeys)).size,
+      solutions: [...new Set(finished.map((w) => solutionCaption(w.solution)))],
+    },
+    total: services.reduce((n, s) => n + s.projects, 0),
+    batches: batches.length,
+    you: live.filter((w) => w.owner === 'you').length,
+  }
 }
 
 export function rightNow(a: Account) {
@@ -217,19 +259,23 @@ export function waitingCounts(a: Account) {
 export type BatchCell =
   | { service: ServiceId; kind: 'skip' }
   | { service: ServiceId; kind: 'planned' }
-  | { service: ServiceId; kind: 'live'; total: number; done: number; you: number }
+  | { service: ServiceId; kind: 'done' }
+  | { service: ServiceId; kind: 'live'; projects: number; workstreams: number; completed: number }
 
 export function batchCells(a: Account, b: Batch): BatchCell[] {
   return SERVICES.map((s) => {
     if (!b.route.includes(s.id)) return { service: s.id, kind: 'skip' }
     const ws = wsIn(a, b.id).filter((w) => w.service === s.id && !w.proposed)
     if (!ws.length) return { service: s.id, kind: 'planned' }
+    const live = ws.filter((w) => w.owner !== 'done')
+    if (!live.length) return { service: s.id, kind: 'done' }
+    const completed = s.id === 'delivery' ? new Set(ws.filter((w) => w.owner === 'done').flatMap(projectKeys)).size : 0
     return {
       service: s.id,
       kind: 'live',
-      total: ws.length,
-      done: ws.filter((w) => w.owner === 'done').length,
-      you: ws.filter((w) => w.owner === 'you').length,
+      projects: new Set(live.flatMap(projectKeys)).size,
+      workstreams: live.length,
+      completed,
     }
   })
 }
@@ -238,7 +284,11 @@ export function batchSummary(a: Account, b: Batch) {
   const n = wsIn(a, b.id).filter((w) => !w.proposed).length
   const bits = [noun(n, 'workstream', 'workstreams')]
   if (b.target) bits.push(`by ${b.target}`)
-  return { goal: b.goal, meta: bits.join(' · '), line: [b.goal, ...bits].join(' · ') }
+  const projects = liveProjectCount(a, b)
+  const detail = [`${b.buildingIds.length} buildings`, noun(projects, 'project', 'projects')]
+  if (b.target) detail.push(`by ${b.target}`)
+  const line = [b.goal, ...detail].join(' · ')
+  return { goal: b.goal, meta: bits.join(' · '), line, detail: line }
 }
 
 export type StageState = 'done' | 'now' | 'next' | 'planned' | 'skip'
@@ -248,6 +298,7 @@ export interface RouteStage {
   label: string
   state: StageState
   caption: string
+  sub?: string
 }
 
 export interface PanelItem {
@@ -298,10 +349,15 @@ export function routeStages(a: Account, b: Batch): RouteStage[] {
     if (doneWs.length === ws.length) {
       return { id: s.id, label: s.label, state: 'done', caption: `Done ${short(latestDone(ws))}` }
     }
-    const caption = doneWs.length
-      ? `${noun(ws.length, 'workstream', 'workstreams')} · ${doneWs.length} done`
-      : noun(ws.length, 'workstream', 'workstreams')
-    return { id: s.id, label: s.label, state: 'now', caption }
+    const liveWs = ws.filter((w) => w.owner !== 'done')
+    const projects = new Set(liveWs.flatMap(projectKeys)).size
+    return {
+      id: s.id,
+      label: s.label,
+      state: 'now',
+      caption: noun(projects, 'project', 'projects'),
+      sub: doneWs.length ? `${noun(doneWs.length, 'workstream', 'workstreams')} done` : undefined,
+    }
   })
   return [start, ...services]
 }
@@ -430,14 +486,9 @@ export function routePanels(a: Account, b: Batch): RoutePanel[] {
 export function routeAside(a: Account, b: Batch, variant: 'dashboard' | 'page') {
   if (variant === 'dashboard') {
     const n = wsIn(a, b.id).length
-    return `${b.buildingIds.length} buildings · ${noun(n, 'workstream', 'workstreams')}${b.lead ? ` · Lead ${b.lead}` : ''}`
+    return `${b.buildingIds.length} buildings · ${noun(n, 'workstream', 'workstreams')}`
   }
-  const live = wsIn(a, b.id).filter(isLive)
-  const parts = (['you', 'cquel', 'suppliers'] as Owner[])
-    .map((o) => ({ o, n: live.filter((w) => w.owner === o).length }))
-    .filter((x) => x.n > 0)
-    .map((x) => `${OWNER_LABEL[x.o]}: ${x.n}`)
-  return parts.join(' · ')
+  return `${noun(liveProjectCount(a, b), 'project', 'projects')} in progress`
 }
 
 export function workstreamBlockMeta(a: Account, b: Batch) {
@@ -460,6 +511,23 @@ export function stepMarks(w: Workstream, notStarted: boolean) {
     const state = sitting ? ('now' as const) : allPast ? ('passed' as const) : ('upcoming' as const)
     return { label, state, count, showCount: sitting }
   })
+}
+
+export function stepNote(w: Workstream, notStarted = false) {
+  if (notStarted) return 'Not started'
+  const counts = service(w.service).steps
+    .map((label, i) => ({ label, n: activeProjects(w).filter((p) => p.step === i).length }))
+    .filter((step) => step.n > 0)
+  if (counts.length <= 1) return counts[0]?.label ?? 'Not started'
+  return counts.map((step) => `${step.n} ${step.label.toLowerCase()}`).join(' · ')
+}
+
+export function byCompleted(list: Workstream[]) {
+  return [...list].sort((a, b) => (b.completedOn ? parse(b.completedOn) : 0) - (a.completedOn ? parse(a.completedOn) : 0))
+}
+
+function liveProjectCount(a: Account, b: Batch) {
+  return new Set(wsIn(a, b.id).filter(isLive).flatMap(projectKeys)).size
 }
 
 export function buildingNames(a: Account, w: Workstream) {

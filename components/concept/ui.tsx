@@ -40,13 +40,10 @@ export function workstreamSummary(list: Array<{ batchId: string; owner: string }
   return `${list.length} ${workstreams} across ${batches} ${batchWord} · ${live} in progress · ${done} done`
 }
 
-/** Responsibility value set by the "CQuel's or suppliers' action" card. */
-export const BOTH_ACTIONS = 'cquel,suppliers'
-
+/** Only "you" filters the list. Older responsibility values count as no filter. */
 export function matchesResponsibility(owner: string, responsibility: string) {
-  if (!responsibility) return true
-  if (responsibility === BOTH_ACTIONS) return owner === 'cquel' || owner === 'suppliers'
-  return owner === responsibility
+  if (responsibility !== 'you') return true
+  return owner === 'you'
 }
 
 export function SummaryCards({
@@ -60,36 +57,22 @@ export function SummaryCards({
 }) {
   const total = list.length
   const you = list.filter((w) => w.owner === 'you').length
-  const shared = list.filter((w) => w.owner === 'cquel' || w.owner === 'suppliers').length
+  const inProgress = list.filter((w) => w.owner !== 'done').length
   const done = list.filter((w) => w.owner === 'done').length
   const batches = new Set(list.map((w) => w.batchId)).size
-  const share = (n: number) => (total > 0 ? `${Math.round((n / total) * 100)}% of workstreams` : null)
-  const toggle = (value: string) => onResponsibility(responsibility === value ? '' : value)
+  const yours = responsibility === 'you'
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <SummaryCard label="Workstreams" number={total} line={total > 0 ? `across ${batches} ${batches === 1 ? 'batch' : 'batches'}` : null} />
       <SummaryCard
         label="Your action"
         mark
         number={you}
-        line={share(you)}
-        pressed={responsibility === 'you'}
-        onClick={() => toggle('you')}
+        line={total > 0 ? `of ${inProgress} in progress` : null}
+        pressed={yours}
+        onClick={() => onResponsibility(yours ? '' : 'you')}
       />
-      <SummaryCard
-        label="CQuel's or suppliers' action"
-        number={shared}
-        line={share(shared)}
-        pressed={responsibility === BOTH_ACTIONS}
-        onClick={() => toggle(BOTH_ACTIONS)}
-      />
-      <SummaryCard
-        label="Done"
-        number={done}
-        line={share(done)}
-        pressed={responsibility === 'done'}
-        onClick={() => toggle('done')}
-      />
+      <SummaryCard label="Done" number={done} line={total > 0 ? `${Math.round((done / total) * 100)}% of workstreams` : null} />
     </div>
   )
 }
@@ -149,15 +132,33 @@ export function FilterField({ label, className, children }: { label: string; cla
   )
 }
 
-/** Search is 1.5fr, each select is 1fr, Clear filters is the last auto column. One column on phones. */
+/** Search is 1.5fr, each select is 1fr, then Your action only and Clear filters. One column on phones. */
 export function FilterBar({ selects, children }: { selects: number; children: ReactNode }) {
   return (
     <div
       className="mb-6 mt-6 grid grid-cols-1 items-end gap-4 lg:[grid-template-columns:var(--filter-cols)]"
-      style={{ '--filter-cols': `1.5fr repeat(${selects}, minmax(0, 1fr)) auto` } as CSSProperties}
+      style={{ '--filter-cols': `1.5fr repeat(${selects}, minmax(0, 1fr)) auto auto` } as CSSProperties}
     >
       {children}
     </div>
+  )
+}
+
+export function YourActionOnly({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="flex h-10 cursor-pointer items-center gap-2">
+      <input type="checkbox" className="peer sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span
+        className={cn(
+          'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-black-7',
+          checked ? 'border-black-7 bg-black-7 text-white' : 'border-black-6 bg-white',
+        )}
+        aria-hidden
+      >
+        {checked && <Check className="h-3 w-3" strokeWidth={3} />}
+      </span>
+      <span className="whitespace-nowrap p6 text-text-primary">Your action only</span>
+    </label>
   )
 }
 
@@ -294,6 +295,7 @@ export function Card({
   className,
   bodyClassName,
   titleClassName,
+  headerClassName,
 }: {
   title?: ReactNode
   right?: ReactNode
@@ -301,11 +303,12 @@ export function Card({
   className?: string
   bodyClassName?: string
   titleClassName?: string
+  headerClassName?: string
 }) {
   return (
     <section className={cn('overflow-hidden rounded-xl border border-border-dark bg-bg-container', className)}>
       {(title || right) && (
-        <header className="flex items-center justify-between gap-3 border-b border-border-light px-4 py-3">
+        <header className={cn('flex items-center justify-between gap-3 border-b border-border-light', headerClassName ?? 'px-4 py-3')}>
           {title && <h2 className={titleClassName ?? 'h6 text-text-primary'}>{title}</h2>}
           {right && <div className="text-sm text-cq-text-secondary">{right}</div>}
         </header>

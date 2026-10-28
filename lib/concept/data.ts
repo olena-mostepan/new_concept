@@ -1,8 +1,8 @@
-import type { Account, Basis, Building, ProjectRow } from './model'
+import type { Account, Basis, Building, Phase, ProjectRow, ServiceId } from './model'
 
 /**
  * Two example accounts.
- *  - Halvering Estates (mature): the staging demo customer — two batches, twenty-five workstreams.
+ *  - Halvering Estates (mature): the staging demo customer — two batches, twenty workstreams.
  *  - Showcase Cinemas (pilot): one new batch at kickoff, two proposed workstreams.
  * Dates are past events or estimates the platform already holds. Nothing is scheduled ahead.
  */
@@ -25,6 +25,10 @@ const ledBasis = (values?: string[]): Basis[] =>
   LED_BASIS.map(([label, source], i) => ({ label, source, value: values?.[i] ?? '—' }))
 
 const p = (buildingId: string, step: number, extra: Partial<ProjectRow> = {}): ProjectRow => ({ buildingId, step, ...extra })
+
+/** Current service is now; the other services on this workstream's route are planned. */
+const route = (services: ServiceId[], now: ServiceId, startedOn?: string): Phase[] =>
+  services.map((service) => (service === now ? { service, state: 'now', ...(startedOn ? { startedOn } : {}) } : { service, state: 'planned' }))
 
 /* ------------------------------------------------------------ Halvering */
 
@@ -108,18 +112,16 @@ const halvering: Account = {
   workstreams: [
     // Flagship
     {
-      id: 'solar-ind', batchId: 'flagship', name: 'Solar PV', service: 'indicative', solution: 'solar',
-      owner: 'done', now: '',
-      startedOn: '20 May 2026', completedOn: '28 Aug 2026',
-      needs: [], lead: 'Tamsin Quarrell',
-      projects: [
-        ...['f1', 'f4', 'f5', 'f7', 'f12'].map((id) => p(id, 3, { estimate: [115, 140], decision: 'go', destination: 'tender', decidedOn: '28 Aug 2026' })),
-        ...['f2', 'f3', 'f6'].map((id) => p(id, 3, { estimate: [115, 140], decision: 'scope', destination: 'scope', decidedOn: '28 Aug 2026' })),
-        ...['f8', 'f9', 'f10', 'f11'].map((id) => p(id, 3, { estimate: [120, 145], decision: 'scope', destination: 'scope', decidedOn: '28 Aug 2026' })),
+      id: 'solar-de', batchId: 'flagship', name: 'Solar PV DE', service: 'tender',
+      phases: [
+        {
+          service: 'indicative', state: 'done', startedOn: '20 May 2026', completedOn: '28 Aug 2026',
+          projects: ['f1', 'f4', 'f5', 'f7', 'f12'].map((id) => p(id, 3, { estimate: [115, 140], decision: 'go', destination: 'tender', decidedOn: '28 Aug 2026' })),
+        },
+        { service: 'tender', state: 'now', startedOn: '1 Sep 2026' },
+        { service: 'delivery', state: 'planned' },
       ],
-    },
-    {
-      id: 'solar-de', batchId: 'flagship', name: 'Solar PV DE', service: 'tender', solution: 'solar',
+      solution: 'solar',
       owner: 'suppliers', now: '', startedOn: '1 Sep 2026',
       next: { kind: 'offers', in: 8, invited: 11, chased: '12 Oct 2026' },
       needs: [
@@ -182,7 +184,20 @@ const halvering: Account = {
       lead: 'Tamsin Quarrell',
     },
     {
-      id: 'solar-roof', batchId: 'flagship', name: 'Solar PV · Missing roof data', service: 'scope', solution: 'solar',
+      id: 'solar-roof', batchId: 'flagship', name: 'Solar PV · Missing roof data', service: 'scope',
+      phases: [
+        {
+          service: 'indicative', state: 'done', startedOn: '20 May 2026', completedOn: '28 Aug 2026',
+          projects: [
+            ...['f2', 'f3', 'f6'].map((id) => p(id, 3, { estimate: [115, 140], decision: 'scope', destination: 'scope', decidedOn: '28 Aug 2026' })),
+            ...['f8', 'f9', 'f10', 'f11'].map((id) => p(id, 3, { estimate: [120, 145], decision: 'scope', destination: 'scope', decidedOn: '28 Aug 2026' })),
+          ],
+        },
+        { service: 'scope', state: 'now', startedOn: '1 Sep 2026' },
+        { service: 'tender', state: 'planned' },
+        { service: 'delivery', state: 'planned' },
+      ],
+      solution: 'solar',
       owner: 'you', now: '', startedOn: '1 Sep 2026',
       next: { kind: 'roof', since: '2 Oct 2026' },
       surveyNote: 'once drawings are in',
@@ -221,7 +236,9 @@ const halvering: Account = {
       lead: 'Tamsin Quarrell',
     },
     {
-      id: 'ev-de', batchId: 'flagship', name: 'EV charging · DE flagships', service: 'scope', solution: 'ev',
+      id: 'ev-de', batchId: 'flagship', name: 'EV charging · DE flagships', service: 'scope',
+      phases: route(['scope', 'tender', 'delivery'], 'scope', '1 Oct 2026'),
+      solution: 'ev',
       owner: 'you', now: '', startedOn: '1 Oct 2026',
       next: { kind: 'carpark', since: '9 Oct 2026' },
       surveyNote: 'car park plans are enough',
@@ -234,7 +251,9 @@ const halvering: Account = {
       lead: 'Tamsin Quarrell',
     },
     {
-      id: 'led-ind', batchId: 'flagship', name: 'LED', service: 'indicative', solution: 'led',
+      id: 'led-ind', batchId: 'flagship', name: 'LED', service: 'indicative',
+      phases: route(['indicative', 'tender', 'delivery'], 'indicative', '20 May 2026'),
+      solution: 'led',
       owner: 'you', now: '', startedOn: '20 May 2026',
       next: { kind: 'decision', since: '6 Oct 2026' },
       needs: [
@@ -265,31 +284,18 @@ const halvering: Account = {
       lead: 'Rich Amos',
     },
     {
-      id: 'hp-kelderby', batchId: 'flagship', name: 'Heat pumps · Kelderby', service: 'pricing', solution: 'ashp', supplier: 'Kelderby',
+      id: 'hp-kelderby', batchId: 'flagship', name: 'Heat pumps · Kelderby', service: 'pricing',
+      phases: route(['pricing', 'delivery'], 'pricing', '24 Sep 2026'),
+      solution: 'ashp', supplier: 'Kelderby',
       owner: 'suppliers', now: '', startedOn: '24 Sep 2026',
       next: { kind: 'price', since: '1 Oct 2026', from: 'Kelderby' },
       needs: [{ label: 'Price from Kelderby', why: 'Incumbent supplier, 4 buildings', owner: 'suppliers', since: '1 Oct 2026' }],
       projects: rows(f(5, 7, 8, 12), 1), lead: 'Rich Amos',
     },
     {
-      id: 'ev-tender', batchId: 'flagship', name: 'EV charging', service: 'tender', solution: 'ev', supplier: 'Voltreny',
-      owner: 'done', now: '', outcome: 'Voltreny chosen',
-      startedOn: '2 Jun 2026', completedOn: '5 Aug 2026', needs: [],
-      tender: { invited: 10, offers: { received: 7 } },
-      projects: rows(f(1, 3, 4, 6, 10, 11), 5), lead: 'Tamsin Quarrell',
-    },
-    {
-      id: 'ev-ind', batchId: 'flagship', name: 'EV charging', service: 'indicative', solution: 'ev',
-      owner: 'done', now: '',
-      startedOn: '20 May 2026', completedOn: '30 May 2026',
-      needs: [], lead: 'Tamsin Quarrell',
-      projects: [
-        ...['f1', 'f3', 'f4', 'f6'].map((id) => p(id, 3, { estimate: [23, 28], paybackYears: 6, decision: 'go', destination: 'tender', decidedOn: '30 May 2026' })),
-        ...['f10', 'f11'].map((id) => p(id, 3, { estimate: [24, 29], paybackYears: 6, decision: 'go', destination: 'tender', decidedOn: '30 May 2026' })),
-      ],
-    },
-    {
-      id: 'hp-flagship', batchId: 'flagship', name: 'Heat pumps · Flagship', service: 'indicative', solution: 'ashp',
+      id: 'hp-flagship', batchId: 'flagship', name: 'Heat pumps · Flagship', service: 'indicative',
+      phases: route(['indicative', 'scope', 'tender', 'delivery'], 'indicative', '1 Oct 2026'),
+      solution: 'ashp',
       owner: 'you', now: '', startedOn: '1 Oct 2026',
       next: { kind: 'gas', since: '1 Oct 2026' },
       needs: [{ label: 'Gas bills for 8 buildings', why: 'Heating load per building', owner: 'you', since: '1 Oct 2026' }],
@@ -297,7 +303,23 @@ const halvering: Account = {
       lead: 'Rich Amos',
     },
     {
-      id: 'ev-voltreny', batchId: 'flagship', name: 'EV charging · Voltreny', service: 'delivery', solution: 'ev', supplier: 'Voltreny',
+      id: 'ev-voltreny', batchId: 'flagship', name: 'EV charging · Voltreny', service: 'delivery',
+      phases: [
+        {
+          service: 'indicative', state: 'done', startedOn: '20 May 2026', completedOn: '30 May 2026',
+          projects: [
+            ...['f1', 'f3', 'f4', 'f6'].map((id) => p(id, 3, { estimate: [23, 28], paybackYears: 6, decision: 'go', destination: 'tender', decidedOn: '30 May 2026' })),
+            ...['f10', 'f11'].map((id) => p(id, 3, { estimate: [24, 29], paybackYears: 6, decision: 'go', destination: 'tender', decidedOn: '30 May 2026' })),
+          ],
+        },
+        {
+          service: 'tender', state: 'done', startedOn: '2 Jun 2026', completedOn: '5 Aug 2026', outcome: 'Voltreny chosen',
+          tender: { invited: 10, offers: { received: 7 } },
+          projects: rows(f(1, 3, 4, 6, 10, 11), 5),
+        },
+        { service: 'delivery', state: 'now', startedOn: '6 Aug 2026' },
+      ],
+      solution: 'ev', supplier: 'Voltreny',
       owner: 'suppliers', now: '', startedOn: '6 Aug 2026',
       deliveryProfile: { contractValue: 152, expectedCompletion: '16 Dec 2026', siteChecksOn: '20 Aug 2026', siteChecks: 3 },
       needs: [{ label: 'Start dates for 3 projects', why: 'Voltreny is planning them', owner: 'suppliers' }],
@@ -370,7 +392,9 @@ const halvering: Account = {
       lead: 'Tamsin Quarrell',
     },
     {
-      id: 'led-lumora', batchId: 'flagship', name: 'LED · Lumora', service: 'delivery', solution: 'led', supplier: 'Lumora',
+      id: 'led-lumora', batchId: 'flagship', name: 'LED · Lumora', service: 'delivery',
+      phases: [{ service: 'delivery', state: 'done', startedOn: '2 Jun 2026', completedOn: '30 Sep 2026', outcome: 'Installed' }],
+      solution: 'led', supplier: 'Lumora',
       owner: 'done', now: 'Installed', outcome: 'handed over', startedOn: '2 Jun 2026', completedOn: '30 Sep 2026',
       deliveryProfile: { contractValue: 48 },
       needs: [],
@@ -381,7 +405,9 @@ const halvering: Account = {
     },
     // Offices
     {
-      id: 'hp-ind', batchId: 'offices', name: 'Heat pumps', service: 'indicative', solution: 'ashp',
+      id: 'hp-ind', batchId: 'offices', name: 'Heat pumps', service: 'indicative',
+      phases: route(['indicative', 'scope', 'tender', 'delivery'], 'indicative', '4 Aug 2026'),
+      solution: 'ashp',
       owner: 'cquel', now: '', startedOn: '4 Aug 2026',
       next: { kind: 'landing' },
       needs: [
@@ -396,7 +422,9 @@ const halvering: Account = {
       lead: 'Rich Amos',
     },
     {
-      id: 'solar-offices', batchId: 'offices', name: 'Solar PV · Offices DE', service: 'indicative', solution: 'solar',
+      id: 'solar-offices', batchId: 'offices', name: 'Solar PV · Offices DE', service: 'indicative',
+      phases: route(['indicative', 'tender', 'delivery'], 'indicative', '4 Aug 2026'),
+      solution: 'solar',
       owner: 'you', now: '', startedOn: '4 Aug 2026',
       next: { kind: 'decision', since: '9 Oct 2026' },
       needs: [{ label: 'Go or no-go on the presented estimates', why: 'Estimates presented 9 Oct', owner: 'you', since: '9 Oct 2026' }],
@@ -411,7 +439,9 @@ const halvering: Account = {
       ],
     },
     {
-      id: 'ev-offices', batchId: 'offices', name: 'EV charging · Offices', service: 'indicative', solution: 'ev',
+      id: 'ev-offices', batchId: 'offices', name: 'EV charging · Offices', service: 'indicative',
+      phases: route(['indicative', 'tender', 'delivery'], 'indicative', '4 Aug 2026'),
+      solution: 'ev',
       owner: 'you', now: '', startedOn: '4 Aug 2026',
       next: { kind: 'decision', since: '14 Oct 2026' },
       needs: [{ label: 'Go or no-go on the presented estimates', why: 'Estimates presented 14 Oct', owner: 'you', since: '14 Oct 2026' }],
@@ -422,7 +452,9 @@ const halvering: Account = {
       ],
     },
     {
-      id: 'led-offices-de', batchId: 'offices', name: 'LED · Offices DE', service: 'tender', solution: 'led',
+      id: 'led-offices-de', batchId: 'offices', name: 'LED · Offices DE', service: 'tender',
+      phases: route(['tender', 'delivery'], 'tender', '1 Sep 2026'),
+      solution: 'led',
       owner: 'you', now: '', startedOn: '1 Sep 2026', lead: 'Rich Amos',
       next: { kind: 'choose', since: '13 Oct 2026' },
       needs: [{ label: 'Your choice of supplier', why: 'Results sent 13 Oct', owner: 'you', since: '13 Oct 2026' }],
@@ -436,7 +468,9 @@ const halvering: Account = {
       activity: [{ date: '1 Sep', title: 'Workstream started', text: '6 projects allocated from Offices DE, FR and BE.' }],
     },
     {
-      id: 'led-offices-frbe', batchId: 'offices', name: 'LED · Offices FR and BE', service: 'tender', solution: 'led',
+      id: 'led-offices-frbe', batchId: 'offices', name: 'LED · Offices FR and BE', service: 'tender',
+      phases: route(['tender', 'delivery'], 'tender', '1 Sep 2026'),
+      solution: 'led',
       owner: 'you', now: '', startedOn: '1 Sep 2026', lead: 'Rich Amos',
       next: { kind: 'brief', since: '14 Oct 2026' },
       needs: [{ label: 'Brief to agree', why: 'Sent 14 Oct', owner: 'you', since: '14 Oct 2026' }],
@@ -444,7 +478,9 @@ const halvering: Account = {
       activity: [{ date: '1 Sep', title: 'Workstream started', text: '18 projects allocated from Offices DE, FR and BE.' }],
     },
     {
-      id: 'solar-be', batchId: 'offices', name: 'Solar PV · BE offices', service: 'tender', solution: 'solar',
+      id: 'solar-be', batchId: 'offices', name: 'Solar PV · BE offices', service: 'tender',
+      phases: route(['tender', 'delivery'], 'tender', '15 Sep 2026'),
+      solution: 'solar',
       owner: 'cquel', now: '', startedOn: '15 Sep 2026', lead: 'Tamsin Quarrell',
       next: { kind: 'shortlist', on: '9 Oct 2026' },
       needs: [{ label: 'Supplier shortlist', why: 'CQuel is matching suppliers', owner: 'cquel', since: '9 Oct 2026' }],
@@ -453,7 +489,9 @@ const halvering: Account = {
       activity: [{ date: '15 Sep', title: 'Workstream started', text: '6 projects allocated from Offices DE, FR and BE.' }],
     },
     {
-      id: 'solar-fr', batchId: 'offices', name: 'Solar PV · FR offices', service: 'scope', solution: 'solar',
+      id: 'solar-fr', batchId: 'offices', name: 'Solar PV · FR offices', service: 'scope',
+      phases: route(['scope', 'tender', 'delivery'], 'scope', '4 Aug 2026'),
+      solution: 'solar',
       owner: 'you', now: '', startedOn: '4 Aug 2026',
       next: { kind: 'agree', since: '10 Oct 2026' },
       surveyNote: 'last on 3 Oct',
@@ -468,7 +506,9 @@ const halvering: Account = {
       lead: 'Rich Amos',
     },
     {
-      id: 'hp-be', batchId: 'offices', name: 'Heat pumps · BE offices', service: 'scope', solution: 'ashp',
+      id: 'hp-be', batchId: 'offices', name: 'Heat pumps · BE offices', service: 'scope',
+      phases: route(['scope', 'tender', 'delivery'], 'scope', '4 Aug 2026'),
+      solution: 'ashp',
       owner: 'cquel', now: '', startedOn: '4 Aug 2026',
       next: { kind: 'writing' },
       surveyNote: 'date to confirm',
@@ -485,21 +525,9 @@ const halvering: Account = {
       lead: 'Rich Amos',
     },
     {
-      id: 'solar-frbe-scope', batchId: 'offices', name: 'Solar PV FR/BE · scope', service: 'scope', solution: 'solar',
-      owner: 'done', now: '', startedOn: '1 Jul 2026', completedOn: '2 Aug 2026',
-      surveyNote: 'July',
-      surveyDocs: true,
-      movedTo: { workstreamId: 'solvarek-quote', reason: 'Scope agreed' },
-      needs: [],
-      projects: o(1, 22, 23, 24).map((id) => p(id, 4, { decision: 'go', decidedOn: '2 Aug 2026', destination: 'pricing', visit: { state: 'done', note: 'July' } })),
-      activity: [
-        { date: '2 Aug', title: 'Scope agreed', text: '4 projects moved to Pricing. Scope agreed.' },
-        { date: '1 Jul', title: 'Workstream started', text: '4 projects allocated from Offices DE, FR and BE.' },
-      ],
-      lead: 'Rich Amos',
-    },
-    {
-      id: 'ev-ladewerk', batchId: 'offices', name: 'EV charging · Ladewerk', service: 'pricing', solution: 'ev', supplier: 'Ladewerk',
+      id: 'ev-ladewerk', batchId: 'offices', name: 'EV charging · Ladewerk', service: 'pricing',
+      phases: route(['pricing', 'delivery'], 'pricing', '8 Sep 2026'),
+      solution: 'ev', supplier: 'Ladewerk',
       owner: 'you', now: '', startedOn: '8 Sep 2026', lead: 'Rich Amos',
       next: { kind: 'sign', since: '15 Oct 2026' },
       pricing: { source: 'Incumbent', total: 196, setOn: '8 Sep 2026', setNote: 'runs your existing chargers', agreedOn: '6 Oct 2026', contractOn: '15 Oct 2026' },
@@ -512,7 +540,9 @@ const halvering: Account = {
       ],
     },
     {
-      id: 'ev-chargeo', batchId: 'offices', name: 'EV charging · Chargeo', service: 'pricing', solution: 'ev', supplier: 'Chargeo',
+      id: 'ev-chargeo', batchId: 'offices', name: 'EV charging · Chargeo', service: 'pricing',
+      phases: route(['pricing', 'delivery'], 'pricing', '22 Sep 2026'),
+      solution: 'ev', supplier: 'Chargeo',
       owner: 'you', now: '', startedOn: '22 Sep 2026', lead: 'Rich Amos',
       next: { kind: 'agreePrice', since: '9 Oct 2026' },
       pricing: {
@@ -552,13 +582,9 @@ const halvering: Account = {
       ],
     },
     {
-      id: 'solvarek-quote', batchId: 'offices', name: 'Solar PV FR/BE · Solvarek quote', service: 'pricing', solution: 'solar', supplier: 'Solvarek',
-      owner: 'done', now: 'Price agreed, contract signed', outcome: 'Contract signed 15 Sep', startedOn: '4 Aug 2026', completedOn: '15 Sep 2026',
-      pricing: { total: 214 },
-      needs: [], projects: rows(o(1, 22, 23, 24), 5), lead: 'Rich Amos',
-    },
-    {
-      id: 'ev-be', batchId: 'offices', name: 'EV charging · BE offices', service: 'delivery', solution: 'ev', supplier: 'Voltreny',
+      id: 'ev-be', batchId: 'offices', name: 'EV charging · BE offices', service: 'delivery',
+      phases: route(['delivery'], 'delivery', '1 Oct 2026'),
+      solution: 'ev', supplier: 'Voltreny',
       owner: 'suppliers', now: '', startedOn: '1 Oct 2026', lead: 'Tamsin Quarrell',
       next: { kind: 'design', n: 2, on: '16 Oct 2026' },
       deliveryProfile: { contractValue: 54, siteChecksOn: '16 Oct 2026', siteChecks: 2 },
@@ -576,10 +602,28 @@ const halvering: Account = {
       activity: [{ date: '16 Oct', title: 'Site checks done', text: 'Grand-Place 3 and Rue Neuve 61.' }],
     },
     {
-      id: 'solvarek', batchId: 'offices', name: 'Solar PV FR/BE · Solvarek', service: 'delivery', solution: 'solar', supplier: 'Solvarek',
+      id: 'solvarek', batchId: 'offices', name: 'Solar PV FR/BE · Solvarek', service: 'delivery',
+      phases: [
+        {
+          service: 'scope', state: 'done', startedOn: '1 Jul 2026', completedOn: '2 Aug 2026',
+          surveyNote: 'July', surveyDocs: true,
+          projects: o(1, 22, 23, 24).map((id) => p(id, 4, { decision: 'go', decidedOn: '2 Aug 2026', destination: 'pricing', visit: { state: 'done', note: 'July' } })),
+        },
+        {
+          service: 'pricing', state: 'done', startedOn: '4 Aug 2026', completedOn: '15 Sep 2026', outcome: 'Price agreed',
+          pricing: { total: 214 },
+          projects: rows(o(1, 22, 23, 24), 5),
+        },
+        { service: 'delivery', state: 'now', startedOn: '16 Sep 2026' },
+      ],
+      solution: 'solar', supplier: 'Solvarek',
       owner: 'suppliers', now: '', startedOn: '16 Sep 2026',
       next: { kind: 'overdue', place: 'Grand-Place 3', due: '10 Oct 2026' }, needs: [],
-      activity: [{ date: '9 Oct', title: 'Rue Belvaux 22 completed', text: 'Rue Belvaux 22 completed.' }],
+      activity: [
+        { date: '9 Oct', title: 'Rue Belvaux 22 completed', text: 'Rue Belvaux 22 completed.' },
+        { date: '2 Aug', title: 'Scope agreed', text: '4 projects moved to Pricing. Scope agreed.' },
+        { date: '1 Jul', title: 'Workstream started', text: '4 projects allocated from Offices DE, FR and BE.' },
+      ],
       projects: [
         p('o1', 5, { delivery: { phases: { complete: { on: '9 Oct 2026', state: 'confirmed' } } } }),
         p('o23', 2, { delivery: { overdueDue: '10 Oct 2026', phases: { phase2: { on: '22 Sep 2026', state: 'confirmed' } } } }),
@@ -672,7 +716,9 @@ const showcase: Account = {
   ],
   workstreams: [
     {
-      id: 'pilot-ev', batchId: 'pilot', name: 'EV Charging', service: 'indicative', solution: 'ev',
+      id: 'pilot-ev', batchId: 'pilot', name: 'EV Charging', service: 'indicative',
+      phases: (['indicative', 'scope', 'tender', 'delivery'] as ServiceId[]).map((service) => ({ service, state: 'planned' as const })),
+      solution: 'ev',
       owner: 'you', proposed: true, now: '',
       gives: 'cost and payback per site',
       needs: [
@@ -682,7 +728,9 @@ const showcase: Account = {
       projects: rows(c(1, 2, 3, 4, 5, 6, 7, 8), 0), lead: 'Tamsin Quarrell',
     },
     {
-      id: 'pilot-solar', batchId: 'pilot', name: 'Solar PV', service: 'indicative', solution: 'solar',
+      id: 'pilot-solar', batchId: 'pilot', name: 'Solar PV', service: 'indicative',
+      phases: (['indicative', 'scope', 'tender', 'delivery'] as ServiceId[]).map((service) => ({ service, state: 'planned' as const })),
+      solution: 'solar',
       owner: 'you', proposed: true, now: '',
       gives: 'system size, cost and payback per roof',
       exclusion: 'Leeds, Nottingham and Reading left out — pitched or shared roofs',

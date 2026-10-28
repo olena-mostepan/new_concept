@@ -3,41 +3,38 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Check, ChevronRight } from 'lucide-react'
-import { activeProjects, batchActivity, byCompleted, byRecentChange, getBuilding, noun, routeAside, routeStages, short, stepNote, workstreamBlockMeta, wsIn } from '@/lib/concept/derive'
+import { activeProjects, batchActivity, byCompleted, byRecentChange, getBuilding, isCompleted, nextParts, noun, phaseOutcome, routeAside, routeStages, workstreamBlockMeta, wsIn } from '@/lib/concept/derive'
 import { pricingNotNeeded, SERVICES, SERVICE_LABEL, SOLUTIONS, service as serviceDef, type Account, type Batch, type Workstream } from '@/lib/concept/model'
-import { Card, CardLink } from './ui'
+import { Card, CardLink, ChangedMark } from './ui'
 import { ServiceTag } from './ServiceTag'
+import { StatusPill } from './StatusPill'
 import { RouteWithNeeds } from './RouteWithNeeds'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
 
-const rowStyle = { gridTemplateColumns: 'minmax(0,1.2fr) 170px minmax(0,1.4fr) 16px' }
+const rowStyle = { gridTemplateColumns: 'minmax(0,1.2fr) 160px minmax(0,1.5fr) 120px 16px' }
 
-function PageWorkstream({ w, notStarted, done, rule }: { w: Workstream; notStarted?: boolean; done?: boolean; rule: boolean }) {
+function PageWorkstream({ w, done, rule }: { w: Workstream; done?: boolean; rule: boolean }) {
   const projects = noun(activeProjects(w).length, 'project', 'projects')
+  const phase = w.phases.find((item) => item.service === 'delivery' && item.state === 'done')
+  const outcome = done && phase ? phaseOutcome('delivery', w, phase) : null
+  const parts = outcome ?? nextParts(w)
+  const yours = !done && w.owner === 'you'
   return (
     <li className={rule ? 'border-t border-border-light' : undefined}>
-      <Link href={hrefs.workstream(w.id)} className="grid items-center gap-x-6 px-6 py-3.5 hover:bg-black-1" style={rowStyle}>
-        {done ? (
-          <p className="min-w-0">
-            <span className="p6 text-text-tertiary">{w.name}</span>
-            <span className="p7 text-text-tertiary"> · {projects}</span>
+      <Link href={hrefs.workstream(w.id)} className="grid items-center gap-x-6 py-3.5 pl-11 pr-6 hover:bg-black-1" style={rowStyle}>
+        <div className="min-w-0">
+          <p className={done ? 'p6 text-text-tertiary' : 'h8 text-text-title'}>
+            {done ? w.name : <ChangedMark w={w}>{w.name}</ChangedMark>}
           </p>
-        ) : (
-          <div className="min-w-0">
-            <p className="h8 text-text-title">{w.name}</p>
-            <p className="p7 text-text-tertiary">{projects}</p>
-          </div>
-        )}
+          <p className="p7 text-text-tertiary">{projects}</p>
+        </div>
         <ServiceTag s={w.service} muted={done} />
-        {done ? (
-          <p className="flex min-w-0 items-center gap-1.5 text-text-tertiary">
-            <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
-            <span className="p6">Done {short(w.completedOn)}</span>
-          </p>
-        ) : (
-          <p className="min-w-0 p6 text-text-secondary">{stepNote(w, notStarted)}</p>
-        )}
+        <div className="min-w-0">
+          <p className={done ? 'p6 text-text-tertiary' : yours ? 'h8 text-text-primary' : 'p6 text-text-primary'}>{parts.main}</p>
+          {parts.detail && <p className="mt-0.5 p7 text-text-tertiary">{parts.detail}</p>}
+        </div>
+        <div className="flex justify-end">{yours && <StatusPill owner="you" />}</div>
         <ChevronRight className="h-4 w-4 text-text-tertiary" aria-hidden />
       </Link>
     </li>
@@ -161,7 +158,7 @@ function PilotDashboard({ account, batch }: { account: Account; batch: Batch }) 
       </Card>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <Card title="Recent activity" right={<CardLink href={hrefs.workstreams()}>See all</CardLink>} bodyClassName="px-6 py-2" {...pilotCard}>
+        <Card title="Recent activity" right={<CardLink href={hrefs.batches}>See all</CardLink>} bodyClassName="px-6 py-2" {...pilotCard}>
           <ul>
             {activity.map((item) => (
               <li key={`${item.date}-${item.title}`} className="flex items-start justify-between gap-4 py-1.5">
@@ -174,7 +171,7 @@ function PilotDashboard({ account, batch }: { account: Account; batch: Batch }) 
             ))}
           </ul>
         </Card>
-        <Card title="Documents" right={<CardLink href={hrefs.workstreams()}>See all</CardLink>} bodyClassName="px-6 py-2" {...pilotCard}>
+        <Card title="Documents" right={<CardLink href={hrefs.batches}>See all</CardLink>} bodyClassName="px-6 py-2" {...pilotCard}>
           <ul>
             {docs.map((doc) => (
               <li key={doc.name} className="flex items-start justify-between gap-4 py-1.5">
@@ -200,9 +197,8 @@ export function BatchView({ account, batch, variant }: { account: Account; batch
   const { agreePlan } = useConcept()
   const [showDone, setShowDone] = useState(false)
   const all = wsIn(account, batch.id)
-  const live = byRecentChange(all.filter((w) => w.owner !== 'done'))
-  const done = all.filter((w) => w.owner === 'done')
-  const notStarted = batch.planState !== 'live'
+  const live = byRecentChange(all.filter((w) => !isCompleted(w) && w.owner !== 'done'))
+  const done = all.filter(isCompleted)
   const activity = batchActivity(account, batch)
 
   if (variant === 'dashboard') return <PilotDashboard account={account} batch={batch} />
@@ -220,14 +216,21 @@ export function BatchView({ account, batch, variant }: { account: Account; batch
       </Card>
 
       <Card title="Workstreams in this batch" right={meta(workstreamBlockMeta(account, batch))} bodyClassName="p-0" {...pageCard}>
+        <div className="grid items-center gap-x-6 border-b border-border-light py-2.5 pl-11 pr-6 h9 text-text-tertiary" style={rowStyle}>
+          <span>Workstream</span>
+          <span>Service</span>
+          <span>Next step</span>
+          <span />
+          <span />
+        </div>
         <ul>
           {liveRows.map((w, index) => (
-            <PageWorkstream key={w.id} w={w} notStarted={notStarted || Boolean(w.proposed)} rule={index > 0} />
+            <PageWorkstream key={w.id} w={w} rule={index > 0} />
           ))}
         </ul>
         {doneRows.length > 0 && (
           <div className="flex items-center justify-between border-t border-border-light bg-black-1 px-6 py-3">
-            <span className="h9 text-text-secondary">Done · {doneRows.length}</span>
+            <span className="h9 text-text-secondary">Completed · {doneRows.length}</span>
             <button type="button" className="btn-link shrink-0" onClick={() => setShowDone((v) => !v)}>
               {showDone ? 'Hide' : 'Show'}
             </button>

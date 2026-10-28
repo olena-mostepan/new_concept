@@ -89,8 +89,8 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
     const path = serviceId
       ? next.service
         ? hrefs.service(next.service as ServiceId)
-        : hrefs.workstreams()
-      : hrefs.workstreams()
+        : hrefs.batches
+      : hrefs.batches
     if (!serviceId && next.service) rest.set('service', next.service)
     const query = serviceId ? qs : rest.toString()
     router.replace(query ? `${path}?${query}` : path)
@@ -110,7 +110,18 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
   return (
     <div>
       <PageHeader title="Workstreams" className="mb-4" />
-      <SummaryCards list={filtered} responsibility={responsibility} onResponsibility={(next) => write({ responsibility: next })} />
+      <SummaryCards
+        total={filtered.length}
+        batches={new Set(filtered.map((w) => w.batchId)).size}
+        yourAction={filtered.filter((w) => w.owner === 'you').length}
+        live={filtered.filter((w) => w.owner !== 'done').length}
+        serviceLabel="progress"
+        thirdLabel="Done"
+        thirdCount={filtered.filter((w) => w.owner === 'done').length}
+        thirdLine="done"
+        responsibility={responsibility}
+        onResponsibility={(next) => write({ responsibility: next })}
+      />
 
       <FilterBar selects={3}>
         <FilterField label="Search">

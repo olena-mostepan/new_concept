@@ -125,7 +125,7 @@ function Services({ account }: { account: Account }) {
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6" aria-hidden />
             {OWNER_LABEL.you}: {noun(pipe.you, 'workstream', 'workstreams')}
           </p>
-          <Link href={hrefs.workstreams()} className="h8 text-text-primary underline underline-offset-[3px] decoration-border-dark">
+          <Link href={hrefs.batches} className="h8 text-text-primary underline underline-offset-[3px] decoration-border-dark">
             See workstreams
           </Link>
         </div>
@@ -136,7 +136,7 @@ function Services({ account }: { account: Account }) {
 
 function Activity({ account }: { account: Account }) {
   return (
-    <Card title="Recent activity" right={<CardLink href={hrefs.workstreams()}>See all</CardLink>} bodyClassName="px-6 py-1" {...header}>
+    <Card title="Recent activity" right={<CardLink href={hrefs.batches}>See all</CardLink>} bodyClassName="px-6 py-1" {...header}>
       <ul>
         {account.activity.slice(0, 5).map((item, index) => {
           const batch = item.batchId ? getBatch(account, item.batchId)?.name : undefined
@@ -161,7 +161,7 @@ function Activity({ account }: { account: Account }) {
 function Momentum({ account }: { account: Account }) {
   if (!account.momentum) return null
   return (
-    <Card title="Momentum" right="Workstreams started and finished" {...header}>
+    <Card title="Momentum" right="Services started and finished" {...header}>
       <div className="mb-3 flex gap-5 text-xs text-cq-text-secondary">
         <span className="inline-flex items-center gap-1.5">
           <svg width="18" height="4" aria-hidden>

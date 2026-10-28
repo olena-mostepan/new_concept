@@ -1,21 +1,18 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import * as Tabs from '@radix-ui/react-tabs'
-import { SOLUTIONS, service as serviceDef, type OfferSplit, type Workstream } from '@/lib/concept/model'
-import { getBatch, short, siteChecksLine, tenderProjectsAside, tenderSteps, totalCapacity } from '@/lib/concept/derive'
+import { service as serviceDef, type OfferSplit, type Workstream } from '@/lib/concept/model'
+import { short, tenderProjectsAside, tenderSteps } from '@/lib/concept/derive'
 import { WALTER_SCOTT_MATCHING } from '@/lib/customer/supplier-matching/fixture'
 import { SupplierMatchingReview } from '@/components/customer/supplier-matching/SupplierMatchingReview'
 import { cn } from '@/lib/utils'
-import { Card, Page, PageHeader } from './ui'
-import { StatusPill } from './StatusPill'
-import { DetailTags, DetailsGrid, DetailsToggle, useDetailsOpen } from './DetailsGrid'
-import { StepsWithNeeds } from './StepsWithNeeds'
+import { Card, Page } from './ui'
+import { DetailTags } from './DetailsGrid'
+import { SimpleSteps } from './SimpleSteps'
 import { ProjectsTable } from './ProjectsTable'
+import { stepsAside, WorkstreamFacts, WorkstreamFrame } from './WorkstreamChrome'
 import { hrefs } from './hrefs'
-import { useConcept } from './store'
 
 const tabTriggerClass = cn(
   'shrink-0 whitespace-nowrap border-b-2 border-transparent px-0.5 py-3 text-sm font-normal outline-none transition-colors',
@@ -60,13 +57,9 @@ function Soon({ label, noun }: { label: string; noun: string }) {
   )
 }
 
-export function TenderWorkstream({ w }: { w: Workstream }) {
-  const { account } = useConcept()
+export function TenderWorkstream({ w, live = w }: { w: Workstream; live?: Workstream }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const batch = getBatch(account, w.batchId)!
-  const detailsOpen = useDetailsOpen()
-  const def = serviceDef(w.service)
   const t = w.tender
   const invited = t?.invited ?? 0
   const inCount = offersIn(t?.offers)
@@ -89,30 +82,6 @@ export function TenderWorkstream({ w }: { w: Workstream }) {
     router.replace(`${hrefs.workstream(w.id)}${qs ? `?${qs}` : ''}`, { scroll: false })
   }
 
-  const size = totalCapacity(w)
-  const checks = siteChecksLine(w)
-  const details: Array<{ label: string; value: ReactNode }> = [
-    { label: 'Service', value: def.label },
-    { label: 'Started', value: short(w.startedOn) },
-    ...(t?.source ? [{ label: 'Supplier source', value: t.source }] : []),
-    { label: 'Solution', value: SOLUTIONS[w.solution] },
-    { label: 'Projects', value: String(w.projects.length) },
-    ...(t?.offersDue ? [{ label: 'Offers due', value: short(t.offersDue) }] : []),
-    {
-      label: 'Batch',
-      value: (
-        <Link href={hrefs.batch(batch.id)} className="hover:text-cq-accent">
-          {batch.name}
-        </Link>
-      ),
-    },
-    ...(size ? [{ label: 'Total size', value: size }] : []),
-    ...(t?.brief ? [{ label: 'Brief', value: t.brief }] : []),
-    { label: 'Lead', value: w.lead },
-    { label: 'Done when', value: def.done },
-    ...(checks ? [{ label: 'Site checks', value: checks }] : []),
-  ]
-
   const offersRight = invited
     ? [t?.invitedOn ? `${invited} suppliers invited ${short(t.invitedOn)}` : `${invited} suppliers invited`, t?.offersDue ? `offers due ${short(t.offersDue)}` : null]
         .filter(Boolean)
@@ -121,31 +90,7 @@ export function TenderWorkstream({ w }: { w: Workstream }) {
 
   return (
     <Page>
-      <PageHeader
-        crumbs={[
-          { label: def.label, href: hrefs.service(w.service) },
-          { label: w.name },
-        ]}
-        title={w.name}
-        meta={[SOLUTIONS[w.solution], batch.name, t?.source, `${w.projects.length} projects`, `Lead ${w.lead}`].filter(Boolean).join(' · ')}
-        actions={
-          <>
-            <StatusPill owner={w.owner} />
-            <Link href={hrefs.batch(batch.id)} className="btn-secondary-sm">
-              View batch
-            </Link>
-            <DetailsToggle open={detailsOpen.open} onToggle={detailsOpen.toggle} />
-          </>
-        }
-      />
-      <div className="space-y-6 pb-12">
-        {detailsOpen.open && (
-          <>
-            <DetailsGrid flow="three" items={details} tags={[def.label, SOLUTIONS[w.solution]]} />
-            <DetailTags label="Criteria" tags={t?.criteria ?? []} />
-          </>
-        )}
-
+      <WorkstreamFrame live={live}>
         {tabs.length > 1 && (
           <Tabs.Root value={tab} onValueChange={setTab}>
             <Tabs.List className="flex gap-6 border-b border-cq-border">
@@ -158,8 +103,23 @@ export function TenderWorkstream({ w }: { w: Workstream }) {
           </Tabs.Root>
         )}
 
-        {tab === 'brief' && <Soon label="Brief" noun="brief" />}
-        {tab === 'offers' && <Soon label="Tender" noun="tender" />}
+        {tab === 'brief' && (
+          <>
+            <DetailTags label="Criteria" tags={t?.criteria ?? []} />
+            <Soon label="Brief" noun="brief" />
+          </>
+        )}
+        {tab === 'offers' && (
+          <>
+            {invited > 0 && t?.offers && (
+              <Card title="Offers" right={offersRight ?? undefined}>
+                <OffersBar offers={t.offers} />
+                <p className="mt-3 text-sm text-cq-text-secondary">{offerSummary(t.offers)}</p>
+              </Card>
+            )}
+            {!(invited > 0 && t?.offers) && <Soon label="Tender" noun="tender" />}
+          </>
+        )}
         {tab === 'supplier-matching' &&
           (w.id === 'solar-de' ? (
             <SupplierMatchingReview
@@ -180,64 +140,14 @@ export function TenderWorkstream({ w }: { w: Workstream }) {
 
         {tab === 'overview' && (
           <>
-            <Card title="Steps" right="Projects at each step">
-              <div className="overflow-x-auto">
-                <div className="min-w-[1080px]">
-                  <StepsWithNeeds columns={tenderSteps(w)} />
-                </div>
-              </div>
-            </Card>
-
-            {invited > 0 && t?.offers && (
-              <Card title="Offers" right={offersRight ?? undefined}>
-                <OffersBar offers={t.offers} />
-                <p className="mt-3 text-sm text-cq-text-secondary">{offerSummary(t.offers)}</p>
-              </Card>
-            )}
-
+            <SimpleSteps title={`${serviceDef(w.service).label} steps`} columns={tenderSteps(w)} right={stepsAside(w)} />
             <Card title="Projects" right={tenderProjectsAside(w)} bodyClassName="p-0">
               <ProjectsTable w={w} />
             </Card>
-
-            {(w.activity?.length || w.documents?.length) && (
-              <div className={w.documents?.length ? 'grid gap-6 lg:grid-cols-2' : ''}>
-                {w.activity && w.activity.length > 0 && (
-                  <Card title="Recent activity">
-                    <ul className="space-y-4">
-                      {w.activity.map((item) => (
-                        <li key={`${item.date}-${item.title}`} className="flex justify-between gap-4">
-                          <div>
-                            <p className="text-sm font-semibold text-cq-text">{item.title}</p>
-                            {item.text && <p className="text-sm text-cq-text-secondary">{item.text}</p>}
-                          </div>
-                          <span className="shrink-0 text-xs text-cq-muted">{item.date}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-                {w.documents && w.documents.length > 0 && (
-                  <Card title="Documents">
-                    <ul className="space-y-4">
-                      {w.documents.map((doc) => (
-                        <li key={doc.name} className={doc.muted ? 'text-cq-muted' : ''}>
-                          <p className={cn('text-sm font-semibold', doc.muted ? 'text-cq-muted' : 'text-cq-text')}>{doc.name}</p>
-                          <p className={cn('text-sm', doc.muted ? 'text-cq-muted' : 'text-cq-text-secondary')}>{doc.meta}</p>
-                          {doc.action && !doc.muted && (
-                            <button type="button" className="btn-link mt-1">
-                              {doc.action}
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-              </div>
-            )}
+            <WorkstreamFacts activity={w.activity ?? []} documents={w.documents} />
           </>
         )}
-      </div>
+      </WorkstreamFrame>
     </Page>
   )
 }

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { ACCOUNTS } from '@/lib/concept/data'
 import type { CustomerDeliveryPayload, CustomerProject } from '@/lib/customer/delivery/types'
 import { HISTORY_TODAY, splitDeliveryId, writeDelivery } from '@/lib/concept/delivery'
+import { checkPhases } from '@/lib/concept/derive'
 import { SERVICES, TODAY, service, type Account, type Batch, type Building, type Doc, type Need, type ServiceId, type SolutionId, type Workstream } from '@/lib/concept/model'
 
 /**
@@ -42,6 +43,11 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
       if (saved && ACCOUNTS.some((a) => a.id === saved)) setId(saved)
     } catch {}
   }, [])
+
+  useEffect(() => {
+    const current = accounts.find((item) => item.id === accountId) ?? accounts[0]
+    checkPhases(current)
+  }, [accounts, accountId])
 
   const setAccountId = (id: string) => {
     setId(id)
@@ -111,6 +117,9 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
             needs: open.map((need) => ({ label: need.label.trim(), why: '', owner: 'you', since: TODAY })),
             documents: documents.map((doc) => ({ ...doc })),
             projects: buildingIds.map((buildingId) => ({ buildingId, step: 0 })),
+            phases: b.planState === 'live'
+              ? [{ service: item.service, state: 'now', startedOn: TODAY }]
+              : [{ service: item.service, state: 'planned' }],
             lead,
           }
           a.workstreams.push(ws)
@@ -128,8 +137,12 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
           b.route = SERVICES.map((s) => s.id).filter((id) => b.route.includes(id) || id === patch.service)
         }
         const kept = new Set(patch.buildingIds)
+        const previous = w.service
         w.name = patch.name
         w.service = patch.service
+        const phase = w.phases.find((item) => item.service === previous)
+        if (phase) phase.service = patch.service
+        w.phases.sort((a, b) => SERVICES.findIndex((item) => item.id === a.service) - SERVICES.findIndex((item) => item.id === b.service))
         w.solution = patch.solution
         w.lead = patch.lead
         w.needs = patch.needs.filter((need) => need.label.trim()).map((need) => ({ label: need.label.trim(), why: need.why, owner: 'you' as const, since: need.since || TODAY }))
@@ -202,6 +215,11 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
           .forEach((w) => {
             w.proposed = false
             w.startedOn = TODAY
+            const phase = w.phases.find((item) => item.service === w.service)
+            if (phase) {
+              phase.state = 'now'
+              phase.startedOn = TODAY
+            }
             w.owner = w.needs.some((n) => !n.received && n.owner === 'you') ? 'you' : 'cquel'
             const open = w.needs.find((n) => !n.received)
             w.now = open?.label ?? 'Estimates in progress'

@@ -66,7 +66,7 @@ export function RightNow({ account }: { account: Account }) {
   const groups = rightNow(account)
   const foldDone = groups.done.length > 5
   return (
-    <Card title="Right now" titleClassName={sectionTitle} right={<CardLink href={hrefs.workstreams()}>All workstreams</CardLink>} bodyClassName="p-0">
+    <Card title="Right now" titleClassName={sectionTitle} right={<CardLink href={hrefs.batches}>All workstreams</CardLink>} bodyClassName="p-0">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px]">
           <tbody>
@@ -86,7 +86,7 @@ export function RightNow({ account }: { account: Account }) {
                   <td colSpan={4} className="py-3 pl-9 pr-5">
                     <div className="flex items-center justify-between gap-4 text-sm text-cq-text-secondary">
                       <span>{groups.done.length} workstreams done</span>
-                      <CardLink href={hrefs.workstreams()}>See all</CardLink>
+                      <CardLink href={hrefs.batches}>See all</CardLink>
                     </div>
                   </td>
                 </tr>

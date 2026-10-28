@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { batchSummary, getBatch } from '@/lib/concept/derive'
-import { Page, PageHeader } from '@/components/concept/ui'
+import { ChangedKey, Page, PageHeader } from '@/components/concept/ui'
 import { BatchView } from '@/components/concept/BatchView'
 import { hrefs } from '@/components/concept/hrefs'
 import { useConcept } from '@/components/concept/store'
@@ -20,7 +20,7 @@ export default function BatchPage() {
   }
   return (
     <Page>
-      <PageHeader crumbs={[{ label: 'Portfolio', href: hrefs.portfolio }, { label: b.name }]} title={b.name} actions={<p className="p7 text-right text-text-secondary">{batchSummary(account, b).line}</p>} />
+      <PageHeader crumbs={[{ label: 'Batches', href: hrefs.batches }, { label: b.name }]} title={b.name} meta={<span className="p7 text-text-secondary">{batchSummary(account, b).line}</span>} actions={<ChangedKey className="p7 text-text-secondary" />} />
       <BatchView account={account} batch={b} variant="page" />
     </Page>
   )

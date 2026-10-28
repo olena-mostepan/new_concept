@@ -1,36 +1,39 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ChevronRight } from 'lucide-react'
 import { SOLUTIONS, service, type ServiceId, type SolutionId, type Workstream } from '@/lib/concept/model'
-import { byRecentChange, customerBatches, days, getBuilding, nextParts, presentedTotal, priceLine, sectionOutcome, splitLine, suppliersLine, surveyLine, wsIn } from '@/lib/concept/derive'
-import { ChangedKey, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, SummaryCards, YourActionOnly, groupTitle, matchesResponsibility, td, th } from './ui'
+import { activeProjects, asPhase, byRecentChange, customerBatches, getBuilding, historyInService, nextParts, noun, phaseOutcome, presentedTotal, priceLine, splitLine, suppliersLine, surveyLine, type PhaseRef } from '@/lib/concept/derive'
+import { ChangedKey, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly, groupTitle } from './ui'
 import { StatusPill } from './StatusPill'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
 import { SurveysTab } from './SurveysTab'
 
-function rowsFor(serviceId: ServiceId, list: Workstream[]) {
-  const mine = list.filter((w) => w.service === serviceId && !w.proposed)
-  const decision =
-    serviceId === 'indicative'
-      ? mine.filter((w) => w.owner === 'you' && w.projects.some((p) => p.decision === 'waiting'))
-      : mine.filter((w) => w.owner === 'you')
-  const progress = mine.filter((w) => w.owner !== 'done' && !decision.includes(w))
-  const done = mine.filter((w) => w.owner === 'done').sort((a, b) => days(a.completedOn || '19 Oct 2026') - days(b.completedOn || '19 Oct 2026'))
-  return [
-    { id: 'decision', title: serviceId === 'scope' ? 'Needs your input' : 'Needs your decision', rows: byRecentChange(decision), outcome: false },
-    { id: 'progress', title: 'In progress', rows: byRecentChange(progress), outcome: false },
-    { id: 'done', title: 'Done', rows: done, outcome: true },
-  ]
+const rowGrid = { gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr) minmax(0,0.8fr) minmax(0,1.2fr) 120px 16px' }
+
+function serviceColumn(serviceId: ServiceId, w: Workstream) {
+  if (serviceId === 'scope') return splitLine(surveyLine(w))
+  if (serviceId === 'tender') return splitLine(suppliersLine(w))
+  if (serviceId === 'pricing') return splitLine(priceLine(w))
+  const estimate = presentedTotal(w)
+  return { main: estimate.count ? estimate.text : '—', detail: noun(activeProjects(w).length, 'project', 'projects') }
+}
+
+function matches(account: ReturnType<typeof useConcept>['account'], w: Workstream, projects: Workstream['projects'], batch: string, solution: string, supplier: string, needle: string) {
+  if (batch && w.batchId !== batch) return false
+  if (solution && w.solution !== solution) return false
+  if (supplier && w.supplier !== supplier) return false
+  if (!needle) return true
+  const names = projects.map((p) => getBuilding(account, p.buildingId).name).join(' ')
+  return `${w.name} ${names}`.toLowerCase().includes(needle)
 }
 
 export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   const { account } = useConcept()
   const router = useRouter()
   const params = useSearchParams()
-  const [open, setOpen] = useState(false)
   const def = service(serviceId)
   const surveys = serviceId === 'scope' && params.get('tab') === 'surveys'
   const q = params.get('q') ?? ''
@@ -50,31 +53,38 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   }
 
   const batches = customerBatches(account)
-  const all = account.workstreams.filter((w) => w.service === serviceId && !w.proposed)
   const needle = q.trim().toLowerCase()
-  const filtered = all.filter((w) => {
-    if (batch && w.batchId !== batch) return false
-    if (solution && w.solution !== solution) return false
-    if (supplier && w.supplier !== supplier) return false
-    if (!needle) return true
-    const names = w.projects.map((p) => getBuilding(account, p.buildingId).name).join(' ')
-    return `${w.name} ${names}`.toLowerCase().includes(needle)
-  })
-  const shown = filtered.filter((w) => matchesResponsibility(w.owner, responsibility))
-  const groups = rowsFor(serviceId, shown)
+  const liveAll = account.workstreams.filter((w) => w.service === serviceId && !w.proposed && w.owner !== 'done')
+  const pastAll = historyInService(account, serviceId)
+  const keep = (w: Workstream, projects: Workstream['projects']) => matches(account, w, projects, batch, solution, supplier, needle)
+  const live = liveAll.filter((w) => keep(w, w.projects))
+  const past = pastAll.filter((row) => keep(row.workstream, row.phase.projects?.length ? row.phase.projects : row.workstream.projects))
+  const liveShown = responsibility === 'you' ? live.filter((w) => w.owner === 'you') : live
+  const pastShown = responsibility === 'you' ? [] : past
+  const decision =
+    serviceId === 'indicative'
+      ? liveShown.filter((w) => w.owner === 'you' && w.projects.some((p) => p.decision === 'waiting'))
+      : liveShown.filter((w) => w.owner === 'you')
+  const progress = liveShown.filter((w) => !decision.includes(w))
+  const groups: Array<{ id: string; title: string; rows: Workstream[]; past: PhaseRef[]; outcome: boolean }> = [
+    { id: 'decision', title: serviceId === 'scope' ? 'Needs your input' : 'Needs your decision', rows: byRecentChange(decision), past: [], outcome: false },
+    { id: 'progress', title: 'In progress', rows: byRecentChange(progress), past: [], outcome: false },
+    { id: 'passed', title: 'Passed through', rows: [], past: pastShown, outcome: true },
+  ]
   const filtering = Boolean(q || batch || solution || responsibility || supplier)
-  const solutions = [...new Set(all.map((w) => w.solution))]
-  const suppliers = [...new Set(all.map((w) => w.supplier).filter((name): name is string => Boolean(name)))]
+  const optionSource = [...liveAll, ...pastAll.map((row) => row.workstream)]
+  const solutions = [...new Set(optionSource.map((w) => w.solution))]
+  const suppliers = [...new Set(optionSource.map((w) => w.supplier).filter((name): name is string => Boolean(name)))]
   const visitTotal = account.workstreams.reduce((n, w) => n + w.projects.filter((p) => p.visit && p.visit.state !== 'skip').length, 0)
+  const listed = liveAll.length + pastAll.length
 
   return (
     <>
       <PageHeader title={def.label} className="mb-4" actions={<ChangedKey className="p7 text-text-secondary" />} />
-      <SummaryCards list={filtered} responsibility={responsibility} onResponsibility={(next) => write({ responsibility: next, state: '' })} />
       {serviceId === 'scope' && (
         <div className="mt-4 flex gap-6 border-b border-cq-border-light">
           <button type="button" onClick={() => write({ tab: '', q: '', batch: '', solution: '', responsibility: '', service: '', status: '', state: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal ${surveys ? 'border-transparent text-cq-text-secondary' : 'border-cq-accent text-cq-text'}`}>
-            Workstreams ({all.length})
+            Workstreams ({listed})
           </button>
           <button type="button" onClick={() => write({ tab: 'surveys', q: '', batch: '', solution: '', responsibility: '', service: '', status: '', state: '' })} className={`-mb-px border-b-2 pb-2 text-sm font-normal ${surveys ? 'border-cq-accent text-cq-text' : 'border-transparent text-cq-text-secondary'}`}>
             Surveys ({visitTotal})
@@ -84,10 +94,10 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
       {serviceId === 'tender' && (
         <div className="mt-4 flex gap-6 border-b border-cq-border-light">
           <span className="-mb-px border-b-2 border-cq-accent pb-2 text-sm font-normal text-cq-text">
-            Workstreams ({all.length})
+            Workstreams ({listed})
           </span>
           <span className="-mb-px cursor-default border-b-2 border-transparent pb-2 text-sm font-normal text-cq-text-secondary" aria-disabled="true">
-            Briefs ({all.length})
+            Briefs ({listed})
           </span>
         </div>
       )}
@@ -104,7 +114,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
         <FilterField label="Batch">
           <FilterSelect value={batch} onChange={(value) => write({ batch: value })}>
             <option value="">All batches</option>
-            {batches.filter((b) => wsIn(account, b.id).some((w) => w.service === serviceId)).map((b) => (
+            {batches.filter((b) => optionSource.some((w) => w.batchId === b.id)).map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
               </option>
@@ -140,84 +150,32 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
       </FilterBar>
       <div className="space-y-6">
         {groups.map((group) => {
-          if (!group.rows.length) return null
-          const folded = group.outcome && group.rows.length > 5 && !open
-          const shown = folded ? [] : group.rows
+          const count = group.outcome ? group.past.length : group.rows.length
+          if (!count) return null
           return (
-            <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-              <header className="border-b border-cq-border-light py-4 pl-9 pr-5">
+            <section key={group.id} className="overflow-hidden rounded-xl border border-cq-border bg-white">
+              <header className="border-b border-cq-border-light py-4 pl-11 pr-6">
                 <h2 className={groupTitle}>
-                  {group.title} · {group.rows.length}
+                  {group.title} · {count}
                 </h2>
               </header>
-              {shown.length > 0 && (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px]">
-                    <thead className="border-b border-cq-border-light">
-                      <tr>
-                        <th className={th} style={{ paddingLeft: 36 }}>Workstream</th>
-                        <th className={th}>Batch</th>
-                        <th className={th}>{serviceId === 'scope' ? 'Surveys' : serviceId === 'tender' ? 'Suppliers' : serviceId === 'pricing' ? 'Price' : 'Estimate'}</th>
-                        <th className={th}>{group.outcome ? 'Outcome' : 'Next'}</th>
-                        <th className={th}>Responsibility</th>
-                        <th className={th} />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {shown.map((w) => {
-                        const b = account.batches.find((x) => x.id === w.batchId)
-                        const parts = group.outcome ? splitLine(sectionOutcome(w)) : nextParts(w)
-                        const estimate = presentedTotal(w)
-                        const extra = serviceId === 'scope' ? splitLine(surveyLine(w)) : serviceId === 'tender' ? splitLine(suppliersLine(w)) : serviceId === 'pricing' ? splitLine(priceLine(w)) : null
-                        return (
-                          <tr key={w.id} className="border-t border-cq-border-light">
-                            <td className={td} style={{ paddingLeft: 36 }}>
-                              <Link href={hrefs.workstream(w.id)} className="font-normal hover:text-cq-accent">
-                                <ChangedMark w={w}>{w.name}</ChangedMark>
-                              </Link>
-                            </td>
-                            <td className={td}>{b?.name}</td>
-                            <td className={td}>
-                              {extra ? (
-                                <>
-                                  <p>{extra.main}</p>
-                                  {extra.detail && <p className="mt-0.5 text-cq-text-secondary">{extra.detail}</p>}
-                                </>
-                              ) : estimate.count ? (
-                                <span className="font-semibold">{estimate.text}</span>
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                            <td className={td}>
-                              <p className={w.owner === 'you' ? 'font-semibold' : ''}>{parts.main}</p>
-                              {parts.detail && <p className="mt-0.5 text-cq-text-secondary">{parts.detail}</p>}
-                            </td>
-                            <td className={td}>
-                              <StatusPill owner={w.owner} />
-                            </td>
-                            <td className={td}>
-                              <Link href={hrefs.workstream(w.id)} className="btn-secondary-sm">
-                                View
-                              </Link>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+              <div className="overflow-x-auto">
+                <div className="min-w-[760px]">
+                  <div className="grid items-center gap-x-6 border-b border-cq-border-light py-2.5 pl-11 pr-6" style={rowGrid}>
+                    <span className="s3 text-text-tertiary">Workstream</span>
+                    <span className="s3 text-text-tertiary">Batch</span>
+                    <span className="s3 text-text-tertiary">{serviceId === 'scope' ? 'Surveys' : serviceId === 'tender' ? 'Suppliers' : serviceId === 'pricing' ? 'Price' : 'Estimate'}</span>
+                    <span className="s3 text-text-tertiary">{group.outcome ? 'Outcome' : 'Next step'}</span>
+                    <span />
+                    <span />
+                  </div>
+                  {group.outcome
+                    ? group.past.map((row) => (
+                        <ServiceRow key={row.workstream.id} account={account} w={asPhase(row.workstream, row.phase)} source={row.workstream} serviceId={serviceId} past outcome={phaseOutcome(serviceId, row.workstream, row.phase)} />
+                      ))
+                    : group.rows.map((w) => <ServiceRow key={w.id} account={account} w={w} source={w} serviceId={serviceId} />)}
                 </div>
-              )}
-              {folded && (
-                <div className="flex items-center justify-between gap-4 bg-cq-bg py-3 pl-9 pr-5 text-sm text-cq-text-secondary">
-                  <p>
-                    <span className="font-semibold uppercase tracking-wide">{group.rows.length} done</span>
-                  </p>
-                  <button type="button" className="btn-link" onClick={() => setOpen(true)}>
-                    Show
-                  </button>
-                </div>
-              )}
+              </div>
             </section>
           )
         })}
@@ -225,5 +183,45 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
       </>
       )}
     </>
+  )
+}
+
+function ServiceRow({
+  account,
+  w,
+  source,
+  serviceId,
+  past,
+  outcome,
+}: {
+  account: ReturnType<typeof useConcept>['account']
+  w: Workstream
+  source: Workstream
+  serviceId: ServiceId
+  past?: boolean
+  outcome?: { main: string; detail: string }
+}) {
+  const b = account.batches.find((item) => item.id === source.batchId)
+  const column = serviceColumn(serviceId, w)
+  const parts = outcome ?? nextParts(source)
+  const muted = past ? 'text-text-tertiary' : 'text-text-primary'
+  const yours = !past && source.owner === 'you'
+  return (
+    <Link href={hrefs.workstream(source.id)} className="grid items-center gap-x-6 border-t border-cq-border-light py-3.5 pl-11 pr-6 hover:bg-black-1" style={rowGrid}>
+      <p className={`min-w-0 p6 ${muted}`}>
+        {past ? source.name : <ChangedMark w={source}>{source.name}</ChangedMark>}
+      </p>
+      <p className={`min-w-0 p6 ${muted}`}>{b?.name}</p>
+      <div className="min-w-0">
+        <p className={`p6 ${muted}`}>{column.main}</p>
+        {column.detail && <p className="mt-0.5 p7 text-text-tertiary">{column.detail}</p>}
+      </div>
+      <div className="min-w-0">
+        <p className={past ? 'p6 text-text-tertiary' : yours ? 'h8 text-text-primary' : 'p6 text-text-primary'}>{parts.main}</p>
+        {parts.detail && <p className="mt-0.5 p7 text-text-tertiary">{parts.detail}</p>}
+      </div>
+      <div className="flex justify-end">{yours && <StatusPill owner="you" />}</div>
+      <ChevronRight className="h-4 w-4 text-text-tertiary" aria-hidden />
+    </Link>
   )
 }

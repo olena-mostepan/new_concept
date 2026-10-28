@@ -1,7 +1,7 @@
 /**
  * Workstreams concept — data model.
  * Mirrors docs/concept/taxonomy.md: Portfolio → Batches · Workstreams · Projects.
- * Batch = buildings with a goal. Workstream = one service × one solution, "buildings with a plan".
+ * Batch = buildings with a goal. Workstream = one solution, one set of projects, and its own route of services.
  */
 
 export type ServiceId = 'indicative' | 'scope' | 'tender' | 'pricing' | 'delivery'
@@ -311,12 +311,33 @@ export interface PricingInfo {
   contractOn?: string
 }
 
+export type PhaseState = 'done' | 'now' | 'planned'
+
+export interface Phase {
+  service: ServiceId
+  state: PhaseState
+  startedOn?: string
+  completedOn?: string
+  /** Short result, e.g. "Voltreny chosen", "Price agreed" */
+  outcome?: string
+  /** Done phases only: the project rows as they were when the phase finished (keeps estimates, decisions, steps) */
+  projects?: ProjectRow[]
+  /** Done phases only: the service data that belonged to that phase */
+  tender?: TenderProfile
+  pricing?: PricingInfo
+  surveyNote?: string
+  surveyDocs?: boolean
+}
+
 export interface Workstream {
   id: string
   batchId: string
   /** Display name as ops set it, e.g. "Solar PV DE" or "Heat pumps · Kelderby" */
   name: string
+  /** Service of the 'now' phase, or the last phase when every phase is done. */
   service: ServiceId
+  /** The workstream's own route, in SERVICES order, a subset of the batch route. */
+  phases: Phase[]
   solution: SolutionId
   /** Named only when a supplier is already on the workstream */
   supplier?: string
@@ -404,7 +425,7 @@ export interface Account {
   workstreams: Workstream[]
   activity: Activity[]
   documents: Doc[]
-  /** Cumulative workstreams started and finished, for Momentum */
+  /** Cumulative services started and finished, for Momentum */
   momentum?: Array<{ month: string; started: number; finished: number }>
   /** Properties ops still need to reconcile into the portfolio */
   toReconcile?: number

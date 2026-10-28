@@ -25,7 +25,13 @@ function Mark({ tone }: { tone: PanelItem['tone'] }) {
 function stageSets(stage: RouteStage, workstreams: Workstream[]) {
   const mine = workstreams.filter((w) => w.service === stage.id && !w.proposed)
   const live = byRecentChange(mine.filter((w) => w.owner !== 'done'))
-  const done = byCompleted(mine.filter((w) => w.owner === 'done'))
+  const done = byCompleted(
+    workstreams.flatMap((w) => {
+      const phase = w.phases.find((item) => item.service === stage.id && item.state === 'done')
+      if (!phase) return []
+      return [{ ...w, completedOn: phase.completedOn }]
+    }),
+  )
   return {
     live,
     done,

@@ -195,7 +195,19 @@ export function CustomerDeliveryView({
 
   return (
     <div className={embedded ? 'space-y-6' : 'mx-auto w-full max-w-screen-2xl space-y-6 px-6 py-8 sm:px-8 lg:px-10'}>
-      {showBanner && payload.datesNeedingConfirm > 0 && !reviewMode ? (
+      {showBanner && payload.datesNeedingConfirm > 0 && !reviewMode && conceptRows ? (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border-dark bg-white px-6 py-4">
+          <div className="min-w-0">
+            <p className="h7 text-text-primary">
+              {payload.datesNeedingConfirm} {payload.datesNeedingConfirm === 1 ? 'date' : 'dates'} to confirm
+            </p>
+            <p className="p6 text-text-secondary">From Voltreny&apos;s invoices</p>
+          </div>
+          <button type="button" className="btn-secondary shrink-0" onClick={startReview}>
+            Confirm dates
+          </button>
+        </div>
+      ) : showBanner && payload.datesNeedingConfirm > 0 && !reviewMode ? (
         <MoneyWashCard>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
             <div className="min-w-0 flex-1 space-y-2">

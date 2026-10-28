@@ -47,32 +47,41 @@ export function matchesResponsibility(owner: string, responsibility: string) {
 }
 
 export function SummaryCards({
-  list,
+  total,
+  batches,
+  yourAction,
+  live,
+  serviceLabel,
+  thirdLabel,
+  thirdCount,
+  thirdLine,
   responsibility,
   onResponsibility,
 }: {
-  list: Array<{ batchId: string; owner: string }>
+  total: number
+  batches: number
+  yourAction: number
+  live: number
+  serviceLabel: string
+  thirdLabel: string
+  thirdCount: number
+  thirdLine: string
   responsibility: string
   onResponsibility: (next: string) => void
 }) {
-  const total = list.length
-  const you = list.filter((w) => w.owner === 'you').length
-  const inProgress = list.filter((w) => w.owner !== 'done').length
-  const done = list.filter((w) => w.owner === 'done').length
-  const batches = new Set(list.map((w) => w.batchId)).size
   const yours = responsibility === 'you'
+  const batchWord = batches === 1 ? 'batch' : 'batches'
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <SummaryCard label="Workstreams" number={total} line={total > 0 ? `across ${batches} ${batches === 1 ? 'batch' : 'batches'}` : null} />
+      <SummaryCard label="Workstreams" number={total} line={total > 0 ? `across ${batches} ${batchWord}` : null} />
       <SummaryCard
         label="Your action"
-        mark
-        number={you}
-        line={total > 0 ? `of ${inProgress} in progress` : null}
+        number={yourAction}
+        line={total > 0 ? `of ${live} in ${serviceLabel}` : null}
         pressed={yours}
         onClick={() => onResponsibility(yours ? '' : 'you')}
       />
-      <SummaryCard label="Done" number={done} line={total > 0 ? `${Math.round((done / total) * 100)}% of workstreams` : null} />
+      <SummaryCard label={thirdLabel} number={thirdCount} line={total > 0 ? thirdLine : null} />
     </div>
   )
 }

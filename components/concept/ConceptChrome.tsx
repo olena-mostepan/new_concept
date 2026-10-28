@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronDown, Globe, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getWorkstream } from '@/lib/concept/derive'
+import { changedRecently, getWorkstream, isLive } from '@/lib/concept/derive'
+import type { Account } from '@/lib/concept/model'
 import { ConceptStoreProvider, useConcept } from './store'
-import { CUSTOMER_NAV, OPS, counterpart, hrefs, type NavItem } from './hrefs'
+import { CUSTOMER_NAV, OPS, OPS_NAV, counterpart, hrefs, type NavItem } from './hrefs'
 
 function AccountToggle() {
   const router = useRouter()
@@ -64,21 +65,43 @@ function ViewToggle({ ops }: { ops: boolean }) {
   )
 }
 
-function Nav({ items, path }: { items: NavItem[]; path: string }) {
+function customerNav(account: Account): NavItem[] {
+  const changed = new Set(account.workstreams.filter((w) => isLive(w) && changedRecently(w)).map((w) => w.service))
+  return CUSTOMER_NAV.map((item) => ({ ...item, changed: item.group === 'services' && changed.has(item.id as Account['workstreams'][number]['service']) }))
+}
+
+function NavLink({ item, path }: { item: NavItem; path: string }) {
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        'relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 py-3 text-sm font-normal transition-colors',
+        item.match(path) ? 'border-cq-accent text-text-primary' : 'border-transparent text-cq-text-secondary hover:text-cq-text',
+      )}
+    >
+      {item.label}
+      {item.changed && <span role="img" aria-label="Changed in the last 7 days" className="h-1.5 w-1.5 rounded-full bg-brand-6" />}
+    </Link>
+  )
+}
+
+function Nav({ items, path, grouped }: { items: NavItem[]; path: string; grouped?: boolean }) {
+  const structure = grouped ? items.filter((item) => item.group === 'structure') : items
+  const services = grouped ? items.filter((item) => item.group === 'services') : []
   return (
     <nav className="border-t border-cq-border bg-white" aria-label="Sections">
-      <div className="mx-auto flex max-w-screen-2xl gap-12 overflow-x-auto px-6 sm:px-8 lg:px-10">
-        {items.map((it) => (
-          <Link
-            key={it.id}
-            href={it.href}
-            className={cn(
-              'relative shrink-0 whitespace-nowrap border-b-2 py-3 text-sm font-normal transition-colors',
-              it.match(path) ? 'border-cq-accent text-text-primary' : 'border-transparent text-cq-text-secondary hover:text-cq-text',
-            )}
-          >
-            {it.label}
-          </Link>
+      <div className="mx-auto flex max-w-screen-2xl items-center gap-8 overflow-x-auto px-6 sm:px-8 lg:px-10">
+        {structure.map((item) => (
+          <NavLink key={item.id} item={item} path={path} />
+        ))}
+        {grouped && (
+          <span className="flex shrink-0 items-center gap-8">
+            <span className="h-5 w-px bg-border-dark" aria-hidden />
+            <span className="s3 text-text-tertiary">Services</span>
+          </span>
+        )}
+        {services.map((item) => (
+          <NavLink key={item.id} item={item} path={path} />
         ))}
       </div>
     </nav>
@@ -95,13 +118,7 @@ function Avatar({ letter }: { letter: string }) {
 
 function AppHeader({ ops, path }: { ops: boolean; path: string }) {
   const { account } = useConcept()
-  const nav = ops
-    ? CUSTOMER_NAV.map((item) =>
-        item.id === 'portfolio'
-          ? { ...item, href: hrefs.ops, match: (p: string) => p === OPS || p === `${OPS}/` }
-          : item,
-      )
-    : CUSTOMER_NAV
+  const nav = ops ? OPS_NAV : customerNav(account)
   return (
     <header className="border-b border-cq-border bg-white">
       <div className="mx-auto flex w-full max-w-screen-2xl flex-wrap items-center justify-between gap-3 px-6 py-3.5 sm:px-8 lg:px-10">
@@ -125,7 +142,7 @@ function AppHeader({ ops, path }: { ops: boolean; path: string }) {
           <Avatar letter={account.user[0]} />
         </div>
       </div>
-      <Nav items={nav} path={path} />
+      <Nav items={nav} path={path} grouped={!ops} />
     </header>
   )
 }
@@ -144,7 +161,7 @@ function backHref(pathname: string, serviceHref?: string) {
   const project = pathname.match(/^\/concept\/projects\/([^/]+)/)
   if (project) return hrefs.workstream(project[1])
   const workstream = pathname.match(/^\/concept\/workstreams\/([^/]+)/)
-  if (workstream) return serviceHref ?? hrefs.workstreams()
+  if (workstream) return serviceHref ?? hrefs.batches
   if (pathname.startsWith(`${OPS}/batches`)) return hrefs.ops
   return hrefs.portfolio
 }
@@ -183,23 +200,20 @@ function Shell({ children }: { children: ReactNode }) {
   const { account } = useConcept()
   const ops = pathname.startsWith(OPS)
   const inside = isInside(pathname)
-
-  let path = pathname
-  const m = pathname.match(/^\/concept\/(?:workstreams|projects)\/([^/?]+)/)
-  if (m) {
-    const w = getWorkstream(account, m[1])
-    if (w) path = hrefs.service(w.service)
-  }
+  const sectionNav = !ops && (pathname.startsWith(`${hrefs.batches}/`) || /^\/concept\/workstreams\/[^/]+/.test(pathname))
 
   return (
     <div className="min-h-screen bg-cq-bg">
       <div className="sticky top-0 z-40">
         {inside ? (
-          <InsideHeader pathname={pathname} />
+          <>
+            <InsideHeader pathname={pathname} />
+            {sectionNav && <Nav items={customerNav(account)} path={pathname} grouped />}
+          </>
         ) : (
           <>
             <AccountToggle />
-            <AppHeader ops={ops} path={path} />
+            <AppHeader ops={ops} path={pathname} />
           </>
         )}
       </div>

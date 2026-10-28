@@ -1,19 +1,19 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import * as Tabs from '@radix-ui/react-tabs'
 import { SOLUTIONS, service as serviceDef, type Building, type ProjectRow, type ServiceId, type Workstream } from '@/lib/concept/model'
-import { deliveryProjectsAside, deliverySteps, getBatch, moneyOne, short } from '@/lib/concept/derive'
+import { deliveryProjectsAside, deliverySteps, getBatch } from '@/lib/concept/derive'
 import { keepShownDate, splitDeliveryId, toCustomerProject, toDeliveryPayload } from '@/lib/concept/delivery'
 import { CustomerDeliveryView } from '@/components/customer/delivery/CustomerDeliveryView'
 import { CustomerProjectDeliveryView } from '@/components/customer/delivery/CustomerProjectDeliveryView'
 import { cn } from '@/lib/utils'
 import { Card, Page, PageHeader } from './ui'
 import { StatusPill } from './StatusPill'
-import { DetailsGrid, DetailsToggle, useDetailsOpen } from './DetailsGrid'
-import { StepsWithNeeds } from './StepsWithNeeds'
+import { DetailsGrid } from './DetailsGrid'
+import { SimpleSteps } from './SimpleSteps'
+import { stepsAside, WorkstreamFacts, WorkstreamFrame } from './WorkstreamChrome'
 import { ProjectRoute } from './ProjectRoute'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
@@ -37,15 +37,10 @@ function Soon({ label }: { label: string }) {
   )
 }
 
-export function DeliveryWorkstream({ w }: { w: Workstream }) {
+export function DeliveryWorkstream({ w, live = w }: { w: Workstream; live?: Workstream }) {
   const { account, saveDelivery } = useConcept()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const batch = getBatch(account, w.batchId)!
-  const detailsOpen = useDetailsOpen()
-  const def = serviceDef(w.service)
-  const info = w.deliveryProfile
-  const complete = w.owner === 'done' ? w.projects.length : w.projects.filter((project) => project.step >= 5).length
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'contract', label: 'Contract' },
@@ -60,31 +55,11 @@ export function DeliveryWorkstream({ w }: { w: Workstream }) {
     const qs = params.toString()
     router.replace(`${hrefs.workstream(w.id)}${qs ? `?${qs}` : ''}`, { scroll: false })
   }
-  const details: Array<{ label: string; value: ReactNode }> = [
-    { label: 'Service', value: def.label },
-    { label: 'Started', value: short(w.startedOn) },
-    { label: 'Complete', value: `${complete} of ${w.projects.length}` },
-    { label: 'Solution', value: solutionLabel(w.solution) },
-    { label: 'Projects', value: String(w.projects.length) },
-    ...(info?.expectedCompletion ? [{ label: 'Expected completion', value: `est ${short(info.expectedCompletion)}` }] : []),
-    { label: 'Batch', value: <Link href={hrefs.batch(batch.id)} className="hover:text-cq-accent">{batch.name}</Link> },
-    ...(w.supplier ? [{ label: 'Supplier', value: w.supplier }] : []),
-    { label: 'Done when', value: def.done },
-    { label: 'Lead', value: w.lead },
-    ...(info?.contractValue ? [{ label: 'Contract value', value: moneyOne(info.contractValue) }] : []),
-  ]
   const payload = toDeliveryPayload(account, [w])
 
   return (
     <Page>
-      <PageHeader
-        crumbs={[{ label: def.label, href: hrefs.service(w.service) }, { label: w.name }]}
-        title={w.name}
-        meta={[SOLUTIONS[w.solution], batch.name, w.supplier, `${w.projects.length} projects`, `Lead ${w.lead}`].filter(Boolean).join(' · ')}
-        actions={<><StatusPill owner={w.owner} /><Link href={hrefs.batch(batch.id)} className="btn-secondary-sm">View batch</Link><DetailsToggle open={detailsOpen.open} onToggle={detailsOpen.toggle} /></>}
-      />
-      <div className="space-y-6 pb-12">
-        {detailsOpen.open && <DetailsGrid flow="three" items={details} tags={[def.label, SOLUTIONS[w.solution], ...(w.supplier ? [w.supplier] : [])]} />}
+      <WorkstreamFrame live={live}>
         <Tabs.Root value={tab} onValueChange={setTab}>
           <Tabs.List className="flex gap-6 border-b border-cq-border-light" aria-label="Workstream">
             {tabs.map((item) => (
@@ -107,13 +82,7 @@ export function DeliveryWorkstream({ w }: { w: Workstream }) {
         )}
         {tab === 'overview' && (
           <>
-            <Card title="Delivery stages" right="Projects at each stage">
-              <div className="overflow-x-auto">
-                <div className="min-w-[1080px]">
-                  <StepsWithNeeds columns={deliverySteps(account, w)} />
-                </div>
-              </div>
-            </Card>
+            <SimpleSteps title={`${serviceDef(w.service).label} steps`} columns={deliverySteps(account, w)} right={stepsAside(w)} />
             <Card title="Projects" right={deliveryProjectsAside(w)} bodyClassName="p-0">
               <CustomerDeliveryView
                 payload={payload}
@@ -129,41 +98,10 @@ export function DeliveryWorkstream({ w }: { w: Workstream }) {
                 }}
               />
             </Card>
-            {(w.activity?.length || w.documents?.length) && (
-              <div className={w.documents?.length && w.activity?.length ? 'grid gap-6 lg:grid-cols-2' : ''}>
-                {w.activity && w.activity.length > 0 && (
-                  <Card title="Recent activity">
-                    <ul className="space-y-4">
-                      {w.activity.map((item) => (
-                        <li key={`${item.date}-${item.title}`} className="flex justify-between gap-4">
-                          <div>
-                            <p className="text-sm font-semibold text-cq-text">{item.title}</p>
-                            {item.text && <p className="text-sm text-cq-text-secondary">{item.text}</p>}
-                          </div>
-                          <span className="shrink-0 text-xs text-cq-muted">{item.date}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-                {w.documents && w.documents.length > 0 && (
-                  <Card title="Documents">
-                    <ul className="space-y-4">
-                      {w.documents.map((doc) => (
-                        <li key={doc.name}>
-                          <p className="text-sm font-semibold text-cq-text">{doc.name}</p>
-                          <p className="text-sm text-cq-text-secondary">{doc.meta}</p>
-                          {doc.action && <button type="button" className="btn-link mt-1">{doc.action}</button>}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-              </div>
-            )}
+            <WorkstreamFacts activity={w.activity ?? []} documents={w.documents} />
           </>
         )}
-      </div>
+      </WorkstreamFrame>
     </Page>
   )
 }

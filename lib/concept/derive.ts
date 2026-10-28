@@ -1,10 +1,198 @@
-import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Need, type Owner, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
+import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Need, type Owner, type Phase, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
 
 /** Customers only see batches once a plan has been shared with them */
 export const customerBatches = (a: Account) => a.batches.filter((b) => b.planState !== 'draft')
 
 export const getBatch = (a: Account, id: string) => a.batches.find((b) => b.id === id)
-export const getWorkstream = (a: Account, id: string) => a.workstreams.find((w) => w.id === id)
+
+/** Removed workstream ids, each pointing at the workstream that carried on. */
+export const WORKSTREAM_ALIAS: Record<string, string> = {
+  'ev-ind': 'ev-voltreny',
+  'ev-tender': 'ev-voltreny',
+  'solar-ind': 'solar-de',
+  'solar-frbe-scope': 'solvarek',
+  'solvarek-quote': 'solvarek',
+}
+
+export const getWorkstream = (a: Account, id: string) => a.workstreams.find((w) => w.id === (WORKSTREAM_ALIAS[id] ?? id))
+
+/** The phase the workstream is in. Last phase when all are done, first when all are still planned. */
+export function currentPhase(w: Workstream): Phase {
+  const now = w.phases.find((phase) => phase.state === 'now')
+  if (now) return now
+  if (w.phases.length && w.phases.every((phase) => phase.state === 'done')) return w.phases[w.phases.length - 1]
+  return w.phases[0]
+}
+
+/** Every phase has finished. */
+export const isCompleted = (w: Workstream) => w.phases.length > 0 && w.phases.every((phase) => phase.state === 'done')
+
+/** Workstreams in this batch that have a phase for the service, with that phase. */
+export function phasesIn(a: Account, b: Batch, serviceId: ServiceId) {
+  return wsIn(a, b.id).flatMap((w) => {
+    const phase = w.phases.find((item) => item.service === serviceId)
+    return phase ? [{ workstream: w, phase }] : []
+  })
+}
+
+export type PhaseRef = { workstream: Workstream; phase: Phase }
+
+/** A done phase of this service, on a workstream that has moved on or finished. Delivery returns completed workstreams. */
+export function historyInService(a: Account, serviceId: ServiceId): PhaseRef[] {
+  const rows = customerBatches(a).flatMap((b) =>
+    phasesIn(a, b, serviceId).filter(({ workstream, phase }) => {
+      if (phase.state !== 'done') return false
+      if (serviceId === 'delivery') return isCompleted(workstream) && currentPhase(workstream).service === 'delivery'
+      return workstream.service !== serviceId || isCompleted(workstream)
+    }),
+  )
+  return rows.sort((x, y) => (y.phase.completedOn ? parse(y.phase.completedOn) : 0) - (x.phase.completedOn ? parse(x.phase.completedOn) : 0))
+}
+
+/** A finished phase, read as that service. Missing phase data stays missing. */
+export function asOfPhase(w: Workstream, phase: Phase): Workstream {
+  return {
+    ...w,
+    service: phase.service,
+    owner: 'done',
+    completedOn: phase.completedOn,
+    startedOn: phase.startedOn,
+    projects: phase.projects ?? w.projects,
+    tender: phase.tender ?? undefined,
+    pricing: phase.pricing ?? undefined,
+    surveyNote: phase.surveyNote,
+    next: undefined,
+    outcome: phase.outcome,
+  }
+}
+
+/** Phase named in the URL, or the current one. A planned phase stays unselectable. */
+export function selectedPhase(w: Workstream, requested: string | null): Phase {
+  const current = currentPhase(w)
+  if (!requested) return current
+  const phase = w.phases.find((item) => item.service === requested)
+  if (!phase) return current
+  if (phase.state === 'planned' && !(proposedStart(w) && phase.service === w.phases[0]?.service)) return current
+  return phase
+}
+
+/** Body of the workstream page: the live record, or a finished phase when one is open. */
+export function workstreamView(w: Workstream, phase: Phase): Workstream {
+  if (phase.state === 'done' && phase.service !== w.service) return asOfPhase(w, phase)
+  return w
+}
+
+/** Every phase is still planned, so the first card is the next one. */
+export function proposedStart(w: Workstream): boolean {
+  return Boolean(w.proposed) && w.phases.length > 0 && w.phases.every((phase) => phase.state === 'planned')
+}
+
+/** Header line under the workstream name. Only parts the platform holds. */
+export function workstreamMeta(w: Workstream): string {
+  const n = activeProjects(w).length
+  const buildings = noun(n, 'building', 'buildings')
+  if (w.service === 'tender') {
+    const parts = [buildings]
+    const size = totalCapacity(w)
+    if (size) parts.push(size)
+    const invited = w.tender?.invited ?? 0
+    const received =
+      w.next?.kind === 'offers' ? w.next.in : (w.tender?.offers ? w.tender.offers.received + (w.tender.offers.partial ?? 0) : 0)
+    if (invited) parts.push(`${received} of ${invited} offers in`)
+    if (w.tender?.offersDue) parts.push(`offers due ${short(w.tender.offersDue)}`)
+    return parts.join(' · ')
+  }
+  if (w.service === 'delivery') {
+    const complete = w.owner === 'done' ? n : activeProjects(w).filter((project) => project.step >= 5).length
+    const parts = [buildings, `${complete} of ${n} complete`]
+    if (w.deliveryProfile?.expectedCompletion) parts.push(`est ${short(w.deliveryProfile.expectedCompletion)}`)
+    if (w.deliveryProfile?.contractValue) parts.push(`contract ${moneyOne(w.deliveryProfile.contractValue)}`)
+    return parts.join(' · ')
+  }
+  if (w.service === 'indicative') {
+    const total = presentedTotal(w)
+    return total.count ? `${buildings} · ${total.text}` : buildings
+  }
+  if (w.service === 'scope') {
+    const fact = surveyLine(w).split(' — ')[0]
+    return fact ? `${buildings} · ${fact}` : buildings
+  }
+  if (w.service === 'pricing') {
+    const total = pricingTotal(w)
+    return total ? `${buildings} · ${moneyOne(total)}` : buildings
+  }
+  return buildings
+}
+
+/** Read the service column from the phase snapshot, falling back to the live record only for the same service. */
+export function asPhase(w: Workstream, phase: Phase): Workstream {
+  const same = phase.service === w.service
+  return {
+    ...w,
+    service: phase.service,
+    owner: 'done',
+    completedOn: phase.completedOn ?? w.completedOn,
+    outcome: phase.outcome,
+    projects: phase.projects?.length ? phase.projects : w.projects,
+    tender: phase.tender ?? (same ? w.tender : undefined),
+    pricing: phase.pricing ?? (same ? w.pricing : undefined),
+    surveyNote: phase.surveyNote ?? (same ? w.surveyNote : undefined),
+  }
+}
+
+/** Outcome column for a passed-through or completed row. */
+export function phaseOutcome(serviceId: ServiceId, w: Workstream, phase: Phase): { main: string; detail: string } {
+  const when = short(phase.completedOn)
+  if (serviceId === 'delivery') {
+    const projects = phase.projects?.length ? phase.projects : w.projects
+    const n = projects.filter((p) => !p.dropped).length
+    return { main: `All ${n} handed over ${when}`, detail: 'installed' }
+  }
+  const detail = `now in ${service(w.service).label}`
+  if (serviceId === 'scope') return { main: phase.outcome ? `${phase.outcome} ${when}` : `Scope agreed ${when}`, detail }
+  if (serviceId === 'pricing') return { main: `Contract signed ${when}`, detail }
+  if (phase.outcome) return { main: `${phase.outcome} ${when}`, detail }
+  return { main: `You decided ${when}`, detail }
+}
+
+/** Card line: where the passed-through workstreams went next. One label, or the generic line when they differ. */
+export function movedOnLine(rows: PhaseRef[]): string {
+  const labels = rows.map(({ workstream, phase }) => {
+    const index = workstream.phases.findIndex((item) => item.service === phase.service)
+    const next = workstream.phases[index + 1]
+    return service(next?.service ?? workstream.service).label
+  })
+  const unique = [...new Set(labels)]
+  return unique.length === 1 ? `moved on to ${unique[0]}` : 'moved on to the next service'
+}
+
+/** Warn in development when a workstream's phases don't match the rules. */
+export function checkPhases(a: Account) {
+  if (process.env.NODE_ENV !== 'development') return
+  const order = SERVICES.map((item) => item.id)
+  for (const w of a.workstreams) {
+    const batch = getBatch(a, w.batchId)
+    const current = w.phases.length ? currentPhase(w) : undefined
+    if (!current || w.service !== current.service) {
+      console.warn(`Workstream ${w.id}: service is ${w.service}, current phase is ${current?.service ?? 'missing'}`)
+    }
+    const nows = w.phases.filter((phase) => phase.state === 'now').length
+    const proposedPlanned = Boolean(w.proposed) && w.phases.length > 0 && w.phases.every((phase) => phase.state === 'planned')
+    if (nows !== 1 && !isCompleted(w) && !proposedPlanned) {
+      console.warn(`Workstream ${w.id}: ${nows} phases are now`)
+    }
+    for (const phase of w.phases) {
+      if (batch && !batch.route.includes(phase.service)) {
+        console.warn(`Workstream ${w.id}: ${phase.service} is not on the ${batch.name} route`)
+      }
+    }
+    const indexes = w.phases.map((phase) => order.indexOf(phase.service))
+    const sorted = [...indexes].sort((x, y) => x - y)
+    if (indexes.some((index, i) => index !== sorted[i])) {
+      console.warn(`Workstream ${w.id}: phases are not in service order`)
+    }
+  }
+}
 export const getBuilding = (a: Account, id: string) => a.buildings.find((b) => b.id === id)!
 export const wsIn = (a: Account, batchId: string) => a.workstreams.filter((w) => w.batchId === batchId)
 export const batchesFor = (a: Account, buildingId: string) => a.batches.filter((b) => b.buildingIds.includes(buildingId))
@@ -75,31 +263,31 @@ export function nextLine(w: Workstream): string {
   const n = w.next
   if (!n) return w.now
   if (n.kind === 'roof') {
-    return `Roof drawings for ${activeProjects(w).length} buildings — asked ${short(n.since)} · waiting ${days(n.since)} days`
+    return `Roof drawings for ${activeProjects(w).length} buildings — asked ${short(n.since)}`
   }
   if (n.kind === 'decision') {
     const step = service(w.service).steps.indexOf('Presented')
     const count = w.projects.filter((p) => p.step === step && !p.dropped).length
-    return `Go or no-go on ${count} estimates — presented ${short(n.since)} · waiting ${days(n.since)} days`
+    return `Go or no-go on ${count} estimates — presented ${short(n.since)}`
   }
   if (n.kind === 'offers') {
     const left = n.invited - n.in
     return `${n.in} of ${n.invited} offers in — last ${left} chased ${short(n.chased)}`
   }
-  if (n.kind === 'price') return `Price from ${n.from} — Requested ${short(n.since)} · waiting ${days(n.since)} days`
+  if (n.kind === 'price') return `Price from ${n.from} — requested ${short(n.since)}`
   if (n.kind === 'installing') {
     const detail = n.detail ?? (w.activity?.length ? `started ${short([...w.activity].sort((a, b) => parse(b.date) - parse(a.date))[0].date)}` : '')
     return detail ? `Installing at ${n.place} — ${detail}` : `Installing at ${n.place}`
   }
   if (n.kind === 'gas') {
-    return `Gas bills for ${activeProjects(w).length} buildings — asked ${short(n.since)} · waiting ${days(n.since)} days`
+    return `Gas bills for ${activeProjects(w).length} buildings — asked ${short(n.since)}`
   }
   if (n.kind === 'carpark') {
-    return `Car park ownership for ${activeProjects(w).length} buildings — asked ${short(n.since)} · waiting ${days(n.since)} days`
+    return `Car park ownership for ${activeProjects(w).length} buildings — asked ${short(n.since)}`
   }
   if (n.kind === 'agree') {
     const count = w.projects.filter((p) => p.decision === 'waiting').length || activeProjects(w).length
-    return `Agree scope for ${count} projects — sent ${short(n.since)} · waiting ${days(n.since)} days`
+    return `Agree scope for ${count} projects — sent ${short(n.since)}`
   }
   if (n.kind === 'writing') {
     const visits = recordedVisits(w)
@@ -107,13 +295,13 @@ export function nextLine(w: Workstream): string {
     const latest = visits.filter((v) => v.state === 'done' && v.on).sort((a, b) => parse(b.on!) - parse(a.on!))[0]
     return `Scope written after the last survey — ${done} of ${visits.length} surveys done${latest?.on ? `, ${short(latest.on)}` : ''}`
   }
-  if (n.kind === 'choose') return `Choose a supplier — results sent ${short(n.since)} · waiting ${days(n.since)} days`
-  if (n.kind === 'brief') return `Agree the brief — sent ${short(n.since)} · waiting ${days(n.since)} days`
+  if (n.kind === 'choose') return `Choose a supplier — results sent ${short(n.since)}`
+  if (n.kind === 'brief') return `Agree the brief — sent ${short(n.since)}`
   if (n.kind === 'shortlist') return `Shortlisting suppliers — brief agreed ${short(n.on)}`
-  if (n.kind === 'agreePrice') return `Agree the price — Analysis sent ${short(n.since)} · waiting ${days(n.since)} days`
-  if (n.kind === 'sign') return `Sign the contract — Sent ${short(n.since)} · waiting ${days(n.since)} days`
-  if (n.kind === 'overdue') return `${n.place} overdue — Installation due ${short(n.due)} · ${days(n.due)} days late`
-  if (n.kind === 'design') return `Design for ${n.n} sites — Site checks done ${short(n.on)}`
+  if (n.kind === 'agreePrice') return `Agree the price — analysis sent ${short(n.since)}`
+  if (n.kind === 'sign') return `Sign the contract — sent ${short(n.since)}`
+  if (n.kind === 'overdue') return `${n.place} overdue — installation due ${short(n.due)}`
+  if (n.kind === 'design') return `Design for ${n.n} sites — site checks done ${short(n.on)}`
   const ready = w.projects.filter((p) => p.ready).length
   const readyOn = w.needs.find((need) => need.since)?.since
   return readyOn
@@ -317,6 +505,15 @@ export interface RoutePanel {
   email?: string
 }
 
+function routeSub(a: Account, b: Batch, serviceId: ServiceId): string | undefined {
+  if (serviceId === 'delivery') {
+    const completed = wsIn(a, b.id).filter((w) => isCompleted(w) && currentPhase(w).service === 'delivery').length
+    return completed ? `${completed} completed` : undefined
+  }
+  const passed = phasesIn(a, b, serviceId).filter(({ workstream, phase }) => phase.state === 'done' && (workstream.service !== serviceId || isCompleted(workstream))).length
+  return passed ? `${passed} passed through` : undefined
+}
+
 function latestDone(ws: Workstream[]) {
   return ws
     .map((w) => w.completedOn)
@@ -356,7 +553,7 @@ export function routeStages(a: Account, b: Batch): RouteStage[] {
       label: s.label,
       state: 'now',
       caption: noun(projects, 'project', 'projects'),
-      sub: doneWs.length ? `${noun(doneWs.length, 'workstream', 'workstreams')} done` : undefined,
+      sub: routeSub(a, b, s.id),
     }
   })
   return [start, ...services]
@@ -494,8 +691,8 @@ export function routeAside(a: Account, b: Batch, variant: 'dashboard' | 'page') 
 export function workstreamBlockMeta(a: Account, b: Batch) {
   if (b.planState === 'proposed') return `Proposed ${short(b.planProposed)}`
   const ws = wsIn(a, b.id).filter((w) => !w.proposed)
-  const done = ws.filter((w) => w.owner === 'done').length
-  return `${noun(ws.length - done, 'in progress', 'in progress')} · ${noun(done, 'done', 'done')}`.replace('1 in progress', '1 in progress')
+  const completed = ws.filter(isCompleted).length
+  return `${ws.length - completed} in progress · ${completed} completed`
 }
 
 export function stepMarks(w: Workstream, notStarted: boolean) {
@@ -553,6 +750,7 @@ export function batchActivity(a: Account, b: Batch) {
 }
 
 export function money(range: [number, number]): string {
+  if (range[0] < 1000 && range[1] >= 1000) return `€${range[0]}k–${(range[1] / 1000).toFixed(1)}m`
   if (range[0] >= 1000 || range[1] >= 1000) {
     const fmt = (n: number) => (n / 1000).toFixed(1).replace(/\.0$/, '')
     return `€${fmt(range[0])}–${fmt(range[1])}m`
@@ -628,6 +826,29 @@ export interface StepColumn {
     tone: 'muted' | 'dashed' | 'solid'
     items: Array<{ mark: 'tick' | 'you' | 'other'; text: string; sub?: string; action?: 'email' }>
   }
+  /** Date a passed step was finished, when the platform holds one. */
+  doneOn?: string
+}
+
+function sharedDate(dates: Array<string | undefined>): string | undefined {
+  if (!dates.length || dates.some((date) => !date)) return undefined
+  return [...dates].sort((a, b) => parse(b!) - parse(a!))[0]
+}
+
+function indicativeDoneOn(w: Workstream, i: number): string | undefined {
+  if (i === 2) return sharedDate(w.projects.filter((project) => project.step > i).map((project) => project.presentedOn))
+  if (i === 3) return sharedDate(w.projects.filter((project) => project.decision && project.decision !== 'waiting').map((project) => project.decidedOn))
+  return undefined
+}
+
+function scopeDoneOn(w: Workstream, i: number): string | undefined {
+  if (i === 3) {
+    const visits = recordedVisits(w)
+    if (!visits.length || visits.some((visit) => visit.state !== 'done')) return undefined
+    return sharedDate(visits.map((visit) => visit.on))
+  }
+  if (i === 4 && w.owner === 'done') return w.completedOn
+  return undefined
 }
 
 export function indicativeSteps(a: Account, w: Workstream): StepColumn[] {
@@ -636,9 +857,10 @@ export function indicativeSteps(a: Account, w: Workstream): StepColumn[] {
   return def.steps.map((label, i) => {
     const here = w.projects.filter((p) => p.step === i)
     const past = w.projects.filter((p) => p.step > i)
-    const state = here.length ? 'now' : past.length ? 'passed' : 'upcoming'
+    const finished = w.owner === 'done'
+    const state = finished ? 'passed' : here.length ? 'now' : past.length ? 'passed' : 'upcoming'
     const count = here.length || past.length
-    return { label, state, count, happens: happens[i] ?? '', panel: stepPanel(a, w, i) }
+    return { label, state, count, happens: happens[i] ?? '', panel: stepPanel(a, w, i), doneOn: indicativeDoneOn(w, i) }
   })
 }
 
@@ -856,6 +1078,8 @@ export function pricingSteps(w: Workstream): StepColumn[] {
     const passed = w.projects.some((project) => project.step > i)
     const finished = w.owner === 'done'
     const state = finished ? 'passed' : here ? 'now' : passed ? 'passed' : 'upcoming'
+    const info = w.pricing
+    const dates = [info?.setOn, info?.requestedOn, info?.receivedOn, info?.analysedOn, info?.agreedOn, info?.contractOn]
     return {
       label,
       state,
@@ -863,6 +1087,7 @@ export function pricingSteps(w: Workstream): StepColumn[] {
       countLabel: finished || !here ? '—' : undefined,
       happens: def.happens?.[i] ?? '',
       panel: pricingPanel(w, i, state),
+      doneOn: dates[i],
     }
   })
 }
@@ -923,7 +1148,7 @@ export function deliveryNextLine(w: Workstream): string {
       : sameMonth
         ? `${dates.slice(0, -1).map((date) => date.split(' ')[0]).join(', ')} and ${dates[dates.length - 1]}`
         : `${dates.slice(0, -1).join(', ')} and ${dates[dates.length - 1]}`
-  return `Confirm ${n} ${n === 1 ? 'date' : 'dates'} — From ${w.supplier}'s invoices, ${when}`
+  return `Confirm ${n} ${n === 1 ? 'date' : 'dates'} — from ${w.supplier}'s invoices, ${when}`
 }
 
 export function datesToConfirm(w: Workstream): number {
@@ -939,7 +1164,7 @@ export function deliveryLine(w: Workstream): string {
   const total = w.projects.length
   const complete = w.owner === 'done' ? total : w.projects.filter((project) => project.step >= 5).length
   const head = `${complete} of ${total} complete`
-  if (w.owner === 'done') return `${head} — Handed over`
+  if (w.owner === 'done') return `${head} — handed over`
   const confirm = datesToConfirm(w)
   if (confirm) return `${head} — ${confirm} ${confirm === 1 ? 'date' : 'dates'} to confirm`
   const overdue = w.projects.filter((project) => project.delivery?.overdueDue).length
@@ -970,6 +1195,7 @@ export function deliverySteps(a: Account, w: Workstream): StepColumn[] {
       countLabel: finished || !here ? '—' : undefined,
       happens: happens[i] ?? '',
       panel: deliveryPanel(a, w, i, state),
+      doneOn: i === 1 ? w.deliveryProfile?.siteChecksOn : undefined,
     }
   })
 }
@@ -1058,6 +1284,7 @@ export function tenderSteps(w: Workstream): StepColumn[] {
       countLabel: finished || !here ? '—' : undefined,
       happens: def.happens?.[i] ?? '',
       panel: tenderPanel(w, i, state),
+      doneOn: i === 0 ? w.tender?.briefAgreedOn : i === 1 ? w.tender?.matchedOn : undefined,
     }
   })
 }
@@ -1107,8 +1334,9 @@ export function scopeSteps(a: Account, w: Workstream): StepColumn[] {
   return def.steps.map((label, i) => {
     const here = w.projects.filter((p) => p.step === i).length
     const passed = w.projects.some((p) => p.step > i)
-    const state = here ? 'now' : passed ? 'passed' : 'upcoming'
-    return { label, state, count: here, countLabel: here ? undefined : '—', happens: happens[i] ?? '', panel: scopePanel(a, w, i) }
+    const finished = w.owner === 'done'
+    const state = finished ? 'passed' : here ? 'now' : passed ? 'passed' : 'upcoming'
+    return { label, state, count: here, countLabel: here ? undefined : '—', happens: happens[i] ?? '', panel: scopePanel(a, w, i), doneOn: scopeDoneOn(w, i) }
   })
 }
 

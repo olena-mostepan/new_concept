@@ -131,7 +131,7 @@ export function SurveysTab() {
                           <Fragment key={w.id}>
                             <tr className="border-t border-cq-border-light">
                               <td className={td}>
-                                <Link href={hrefs.workstream(w.id)} className="font-normal hover:text-cq-accent">
+                                <Link href={hrefs.workstream(w.id, 'service')} className="font-normal hover:text-cq-accent">
                                   {w.name}
                                 </Link>
                               </td>
@@ -144,7 +144,7 @@ export function SurveysTab() {
                                     Survey documents
                                   </button>
                                 ) : (
-                                  <Link href={hrefs.workstream(w.id)} className="btn-secondary-sm">
+                                  <Link href={hrefs.workstream(w.id, 'service')} className="btn-secondary-sm">
                                     View
                                   </Link>
                                 )}

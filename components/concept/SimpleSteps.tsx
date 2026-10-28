@@ -16,7 +16,7 @@ function looks(columns: StepColumn[]): Look[] {
 
 function lineFor(column: StepColumn, look: Look): string {
   if (look === 'now') return noun(column.count, 'project', 'projects')
-  if (look === 'passed' && column.doneOn) return `Done ${short(column.doneOn)}`
+  if (look === 'passed') return column.doneOn ? `Done ${short(column.doneOn)}` : 'Done'
   return '—'
 }
 
@@ -42,7 +42,7 @@ export function SimpleSteps({ title, columns, right }: { title: string; columns:
                   <span
                     className={cn(
                       'rounded-full',
-                      look === 'now' && 'h-3.5 w-3.5 bg-black-7 ring-4 ring-black-2',
+                      look === 'now' && 'h-3.5 w-3.5 bg-brand-6 ring-4 ring-brand-1',
                       look === 'passed' && 'h-2.5 w-2.5 bg-black-6',
                       look === 'upcoming' && 'h-2.5 w-2.5 border-2 border-border-dark bg-white',
                     )}

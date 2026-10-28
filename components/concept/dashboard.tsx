@@ -6,7 +6,6 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { getBatch, noun, servicePipeline, type ServiceCount } from '@/lib/concept/derive'
 import { OWNER_LABEL, SERVICE_LABEL, type Account } from '@/lib/concept/model'
 import { Card, CardLink } from './ui'
-import { BatchesCard } from './BatchesCard'
 import { hrefs } from './hrefs'
 
 const SHADES = [0.16, 0.3, 0.44, 0.58, 0.74, 1]
@@ -126,7 +125,7 @@ function Services({ account }: { account: Account }) {
             {OWNER_LABEL.you}: {noun(pipe.you, 'workstream', 'workstreams')}
           </p>
           <Link href={hrefs.batches} className="h8 text-text-primary underline underline-offset-[3px] decoration-border-dark">
-            See workstreams
+            See batches
           </Link>
         </div>
       )}
@@ -136,7 +135,7 @@ function Services({ account }: { account: Account }) {
 
 function Activity({ account }: { account: Account }) {
   return (
-    <Card title="Recent activity" right={<CardLink href={hrefs.batches}>See all</CardLink>} bodyClassName="px-6 py-1" {...header}>
+    <Card title="Recent activity" right={<CardLink href={hrefs.batches}>See all</CardLink>} bodyClassName="px-6 py-1" className="h-full" {...header}>
       <ul>
         {account.activity.slice(0, 5).map((item, index) => {
           const batch = item.batchId ? getBatch(account, item.batchId)?.name : undefined
@@ -161,7 +160,7 @@ function Activity({ account }: { account: Account }) {
 function Momentum({ account }: { account: Account }) {
   if (!account.momentum) return null
   return (
-    <Card title="Momentum" right="Services started and finished" {...header}>
+    <Card title="Momentum" right="Services started and finished" className="h-full" {...header}>
       <div className="mb-3 flex gap-5 text-xs text-cq-text-secondary">
         <span className="inline-flex items-center gap-1.5">
           <svg width="18" height="4" aria-hidden>
@@ -196,9 +195,10 @@ export function MatureDashboard({ account }: { account: Account }) {
   return (
     <div className="space-y-4">
       <Services account={account} />
-      <BatchesCard account={account} />
-      <Momentum account={account} />
-      <Activity account={account} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Momentum account={account} />
+        <Activity account={account} />
+      </div>
     </div>
   )
 }

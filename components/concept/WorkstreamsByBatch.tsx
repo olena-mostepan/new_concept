@@ -16,7 +16,7 @@ const rowStyle = { gridTemplateColumns: 'minmax(0,1.3fr) 170px minmax(0,1.5fr) 1
 function WorkstreamLine({ w, done }: { w: Workstream; done?: boolean }) {
   const projects = noun(activeProjects(w).length, 'project', 'projects')
   return (
-    <Link href={hrefs.workstream(w.id)} className="grid items-center gap-x-6 border-t border-border-light px-6 py-3 hover:bg-black-1" style={rowStyle}>
+    <Link href={hrefs.workstream(w.id, 'batch')} className="grid items-center gap-x-6 border-t border-border-light px-6 py-3 hover:bg-black-1" style={rowStyle}>
       {done ? (
         <p className="min-w-0">
           <span className="p6 text-text-tertiary">{w.name}</span>

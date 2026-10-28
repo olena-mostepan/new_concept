@@ -2,7 +2,8 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { ListChecks } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ChevronRight, ListChecks } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { sectionTitleClass } from '@/lib/ui/headings'
@@ -40,6 +41,7 @@ export function CustomerDeliveryView({
   conceptRows = false,
   bare = false,
   bannerDetail,
+  rowLinks = false,
 }: {
   payload?: CustomerDeliveryPayload
   onPayloadChange?: (next: CustomerDeliveryPayload) => void
@@ -51,7 +53,10 @@ export function CustomerDeliveryView({
   conceptRows?: boolean
   bare?: boolean
   bannerDetail?: string
+  /** Whole row opens the project. Pending dates stay as text. */
+  rowLinks?: boolean
 } = {}) {
+  const router = useRouter()
   const [uncontrolled, setUncontrolled] = React.useState<CustomerDeliveryPayload>(
     INITIAL_CUSTOMER_DELIVERY,
   )
@@ -340,7 +345,16 @@ export function CustomerDeliveryView({
                           focused &&
                             'bg-[var(--cq-accent-muted)]/40 ring-2 ring-inset ring-[var(--cq-green)]/40',
                           dimmed && 'opacity-50',
+                          rowLinks && 'cursor-pointer hover:bg-black-1',
                         )}
+                        onClick={
+                          rowLinks && projectHref
+                            ? (event) => {
+                                if ((event.target as HTMLElement).closest('a,button')) return
+                                router.push(projectHref(project))
+                              }
+                            : undefined
+                        }
                       >
                         <td className="min-w-[240px] px-5 py-4 align-middle sm:min-w-[280px] sm:px-6">
                           <Link
@@ -375,6 +389,15 @@ export function CustomerDeliveryView({
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 align-middle text-right sm:px-6">
+                          {rowLinks ? (
+                            <div className="flex items-center justify-end gap-3">
+                              {conceptRows ? <span className="text-sm text-cq-text">{project.insightLabel}</span> : null}
+                              {(conceptRows ? project.needsConfirm : needsDateConfirm(project)) ? (
+                                <span className="h8 text-text-primary">Date to confirm</span>
+                              ) : null}
+                              <ChevronRight className="h-4 w-4 text-text-tertiary" aria-hidden />
+                            </div>
+                          ) : (
                           <div className="flex items-center justify-end gap-3">
                             {conceptRows ? <span className="text-sm text-cq-text">{project.insightLabel}</span> : null}
                             {(conceptRows ? project.needsConfirm : needsDateConfirm(project)) ? (
@@ -399,6 +422,7 @@ export function CustomerDeliveryView({
                               </Link>
                             ) : null}
                           </div>
+                          )}
                         </td>
                       </tr>
                     )

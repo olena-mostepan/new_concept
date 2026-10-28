@@ -74,6 +74,7 @@ export function DeliveryWorkstream({ w, live = w }: { w: Workstream; live?: Work
             onPayloadChange={saveDelivery}
             embedded
             showBanner={false}
+            rowLinks
             projectHref={(project) => {
               const parts = splitDeliveryId(project.id)
               return parts ? hrefs.project(parts.workstreamId, parts.buildingId) : hrefs.workstream(w.id)
@@ -92,6 +93,7 @@ export function DeliveryWorkstream({ w, live = w }: { w: Workstream; live?: Work
                 showBanner={false}
                 showCity
                 conceptRows
+                rowLinks
                 projectHref={(project) => {
                   const parts = splitDeliveryId(project.id)
                   return parts ? hrefs.project(parts.workstreamId, parts.buildingId) : hrefs.workstream(w.id)

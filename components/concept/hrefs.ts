@@ -9,7 +9,7 @@ export const hrefs = {
   batch: (id: string) => `${BASE}/batches/${id}`,
   workstreams: (s?: ServiceId) => `${BASE}/workstreams${s ? `?service=${s}` : ''}`,
   service: (s: ServiceId) => `${BASE}/services/${s}`,
-  workstream: (id: string) => `${BASE}/workstreams/${id}`,
+  workstream: (id: string, from?: 'batch' | 'service') => `${BASE}/workstreams/${id}${from ? `?from=${from}` : ''}`,
   project: (workstreamId: string, buildingId: string) => `${BASE}/projects/${workstreamId}/${buildingId}`,
   ops: OPS,
   opsNewBatch: `${OPS}/batches/new`,

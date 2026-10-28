@@ -1,209 +1,114 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { decisionLabel, getBuilding, money, moneyOne, paybackLabel, scopeDecisionLabel, short, visitStateLabel } from '@/lib/concept/derive'
+import { ChevronRight } from 'lucide-react'
+import { getBuilding, money, moneyOne, scopeDecisionLabel, short, visitStateLabel } from '@/lib/concept/derive'
 import { service, type ProjectRow, type Workstream } from '@/lib/concept/model'
-import { td, th } from './ui'
-import { DecisionButtons } from './DecisionButtons'
 import { hrefs } from './hrefs'
 import { useConcept } from './store'
 import { cn } from '@/lib/utils'
 
-export function ProjectsTable({ w }: { w: Workstream }) {
-  const { account, agreeScope, decide } = useConcept()
-  const steps = service(w.service).steps
+type Column = 'step' | 'estimate' | 'decision' | 'size' | 'brief' | 'check' | 'gap' | 'survey' | 'price' | 'analysis'
+
+const LABEL: Record<Column, string> = {
+  step: 'Step',
+  estimate: 'Estimate',
+  decision: 'Your decision',
+  size: 'Size',
+  brief: 'Brief',
+  check: 'Site check',
+  gap: 'Open gap',
+  survey: 'Survey',
+  price: 'Price',
+  analysis: 'Analysis',
+}
+
+function decisionText(row: ProjectRow): { text: string; emphasis: boolean; muted: boolean } {
+  if (row.decision === 'waiting') return { text: 'Waiting for your decision', emphasis: true, muted: false }
+  if (row.decision === 'no' && row.paybackYears === 'over12') return { text: 'Not proceeding · payback over 12 years', emphasis: false, muted: true }
+  if (row.decision === 'no') return { text: `Not now · ${short(row.decidedOn)}`, emphasis: false, muted: true }
+  if (row.decision === 'scope') return { text: `To Scope definition · ${short(row.decidedOn)}`, emphasis: false, muted: false }
+  if (row.decision === 'go') return { text: row.price ? `Agreed · ${short(row.decidedOn)}` : `Going ahead · ${short(row.decidedOn)}`, emphasis: false, muted: false }
+  return { text: '—', emphasis: false, muted: true }
+}
+
+function columnsFor(w: Workstream): Column[] {
+  if (w.service === 'tender') return ['step', 'size', 'brief', 'check']
+  if (w.service === 'scope') return ['step', 'gap', 'survey']
   if (w.service === 'pricing') {
-    const showPrice = w.projects.some((row) => row.price)
-    const showAnalysis = w.projects.some((row) => row.analysis)
-    const showDecision = w.projects.some((row) => row.decision)
-    const decided = (row: ProjectRow) => (row.decision === 'no' ? `Not now · ${short(row.decidedOn)}` : `Agreed · ${short(row.decidedOn)}`)
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px]">
-          <thead className="border-b border-cq-border-light">
-            <tr>
-              <th className={th}>Project</th>
-              <th className={th}>Step</th>
-              {showPrice && <th className={th}>Price</th>}
-              {showAnalysis && <th className={th}>Analysis</th>}
-              {showDecision && <th className={th}>Decision</th>}
-              <th className={th} />
-            </tr>
-          </thead>
-          <tbody>
-            {w.projects.map((row) => {
-              const building = getBuilding(account, row.buildingId)
-              const waiting = row.decision === 'waiting'
-              return (
-                <tr key={row.buildingId} className="border-t border-cq-border-light">
-                  <td className={td}>
-                    <span className="font-normal">{building.name}</span>
-                    <span className="mt-0.5 block text-cq-text-secondary">{building.city}</span>
-                  </td>
-                  <td className={td}>{w.owner === 'done' ? 'Done' : steps[row.step]}</td>
-                  {showPrice && <td className={td}>{row.price ? moneyOne(row.price) : '—'}</td>}
-                  {showAnalysis && (
-                    <td className={cn(td, row.analysisStrong ? 'font-semibold' : 'text-cq-text-secondary')}>{row.analysis ?? '—'}</td>
-                  )}
-                  {showDecision && (
-                    <td className={td}>
-                      {waiting ? (
-                        <DecisionButtons goLabel="Agree price" onGo={() => decide(w.id, row.buildingId, 'go')} onNotNow={() => decide(w.id, row.buildingId, 'no')} />
-                      ) : row.decision ? (
-                        decided(row)
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                  )}
-                  <td className={td}>
-                    <Link href={hrefs.project(w.id, row.buildingId)} className="btn-secondary-sm">
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    )
+    const columns: Column[] = ['step']
+    if (w.projects.some((row) => row.price)) columns.push('price')
+    if (w.projects.some((row) => row.analysis)) columns.push('analysis')
+    if (w.projects.some((row) => row.decision)) columns.push('decision')
+    return columns
   }
-  if (w.service === 'tender') {
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px]">
-          <thead className="border-b border-cq-border-light">
-            <tr>
-              <th className={th}>Project</th>
-              <th className={th}>Step</th>
-              <th className={th}>Size</th>
-              <th className={th}>Brief</th>
-              <th className={th}>Site check</th>
-              <th className={th} />
-            </tr>
-          </thead>
-          <tbody>
-            {w.projects.map((row) => {
-              const building = getBuilding(account, row.buildingId)
-              const check = row.visit?.state === 'done' && row.visit.on ? `Done ${short(row.visit.on)}` : row.visit?.state === 'skip' ? 'Not needed' : '—'
-              return (
-                <tr key={row.buildingId} className="border-t border-cq-border-light">
-                  <td className={td}>
-                    <span className="font-normal">{building.name}</span>
-                    <span className="mt-0.5 block text-cq-text-secondary">{building.city}</span>
-                  </td>
-                  <td className={td}>{steps[row.step]}</td>
-                  <td className={td}>{row.sizeKwp ? `${row.sizeKwp} kWp` : '—'}</td>
-                  <td className={td}>
-                    {row.briefLabel ? <span className={row.briefStrong ? 'font-semibold' : ''}>{row.briefLabel}</span> : '—'}
-                  </td>
-                  <td className={cn(td, check === 'Not needed' || check === '—' ? 'text-cq-muted' : 'font-semibold')}>{check}</td>
-                  <td className={td}>
-                    <Link href={hrefs.project(w.id, row.buildingId)} className="btn-secondary-sm">
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    )
+  return ['step', 'estimate', 'decision']
+}
+
+export function ProjectsTable({ w, rows, columns }: { w: Workstream; rows?: ProjectRow[]; columns?: Column[] }) {
+  const { account } = useConcept()
+  const steps = service(w.service).steps
+  const list = rows ?? w.projects
+  const cols = columns ?? columnsFor(w)
+  const template = `minmax(0,1.5fr) ${cols.map(() => 'minmax(0,1fr)').join(' ')} 16px`
+
+  const cell = (row: ProjectRow, column: Column): ReactNode => {
+    if (column === 'step') return w.owner === 'done' ? 'Done' : steps[row.step]
+    if (column === 'estimate') return row.estimate ? money(row.estimate) : '—'
+    if (column === 'size') return row.sizeKwp ? `${row.sizeKwp} kWp` : '—'
+    if (column === 'brief') return row.briefLabel ?? '—'
+    if (column === 'check') {
+      if (row.visit?.state === 'done' && row.visit.on) return `Done ${short(row.visit.on)}`
+      if (row.visit?.state === 'skip') return 'Not needed'
+      return '—'
+    }
+    if (column === 'survey') return row.visit ? visitStateLabel(row.visit) : '—'
+    if (column === 'gap') {
+      if (row.decision === 'go') return scopeDecisionLabel(row)
+      if (row.decision === 'waiting') return <span className="h8 text-text-primary">Waiting for your decision</span>
+      return row.gap ?? '—'
+    }
+    if (column === 'price') return row.price ? moneyOne(row.price) : '—'
+    if (column === 'analysis') return row.analysis ?? '—'
+    const decision = decisionText(row)
+    return <span className={cn(decision.emphasis && 'h8 text-text-primary', decision.muted && 'text-text-tertiary')}>{decision.text}</span>
   }
-  if (w.service === 'scope') {
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px]">
-          <thead className="border-b border-cq-border-light">
-            <tr>
-              <th className={th}>Project</th>
-              <th className={th}>Step</th>
-              <th className={th}>Open gap</th>
-              <th className={th}>Survey</th>
-              <th className={th} />
-            </tr>
-          </thead>
-          <tbody>
-            {w.projects.map((row) => {
-              const building = getBuilding(account, row.buildingId)
-              const waiting = row.decision === 'waiting'
-              return (
-                <tr key={row.buildingId} className={cn('border-t border-cq-border-light', waiting && 'outline outline-1 -outline-offset-1 outline-cq-accent')}>
-                  <td className={td}>
-                    <span className="font-normal">{building.name}</span>
-                    <span className="mt-0.5 block text-cq-text-secondary">{building.city}</span>
-                  </td>
-                  <td className={td}>{steps[row.step]}</td>
-                  <td className={td}>
-                    {waiting ? (
-                      <button type="button" className="btn-primary-sm" onClick={() => agreeScope(w.id, row.buildingId)}>
-                        Agree scope
-                      </button>
-                    ) : row.decision === 'go' ? (
-                      scopeDecisionLabel(row)
-                    ) : (
-                      row.gap ?? '—'
-                    )}
-                  </td>
-                  <td className={td}>{row.visit ? visitStateLabel(row.visit) : '—'}</td>
-                  <td className={td}>
-                    <Link href={hrefs.project(w.id, row.buildingId)} className="btn-secondary-sm">
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
+
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px]">
-        <thead className="border-b border-cq-border-light">
-          <tr>
-            <th className={th}>Project</th>
-            <th className={th}>Step</th>
-            <th className={th}>Estimate</th>
-            <th className={th}>Payback</th>
-            <th className={th}>Your decision</th>
-            <th className={th} />
-          </tr>
-        </thead>
-        <tbody>
-          {w.projects.map((row) => {
-            const building = getBuilding(account, row.buildingId)
-            const waiting = row.decision === 'waiting'
-            return (
-              <tr key={row.buildingId} className={cn('border-t border-cq-border-light', waiting && 'outline outline-1 -outline-offset-1 outline-cq-accent')}>
-                <td className={td}>
-                  <span className="font-normal">{building.name}</span>
-                  <span className="mt-0.5 block text-cq-text-secondary">{building.city}</span>
-                </td>
-                <td className={td}>{steps[row.step]}</td>
-                <td className={td}>{row.estimate ? money(row.estimate) : '—'}</td>
-                <td className={td}>{paybackLabel(row.paybackYears)}</td>
-                <td className={td}>
-                  {waiting ? (
-                    <DecisionButtons onGo={() => decide(w.id, row.buildingId, 'go')} onNotNow={() => decide(w.id, row.buildingId, 'no')} />
-                  ) : (
-                    decisionLabel(row)
-                  )}
-                </td>
-                <td className={td}>
-                  <Link href={hrefs.project(w.id, row.buildingId)} className="btn-secondary-sm">
-                    View
-                  </Link>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      <div className="min-w-[720px]">
+        <div className="grid items-center gap-x-4 border-b border-border-light py-2 pl-8 pr-6 s3 text-text-tertiary" style={{ gridTemplateColumns: template }}>
+          <span>Project</span>
+          {cols.map((column) => (
+            <span key={column}>{LABEL[column]}</span>
+          ))}
+          <span />
+        </div>
+        {list.map((row) => {
+          const building = getBuilding(account, row.buildingId)
+          const muted = Boolean(row.dropped)
+          return (
+            <Link
+              key={row.buildingId}
+              href={hrefs.project(w.id, row.buildingId)}
+              className={cn('grid items-center gap-x-4 border-t border-border-light py-3 pl-8 pr-6 hover:bg-black-1', muted && 'text-text-tertiary')}
+              style={{ gridTemplateColumns: template }}
+            >
+              <span className="min-w-0">
+                <span className={cn('block font-normal', muted ? 'text-text-tertiary' : 'text-text-primary')}>{building.name}</span>
+                <span className="mt-0.5 block p7 text-text-tertiary">{building.city}</span>
+              </span>
+              {cols.map((column) => (
+                <span key={column} className={cn('min-w-0 p6', muted ? 'text-text-tertiary' : 'text-text-primary', column === 'brief' && row.briefStrong && !muted && 'font-semibold')}>
+                  {cell(row, column)}
+                </span>
+              ))}
+              <ChevronRight className="h-4 w-4 justify-self-end text-text-tertiary" aria-hidden />
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
 }

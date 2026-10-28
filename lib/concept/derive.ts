@@ -87,12 +87,12 @@ export function proposedStart(w: Workstream): boolean {
   return Boolean(w.proposed) && w.phases.length > 0 && w.phases.every((phase) => phase.state === 'planned')
 }
 
-/** Header line under the workstream name. Only parts the platform holds. */
-export function workstreamMeta(w: Workstream): string {
-  const n = activeProjects(w).length
+/** Header line under the workstream name. Batch name first, then only facts the platform holds. */
+export function workstreamMeta(w: Workstream, batchName?: string): string {
+  const n = w.projects.length
   const buildings = noun(n, 'building', 'buildings')
+  const parts = batchName ? [batchName, buildings] : [buildings]
   if (w.service === 'tender') {
-    const parts = [buildings]
     const size = totalCapacity(w)
     if (size) parts.push(size)
     const invited = w.tender?.invited ?? 0
@@ -103,25 +103,37 @@ export function workstreamMeta(w: Workstream): string {
     return parts.join(' · ')
   }
   if (w.service === 'delivery') {
-    const complete = w.owner === 'done' ? n : activeProjects(w).filter((project) => project.step >= 5).length
-    const parts = [buildings, `${complete} of ${n} complete`]
+    const complete = w.owner === 'done' ? n : w.projects.filter((project) => !project.dropped && project.step >= 5).length
+    parts.push(`${complete} of ${n} complete`)
     if (w.deliveryProfile?.expectedCompletion) parts.push(`est ${short(w.deliveryProfile.expectedCompletion)}`)
     if (w.deliveryProfile?.contractValue) parts.push(`contract ${moneyOne(w.deliveryProfile.contractValue)}`)
     return parts.join(' · ')
   }
   if (w.service === 'indicative') {
     const total = presentedTotal(w)
-    return total.count ? `${buildings} · ${total.text}` : buildings
+    if (total.count) parts.push(`${total.text} across ${noun(total.count, 'estimate', 'estimates')}`)
+    const waiting = waitingForDecision(w)
+    if (waiting) parts.push(`${waiting} waiting for your decision`)
+    return parts.join(' · ')
   }
   if (w.service === 'scope') {
     const fact = surveyLine(w).split(' — ')[0]
-    return fact ? `${buildings} · ${fact}` : buildings
+    if (fact) parts.push(fact)
+    return parts.join(' · ')
   }
   if (w.service === 'pricing') {
     const total = pricingTotal(w)
-    return total ? `${buildings} · ${moneyOne(total)}` : buildings
+    if (total) parts.push(moneyOne(total))
+    return parts.join(' · ')
   }
-  return buildings
+  return parts.join(' · ')
+}
+
+/** The offers summary moved in the last 7 days. */
+export function offersAreNew(w: Workstream): boolean {
+  if (w.next?.kind !== 'offers' || !w.next.chased) return false
+  const age = days(w.next.chased)
+  return age >= 0 && age <= 7
 }
 
 /** Read the service column from the phase snapshot, falling back to the live record only for the same service. */
@@ -855,12 +867,12 @@ export function indicativeSteps(a: Account, w: Workstream): StepColumn[] {
   const def = service(w.service)
   const happens = (def.happens ?? []).map((line, i) => (i === 0 && w.solution !== 'led' ? COLLECT[w.solution] ?? line : line))
   return def.steps.map((label, i) => {
-    const here = w.projects.filter((p) => p.step === i)
-    const past = w.projects.filter((p) => p.step > i)
+    const live = w.projects.filter((p) => !p.dropped)
+    const here = live.filter((p) => p.step === i)
+    const past = live.filter((p) => p.step > i)
     const finished = w.owner === 'done'
     const state = finished ? 'passed' : here.length ? 'now' : past.length ? 'passed' : 'upcoming'
-    const count = here.length || past.length
-    return { label, state, count, happens: happens[i] ?? '', panel: stepPanel(a, w, i), doneOn: indicativeDoneOn(w, i) }
+    return { label, state, count: here.length, happens: happens[i] ?? '', panel: stepPanel(a, w, i), doneOn: indicativeDoneOn(w, i) }
   })
 }
 

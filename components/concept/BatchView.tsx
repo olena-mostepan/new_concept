@@ -22,7 +22,7 @@ function PageWorkstream({ w, done, rule }: { w: Workstream; done?: boolean; rule
   const yours = !done && w.owner === 'you'
   return (
     <li className={rule ? 'border-t border-border-light' : undefined}>
-      <Link href={hrefs.workstream(w.id)} className="grid items-center gap-x-6 py-3.5 pl-11 pr-6 hover:bg-black-1" style={rowStyle}>
+      <Link href={hrefs.workstream(w.id, 'batch')} className="grid items-center gap-x-6 py-3.5 pl-11 pr-6 hover:bg-black-1" style={rowStyle}>
         <div className="min-w-0">
           <p className={done ? 'p6 text-text-tertiary' : 'h8 text-text-title'}>
             {done ? w.name : <ChangedMark w={w}>{w.name}</ChangedMark>}

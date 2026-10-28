@@ -53,7 +53,7 @@ function StagePanel({ stage, live, done, you }: { stage: RouteStage; live: Works
       {live.length > 0 && (
         <div className="mt-2 border-t border-border-light pt-2">
           {live.map((w) => (
-            <Link key={w.id} href={hrefs.workstream(w.id)} className="flex justify-between gap-3 py-1.5 p7">
+            <Link key={w.id} href={hrefs.workstream(w.id, 'batch')} className="flex justify-between gap-3 py-1.5 p7">
               <span className="min-w-0 text-text-primary">{w.name}</span>
               <span className="shrink-0 tabular-nums text-text-primary">{noun(activeProjects(w).length, 'project', 'projects')}</span>
             </Link>
@@ -63,7 +63,7 @@ function StagePanel({ stage, live, done, you }: { stage: RouteStage; live: Works
       {done.length > 0 && (
         <div className="mt-2 border-t border-border-light pt-2">
           {done.map((w) => (
-            <Link key={w.id} href={hrefs.workstream(w.id)} className="flex items-center justify-between gap-3 py-1.5 p7">
+            <Link key={w.id} href={hrefs.workstream(w.id, 'batch')} className="flex items-center justify-between gap-3 py-1.5 p7">
               <span className="min-w-0 text-text-tertiary">{w.name}</span>
               <span className="flex shrink-0 items-center gap-1.5 text-text-tertiary">
                 <Check className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />

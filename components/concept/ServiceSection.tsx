@@ -207,7 +207,7 @@ function ServiceRow({
   const muted = past ? 'text-text-tertiary' : 'text-text-primary'
   const yours = !past && source.owner === 'you'
   return (
-    <Link href={hrefs.workstream(source.id)} className="grid items-center gap-x-6 border-t border-cq-border-light py-3.5 pl-11 pr-6 hover:bg-black-1" style={rowGrid}>
+    <Link href={hrefs.workstream(source.id, 'service')} className="grid items-center gap-x-6 border-t border-cq-border-light py-3.5 pl-11 pr-6 hover:bg-black-1" style={rowGrid}>
       <p className={`min-w-0 p6 ${muted}`}>
         {past ? source.name : <ChangedMark w={source}>{source.name}</ChangedMark>}
       </p>

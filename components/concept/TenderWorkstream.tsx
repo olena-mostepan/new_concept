@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import * as Tabs from '@radix-ui/react-tabs'
 import { service as serviceDef, type OfferSplit, type Workstream } from '@/lib/concept/model'
-import { short, tenderProjectsAside, tenderSteps } from '@/lib/concept/derive'
+import { offersAreNew, short, tenderProjectsAside, tenderSteps } from '@/lib/concept/derive'
 import { WALTER_SCOTT_MATCHING } from '@/lib/customer/supplier-matching/fixture'
 import { SupplierMatchingReview } from '@/components/customer/supplier-matching/SupplierMatchingReview'
 import { cn } from '@/lib/utils'
@@ -11,11 +11,11 @@ import { Card, Page } from './ui'
 import { DetailTags } from './DetailsGrid'
 import { SimpleSteps } from './SimpleSteps'
 import { ProjectsTable } from './ProjectsTable'
-import { stepsAside, WorkstreamFacts, WorkstreamFrame } from './WorkstreamChrome'
+import { stepsAside, TabDot, WorkstreamFacts, WorkstreamFrame } from './WorkstreamChrome'
 import { hrefs } from './hrefs'
 
 const tabTriggerClass = cn(
-  'shrink-0 whitespace-nowrap border-b-2 border-transparent px-0.5 py-3 text-sm font-normal outline-none transition-colors',
+  'inline-flex shrink-0 items-center whitespace-nowrap border-b-2 border-transparent px-0.5 py-3 text-sm font-normal outline-none transition-colors',
   'text-cq-text-secondary hover:text-cq-text',
   'data-[state=active]:border-[var(--cq-green)] data-[state=active]:text-text-primary',
 )
@@ -95,9 +95,10 @@ export function TenderWorkstream({ w, live = w }: { w: Workstream; live?: Workst
           <Tabs.Root value={tab} onValueChange={setTab}>
             <Tabs.List className="flex gap-6 border-b border-cq-border">
               {tabs.map((item) => (
-                <Tabs.Trigger key={item.id} value={item.id} className={tabTriggerClass}>
-                  {item.label}
-                </Tabs.Trigger>
+              <Tabs.Trigger key={item.id} value={item.id} className={tabTriggerClass}>
+                {item.label}
+                {item.id === 'offers' && offersAreNew(w) && <TabDot />}
+              </Tabs.Trigger>
               ))}
             </Tabs.List>
           </Tabs.Root>

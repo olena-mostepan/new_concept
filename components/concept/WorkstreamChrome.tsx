@@ -180,19 +180,19 @@ export function ServiceCards({ w }: { w: Workstream }) {
         )
         const className = cn(
           'w-full rounded-xl border py-3.5 pl-5 pr-4 text-left',
-          current ? 'border-brand-2 bg-bg-accent' : planned ? 'border-black-2 bg-black-1' : 'border-border-dark bg-white',
+          planned ? 'border-black-2 bg-black-1' : isSelected ? 'border-brand-2 bg-bg-accent' : 'border-border-dark bg-white',
+          current && 'border-l-4 border-l-brand-6',
           clickable && 'cursor-pointer',
         )
-        const selectedStyle = isSelected ? { borderLeftWidth: 4, borderLeftColor: 'var(--brand-6)' } : undefined
         if (!clickable) {
           return (
-            <div key={phase.service} className={className} style={selectedStyle} aria-current={isSelected ? 'true' : undefined}>
+            <div key={phase.service} className={className} aria-current={isSelected ? 'true' : undefined}>
               {body}
             </div>
           )
         }
         return (
-          <button key={phase.service} type="button" className={className} style={selectedStyle} aria-current={isSelected ? 'true' : undefined} onClick={() => open(phase.service)}>
+          <button key={phase.service} type="button" className={className} aria-current={isSelected ? 'true' : undefined} onClick={() => open(phase.service)}>
             {body}
           </button>
         )

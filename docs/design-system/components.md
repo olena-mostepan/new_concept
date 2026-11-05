@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 28, 05 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 29, 05 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -871,8 +871,20 @@ The sections inside one page, such as Overview · Estimates · Brief · Tender r
 - No tab for a planned or not-required service. Only Supplier matching and Tender results carry a count ("Tender results (8)").
 - Never two tab rows on one page.
 - **The package Overview** holds the Steps of the current service, the Assets table, and Recent activity with Documents side by side, once for the whole package. Service tabs don't repeat them.
-- Labels are `p6` text-secondary. The active label is `h8` text-primary, with a 2px `brand-6` underline.
-- A row of tabs sits on a `border-light` line, with 24px gaps.
+- Labels are `p6` text-secondary; hover text-primary. The active label is `h8` text-primary, with a 2px `brand-6` underline.
+- **Spacing:**
+
+| Part | Value |
+|---|---|
+| Header to the tab row | 24 (PageHeader's bottom gap) |
+| Label (20 high) to the underline | 12: each tab is 32 high, text at the top |
+| Between tabs | 32 |
+| Underline | 2px `brand-6`, exactly the width of the label (and dot), no side padding; it sits over the row's line |
+| Row line | 1px `border-light`, full width |
+| Dot | 6px, 6 after the label, centred on the 20px line |
+| Tab row to its content | 16 |
+
+- A long row (six tabs) never wraps on desktop; if it ever needs more room, shorten labels rather than the gaps.
 - A count goes in brackets after the label: "Offers (8)".
 - **The dot** (6px `brand-6`, after the label) keeps both meanings of orange: where you are, or what's new. It's only a dot: no number, no text.
   - On package and asset pages it marks **the current service** (`current`), the same service the StatusCard or PackageStrip names. An asset in two packages can have two. Accessible label "Current service".

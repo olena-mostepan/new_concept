@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 30, 05 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 31, 05 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -22,6 +22,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [DetailsGrid](#detailsgrid)
 - [DocumentList](#documentlist)
 - [EmptyState](#emptystate)
+- [FactSelect](#factselect)
 - [FilterBar](#filterbar)
 - [FilterChips](#filterchips)
 - [FilterSelect](#filterselect)
@@ -35,6 +36,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [Modal](#modal)
 - [NeedsDecision](#needsdecision)
 - [NeedsPanel](#needspanel)
+- [PackageCard](#packagecard)
 - [PackageStrip](#packagestrip)
 - [PageHeader](#pageheader)
 - [Pager](#pager)
@@ -214,6 +216,7 @@ A small pill that marks where something is (display) or chooses what a list show
 - **`lead: 'next'`**: a 1px dashed `black-4` border, label `p7` text-tertiary. Its fill is the surface it sits on (`--cq-surface`: white by default, `bg-container-grey` inside the PackageStrip panel or a `cq-on-grey` wrapper), so a track line stops at its edge.
 - One look on white and on grey: nothing changes with the background.
 - **`size: 'big'`** (32 high, `h8`, `p6` for next, 16px tick, 12 side padding): an asset's services in the PackageStrip, so they outrank the 24px steps and phases under them. Same height as the filter chip and the big Tag.
+- **Selectable display chip** (`onSelect`): a display chip that switches a panel (PackageCard). Only chips with data are selectable; the rest stay display-only. It's a `role="tab"` button inside a `tablist`. Hover: `border-dark`. Selected: a 2px `black-7` outline, 1 out, `aria-selected`. Focus: the 2px outline, 2 out. The look is otherwise the display chip's: never the filter chip's black fill.
 - `count` adds " · 3" after the label ("Installation · 1").
 - Used for an asset's services (PackageStrip), steps (Steps) and delivery phases (PhaseStepper).
 
@@ -229,7 +232,7 @@ A small pill that marks where something is (display) or chooses what a list show
 - Not a Tag: Tag stays for categories and status inside rows; ResponsibilityPill stays "Your action".
 
 ### The consumer provides
-`children`, `lead`, `count`, and for a filter `selected` and `onClick`.
+`children`, `lead`, `size`, `count`; for a selectable display chip `onSelect` and `selected`; for a filter `selected` and `onClick`.
 
 ---
 
@@ -299,6 +302,26 @@ What a card or list says when it has nothing to show.
 
 ### The consumer provides
 `children` (the line), `action`, `inCard`.
+
+---
+
+## FactSelect
+
+A fact whose value switches what the page shows. Today only the asset's Package: an asset's data belongs to a project (this asset in one package), so the page picks a package first.
+
+### Rules
+- It lives in PageHeader's facts row, as the first fact. Pass it as `{label: 'Package', select: {options, value, onChange}}`; PageHeader renders the label and the control.
+- **One option:** a plain fact. No chevron, no count.
+- **Several live options:** the label reads "Package · <i> of <n>". The value is a button: the name in `p6` plus a 16px `chevron-down`, 6 apart. Hover and open: `bg-container-grey` behind it, `radius-sm`, padding 2/6 with matching negative margin so the text doesn't move. Focus: the 2px `black-7` outline.
+- **One live option plus earlier ones:** no count, but the chevron shows, because there's history.
+- **Menu:** 8 under the value, left-aligned, 330 wide, white, `border-dark`, `radius-md`, `elevation-floating`, padding 6. Each row: the name in `p6` (selected: `h8` on `bg-container-grey`) over a `p7` text-tertiary line ("Flagship solar · Tender", or "<batch> · Complete"). Order: the selected one first, then most recent activity.
+- **Earlier:** closed packages (an earlier tender round) under an "Earlier" label (`p7` text-tertiary) and a `border-light` line, in text-secondary. Their line says why they closed ("Closed 3 Mar · 6 offers · not chosen"). Picking one opens it read-only.
+- **Keyboard:** listbox behaviour. Arrow keys move, Enter picks, Esc closes and returns focus to the value; a click outside closes it.
+- Screen-reader name: "Package: <name>. <i> of <n>. Change package".
+- Picking a package switches the facts that follow it (Batch, Solution), the PackageCard and its panel. History and Documents stay for the whole asset.
+
+### The consumer provides
+`options: [{id, name, line, earlier}]`, `value`, `onChange(id)`, `label`.
 
 ---
 
@@ -539,20 +562,37 @@ What we still need, under a route service or a package step.
 
 ---
 
-## PackageStrip
+## PackageCard
 
-On an asset page, one card per project: the package it belongs to, where this asset is, the way to the package, and this asset's own progress.
+On the asset page, under the header: the selected package at this asset. Where this asset is, the way to the package, and this asset's own figures. One card, for the package picked in the header's Package fact (FactSelect).
 
 ### Rules
-- **Left:** "Package" as a card label (`s3`; write it in sentence case, the style capitalises it), 2 above the package name in `h7`, then the services as big display Chips (`size: 'big'`, 32px) 12 below, 8 apart: done and now only. No chip for planned or not-required services.
-- **Right, vertically centred on the left block:** ServiceIcon at 72 (inline, no break-out), 12 gap, "This asset is in" in `p7` text-tertiary over the service in `h4`, then the large `strong` Button "Open package" with the chevron on the right. It's the only link to the package on the page; its screen-reader name is "Open <package> package".
-- No line about what's on the package page: the status replaces it.
-- **At this asset** (optional): a `bg-container-grey` panel 16 under the head, `radius-md`, with a title in `h8` ("Delivery at this asset") and an aside in `p7` text-tertiary ("Voltreny · contract €26k"). Only this asset's own data for the current service: delivery phases, the Planning site check, this asset's figure in Estimates or Pricing. Never package facts (offer counts, the brief). Tender has no panel: it's priced for the whole package.
-- **Two projects on the asset:** two strips.
+- White, 1px `border-dark`, `radius-lg`, padding 16/20/20. 24 under the header.
+- **Head row:** the services as big display Chips (32px, 8 apart; done and now only) on the left. On the right, vertically centred: ServiceIcon at 72 (inline), 12 gap, "This asset is in" in `p7` text-tertiary over the service in `h4`, then the large `strong` Button "Open package" with the chevron on the right. Its screen-reader name is "Open <package> package".
+- No "Package" label and no package name in the card: the header names the package.
+- **Chips switch the panel:** a chip is selectable only when this asset has data for that service in this package (`selectable`); the others stay display-only, with no hover. Selectable chips sit in a `tablist` labelled "Services for this asset" (see Chip). The panel opens on the current service.
+- **Panel:** a `bg-container-grey` box 16 under the chips, `radius-md`, titled after the selected chip in `h8`, with an aside in `p7` text-tertiary ("Voltreny · contract €26k", or the date of the facts):
+
+| Chip | Panel title | Content |
+|---|---|---|
+| Estimates | Estimate at this asset | Cost · Payback · Your decision |
+| Planning | Planning at this asset | Open gap · Survey · Scope |
+| Tender | Tender at this asset | Supplier (once chosen) · Price for this asset · Site check |
+| Pricing | Price at this asset | Price · Analysis · Your decision |
+| Delivery | Delivery at this asset | PhaseStepper, Start to Handover |
+
+- Facts in the panel use DetailsGrid. Only this asset's figures: never offer counts, the brief, supplier matching or other assets. With no facts for the service, no panel.
 - **Completed:** "This asset is" over "Complete", the Delivery icon, every chip done, no panel. The button stays: the package still holds the results.
+- Replaces PackageStrip (retired 5 Nov 2026).
 
 ### The consumer provides
-`name`, `service`, `completed`, `services: [{label, lead}]`, `href`, `title`, `aside`, and the panel content as `children`.
+`name` (for the button's screen-reader name), `service`, `completed`, `services: [{id, label, lead, selectable}]`, `selected`, `onSelect(id)`, `href`, `title`, `aside`, and the panel content as `children`.
+
+---
+
+## PackageStrip (retired)
+
+Retired on 5 Nov 2026. The asset page picks one package in the header (FactSelect on the Package fact) and shows it in a **PackageCard**: chips, "This asset is in <service>", "Open package ›" and this asset's panel. The bundle keeps `PackageStrip` as an alias to PackageCard so old code still renders; don't use it in new work.
 
 ---
 
@@ -574,7 +614,7 @@ One header for the batch, package and asset pages: breadcrumb, type label, title
 - **Facts per page:**
   - Batch: Goal · Solution · Assets · Packages · Target (only when set, "Dec 2027", never shown as late).
   - Package: Batch · Solution · Assets · Supplier (once chosen).
-  - Asset: Batch · Solution · Buildings · City.
+  - Asset: Package · Batch · Solution · City. Package is a FactSelect when the asset is in more than one package (or has earlier ones); Batch and Solution follow the selected package. No Buildings (an asset is always 1).
 - **Aside:** on the right, top-aligned with the type label, 32 from the left block, which takes the remaining width.
   - Package: StatusCard.
   - Asset: the site photo, 260×164, `radius-lg`, cropped to fill, only when we hold one. No placeholder.
@@ -584,7 +624,7 @@ One header for the batch, package and asset pages: breadcrumb, type label, title
 - Detail pages (batch, package, asset) sit under a DetailBar, not the section nav.
 
 ### The consumer provides
-`crumbs`, `crumbAside` (the Pager), `kind`, `title`, `facts: [{label, value}]`, `aside`.
+`crumbs`, `crumbAside` (the Pager), `kind`, `title`, `facts: [{label, value} | {label, select: {options, value, onChange}}]`, `aside`.
 
 ---
 
@@ -747,8 +787,8 @@ The 3D illustration for a service. It shows where a package or asset is, nothing
 - Five icons, ids match the service ids: `indicative` (Estimates), `scope` (Planning), `tender`, `pricing`, `delivery`. 3D glass renders, transparent PNGs, about 230 square.
 - An `<img>` with `alt=""` and `aria-hidden`: the service name always sits next to it in text.
 - `object-fit: contain`, `filter: drop-shadow(0 10px 14px rgba(30,40,50,.12))`.
-- **Two sizes only:** 116 (StatusCard) and 72 (PackageStrip).
-- **Only in StatusCard and PackageStrip.** Never in tabs, chips, tables, filters, nav or service-tab cards.
+- **Two sizes only:** 116 (StatusCard) and 72 (PackageCard).
+- **Only in StatusCard and PackageCard.** Never in tabs, chips, tables, filters, nav or service-tab cards.
 - They're illustrations, not icons: the 24-grid line-icon rules don't apply, and the Icon component doesn't draw them.
 - Outside the design system, set `CQuelDS.serviceIconBase` to a folder holding `<id>.png` (the prototype keeps them in `public/icons/services/`).
 
@@ -890,10 +930,10 @@ The sections inside one page, such as Overview · Estimates · Brief · Tender r
 - A long row (six tabs) never wraps on desktop; if it ever needs more room, shorten labels rather than the gaps.
 - A count goes in brackets after the label: "Offers (8)".
 - **The dot** (6px `brand-6`, after the label) keeps both meanings of orange: where you are, or what's new. It's only a dot: no number, no text.
-  - On package and asset pages it marks **the current service** (`current`), the same service the StatusCard or PackageStrip names. An asset in two packages can have two. Accessible label "Current service".
+  - On the package page it marks **the current service** (`current`), the same service the StatusCard names. Accessible label "Current service".
   - Elsewhere it marks a tab holding something the customer hasn't seen yet (`isNew`). Accessible label "New".
   - Never both on one tab.
-- **Asset page tabs:** Overview, then one tab per service this asset has been through, in service order, only when the asset has data for it. Overview holds the PackageStrips, History and Documents. A service tab starts with "This asset only" (`p7` text-tertiary), then one Card per package with this asset's 2–3 facts in a 3-column facts row. No offer counts, no brief, no buttons.
+- **The asset page has no tabs.** It picks a package in the header (FactSelect) and switches services with the selectable chips in its PackageCard.
 - Keyboard focus: a 2px black-7 outline.
 - Each tab shows one section. Never put actions in a tab label.
 

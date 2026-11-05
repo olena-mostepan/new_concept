@@ -48,7 +48,7 @@ export interface FilterChipsProps { options: FilterChip[]; value?: string; onCha
 export interface AssetFact { label: string; value: ReactNode }
 export interface AssetHeaderProps { title: string; /** "<postcode> <city> · <batch>" */ meta?: ReactNode; /** at most 6 shown */ facts?: AssetFact[]; /** site photo we hold; omit for none (no placeholder) */ photo?: { src: string; alt?: string } }
 /** One per project on the asset page: the package, its services as display chips, the strong Open package button, and this asset's own data for the current service as children. */
-/** service: where this asset is (icon + 'This asset is in <service>'). completed: 'This asset is complete', no panel. */
+/** Retired: use PackageCard. */
 export interface PackageStripProps { name: string; service?: ServiceId; completed?: boolean; services?: { label: string; lead: 'done' | 'now' }[]; href?: string; onOpen?: () => void; title?: string; aside?: string; children?: ReactNode }
 export interface PagerProps { index: number; total: number; prev?: { label: string; href?: string; onClick?: () => void }; next?: { label: string; href?: string; onClick?: () => void }; /** default "in this package" */ context?: string; /** default "asset" */ noun?: string }
 export interface NeedsDecisionRow { id?: string; href?: string; changed?: boolean; package: { main: string; detail?: string }; next: { main: string; detail?: string } }
@@ -59,7 +59,7 @@ export interface IconProps { name: IconName; size?: 16 | 20 | 24; /** icon role 
 export interface Crumb { label: string; href?: string }
 export interface BreadcrumbsProps { items: Crumb[] }
 /** Batch, package and asset pages. Gaps fixed: crumbs 24 · type label 4 · title 16 · facts; 24 below. Facts with no value are dropped. */
-export interface PageHeaderProps { crumbs?: Crumb[]; /** right of the breadcrumbs, e.g. a Pager */ crumbAside?: ReactNode; kind?: 'batch' | 'package' | 'asset'; title?: ReactNode; facts?: { label: string; value: ReactNode }[]; /** package: StatusCard; asset: the site photo; batch: none */ aside?: ReactNode }
+export interface PageHeaderProps { crumbs?: Crumb[]; /** right of the breadcrumbs, e.g. a Pager */ crumbAside?: ReactNode; kind?: 'batch' | 'package' | 'asset'; title?: ReactNode; facts?: ({ label: string; value: ReactNode } | { label: string; select: FactSelectProps })[]; /** package: StatusCard; asset: the site photo; batch: none */ aside?: ReactNode }
 export interface TypeLabelProps { kind: 'batch' | 'package' | 'asset' }
 export type ServiceId = 'indicative' | 'scope' | 'tender' | 'pricing' | 'delivery';
 /** 3D service illustration. Only in StatusCard (116) and PackageStrip (72). */
@@ -81,9 +81,13 @@ export interface ServicesBarProps { services: { id: string; label: string; count
 export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean }
 export interface TooltipProps { content: ReactNode; children: ReactNode; /** 'definition': sentences, up to 300 wide; only for TypeLabel */ variant?: 'label' | 'definition' }
 export interface YourActionOnlyProps { checked: boolean; onChange: (checked: boolean) => void; label?: string }
-/** Display chip (no onClick): 24px (size 'big': 32px, for PackageStrip services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
-export interface ChipProps { children: ReactNode; lead?: 'done' | 'now' | 'next'; /** Display chips only: 'big' is 32px, for PackageStrip services. */ size?: 'default' | 'big'; count?: number; selected?: boolean; onClick?: () => void }
+/** onSelect + selected: a selectable display chip (role tab) that switches a panel. Display chip (no onClick): 24px (size 'big': 32px, for PackageStrip services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
+export interface ChipProps { children: ReactNode; lead?: 'done' | 'now' | 'next'; /** Display chips only: 'big' is 32px, for PackageStrip services. */ size?: 'default' | 'big'; count?: number; selected?: boolean; onClick?: () => void; onSelect?: () => void }
 
 /** Momentum: cumulative lines over months. One accent series (brand-6 + soft fill); others ink, dashed. Hover shows a guide, ringed dots and a tooltip. */
 export interface TrendChartProps { labels: string[]; longLabels?: string[]; series: { name: string; values: number[]; accent?: boolean }[]; height?: number; active?: number; label?: string }
+/** The asset's Package fact: plain with one option, a menu with several (live first, 'Earlier' group for closed ones). */
+export interface FactSelectProps { options: { id: string; name: string; line?: string; earlier?: boolean }[]; value?: string; onChange?: (id: string) => void; label?: string }
+/** Asset page: the selected package. Chips on the left (selectable ones switch the panel), 'This asset is in <service>' + Open package on the right, this asset's panel below. Replaces PackageStrip. */
+export interface PackageCardProps { name?: string; service?: ServiceId; completed?: boolean; services?: { id: ServiceId; label: string; lead: 'done' | 'now'; selectable?: boolean }[]; selected?: ServiceId; onSelect?: (id: ServiceId) => void; href?: string; onOpen?: () => void; title?: string; aside?: string; children?: ReactNode }
 ```

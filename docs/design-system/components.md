@@ -1,5 +1,6 @@
-<!-- Exported from the CQuel design system artifact (version 25, 04 Nov 2026).
-Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand. -->
+<!-- Exported from the CQuel design system artifact (version 28, 05 Nov 2026).
+Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
+In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
 # CQuel design system: components
 
@@ -17,6 +18,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [CheckCard](#checkcard)
 - [Checkbox](#checkbox)
 - [Chip](#chip)
+- [DetailBar](#detailbar)
 - [DetailsGrid](#detailsgrid)
 - [DocumentList](#documentlist)
 - [EmptyState](#emptystate)
@@ -44,7 +46,9 @@ One section per component: its rules and what the consumer provides. The prototy
 - [SearchField](#searchfield)
 - [Select](#select)
 - [ServiceCards](#servicecards)
+- [ServiceIcon](#serviceicon)
 - [ServicesBar](#servicesbar)
+- [StatusCard](#statuscard)
 - [Steps](#steps)
 - [SummaryCard](#summarycard)
 - [Table](#table)
@@ -54,6 +58,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [Timeline](#timeline)
 - [Tooltip](#tooltip)
 - [TrendChart](#trendchart)
+- [TypeLabel](#typelabel)
 - [YourActionOnly](#youractiononly)
 
 ## ActivityList
@@ -64,28 +69,16 @@ One section per component: its rules and what the consumer provides. The prototy
 - In a flush Card titled "Recent activity", with "See all" as a link on the right. Five items at most.
 - Each item: what happened in `h8` text-title, the detail in `p7` text-secondary, and on the right the date in `p7` text-tertiary, with the batch under it when the list spans batches.
 - Short facts, no full stops, " · " between parts. Dates as "15 Oct".
-- Empty: "Nothing on file yet".
+- Empty: "Nothing here yet".
 
 ### The consumer provides
 `items`: `[{title, text, date, aside}]`, `empty`.
 
 ---
 
-## AssetHeader
+## AssetHeader (retired)
 
-The top of an asset page: the address, where it sits, what we know about it, and a site photo when we have one.
-
-### Rules
-- **No container.** It sits on the page background, under the breadcrumb row. Content on the left, photo on the right, 32 apart.
-- **Title:** the street address in `h4`. Under it, "<postcode> <city> · <batch>" in `p6` text-secondary (postcode only when we hold it).
-- **What we know:** 20 below, a three-column grid of facts (two on phones), at most 6. Each fact is a label (`p7` text-tertiary), a value (`p6`) and where it comes from (`p7` text-tertiary): "Car park · Can take 4 chargers · Site check · 20 Aug". With no facts, the row is left out: no "Nothing on file yet".
-- **Photo (optional):** 260×164, `radius-lg`, cropped to fill. Only a site photo we hold (a customer upload or a site visit). No caption, no date, no frame. With no photo there's no placeholder: the facts take the full width. Never street-view or map images.
-- **Nothing else in the header:** no "See info", no View batch, no pill, no DetailsGrid, no buttons. The package, its services and "Open package" sit in a PackageStrip under the header, one per project.
-
-### The consumer provides
-- `title`, `meta`
-- `facts`: `[{label, value, source}]`
-- `photo`: `{src, alt}`, or nothing
+Retired on 5 Nov 2026. The asset page uses **PageHeader** with `kind: 'asset'`: breadcrumb, type label, title, the facts row (Batch · Solution · Buildings · City) and the site photo as the aside. The bundle keeps `AssetHeader` as a thin alias to PageHeader so old code still renders; don't use it in new work.
 
 ---
 
@@ -110,8 +103,11 @@ Where a page sits, above its title.
 
 ### Rules
 - `p6` text-secondary, a 14px chevron between items in text-tertiary. The last item is the current page in text-primary and isn't a link.
-- Start from the nav item the page belongs to: "Assets › Kervelstraat 14", "Flagship sites › EV charging · Voltreny".
-- When an asset page is opened from a package, the package sits in the middle, and a Pager goes on the right of the same row.
+- **Follow the levels:**
+  - Batch: "Overview › <batch>".
+  - Package: always "Overview › <batch> › <package>", wherever it was opened from.
+  - Asset: from a package, "Overview › <batch> › <package> › <asset>", with the Pager on the right of the same row. From the Assets list, "Assets › <asset>".
+- On detail pages the breadcrumb sits under the DetailBar. Back returns to where you came from; the breadcrumb shows where the page sits.
 
 ### The consumer provides
 `items`: `[{label, href}]`.
@@ -163,7 +159,7 @@ The one container: white, border-dark, radius-lg, no shadow, with an optional he
 - Footer (optional): a `bg-container-grey` strip under a border-light line, 12/16, with a line on the left and at most one link or button on the right ("See all 5", "Open … package ›").
 
 ### States
-- Empty: an EmptyState line ("Nothing on file yet") in the body. A card that would only ever say that can be left out.
+- Empty: an EmptyState line ("Nothing here yet") in the body. A card that would only ever say that can be left out.
 - Error: a Banner in the body, not a red card.
 
 ### The consumer provides
@@ -237,6 +233,27 @@ A small pill that marks where something is (display) or chooses what a list show
 
 ---
 
+## DetailBar
+
+The slim top bar on detail pages: Back on the left, the account tools on the right. It replaces the app header and section nav there.
+
+### Where it goes
+- **Detail pages:** batch, package and asset pages, and anything else you open from a list (ops batch pages too).
+- **Section pages** (Overview, Assets, the five service lists, ops Portfolio and Workstreams) keep the app header with the customer logo and the section nav.
+
+### Rules
+- White, 64 high, `border-dark` line under it, page side padding (32). Sticky at the top.
+- **Back:** the `arrow-left` icon (16) and "Back" in `h8` text-primary, 6 apart. Hover underlines it; focus is the 2px black-7 outline.
+- **Where Back goes:** to the page the person came from (a list, a service page, the package). If they landed on the page directly (a link, a refresh), to the parent level in the breadcrumb.
+- **Right:** the same tools as the app header, in the same order: Questions, the Customer/Ops switch (prototype only), the avatar. On ops, no "Create batch" here.
+- **No** customer logo, account name, section nav or page actions in the bar. Page actions belong in the page.
+- Under it, the page starts with PageHeader: the breadcrumb says where the page sits and lets you jump up any level. Back means "return"; the breadcrumb means "where am I". Keep both.
+
+### The consumer provides
+`backHref` or `onBack`, `backLabel` ("Back" by default), and the tools as `children`.
+
+---
+
 ## DetailsGrid
 
 Label-over-value facts inside a card, such as contract details or an ops record.
@@ -244,7 +261,7 @@ Label-over-value facts inside a card, such as contract details or an ops record.
 ### Rules
 Label `p7` text-secondary, value `h8` text-primary, 4 apart. Four columns (two on phones), 12 between rows, 24 between columns. Links (batch, package) are underlined.
 
-Not in customer page headers: the asset page uses AssetHeader's "What we know", and package pages have no details grid.
+Not in customer page headers: batch, package and asset pages show their facts in PageHeader's facts row.
 
 ### The consumer provides
 `items`: `[{label, value, href?}]`.
@@ -261,7 +278,7 @@ Not in customer page headers: the asset page uses AssetHeader's "What we know", 
 - On the right, one tertiary IconButton: `download` for a file, `chevron-right` (View) for a set that opens a list. Its label names the file ("Download Contract · Voltreny").
 - One list, newest first. No grouping by who sent it; a file the customer sent says so in its name or detail ("Site plans · you sent 14 May").
 - Package files on an asset page carry "package" in the detail ("PDF · package · 2 Aug").
-- Empty: hide the card on an asset page; elsewhere "Nothing on file yet".
+- Empty: hide the card on an asset page; elsewhere "Nothing here yet".
 
 ### The consumer provides
 `items`: `[{name, type, meta, action: 'Download'|'View', href}]`, `empty`.
@@ -273,7 +290,7 @@ Not in customer page headers: the asset page uses AssetHeader's "What we know", 
 What a card or list says when it has nothing to show.
 
 ### Rules
-- One `p6` line in text-tertiary that says what's missing, in the product's words: "Nothing on file yet", "No assets match “Kerv”", "No packages here yet".
+- One `p6` line in text-tertiary that says what's missing, in the product's words: "Nothing here yet", "No assets match “Kerv”", "No packages here yet".
 - When a filter caused it, add the "Clear filters" link on the right.
 - No illustrations, no icons, no exclamation marks. A card with nothing in it may also be left out, when the page reads fine without it (NeedsDecision).
 
@@ -401,10 +418,12 @@ A square button with only an icon, for small repeated actions: Close, Download, 
 
 ## InfoDrawer
 
+**Unused (5 Nov 2026).** No page opens it now: page headers carry their facts in PageHeader's facts row, and nothing says "See info". It stays in the design system for a future secondary lookup; check with Olena before using it.
+
 A right-side panel with an item's details, for facts that don't belong on the page itself.
 
 ### Where it goes
-- Customer package and asset pages don't use it. Their headers show what matters on the page: the asset page's AssetHeader holds "What we know", and the package page has no "See info".
+- Customer package and asset pages don't use it. Their headers show what matters on the page: batch, package and asset pages use PageHeader's facts row, and nothing says "See info".
 - Use it for secondary lookups: an ops record's details, or a row's details on a list where opening a page would lose the user's place.
 - Open it from a secondary button or a row, never from the page title.
 
@@ -519,32 +538,50 @@ What we still need, under a route service or a package step.
 
 ## PackageStrip
 
-On an asset page, one card per project: the package it belongs to, how far its services have got, the way to the package, and this asset's own progress.
+On an asset page, one card per project: the package it belongs to, where this asset is, the way to the package, and this asset's own progress.
 
 ### Rules
-- **Head:** "Package" as a card label (`s3`: capitals, SemiBold, +4% tracking, text-tertiary; write it in sentence case, the style capitalises it), 2 above the package name in `h7`, and one `p7` text-secondary line on what's on the package page and how many assets share it ("Tender results, contract and delivery for this asset and 5 others"). On the right, the large `strong` Button "Open package" with the chevron icon on the right. It's the only link to the package on the page; its screen-reader name is "Open <package> package".
-- **Services:** big display Chips (`size: 'big'`, 32px) 12 under the head, 8 apart: done and now only. No chip for planned or not-required services.
-- **At this asset** (optional): a `bg-container-grey` panel 16 under the chips, `radius-md`, with a title in `h8` ("Delivery at this asset") and an aside in `p7` text-tertiary ("Voltreny · contract €26k"). Only this asset's own data for the current service: delivery phases, the Planning site check, this asset's figure in Estimates or Pricing. Never package facts (offer counts, the brief). Tender has no panel: it's priced for the whole package.
+- **Left:** "Package" as a card label (`s3`; write it in sentence case, the style capitalises it), 2 above the package name in `h7`, then the services as big display Chips (`size: 'big'`, 32px) 12 below, 8 apart: done and now only. No chip for planned or not-required services.
+- **Right, vertically centred on the left block:** ServiceIcon at 72 (inline, no break-out), 12 gap, "This asset is in" in `p7` text-tertiary over the service in `h4`, then the large `strong` Button "Open package" with the chevron on the right. It's the only link to the package on the page; its screen-reader name is "Open <package> package".
+- No line about what's on the package page: the status replaces it.
+- **At this asset** (optional): a `bg-container-grey` panel 16 under the head, `radius-md`, with a title in `h8` ("Delivery at this asset") and an aside in `p7` text-tertiary ("Voltreny · contract €26k"). Only this asset's own data for the current service: delivery phases, the Planning site check, this asset's figure in Estimates or Pricing. Never package facts (offer counts, the brief). Tender has no panel: it's priced for the whole package.
 - **Two projects on the asset:** two strips.
-- **Completed package:** the line reads "Completed <date>", every chip is done, and there's no panel.
+- **Completed:** "This asset is" over "Complete", the Delivery icon, every chip done, no panel. The button stays: the package still holds the results.
 
 ### The consumer provides
-`name`, `line`, `services: [{label, lead}]`, `href`, `title`, `aside`, and the panel content as `children`.
+`name`, `service`, `completed`, `services: [{label, lead}]`, `href`, `title`, `aside`, and the panel content as `children`.
 
 ---
 
 ## PageHeader
 
-The top of every page: breadcrumbs, the title, one meta line, and at most one thing on the right.
+One header for the batch, package and asset pages: breadcrumb, type label, title, facts, and one thing on the right. The component owns the spacing, so the three pages can't drift.
+
+### Order and spacing (fixed by the component)
+| From | To | Gap |
+|---|---|---|
+| Breadcrumb row (20 high; the Pager on its right) | Type label | 24 |
+| Type label row (20 high) | Title (`h4`) | 4 |
+| Title | Facts row | 16 |
+| Header | Whatever comes next (tabs, strips, service cards) | 24 |
 
 ### Rules
-- Breadcrumbs (optional) with an aside on the same row, such as the Pager. 8 below them, the title in `h4`.
-- Meta: one `p6` text-secondary line of facts joined with " · " ("Flagship sites · 6 assets · 2 of 6 complete · contract €152k").
-- Aside, on the right: the Your action pill, a ChangedDot key, or on ops one `primary` Button. Nothing else.
-- 24 below the header. No details grid and no "See info" (see InfoDrawer). The asset page uses AssetHeader instead.
+- **Type label:** TypeLabel for `kind` 'batch', 'package' or 'asset'. Its "i" never makes the row taller.
+- **Facts row:** each fact is a label in `p7` text-tertiary, 2 above a value in `p6` text-primary. 40 between facts, 16 between rows when they wrap. Two lines only: no source line. A fact with no value is left out; with no facts, the row is left out.
+- **Facts per page:**
+  - Batch: Goal · Solution · Assets · Packages · Target (only when set, "Dec 2027", never shown as late).
+  - Package: Batch · Solution · Assets · Supplier (once chosen).
+  - Asset: Batch · Solution · Buildings · City.
+- **Aside:** on the right, top-aligned with the type label, 32 from the left block, which takes the remaining width.
+  - Package: StatusCard.
+  - Asset: the site photo, 260×164, `radius-lg`, cropped to fill, only when we hold one. No placeholder.
+  - Batch: none.
+- No meta line, no "city · batch" line, no "See info", no details grid.
+- Pages with the section nav (Overview, Assets, service lists) use the same component without `kind` and `facts`: breadcrumb (if any) and title.
+- Detail pages (batch, package, asset) sit under a DetailBar, not the section nav.
 
 ### The consumer provides
-`crumbs`, `crumbAside`, `title`, `meta`, `aside`.
+`crumbs`, `crumbAside` (the Pager), `kind`, `title`, `facts: [{label, value}]`, `aside`.
 
 ---
 
@@ -699,6 +736,24 @@ Service filter cards on a batch page: they choose which assets the list below sh
 
 ---
 
+## ServiceIcon
+
+The 3D illustration for a service. It shows where a package or asset is, nothing else.
+
+### Rules
+- Five icons, ids match the service ids: `indicative` (Estimates), `scope` (Planning), `tender`, `pricing`, `delivery`. 3D glass renders, transparent PNGs, about 230 square.
+- An `<img>` with `alt=""` and `aria-hidden`: the service name always sits next to it in text.
+- `object-fit: contain`, `filter: drop-shadow(0 10px 14px rgba(30,40,50,.12))`.
+- **Two sizes only:** 116 (StatusCard) and 72 (PackageStrip).
+- **Only in StatusCard and PackageStrip.** Never in tabs, chips, tables, filters, nav or service-tab cards.
+- They're illustrations, not icons: the 24-grid line-icon rules don't apply, and the Icon component doesn't draw them.
+- Outside the design system, set `CQuelDS.serviceIconBase` to a folder holding `<id>.png` (the prototype keeps them in `public/icons/services/`).
+
+### The consumer provides
+`service`, `size` (116 or 72).
+
+---
+
 ## ServicesBar
 
 The Overview's "Services" card: how many projects sit in each service, as one segmented bar.
@@ -712,6 +767,32 @@ The Overview's "Services" card: how many projects sit in each service, as one se
 
 ### The consumer provides
 `services`: `[{id, label, count, line, href}]`, `completed`.
+
+---
+
+## StatusCard
+
+On the package page, in PageHeader's aside: which service the package is in, and the one way into it.
+
+### Rules
+- White, 1px `border-dark`, 16 radius, padding 18/20 with 84 on the left, and a 30 left margin so the icon isn't clipped.
+- ServiceIcon at 116: absolute, left −30, centred on the card's height, breaking out over the left border.
+- Text: "This package is in" in `p7` text-tertiary over the service name in `h4`. No third line.
+- On the right: the large `strong` Button with `chevron-right` on the right, named after the service. It opens that tab.
+
+| Service | Button |
+|---|---|
+| Estimates | See estimates |
+| Planning | See surveys |
+| Tender | See offers |
+| Pricing | See prices |
+| Delivery | See delivery |
+
+- **Completed:** "This package is" over "Complete", the Delivery icon, no button.
+- The tab of the current service carries the orange dot (see Tabs): it repeats where the package is.
+
+### The consumer provides
+`service`, `href`, `completed`.
 
 ---
 
@@ -793,12 +874,16 @@ The sections inside one page, such as Overview · Estimates · Brief · Tender r
 - Labels are `p6` text-secondary. The active label is `h8` text-primary, with a 2px `brand-6` underline.
 - A row of tabs sits on a `border-light` line, with 24px gaps.
 - A count goes in brackets after the label: "Offers (8)".
-- **New dot:** a 6px `brand-6` dot after the label when the tab holds something the customer hasn't seen yet. It's only a dot: no number, no "new" text. Its accessible label is "New".
+- **The dot** (6px `brand-6`, after the label) keeps both meanings of orange: where you are, or what's new. It's only a dot: no number, no text.
+  - On package and asset pages it marks **the current service** (`current`), the same service the StatusCard or PackageStrip names. An asset in two packages can have two. Accessible label "Current service".
+  - Elsewhere it marks a tab holding something the customer hasn't seen yet (`isNew`). Accessible label "New".
+  - Never both on one tab.
+- **Asset page tabs:** Overview, then one tab per service this asset has been through, in service order, only when the asset has data for it. Overview holds the PackageStrips, History and Documents. A service tab starts with "This asset only" (`p7` text-tertiary), then one Card per package with this asset's 2–3 facts in a 3-column facts row. No offer counts, no brief, no buttons.
 - Keyboard focus: a 2px black-7 outline.
 - Each tab shows one section. Never put actions in a tab label.
 
 ### The consumer provides
-- `tabs`: `[{id, label, isNew}]`
+- `tabs`: `[{id, label, current, isNew}]`
 - `value`
 - `onChange(id)`
 
@@ -856,10 +941,11 @@ A short label for something that has no visible text, such as an icon-only butto
 ### Rules
 - `p7` white on black-7, padded 4/8, `radius-md`, `elevation-floating`, 8 above the trigger. Shows on hover and keyboard focus.
 - A few words, no full stop. Never the only place important information lives.
+- **Definition variant** (`variant: 'definition'`): `p7`, up to 300 wide, padding 8/12, short sentences allowed, the term in `h9` on the first line. Same colours and elevation. Only for TypeLabel; everything else keeps the short-label rule.
 - Every icon-only button has one.
 
 ### The consumer provides
-`content`, `children` (the trigger).
+`content`, `children` (the trigger), `variant`.
 
 ---
 
@@ -881,6 +967,26 @@ Momentum: how many services have started and finished over time, as two cumulati
 
 ### The consumer provides
 `labels` (short month labels), `longLabels` (for the tooltip, for example "September 2026"), `series: [{name, values, accent}]`, `height` (224 by default), `active`, `label` (for screen readers).
+
+---
+
+## TypeLabel
+
+Says what kind of thing a page is, above its title, with a definition one hover away.
+
+### Rules
+- "BATCH", "PACKAGE" or "ASSET" in `h9` text-tertiary, 0.06em tracking, then an `info` icon button (tertiary, small, 14px icon), 8 apart.
+- **The row is 20 high.** The 24px button overhangs by 2 above and below; it must never make the row taller.
+- Hover or keyboard focus shows the definition in a Tooltip, `definition` variant.
+- The button's accessible name: "What is a batch?" / "What is a package?" / "What is an asset?".
+- **Definitions:**
+  - Batch: "Assets grouped around one goal. A batch can hold several packages."
+  - Package: "Assets that go through the services together. One service at a time."
+  - Asset: "A building or site you own."
+- Only in PageHeader.
+
+### The consumer provides
+`kind`: 'batch' | 'package' | 'asset'.
 
 ---
 

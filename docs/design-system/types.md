@@ -39,14 +39,16 @@ export interface FilterSelectProps { label: string; allLabel?: string; options: 
 export interface FilterBarProps { children: ReactNode; onClear?: () => void; aside?: ReactNode }
 /** The batch page's service filter: All, then each service with projects. */
 export interface ServiceCardsProps { options: { id: string; label: string; count: number; done?: number }[]; value?: string; onChange?: (id: string) => void; label?: string }
-export interface TabsProps { tabs: { id: string; label: ReactNode; isNew?: boolean }[]; value?: string; onChange?: (id: string) => void }
+export interface TabsProps { /** current: the package's/asset's current service (orange dot, 'Current service'). isNew: something unseen (orange dot, 'New'). Never both. */ tabs: { id: string; label: ReactNode; current?: boolean; isNew?: boolean }[]; value?: string; onChange?: (id: string) => void }
 export interface InfoDrawerProps { title: string; items: { label: string; value: ReactNode }[]; footer?: ReactNode; open?: boolean; inline?: boolean; onClose?: () => void }
 export interface FilterChip { /** '' is the All chip */ id: string; label: string; count?: number }
 export interface FilterChipsProps { options: FilterChip[]; value?: string; onChange?: (id: string) => void; label?: string }
-export interface AssetFact { label: string; value: ReactNode; source?: string }
+/** Retired: use PageHeader kind 'asset'. */
+export interface AssetFact { label: string; value: ReactNode }
 export interface AssetHeaderProps { title: string; /** "<postcode> <city> · <batch>" */ meta?: ReactNode; /** at most 6 shown */ facts?: AssetFact[]; /** site photo we hold; omit for none (no placeholder) */ photo?: { src: string; alt?: string } }
 /** One per project on the asset page: the package, its services as display chips, the strong Open package button, and this asset's own data for the current service as children. */
-export interface PackageStripProps { name: string; line?: string; services?: { label: string; lead: 'done' | 'now' }[]; href?: string; onOpen?: () => void; ctaLabel?: string; title?: string; aside?: string; children?: ReactNode }
+/** service: where this asset is (icon + 'This asset is in <service>'). completed: 'This asset is complete', no panel. */
+export interface PackageStripProps { name: string; service?: ServiceId; completed?: boolean; services?: { label: string; lead: 'done' | 'now' }[]; href?: string; onOpen?: () => void; title?: string; aside?: string; children?: ReactNode }
 export interface PagerProps { index: number; total: number; prev?: { label: string; href?: string; onClick?: () => void }; next?: { label: string; href?: string; onClick?: () => void }; /** default "in this package" */ context?: string; /** default "asset" */ noun?: string }
 export interface NeedsDecisionRow { id?: string; href?: string; changed?: boolean; package: { main: string; detail?: string }; next: { main: string; detail?: string } }
 export interface NeedsDecisionProps { rows: NeedsDecisionRow[]; total?: number; limit?: number; title?: string; /** right slot, e.g. "5 packages" */ countLabel?: string; nameLabel?: string; seeAllHref?: string; onSeeAll?: () => void }
@@ -55,7 +57,16 @@ export type IconName = 'access-cap' | 'add-building' | 'alert' | 'arrow-left' | 
 export interface IconProps { name: IconName; size?: 16 | 20 | 24; /** icon role token: 'strong' | 'default' | 'disabled' | 'white' | 'active' */ role?: string; /** give a label only when the icon carries meaning on its own */ label?: string; src?: string; className?: string }
 export interface Crumb { label: string; href?: string }
 export interface BreadcrumbsProps { items: Crumb[] }
-export interface PageHeaderProps { crumbs?: Crumb[]; /** right of the breadcrumbs, e.g. a Pager */ crumbAside?: ReactNode; title?: ReactNode; meta?: ReactNode; /** right of the title: a pill, or one button */ aside?: ReactNode }
+/** Batch, package and asset pages. Gaps fixed: crumbs 24 · type label 4 · title 16 · facts; 24 below. Facts with no value are dropped. */
+export interface PageHeaderProps { crumbs?: Crumb[]; /** right of the breadcrumbs, e.g. a Pager */ crumbAside?: ReactNode; kind?: 'batch' | 'package' | 'asset'; title?: ReactNode; facts?: { label: string; value: ReactNode }[]; /** package: StatusCard; asset: the site photo; batch: none */ aside?: ReactNode }
+export interface TypeLabelProps { kind: 'batch' | 'package' | 'asset' }
+export type ServiceId = 'indicative' | 'scope' | 'tender' | 'pricing' | 'delivery';
+/** 3D service illustration. Only in StatusCard (116) and PackageStrip (72). */
+export interface ServiceIconProps { service: ServiceId; size?: 116 | 72 }
+/** Package page aside: 'This package is in <service>' and the strong 'See …' button. */
+export interface StatusCardProps { service?: ServiceId; href?: string; onClick?: () => void; completed?: boolean }
+/** Detail pages' top bar: Back on the left, account tools (children) on the right. Replaces the app header and section nav. */
+export interface DetailBarProps { backHref?: string; onBack?: () => void; backLabel?: string; children?: ReactNode }
 export interface SummaryCardProps { label: string; value: ReactNode; line?: string; /** makes it a filter toggle */ onClick?: () => void; pressed?: boolean }
 export interface ListFooterProps { total: number; limit?: number; open: boolean; onOpen: () => void; /** shown after the total when open: "assets" */ noun?: string }
 export interface EmptyStateProps { children?: ReactNode; text?: string; action?: ReactNode; /** adds card padding */ inCard?: boolean }
@@ -67,7 +78,7 @@ export interface DocumentListProps { items: { name: string; type?: string; meta?
 export interface TimelineProps { items: { event: string; detail?: string; date: string; year?: string; you?: boolean }[]; empty?: string }
 export interface ServicesBarProps { services: { id: string; label: string; count: number; line?: string; href?: string }[]; completed?: { count: number; line?: string } }
 export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean }
-export interface TooltipProps { content: string; children: ReactNode }
+export interface TooltipProps { content: ReactNode; children: ReactNode; /** 'definition': sentences, up to 300 wide; only for TypeLabel */ variant?: 'label' | 'definition' }
 export interface YourActionOnlyProps { checked: boolean; onChange: (checked: boolean) => void; label?: string }
 /** Display chip (no onClick): 24px (size 'big': 32px, for PackageStrip services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
 export interface ChipProps { children: ReactNode; lead?: 'done' | 'now' | 'next'; /** Display chips only: 'big' is 32px, for PackageStrip services. */ size?: 'default' | 'big'; count?: number; selected?: boolean; onClick?: () => void }

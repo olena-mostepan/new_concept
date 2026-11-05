@@ -1,6 +1,6 @@
-# CQuel design system: handoff (4 Nov 2026, updated after version 24)
+# CQuel design system: handoff (4 Nov 2026, updated after version 28)
 
-For the next task on the design system. Read the published artifact first; it is the full, current copy. Version 24 supersedes anything below that it contradicts.
+For the next task on the design system. Read the published artifact first; it is the full, current copy. Version 28 supersedes anything below that it contradicts.
 
 ## Where it lives
 
@@ -53,7 +53,7 @@ These came from the design review. The tracker is https://claude.ai/artifact/PaN
 - **Tokens:** no 13px or 15px sizes. New tokens: `space-2`, `space-6`, `radius-image` and `bg-scrim`.
 - **Prototype words:** Estimates, Planning, Tender, Pricing, Delivery. A skipped service is "Not required".
 
-## Versions 15–24 (4 Nov): chips, steps, history, buttons, documents
+## Versions 15–28 (4 Nov): chips, steps, history, buttons, documents
 
 The full write-up is `claude/design-system-update-tabs-chips.md`. The prototype prompts are part 26 (`claude/cursor-prompt-chips-steps-history.md`), part 27 (`claude/cursor-prompt-documents.md`) and part 28 (`claude/cursor-prompt-chips-on-grey.md`).
 
@@ -71,6 +71,10 @@ The full write-up is `claude/design-system-update-tabs-chips.md`. The prototype 
 - **Timeline:** date first, with a 52px date column and a rail. `you: true` gives the dot an accent ring.
 - **Button icons:** Button takes `icon`. IconButton is square, secondary or tertiary, with the label shown as a tooltip. Modal and drawer close buttons use IconButton.
 - **TrendChart (Momentum):** Started is the one orange line (2.5px, soft brand-6 fill); Finished is ink, dashed. Hover: dashed black-3 guide, ringed orange dot with a brand-1 halo, month label in ink, floating tooltip (no border) with keys and right-aligned values. Prototype prompt: part 29 (`claude/cursor-prompt-momentum.md`).
+- **PageHeader (v28):** one header for batch, package and asset: breadcrumb, TypeLabel (with an "i" definition tooltip), title, facts row (label over value, two lines), aside (package StatusCard, asset photo). Fixed gaps 24 · 4 · 16, 24 below. AssetHeader retired.
+- **ServiceIcon / StatusCard (v28):** five 3D service illustrations (asset group "Services"), only in StatusCard (116) and PackageStrip (72). PackageStrip now shows "This asset is in <service>" on the right; its `line` is gone.
+- **DetailBar (v28):** detail pages (batch, package, asset, project, ops batch) have a slim bar with Back and the account tools, instead of the app header and section nav. Back = where you came from, else up one level. Breadcrumbs follow the levels. Prompt: part 32 (`claude/cursor-prompt-detail-header.md`).
+- **Tab dot:** keeps both meanings: the current service on package and asset pages, "new" elsewhere. InfoDrawer is unused but kept.
 - **DocumentList:** one list with no grouping. Each row has the file type as a neutral Tag at the new `xsmall` size (20px) before the detail, and a tertiary IconButton (download, or chevron-right for a set to view).
 
 ## Open points

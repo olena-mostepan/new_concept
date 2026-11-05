@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 25, 04 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 28, 05 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -13,7 +13,8 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - a need that is with the customer;
   - a delivery phase waiting on them ("Confirm dates").
 - **Where the customer is, or what's new:**
-  - the ChangedDot (changed in 7 days; new in a tab);
+  - the ChangedDot (changed in 7 days);
+  - the tab dot: the current service on package and asset pages, or something new in a tab elsewhere;
   - the active tab underline;
   - the selected service filter card on a batch page (4px top bar);
   - the `now` display Chip: the step, phase or service where work is under way (light accent, darker border, orange dot);
@@ -107,12 +108,15 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
 - **Package tabs** (Tabs): one row is the package page's whole navigation: Overview, then the content tabs that have data, in service order. Never two tab rows on a page.
 - **Service filter cards** (ServiceCards, batch page): All, then each service with projects, with its count. They filter the Assets table below. White; the selected card has a 4px orange top bar; borders never turn dark.
 - **Steps** (one service of a package): chips on a track. Done steps are done chips, steps with work under way are now chips with the count ("Installation · 1") and when it started under them, later steps are dashed. A 2px `border-dark` line joins them. Assets that haven't started sit on a plain chip with "3 awaiting start". On a package Overview there are no descriptions, needs panels or buttons.
-- **Page headers** hold a title and one meta line. No "See info", no details grid, no staff names on customer screens.
-  - **Asset page** (AssetHeader): the address in `h4`, "city · batch", then a "What we know" fact grid with each fact's source. An optional site photo sits on the right with no date and no frame; with no photo, no placeholder.
-  - On the breadcrumb row, a Pager steps through the package's assets ("‹ name · 1 of 6 in this package · name ›") when the page was opened from a package.
-  - InfoDrawer stays for secondary lookups, not for page headers.
+- **Page headers** (PageHeader) are one component for batch, package and asset pages: breadcrumb, TypeLabel ("BATCH", "PACKAGE", "ASSET" with an "i" that shows the definition), the title in `h4`, then a facts row (label over value, two lines only). The gaps are fixed: 24 · 4 · 16, and 24 below. No meta line, no "See info", no details grid, no staff names on customer screens.
+  - Facts: Batch: Goal · Solution · Assets · Packages · Target. Package: Batch · Solution · Assets · Supplier. Asset: Batch · Solution · Buildings · City. A fact with no value is left out.
+  - Aside: the package page's StatusCard ("This package is in Delivery" with the 3D service icon and "See delivery ›"); the asset's site photo (260×164, only when we hold one); nothing on a batch.
+  - On the breadcrumb row, a Pager steps through the package's assets ("‹ name · 1 of 6 in this package · name ›") when the asset page was opened from a package.
+  - InfoDrawer is unused for now.
+- **Service icons** (ServiceIcon): five 3D illustrations, one per service. Only in StatusCard (116) and PackageStrip (72); never in tabs, chips, tables, filters or nav.
 - **Momentum** (TrendChart, dashboards): Started is the one orange line (2.5px, soft orange fill under it); Finished is ink, dashed. Hover shows a dashed guide, the orange point with a white ring and accent halo, the month label in ink, and a floating tooltip with each series' key and value.
-- **Package strip** (PackageStrip, asset page): one per project. "Package", the package name and one line on what's there; the services as big display chips (32px; done and now only); the strong "Open package ›" Button, the only link to the package on the page. Under it, in a grey panel, only this asset's own data for the current service ("Delivery at this asset").
+- **Package strip** (PackageStrip, asset page): one per project. Left: "Package", the package name, and the services as big display chips (32px; done and now only). Right: the service icon (72), "This asset is in <service>", and the strong "Open package ›" Button, the only link to the package on the page. Under it, in a grey panel, only this asset's own data for the current service ("Delivery at this asset").
+- **Asset page tabs:** Overview (package strips, History, Documents), then one tab per service the asset has data for, each starting with "This asset only" and one card per package with this asset's facts.
 - **Delivery phases** follow the product's delivery view: Start → Design & survey → Installation → Commissioning → Handover → Complete. Every date says where it comes from: Start's is "Contract start date", "Contract signed", "LOI signed" or "From invoice · date to confirm"; others "Site check report", "From invoice · date to confirm" or "Estimate". PhaseStepper draws them as chips on a track with the date and its source under each; in table rows, one chip for the phase the asset is in. A phase waiting on the customer shows "Confirm dates" with the orange dot.
 - **Overview: Needs your decision** (NeedsDecision): its own card, three packages newest first, with "See all n" when there are more. Only when something is with the customer.
 - **Lists filtered by one value** (Assets by solution) use FilterChips above the FilterBar instead of a select.
@@ -120,9 +124,13 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
 
 ## Page furniture
 
-- **Header:** the customer's own logo when we hold it, otherwise their initial on a black-7 square with white text, never orange. Then "Powered by CQuel" and the account name.
-- **Nav:** Overview · Assets | SERVICES · the five services. Package and batch pages sit under Overview, asset pages under Assets, service lists under their service. The active item has the 2px `brand-6` underline; a dot after a service shows something in it changed.
-- **PageHeader** with **Breadcrumbs**, then the page's cards 16 apart. Lists of more than 10 end in a **ListFooter**.
+- **Two kinds of page, two tops.**
+  - **Section pages** (Overview, Assets, the five service lists; ops Portfolio and Workstreams): the app header and the section nav.
+    - **Header:** the customer's own logo when we hold it, otherwise their initial on a black-7 square with white text, never orange. Then "Powered by CQuel" and the account name. On the right: Questions, the avatar.
+    - **Nav:** Overview · Assets | SERVICES · the five services. The active item has the 2px `brand-6` underline; a dot after a service shows something in it changed.
+  - **Detail pages** (batch, package, asset, ops batch: anything opened from a list): the **DetailBar** instead. Back on the left, the same tools on the right, no logo and no section nav. Back returns to where you came from (or up one level if you landed there directly); the breadcrumb under it shows where the page sits. Never both bars on one page.
+- **Breadcrumbs follow the levels:** "Overview › <batch>", "Overview › <batch> › <package>" (wherever it was opened from), "Overview › <batch> › <package> › <asset>" from a package or "Assets › <asset>" from the Assets list.
+- **PageHeader** with **Breadcrumbs**, then the page's cards 16 apart. (The header's 24 bottom gap sits above the first tab row or card.) Lists of more than 10 end in a **ListFooter**.
 - **SummaryCard** for counts at the top of a list; **ServicesBar** for the Overview's Services card.
 - **ActivityList**, **DocumentList** and, on asset pages, **Timeline** ("History"): date first, newest first, an orange dot only on an event that still waits on the customer.
 - **Buttons with icons:** a 16px icon on the left for actions; on the right only the chevron, on a button that goes to another page. **IconButton** for icon-only actions (Close, Download, More), always with a label that becomes its tooltip.

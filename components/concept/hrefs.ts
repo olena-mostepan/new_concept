@@ -1,62 +1,124 @@
-import { SERVICES, type ServiceId } from '@/lib/concept/model'
+import { SERVICES, type ServiceId } from "@/lib/concept/model";
+import { WORDS } from "@/lib/concept/words";
 
-export const BASE = '/concept'
-export const OPS = `${BASE}/ops`
+export const BASE = "/concept";
+export const OPS = `${BASE}/ops`;
+
+export type BuildingFrom = "buildings" | "workstream" | "search" | "batch";
+export type BuildingVia = "batch" | "service";
+export type WorkstreamFrom = "batch" | "service" | "building";
 
 export const hrefs = {
+  overview: BASE,
+  /** Alias of overview, so older links keep working. */
   portfolio: BASE,
+  buildings: `${BASE}/assets`,
+  building: (
+    buildingId: string,
+    opts?: {
+      project?: string;
+      from?: BuildingFrom;
+      ws?: string;
+      via?: BuildingVia;
+      batch?: string;
+      package?: string;
+      service?: string;
+    },
+  ) => {
+    const sp = new URLSearchParams();
+    if (opts?.project) sp.set("project", opts.project);
+    if (opts?.from) sp.set("from", opts.from);
+    if (opts?.ws) sp.set("ws", opts.ws);
+    if (opts?.via) sp.set("via", opts.via);
+    if (opts?.batch) sp.set("batch", opts.batch);
+    if (opts?.package) sp.set("package", opts.package);
+    if (opts?.service) sp.set("service", opts.service);
+    const query = sp.toString();
+    return `${BASE}/assets/${buildingId}${query ? `?${query}` : ""}`;
+  },
   batches: `${BASE}/batches`,
   batch: (id: string) => `${BASE}/batches/${id}`,
-  workstreams: (s?: ServiceId) => `${BASE}/workstreams${s ? `?service=${s}` : ''}`,
+  workstreams: (s?: ServiceId) => `${BASE}/packages${s ? `?service=${s}` : ""}`,
   service: (s: ServiceId) => `${BASE}/services/${s}`,
-  workstream: (id: string, from?: 'batch' | 'service') => `${BASE}/workstreams/${id}${from ? `?from=${from}` : ''}`,
-  project: (workstreamId: string, buildingId: string) => `${BASE}/projects/${workstreamId}/${buildingId}`,
+  workstream: (id: string, from?: WorkstreamFrom, buildingId?: string) => {
+    const sp = new URLSearchParams();
+    if (from) sp.set("from", from);
+    if (buildingId) sp.set("building", buildingId);
+    const query = sp.toString();
+    return `${BASE}/packages/${id}${query ? `?${query}` : ""}`;
+  },
+  project: (workstreamId: string, buildingId: string) =>
+    `${BASE}/assets/${buildingId}?project=${workstreamId}`,
   ops: OPS,
   opsNewBatch: `${OPS}/batches/new`,
   opsBatch: (id: string) => `${OPS}/batches/${id}`,
-}
+};
 
 export interface NavItem {
-  id: string
-  label: string
-  href: string
-  group: 'structure' | 'services'
-  match: (path: string) => boolean
+  id: string;
+  label: string;
+  href: string;
+  group: "structure" | "services";
+  match: (path: string) => boolean;
   /** A live workstream in this service changed in the last 7 days. */
-  changed?: boolean
+  changed?: boolean;
 }
 
 export const CUSTOMER_NAV: NavItem[] = [
-  { id: 'portfolio', group: 'structure', label: 'Portfolio', href: hrefs.portfolio, match: (p) => p === BASE || p === `${BASE}/` },
-  { id: 'batches', group: 'structure', label: 'Batches', href: hrefs.batches, match: (p) => p.startsWith(`${BASE}/batches`) || p.startsWith(`${BASE}/workstreams`) },
+  {
+    id: "overview",
+    group: "structure",
+    label: "Overview",
+    href: hrefs.overview,
+    match: (p) => p === BASE || p === `${BASE}/`,
+  },
+  {
+    id: "buildings",
+    group: "structure",
+    label: WORDS.Assets,
+    href: hrefs.buildings,
+    match: (p) => p.startsWith(`${BASE}/assets`),
+  },
   ...SERVICES.map((s) => ({
     id: s.id,
-    group: 'services' as const,
+    group: "services" as const,
     label: s.label,
     href: hrefs.service(s.id),
     match: (p: string) => p.startsWith(hrefs.service(s.id)),
   })),
-]
+];
 
 /** The ops bar stays the previous customer nav: Portfolio, Workstreams, then the services. */
 export const OPS_NAV: NavItem[] = [
-  { id: 'ops-portfolio', group: 'structure', label: 'Portfolio', href: hrefs.ops, match: (p) => p === OPS || p === `${OPS}/` },
-  { id: 'workstreams', group: 'structure', label: 'Workstreams', href: `${BASE}/workstreams`, match: (p) => p.startsWith(`${BASE}/workstreams`) },
+  {
+    id: "ops-portfolio",
+    group: "structure",
+    label: "Portfolio",
+    href: hrefs.ops,
+    match: (p) => p === OPS || p === `${OPS}/`,
+  },
+  {
+    id: "workstreams",
+    group: "structure",
+    label: "Workstreams",
+    href: hrefs.workstreams(),
+    match: (p) => p.startsWith(`${BASE}/packages`),
+  },
   ...SERVICES.map((s) => ({
     id: s.id,
-    group: 'services' as const,
+    group: "services" as const,
     label: s.label,
     href: hrefs.service(s.id),
     match: (p: string) => p.startsWith(hrefs.service(s.id)),
   })),
-]
+];
 
 /** Same place on the other side, or its home */
 export function counterpart(path: string): string {
   if (path.startsWith(OPS)) {
-    const m = path.match(/\/ops\/batches\/([^/?]+)/)
-    return m && m[1] !== 'new' ? hrefs.batch(m[1]) : BASE
+    const m = path.match(/\/ops\/batches\/([^/?]+)/);
+    return m && m[1] !== "new" ? hrefs.batch(m[1]) : BASE;
   }
-  const m = path.match(/\/concept\/batches\/([^/?]+)/)
-  return m ? hrefs.opsBatch(m[1]) : OPS
+  const m = path.match(/\/concept\/batches\/([^/?]+)/);
+  return m ? hrefs.opsBatch(m[1]) : OPS;
 }

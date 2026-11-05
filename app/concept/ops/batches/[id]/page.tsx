@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import { Suspense } from 'react'
-import { useParams } from 'next/navigation'
-import { OpsBatch } from '@/components/concept/OpsBatch'
+import { Suspense } from "react";
+import { useParams } from "next/navigation";
+import { OpsBatch } from "@/components/concept/OpsBatch";
 
 function Inner() {
-  const { id } = useParams<{ id: string }>()
-  return <OpsBatch id={id} />
+  const { id } = useParams<{ id: string }>();
+  return <OpsBatch id={id} />;
 }
 
 export default function OpsBatchPage() {
@@ -14,5 +14,5 @@ export default function OpsBatchPage() {
     <Suspense>
       <Inner />
     </Suspense>
-  )
+  );
 }

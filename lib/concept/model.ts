@@ -23,7 +23,7 @@ export interface ServiceDef {
 export const SERVICES: ServiceDef[] = [
   {
     id: 'indicative',
-    label: 'Indicative pricing',
+    label: 'Estimates',
     done: 'You have decided',
     steps: ['Data collected', 'Estimate', 'Presented', 'Decision'],
     happens: [
@@ -35,7 +35,7 @@ export const SERVICES: ServiceDef[] = [
   },
   {
     id: 'scope',
-    label: 'Scope definition',
+    label: 'Planning',
     done: 'Scope agreed',
     steps: ['Gap found', 'Info requested', 'Survey booked', 'Survey done', 'Scope agreed'],
     happens: [
@@ -79,7 +79,7 @@ export const SERVICES: ServiceDef[] = [
     id: 'delivery',
     label: 'Delivery',
     done: 'Installed',
-    steps: ['Kick-off', 'Design & survey', 'Installation', 'Commissioning', 'Handover', 'Complete'],
+    steps: ['Start', 'Design & survey', 'Installation', 'Commissioning', 'Handover', 'Complete'],
     happens: [
       'Contract signed; the supplier plans the work.',
       'The supplier checks the site and designs the install.',
@@ -149,6 +149,8 @@ export interface Building {
   postcode?: string
   /** Property type, when ops or the portfolio recorded one. */
   type?: string
+  /** Site photo from the customer's files or a visit. No date is stored. */
+  photo?: string
 }
 
 /**
@@ -183,7 +185,7 @@ export interface Batch {
   /** Only when the platform already holds one */
   target?: string
   buildingIds: string[]
-  /** Services this batch goes through. Tender or Pricing — the other is "Not needed". */
+  /** Services this batch goes through. Tender or Pricing — the other is "Not required". */
   route: ServiceId[]
   /** One line per route service, shown in the plan */
   routeNotes?: Partial<Record<ServiceId, string>>
@@ -214,7 +216,7 @@ export interface Basis {
   source: string
 }
 
-/** A visit to a building. Scope definition calls it a survey; Tender and Delivery call it a site check. */
+/** A visit to a building. Planning calls it a survey; Tender and Delivery call it a site check. */
 export type VisitState = 'unbooked' | 'booked' | 'done' | 'skip'
 
 export interface Visit {
@@ -269,10 +271,14 @@ export interface ProjectRow {
 
 export type DeliveryPhaseId = 'start' | 'phase1' | 'phase2' | 'phase3' | 'phase4' | 'complete'
 export type DeliveryDateState = 'confirmed' | 'estimate' | 'from_invoice' | 'needs_confirm'
+/** Where a delivery start date comes from. The strongest known fact wins. */
+export type StartSource = 'contract_start' | 'contract_signed' | 'loi_signed' | 'first_invoice'
 
 export interface DeliveryPhase {
   on?: string
   state?: DeliveryDateState
+  /** Start phase only. */
+  source?: StartSource
 }
 
 export interface ProjectDelivery {
@@ -386,6 +392,8 @@ export interface Activity {
 export interface Doc {
   name: string
   meta: string
+  /** File type, when there is one: "PDF", "3 PDF", "23 files". */
+  type?: string
   action?: string
   batchId?: string
   /** Shown grey, with no action. */

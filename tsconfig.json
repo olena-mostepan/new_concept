@@ -37,7 +37,19 @@
     ".next-agent/types/**/*.ts",
     ".next-agent/dev/types/**/*.ts",
     ".next-3460/types/**/*.ts",
-    ".next-3460/dev/types/**/*.ts"
+    ".next-3460/dev/types/**/*.ts",
+    ".next-part22/types/**/*.ts",
+    ".next-part22/dev/types/**/*.ts",
+    ".next-part23/types/**/*.ts",
+    ".next-part23/dev/types/**/*.ts",
+    ".next-part24/types/**/*.ts",
+    ".next-part24/dev/types/**/*.ts",
+    ".next-part25/types/**/*.ts",
+    ".next-part25/dev/types/**/*.ts",
+    ".next-part31/types/**/*.ts",
+    ".next-part31/dev/types/**/*.ts",
+    ".next-part32/types/**/*.ts",
+    ".next-part32/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

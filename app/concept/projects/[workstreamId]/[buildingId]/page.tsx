@@ -1,18 +1,17 @@
-'use client'
+import { redirect } from "next/navigation";
 
-import { Suspense } from 'react'
-import { useParams } from 'next/navigation'
-import { ProjectView } from '@/components/concept/ProjectView'
-
-function Inner() {
-  const { workstreamId, buildingId } = useParams<{ workstreamId: string; buildingId: string }>()
-  return <ProjectView workstreamId={workstreamId} buildingId={buildingId} />
-}
-
-export default function ProjectPage() {
-  return (
-    <Suspense>
-      <Inner />
-    </Suspense>
-  )
+export default async function ProjectPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ workstreamId: string; buildingId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { workstreamId, buildingId } = await params;
+  const incoming = await searchParams;
+  const next = new URLSearchParams();
+  next.set("project", workstreamId);
+  const from = incoming.from;
+  if (typeof from === "string" && from) next.set("from", from);
+  redirect(`/concept/assets/${buildingId}?${next.toString()}`);
 }

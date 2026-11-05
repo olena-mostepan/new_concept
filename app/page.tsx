@@ -86,7 +86,7 @@ export default function HomePage() {
       <main className="w-full max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-10 space-y-12">
         <Link
           href="/concept"
-          className="flex items-center justify-between gap-6 rounded-xl border-2 border-[var(--cq-accent)] bg-white p-6  hover:bg-[var(--cq-accent-muted)]"
+          className="flex items-center justify-between gap-6 rounded-lg border-2 border-[var(--cq-accent)] bg-white p-6  hover:bg-[var(--cq-accent-muted)]"
         >
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-accent)]">New concept</p>
@@ -103,10 +103,10 @@ export default function HomePage() {
           <div className="grid max-w-4xl gap-6 md:grid-cols-2">
             <Link
               href={supplierPortal.href}
-              className="group flex flex-col gap-4 rounded-xl border border-[var(--cq-green)] bg-white p-6  ring-1 ring-[var(--cq-green)]/20 transition-shadow hover:shadow-lg"
+              className="group flex flex-col gap-4 rounded-lg border border-[var(--cq-green)] bg-white p-6  ring-1 ring-[var(--cq-green)]/20 transition-shadow hover:shadow-lg"
             >
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border border-[#E4E7EC] bg-[#F9FAFB] text-[var(--cq-green)]">
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg border border-[#E4E7EC] bg-[#F9FAFB] text-[var(--cq-green)]">
                   <LayoutDashboard className="h-8 w-8" aria-hidden />
                 </div>
                 <div className="flex-1">
@@ -125,10 +125,10 @@ export default function HomePage() {
             </Link>
             <Link
               href={customerPortal.href}
-              className="group flex flex-col gap-4 rounded-xl border border-[#E4E7EC] bg-white p-6  transition-shadow hover:shadow-lg"
+              className="group flex flex-col gap-4 rounded-lg border border-[#E4E7EC] bg-white p-6  transition-shadow hover:shadow-lg"
             >
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border border-[#E4E7EC] bg-[#F9FAFB] text-[var(--cq-green)]">
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg border border-[#E4E7EC] bg-[#F9FAFB] text-[var(--cq-green)]">
                   <Building2 className="h-8 w-8" aria-hidden />
                 </div>
                 <div className="flex-1">
@@ -155,7 +155,7 @@ export default function HomePage() {
               <Link
                 key={project.slug}
                 href={project.href}
-                className="group rounded-xl border border-[#E4E7EC] bg-white  hover:shadow-lg transition-shadow p-6 flex flex-col gap-4"
+                className="group rounded-lg border border-[#E4E7EC] bg-white  hover:shadow-lg transition-shadow p-6 flex flex-col gap-4"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
@@ -193,10 +193,10 @@ export default function HomePage() {
                 <Link
                   key={w.slug}
                   href={w.href}
-                  className="group rounded-xl border border-[#E4E7EC] bg-white  hover:shadow-lg transition-shadow p-6 flex flex-col gap-4"
+                  className="group rounded-lg border border-[#E4E7EC] bg-white  hover:shadow-lg transition-shadow p-6 flex flex-col gap-4"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center rounded-xl border border-[#E4E7EC] bg-[#F9FAFB] text-[var(--cq-green)]">
+                    <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center rounded-lg border border-[#E4E7EC] bg-[#F9FAFB] text-[var(--cq-green)]">
                       <Icon className="w-9 h-9" aria-hidden />
                     </div>
                     <div className="flex-1">

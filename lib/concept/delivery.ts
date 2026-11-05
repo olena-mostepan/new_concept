@@ -1,8 +1,10 @@
 import type { CustomerDeliveryPayload, CustomerPhaseId, CustomerPhaseNode, CustomerProject, DateConfirmState } from '@/lib/customer/delivery/types'
+import { packageAssetRank, short } from '@/lib/concept/derive'
 import {
   TODAY,
   type Account,
   type DeliveryDateState,
+  type DeliveryPhase,
   type DeliveryPhaseId,
   type ProjectRow,
   type Workstream,
@@ -11,7 +13,7 @@ import {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export const DELIVERY_PHASES: Array<{ id: DeliveryPhaseId; label: string; shortLabel: string; step: number }> = [
-  { id: 'start', label: 'Kick-off', shortLabel: 'Kick-off', step: 0 },
+  { id: 'start', label: 'Start', shortLabel: 'Start', step: 0 },
   { id: 'phase1', label: 'Design & survey', shortLabel: 'Design & survey', step: 1 },
   { id: 'phase2', label: 'Installation', shortLabel: 'Installation', step: 2 },
   { id: 'phase3', label: 'Commissioning', shortLabel: 'Commissioning', step: 3 },
@@ -34,6 +36,22 @@ export function conceptDateToIso(d: string): string {
 export function isoToConcept(iso: string): string {
   const [year, month, day] = iso.slice(0, 10).split('-').map(Number)
   return `${day} ${MONTHS[(month ?? 1) - 1]} ${year}`
+}
+
+/** Date line under a delivery phase chip on the asset page. */
+export function deliveryPhaseDateNote(
+  phase: DeliveryPhase | undefined,
+  isCurrent: boolean,
+): { text: string; className: string } | null {
+  if (!phase?.on) {
+    if (isCurrent) {
+      return { text: 'Date to confirm', className: 'p7 text-text-tertiary' }
+    }
+    return null
+  }
+  const when = short(phase.on)
+  const text = phase.state === 'estimate' ? `Est. ${when}` : when
+  return { text, className: 'p7 text-text-primary' }
 }
 
 export function phaseOf(step: number): DeliveryPhaseId {
@@ -165,18 +183,11 @@ export function splitDeliveryId(id: string): { workstreamId: string; buildingId:
 
 export const HISTORY_TODAY = TODAY.split(' ').slice(0, 2).join(' ')
 
-function deliveryRank(project: CustomerProject) {
-  if (project.needsConfirm) return 0
-  if (project.insight === 'complete') return 1
-  if (project.insight === 'awaiting_start') return 3
-  return 2
-}
-
 export function toDeliveryPayload(account: Account, streams: Workstream[]): CustomerDeliveryPayload {
   const projects = streams.flatMap((stream) =>
-    stream.projects
-      .map((row) => toCustomerProject(account, stream, row))
-      .sort((a, b) => deliveryRank(a) - deliveryRank(b)),
+    [...stream.projects]
+      .sort((a, b) => packageAssetRank(stream, a) - packageAssetRank(stream, b))
+      .map((row) => toCustomerProject(account, stream, row)),
   )
   const batches = streams.map((stream) => {
     const mine = projects.filter((project) => project.batchId === stream.id)

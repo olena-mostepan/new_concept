@@ -1,34 +1,54 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { cn } from '@/lib/utils'
-import type { Account, Batch, Workstream } from '@/lib/concept/model'
-import { activeProjects, doneCount, getBatch, isBatchDone, nextLine, short, wsIn, yourNeeds } from '@/lib/concept/derive'
-import { Bar, OwnerPill, ServiceTag, td, th } from './ui'
-import { hrefs } from './hrefs'
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import type { Account, Batch, Workstream } from "@/lib/concept/model";
+import {
+  activeProjects,
+  doneCount,
+  getBatch,
+  isBatchDone,
+  nextLine,
+  short,
+  wsIn,
+  yourNeeds,
+} from "@/lib/concept/derive";
+import { Bar, OwnerPill, ServiceTag, td, th } from "./ui";
+import { hrefs } from "./hrefs";
+import { nAssets, nPackages, WORDS } from "@/lib/concept/words";
 
 /** Light table of workstreams — scales to 30+ rows */
-export function WorkstreamTable({ account, items, showBatch, hrefFor = hrefs.workstream }: { account: Account; items: Workstream[]; showBatch?: boolean; hrefFor?: (id: string) => string }) {
+export function WorkstreamTable({
+  account,
+  items,
+  showBatch,
+  hrefFor = hrefs.workstream,
+}: {
+  account: Account;
+  items: Workstream[];
+  showBatch?: boolean;
+  hrefFor?: (id: string) => string;
+}) {
   return (
     <table className="w-full table-fixed">
-      <thead className="border-b border-cq-border-light">
+      <thead className="border-b border-border-light">
         <tr>
-          <th className={cn(th, 'w-[30%]')}>Workstream</th>
-          {showBatch && <th className={cn(th, 'w-[16%]')}>Batch</th>}
-          <th className={cn(th, 'w-36')}>Progress</th>
+          <th className={cn(th, "w-[30%]")}>{WORDS.Package}</th>
+          {showBatch && <th className={cn(th, "w-[16%]")}>Batch</th>}
+          <th className={cn(th, "w-36")}>Progress</th>
           <th className={th}>Next</th>
-          <th className={cn(th, 'w-36')}>With</th>
+          <th className={cn(th, "w-36")}>With</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-cq-border-light">
+      <tbody className="divide-y divide-border-light">
         {items.map((w) => {
-          const total = activeProjects(w).length
-          const done = doneCount(w)
-          const mine = yourNeeds(w).length
+          const total = activeProjects(w).length;
+          const done = doneCount(w);
+          const mine = yourNeeds(w).length;
           return (
-            <tr key={w.id} className="hover:bg-cq-bg/60">
+            <tr key={w.id} className="hover:bg-bg-container-grey/60">
               <td className={td}>
-                <Link href={hrefFor(w.id)} className="font-normal hover:text-cq-accent">
+                <Link href={hrefFor(w.id)} className="h8 text-text-title hover:text-text-title focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7">
                   {w.name}
                 </Link>
                 <div className="mt-1">
@@ -36,15 +56,18 @@ export function WorkstreamTable({ account, items, showBatch, hrefFor = hrefs.wor
                 </div>
               </td>
               {showBatch && (
-                <td className={cn(td, 'text-cq-text-secondary')}>
-                  <Link href={hrefs.batch(w.batchId)} className="hover:text-cq-text">
+                <td className={cn(td, "text-text-secondary")}>
+                  <Link
+                    href={hrefs.batch(w.batchId)}
+                    className="hover:text-text-primary"
+                  >
                     {getBatch(account, w.batchId)?.name}
                   </Link>
                 </td>
               )}
               <td className={td}>
                 {w.proposed ? (
-                  <span className="text-cq-text-secondary">{total} buildings</span>
+                  <span className="text-text-secondary">{nAssets(total)}</span>
                 ) : (
                   <>
                     <span className="tabular-nums">
@@ -54,47 +77,72 @@ export function WorkstreamTable({ account, items, showBatch, hrefFor = hrefs.wor
                   </>
                 )}
               </td>
-              <td className={cn(td, 'text-cq-text-secondary')}>
-                {w.owner === 'done' ? `Done ${short(w.completedOn)}` : nextLine(w) || w.now}
-                {mine > 0 && !w.proposed && <span className="ml-2 font-normal text-cq-owner-you">{mine} from you</span>}
+              <td className={cn(td, "text-text-secondary")}>
+                {w.owner === "done"
+                  ? `Done ${short(w.completedOn)}`
+                  : nextLine(w) || w.now}
+                {mine > 0 && !w.proposed && (
+                  <span className="ml-2 text-brand-7">{mine} from you</span>
+                )}
               </td>
               <td className={td}>
                 <OwnerPill owner={w.owner} />
               </td>
             </tr>
-          )
+          );
         })}
       </tbody>
     </table>
-  )
+  );
 }
 
 /** Workstreams grouped under their batch; finished batches last */
-export function GroupedByBatch({ account, items, batches }: { account: Account; items: Workstream[]; batches: Batch[] }) {
+export function GroupedByBatch({
+  account,
+  items,
+  batches,
+}: {
+  account: Account;
+  items: Workstream[];
+  batches: Batch[];
+}) {
   const groups = batches
     .map((b) => ({ b, ws: items.filter((w) => w.batchId === b.id) }))
     .filter((g) => g.ws.length > 0)
-    .sort((a, z) => Number(isBatchDone(account, a.b)) - Number(isBatchDone(account, z.b)))
-  if (!groups.length) return <p className="text-sm text-cq-text-secondary">No workstreams here yet.</p>
+    .sort(
+      (a, z) =>
+        Number(isBatchDone(account, a.b)) - Number(isBatchDone(account, z.b)),
+    );
+  if (!groups.length)
+    return (
+      <p className="p6 text-text-secondary">No {WORDS.packages} here yet.</p>
+    );
   return (
     <div className="space-y-6">
       {groups.map(({ b, ws }) => (
-        <section key={b.id} className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-          <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-cq-border-light py-4 pl-8 pr-5">
+        <section
+          key={b.id}
+          className="overflow-hidden rounded-lg border border-border-dark bg-white "
+        >
+          <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border-light py-4 pl-8 pr-5">
             <div>
-              <Link href={hrefs.batch(b.id)} className="text-base font-semibold text-cq-text hover:text-cq-accent">
+              <Link
+                href={hrefs.batch(b.id)}
+                className="h8 text-text-primary hover:text-text-primary"
+              >
                 {b.name}
               </Link>
-              <p className="mt-0.5 text-sm text-cq-text-secondary">{b.goal}</p>
+              <p className="mt-0.5 p6 text-text-secondary">{b.goal}</p>
             </div>
-            <span className="text-sm text-cq-text-secondary">
-              {b.buildingIds.length} buildings · {wsIn(account, b.id).length} workstreams
-              {b.target && ` · by ${b.target}`}
+            <span className="p6 text-text-secondary">
+              {nAssets(b.buildingIds.length)} ·{" "}
+              {nPackages(wsIn(account, b.id).length)}
+              {b.target && ` · target ${b.target}`}
             </span>
           </header>
           <WorkstreamTable account={account} items={ws} />
         </section>
       ))}
     </div>
-  )
+  );
 }

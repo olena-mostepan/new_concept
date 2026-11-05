@@ -1,15 +1,6 @@
-'use client'
-
-import { Suspense } from 'react'
-import { Page } from '@/components/concept/ui'
-import { BatchesIndex } from '@/components/concept/BatchesIndex'
+import { redirect } from "next/navigation";
+import { hrefs } from "@/components/concept/hrefs";
 
 export default function BatchesPage() {
-  return (
-    <Suspense>
-      <Page>
-        <BatchesIndex />
-      </Page>
-    </Suspense>
-  )
+  redirect(hrefs.buildings);
 }

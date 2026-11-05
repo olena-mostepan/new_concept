@@ -1,27 +1,27 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import Link from 'next/link'
-import { Calendar, Rocket, Search, Zap } from 'lucide-react'
-import { toast } from 'sonner'
-import { OWNER_LABEL } from '@/lib/concept/model'
-import { PORTFOLIO_USER } from '@/lib/customer/portfolio/mock-data'
+import * as React from "react";
+import Link from "next/link";
+import { Calendar, Rocket, Search, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { OWNER_LABEL } from "@/lib/concept/model";
+import { PORTFOLIO_USER } from "@/lib/customer/portfolio/mock-data";
 import {
   CUSTOMER_PROJECT_LIST,
   WORKSPACE_STATS,
   type CustomerProjectListRow,
-} from '@/lib/customer/workspace/mock-data'
+} from "@/lib/customer/workspace/mock-data";
 import {
   FilterSelect,
   ProjectName,
   ResponsibilityPill,
   WorkspaceStat,
-} from '@/components/customer/workspace/WorkspaceBits'
+} from "@/components/customer/workspace/WorkspaceBits";
 
 const RESPONSIBILITY_LABEL = {
   your_action: OWNER_LABEL.you,
   supplier_action: OWNER_LABEL.suppliers,
-} as const
+} as const;
 
 function matches(
   row: CustomerProjectListRow,
@@ -30,29 +30,36 @@ function matches(
   solution: string,
   status: string,
 ) {
-  if (party !== 'all' && RESPONSIBILITY_LABEL[row.responsibility] !== party) return false
-  if (solution !== 'all' && row.projectType !== solution) return false
-  if (status !== 'all' && row.status !== status) return false
-  if (!query) return true
-  return `${row.name} ${row.location}`.toLowerCase().includes(query)
+  if (party !== "all" && RESPONSIBILITY_LABEL[row.responsibility] !== party)
+    return false;
+  if (solution !== "all" && row.projectType !== solution) return false;
+  if (status !== "all" && row.status !== status) return false;
+  if (!query) return true;
+  return `${row.name} ${row.location}`.toLowerCase().includes(query);
 }
 
 export function CustomerAllProjectsView() {
-  const [search, setSearch] = React.useState('')
-  const [party, setParty] = React.useState('all')
-  const [solution, setSolution] = React.useState('all')
-  const [status, setStatus] = React.useState('all')
+  const [search, setSearch] = React.useState("");
+  const [party, setParty] = React.useState("all");
+  const [solution, setSolution] = React.useState("all");
+  const [status, setStatus] = React.useState("all");
 
-  const query = search.trim().toLowerCase()
+  const query = search.trim().toLowerCase();
   const rows = CUSTOMER_PROJECT_LIST.filter((row) =>
     matches(row, query, party, solution, status),
-  )
+  );
 
   const parties = [
-    ...new Set(CUSTOMER_PROJECT_LIST.map((row) => RESPONSIBILITY_LABEL[row.responsibility])),
-  ]
-  const types = [...new Set(CUSTOMER_PROJECT_LIST.map((row) => row.projectType))]
-  const statuses = [...new Set(CUSTOMER_PROJECT_LIST.map((row) => row.status))]
+    ...new Set(
+      CUSTOMER_PROJECT_LIST.map(
+        (row) => RESPONSIBILITY_LABEL[row.responsibility],
+      ),
+    ),
+  ];
+  const types = [
+    ...new Set(CUSTOMER_PROJECT_LIST.map((row) => row.projectType)),
+  ];
+  const statuses = [...new Set(CUSTOMER_PROJECT_LIST.map((row) => row.status))];
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl space-y-5 px-6 py-8 sm:px-8 lg:px-10">
@@ -84,8 +91,8 @@ export function CustomerAllProjectsView() {
         />
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-cq-border bg-white ">
-        <div className="flex flex-col gap-4 border-b border-cq-border px-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+      <section className="overflow-hidden rounded-lg border border-border-dark bg-white ">
+        <div className="flex flex-col gap-4 border-b border-border-dark px-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6">
           <div className="relative w-full sm:max-w-xs">
             <label htmlFor="project-search" className="sr-only">
               Search projects
@@ -96,10 +103,10 @@ export function CustomerAllProjectsView() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search..."
-              className="w-full rounded-lg border border-cq-border bg-white py-2 pl-3 pr-10 text-sm text-cq-text placeholder:text-cq-muted focus:border-[var(--cq-green)] focus:outline-none focus:ring-1 focus:ring-[var(--cq-green)]"
+              className="w-full rounded-md border border-border-dark bg-white py-2 pl-3 pr-10 p6 text-text-primary placeholder:text-text-tertiary focus:border-[var(--brand-6)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-6)]"
             />
             <Search
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cq-muted"
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
               aria-hidden
             />
           </div>
@@ -129,16 +136,16 @@ export function CustomerAllProjectsView() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] text-left text-sm">
+          <table className="w-full min-w-[880px] text-left p6">
             <thead>
-              <tr className="border-b border-cq-border bg-cq-bg/50 text-xs font-normal text-cq-text-secondary">
-                <th className="px-5 py-3 font-normal sm:px-6">Project Name</th>
-                <th className="px-3 py-3 font-normal">Location</th>
-                <th className="px-3 py-3 font-normal">Project Type</th>
-                <th className="px-3 py-3 font-normal">Project Delivery</th>
-                <th className="px-3 py-3 font-normal">Next Step</th>
-                <th className="px-3 py-3 font-normal">Responsibility</th>
-                <th className="px-5 py-3 text-right font-normal sm:px-6">Actions</th>
+              <tr className="border-b border-border-dark bg-bg-container-grey/50 p7 text-text-secondary">
+                <th className="px-5 py-3 sm:px-6">Project Name</th>
+                <th className="px-3 py-3 ">Location</th>
+                <th className="px-3 py-3 ">Project Type</th>
+                <th className="px-3 py-3 ">Project Delivery</th>
+                <th className="px-3 py-3 ">Next Step</th>
+                <th className="px-3 py-3 ">Responsibility</th>
+                <th className="px-5 py-3 text-right sm:px-6">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -146,21 +153,30 @@ export function CustomerAllProjectsView() {
                 <tr>
                   <td
                     colSpan={7}
-                    className="px-5 py-10 text-center text-sm text-cq-text-secondary sm:px-6"
+                    className="px-5 py-10 text-center p6 text-text-secondary sm:px-6"
                   >
                     No projects match this search.
                   </td>
                 </tr>
               ) : (
                 rows.map((row) => (
-                  <tr key={row.id} className="border-b border-cq-border last:border-b-0">
+                  <tr
+                    key={row.id}
+                    className="border-b border-border-dark last:border-b-0"
+                  >
                     <td className="px-5 py-4 sm:px-6">
                       <ProjectName name={row.name} href={row.href} />
                     </td>
-                    <td className="px-3 py-4 text-cq-text">{row.location}</td>
-                    <td className="px-3 py-4 text-cq-text">{row.projectType}</td>
-                    <td className="px-3 py-4 text-cq-text">{row.delivery}</td>
-                    <td className="px-3 py-4 text-cq-text-secondary">
+                    <td className="px-3 py-4 text-text-primary">
+                      {row.location}
+                    </td>
+                    <td className="px-3 py-4 text-text-primary">
+                      {row.projectType}
+                    </td>
+                    <td className="px-3 py-4 text-text-primary">
+                      {row.delivery}
+                    </td>
+                    <td className="px-3 py-4 text-text-secondary">
                       Next: {row.nextStep}
                     </td>
                     <td className="px-3 py-4">
@@ -178,7 +194,9 @@ export function CustomerAllProjectsView() {
                         <button
                           type="button"
                           className="btn-secondary-sm"
-                          onClick={() => toast.message('Status opens here in production')}
+                          onClick={() =>
+                            toast.message("Status opens here in production")
+                          }
                         >
                           View status
                         </button>
@@ -192,5 +210,5 @@ export function CustomerAllProjectsView() {
         </div>
       </section>
     </div>
-  )
+  );
 }

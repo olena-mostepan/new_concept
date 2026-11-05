@@ -18,7 +18,7 @@ export function Tag({
   children,
 }: {
   type?: keyof typeof TYPE
-  size?: 'small' | 'big'
+  size?: 'xsmall' | 'small' | 'big'
   dot?: boolean
   children: ReactNode
 }) {
@@ -27,7 +27,11 @@ export function Tag({
     <span
       className={cn(
         'inline-flex w-fit items-center gap-1.5 rounded-full border whitespace-nowrap',
-        size === 'big' ? 'h-8 px-3 text-sm font-semibold' : 'h-6 px-2.5 h9',
+        size === 'big'
+          ? 'h-8 px-3 text-sm font-semibold'
+          : size === 'xsmall'
+            ? 'h-5 px-1.5 gap-1 h9'
+            : 'h-6 px-2.5 h9',
         TYPE[type],
       )}
     >

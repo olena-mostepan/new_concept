@@ -9,7 +9,7 @@ export default function SupplierJobDeliveryPage() {
     <Suspense
       fallback={
         <div className="mx-auto w-full max-w-screen-2xl px-6 py-8 sm:px-8 lg:px-10">
-          <div className="h-28 animate-pulse rounded-xl border border-cq-border bg-white" />
+          <div className="h-28 animate-pulse rounded-lg border border-cq-border bg-white" />
         </div>
       }
     >

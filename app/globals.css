@@ -16,6 +16,7 @@
   --white: #ffffff;
   --brand-1: #fdeee9;
   --brand-2: #fbddd2;
+  --brand-3: #f6bca5;
   --brand-6: #d93f0b;
   --brand-7: #b5360a;
   --brand-8: #9a2e08;
@@ -49,7 +50,9 @@
   --border-active: var(--brand-6);
   --bg-container: var(--white);
   --bg-container-grey: var(--black-1);
+  --chip-surface: var(--color-bg-container);
   --bg-accent: var(--brand-1);
+  --bg-scrim: rgba(30, 40, 50, 0.25);
   --btn-primary: var(--brand-6);
   --accent-hover: var(--brand-7);
   --accent-pressed: var(--brand-8);
@@ -74,39 +77,10 @@
   --status-info-border: var(--blue-2);
   --status-info-mark: var(--blue-mark);
   --status-info-text: var(--blue-text);
-  --elevation-floating: 0 4px 30px 10px rgba(82, 82, 82, 0.06);
+  --elevation-floating: 0 8px 24px rgba(30, 40, 50, 0.12);
   --elevation-overlay: 0 4px 30px 10px rgba(82, 82, 82, 0.25);
-  --focus-ring: 0 0 0 3px var(--black-2);
+  --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px var(--black-7);
   --halo-current: 0 0 0 4px var(--black-2);
-
-  /* Legacy names. Removed once nothing references them. */
-  --cq-text: var(--text-primary);
-  --cq-text-secondary: var(--text-secondary);
-  --cq-muted: var(--text-tertiary);
-  --cq-border: var(--border-dark);
-  --cq-border-light: var(--border-light);
-  --cq-bg: var(--bg-container-grey);
-  --cq-accent: var(--brand-6);
-  --cq-green: var(--brand-6);
-  --cq-owner-you: var(--brand-6);
-  --cq-accent-hover: var(--brand-7);
-  --cq-green-hover: var(--brand-7);
-  --cq-accent-muted: var(--bg-accent);
-  --cq-accent-muted-strong: var(--brand-2);
-  --cq-owner-you-bg: var(--bg-accent);
-  --cq-owner-cquel: var(--text-secondary);
-  --cq-owner-cquel-bg: var(--black-1);
-  --cq-owner-cquel-border: var(--border-dark);
-  --cq-owner-suppliers: var(--text-secondary);
-  --cq-owner-suppliers-bg: var(--black-1);
-  --cq-done: var(--text-secondary);
-  --cq-done-bg: var(--black-2);
-  --cq-dark: var(--brand-8);
-  --cq-link: var(--status-info-text);
-  --cq-amber: var(--amber-mark);
-  --cq-amber-bg: var(--amber-1);
-  --color-text-danger: var(--text-error);
-  --color-background-secondary: var(--bg-container-grey);
 
   --background: var(--bg-container-grey);
   --foreground: var(--text-primary);
@@ -143,6 +117,10 @@
   --sidebar-ring: var(--black-6);
 }
 
+.surface-grey {
+  --chip-surface: var(--color-bg-container-grey);
+}
+
 @theme inline {
   --font-sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
@@ -159,8 +137,10 @@
   --color-bg-container: var(--bg-container);
   --color-bg-container-grey: var(--bg-container-grey);
   --color-bg-accent: var(--bg-accent);
+  --color-bg-scrim: var(--bg-scrim);
   --color-brand-1: var(--brand-1);
   --color-brand-2: var(--brand-2);
+  --color-brand-3: var(--brand-3);
   --color-brand-6: var(--brand-6);
   --color-brand-7: var(--brand-7);
   --color-brand-8: var(--brand-8);
@@ -192,23 +172,6 @@
   --color-icon-default: var(--icon-default);
   --color-icon-disabled: var(--icon-disabled);
   --color-icon-active: var(--icon-active);
-  --color-cq-accent: var(--cq-accent);
-  --color-cq-accent-hover: var(--cq-accent-hover);
-  --color-cq-owner-you: var(--cq-owner-you);
-  --color-cq-owner-cquel: var(--cq-owner-cquel);
-  --color-cq-owner-suppliers: var(--cq-owner-suppliers);
-  --color-cq-done: var(--cq-done);
-  --color-cq-green: var(--cq-green);
-  --color-cq-green-hover: var(--cq-green-hover);
-  --color-cq-dark: var(--cq-dark);
-  --color-cq-text: var(--cq-text);
-  --color-cq-text-secondary: var(--cq-text-secondary);
-  --color-cq-link: var(--cq-link);
-  --color-cq-border: var(--cq-border);
-  --color-cq-border-light: var(--cq-border-light);
-  --color-cq-bg: var(--cq-bg);
-  --color-cq-muted: var(--cq-muted);
-  --color-cq-amber: var(--cq-amber);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -235,8 +198,8 @@
   --color-chart-5: var(--chart-5);
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  --radius-lg: 12px;
+  --radius-image: 10px;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -249,7 +212,11 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+  :focus-visible {
+    outline: 2px solid var(--black-7);
+    outline-offset: 2px;
   }
   body {
     @apply bg-background text-foreground;
@@ -259,22 +226,27 @@
 /* Shared button system — use with <button>, <a>, or <Link> */
 @layer components {
   .btn-primary {
-    @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-brand-6 px-4 text-sm font-semibold text-white outline-none transition-colors hover:bg-brand-7 active:bg-brand-8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-6 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
+    @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-brand-6 px-4 text-white outline-none transition-colors hover:bg-brand-7 active:bg-brand-8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
   }
   .btn-secondary {
-    @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border-dark bg-bg-container px-4 text-sm font-semibold text-text-primary outline-none transition-colors hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-6 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
+    @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border-dark bg-bg-container px-4 text-text-primary outline-none transition-colors hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
   }
   .btn-primary-sm {
-    @apply inline-flex h-8 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-brand-6 px-3 text-sm font-semibold text-white outline-none transition-colors hover:bg-brand-7 active:bg-brand-8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-6 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
+    @apply inline-flex h-8 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-brand-6 px-3 text-white outline-none transition-colors hover:bg-brand-7 active:bg-brand-8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
   }
   .btn-secondary-sm {
-    @apply inline-flex h-8 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border-dark bg-bg-container px-3 text-sm font-semibold text-text-primary outline-none transition-colors hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-6 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
+    @apply inline-flex h-8 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border-dark bg-bg-container px-3 text-text-primary outline-none transition-colors hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4;
   }
   .btn-link {
-    @apply inline-flex items-center text-sm font-normal text-text-primary underline underline-offset-2 transition-colors hover:text-text-secondary;
+    @apply inline-flex items-center text-text-primary underline decoration-border-dark underline-offset-2 transition-colors hover:text-text-primary hover:decoration-text-primary;
+  }
+  .btn-primary, .btn-secondary, .btn-primary-sm, .btn-secondary-sm, .btn-link {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
   }
 
-  .h3, .h4, .h5, .h6, .h7, .h8, .h9, .p6, .p7, .s3, .l1, .l1-strong {
+  .h3, .h4, .h5, .h6, .h7, .h8, .h9, .p6, .p7, .s3 {
     font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   }
   .h3, .h4, .h5, .h6, .h7, .h8, .h9 { text-transform: none; letter-spacing: normal; }
@@ -288,8 +260,6 @@
   .h9 { font-size: 12px; line-height: 16px; font-weight: 600; }
   .p7 { font-size: 12px; line-height: 16px; font-weight: 400; }
   .s3 { font-size: 12px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-  .l1 { font-size: 13px; line-height: 18px; font-weight: 400; }
-  .l1-strong { font-size: 13px; line-height: 18px; font-weight: 600; }
   .shadow-floating { box-shadow: var(--elevation-floating); }
   .shadow-overlay { box-shadow: var(--elevation-overlay); }
 }

@@ -66,7 +66,7 @@ export default function AiQuestionDetailPage() {
         <QuestionPromptSection question={question.questionText} />
 
         {visible.length > 0 ? (
-          <section className="rounded-xl border border-cq-border bg-white p-5 sm:p-6">
+          <section className="rounded-lg border border-cq-border bg-white p-5 sm:p-6">
             <h2 className="text-base font-semibold text-cq-text">Supplier answers</h2>
             <div className="mt-3">
               <SupplierAnswerList
@@ -78,7 +78,7 @@ export default function AiQuestionDetailPage() {
             </div>
           </section>
         ) : (
-          <section className="rounded-xl border border-dashed border-cq-border bg-cq-bg/40 px-5 py-8 text-center sm:p-6">
+          <section className="rounded-lg border border-dashed border-cq-border bg-cq-bg/40 px-5 py-8 text-center sm:p-6">
             <p className="text-sm font-semibold text-cq-text">No answers yet</p>
             <p className="mt-1 text-sm text-cq-text-secondary">
               Suppliers have not returned extracted values for this question.

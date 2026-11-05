@@ -68,7 +68,7 @@ export default function SupplierAnswerPage() {
   return (
     <div className="mx-auto w-full max-w-[720px] px-6 pb-20 pt-8 sm:px-8">
       <article className="space-y-5">
-        <header className="flex gap-4 rounded-xl border border-cq-border bg-white p-5 sm:p-6">
+        <header className="flex gap-4 rounded-lg border border-cq-border bg-white p-5 sm:p-6">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cq-border bg-cq-bg">
             <Building2 className="h-6 w-6 text-cq-text-secondary" aria-hidden />
           </div>
@@ -80,7 +80,7 @@ export default function SupplierAnswerPage() {
           </div>
         </header>
 
-        <section className="rounded-xl border border-[rgba(28,117,188,0.12)] bg-[rgba(28,117,188,0.06)] px-5 py-4 sm:p-6">
+        <section className="rounded-lg border border-[rgba(28,117,188,0.12)] bg-[rgba(28,117,188,0.06)] px-5 py-4 sm:p-6">
           <p className="text-sm font-semibold text-cq-text">
             Sent {item.raisedAgo} by {item.raisedBy}:
           </p>
@@ -89,7 +89,7 @@ export default function SupplierAnswerPage() {
           </p>
         </section>
 
-        <section className="rounded-xl border border-cq-border bg-white p-5 sm:p-6">
+        <section className="rounded-lg border border-cq-border bg-white p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <h2 className="text-base font-semibold text-cq-text">Context</h2>
             {canAnswer && !inlineReply ? (
@@ -145,7 +145,7 @@ export default function SupplierAnswerPage() {
         </section>
 
         {!canAnswer ? (
-          <p className="rounded-xl border border-cq-border bg-white p-4 text-sm text-cq-text-secondary">
+          <p className="rounded-lg border border-cq-border bg-white p-4 text-sm text-cq-text-secondary">
             {item.status === 'applied'
               ? 'This clarification was accepted — no further action needed.'
               : item.status === 'closed'

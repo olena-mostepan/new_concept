@@ -1,4 +1,5 @@
-import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Need, type Owner, type Phase, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
+import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Building, type Need, type Owner, type Phase, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
+import { nAssets, nPackages, WORDS } from './words'
 
 /** Customers only see batches once a plan has been shared with them */
 export const customerBatches = (a: Account) => a.batches.filter((b) => b.planState !== 'draft')
@@ -10,8 +11,8 @@ export const WORKSTREAM_ALIAS: Record<string, string> = {
   'ev-ind': 'ev-voltreny',
   'ev-tender': 'ev-voltreny',
   'solar-ind': 'solar-de',
-  'solar-frbe-scope': 'solvarek',
-  'solvarek-quote': 'solvarek',
+  'solar-frbe-scope': 'hp-ind',
+  'solvarek-quote': 'hp-ind',
 }
 
 export const getWorkstream = (a: Account, id: string) => a.workstreams.find((w) => w.id === (WORKSTREAM_ALIAS[id] ?? id))
@@ -66,31 +67,16 @@ export function asOfPhase(w: Workstream, phase: Phase): Workstream {
   }
 }
 
-/** Phase named in the URL, or the current one. A planned phase stays unselectable. */
-export function selectedPhase(w: Workstream, requested: string | null): Phase {
-  const current = currentPhase(w)
-  if (!requested) return current
-  const phase = w.phases.find((item) => item.service === requested)
-  if (!phase) return current
-  if (phase.state === 'planned' && !(proposedStart(w) && phase.service === w.phases[0]?.service)) return current
-  return phase
-}
-
 /** Body of the workstream page: the live record, or a finished phase when one is open. */
 export function workstreamView(w: Workstream, phase: Phase): Workstream {
   if (phase.state === 'done' && phase.service !== w.service) return asOfPhase(w, phase)
   return w
 }
 
-/** Every phase is still planned, so the first card is the next one. */
-export function proposedStart(w: Workstream): boolean {
-  return Boolean(w.proposed) && w.phases.length > 0 && w.phases.every((phase) => phase.state === 'planned')
-}
-
 /** Header line under the workstream name. Batch name first, then only facts the platform holds. */
 export function workstreamMeta(w: Workstream, batchName?: string): string {
   const n = w.projects.length
-  const buildings = noun(n, 'building', 'buildings')
+  const buildings = nAssets(n)
   const parts = batchName ? [batchName, buildings] : [buildings]
   if (w.service === 'tender') {
     const size = totalCapacity(w)
@@ -218,6 +204,32 @@ export const doneCount = (w: Workstream) => {
   return w.projects.filter((p) => p.step === last && !p.dropped).length
 }
 export const activeProjects = (w: Workstream) => w.projects.filter((p) => !p.dropped)
+
+/** Same order as the delivery Assets card: dates to confirm, then complete, then in progress, then awaiting start. */
+export function packageAssetRank(w: Workstream, row: ProjectRow): number {
+  if (w.service !== 'delivery') return 0
+  const finished = w.owner === 'done' || row.step === 5
+  const awaiting = row.step === 0 && !row.delivery?.phases.start?.on
+  if (row.delivery?.confirmPhase) return 0
+  if (finished) return 1
+  if (awaiting) return 3
+  return 2
+}
+
+/** Active assets in the order the package page's Assets card shows them. */
+export function packageAssets(w: Workstream): ProjectRow[] {
+  const rows = activeProjects(w)
+  if (w.service !== 'delivery') return rows
+  return [...rows].sort((a, b) => packageAssetRank(w, a) - packageAssetRank(w, b))
+}
+
+/** Live customer workstreams waiting on the customer, newest change first. */
+export function yourActionWorkstreams(a: Account): Workstream[] {
+  const ids = new Set(customerBatches(a).map((batch) => batch.id))
+  return a.workstreams
+    .filter((w) => !w.proposed && w.owner === 'you' && ids.has(w.batchId))
+    .sort((a, b) => parse(lastChangedOn(b) || '1 Jan 2000') - parse(lastChangedOn(a) || '1 Jan 2000') || a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
+}
 
 /** Distinct projects (building × solution) in a batch */
 export const projectCount = (a: Account, b: Batch) =>
@@ -482,11 +494,11 @@ export function batchCells(a: Account, b: Batch): BatchCell[] {
 
 export function batchSummary(a: Account, b: Batch) {
   const n = wsIn(a, b.id).filter((w) => !w.proposed).length
-  const bits = [noun(n, 'workstream', 'workstreams')]
-  if (b.target) bits.push(`by ${b.target}`)
+  const bits = [nPackages(n)]
+  if (b.target) bits.push(`target ${b.target}`)
   const projects = liveProjectCount(a, b)
-  const detail = [`${b.buildingIds.length} buildings`, noun(projects, 'project', 'projects')]
-  if (b.target) detail.push(`by ${b.target}`)
+  const detail = [nAssets(b.buildingIds.length), noun(projects, 'project', 'projects')]
+  if (b.target) detail.push(`target ${b.target}`)
   const line = [b.goal, ...detail].join(' · ')
   return { goal: b.goal, meta: bits.join(' · '), line, detail: line }
 }
@@ -536,19 +548,29 @@ function latestDone(ws: Workstream[]) {
 
 export function routeStages(a: Account, b: Batch): RouteStage[] {
   const kickoff = b.planState !== 'live'
-  const start: RouteStage = {
-    id: 'start',
-    label: 'Getting started',
-    state: kickoff ? 'now' : 'done',
-    caption: kickoff ? 'Now · plan ready' : `Agreed ${short(b.planAgreed)}`,
-  }
+  const rows = SERVICES.map((s) => ({
+    s,
+    ws: wsIn(a, b.id).filter((w) => w.service === s.id && !w.proposed),
+  }))
+  const laterStarted = (index: number) =>
+    rows.slice(index + 1).some(({ s, ws }) => b.route.includes(s.id) && ws.length > 0)
   let nextAssigned = false
-  const services: RouteStage[] = SERVICES.map((s) => {
+  return rows.map(({ s, ws }, index) => {
     if (!b.route.includes(s.id)) {
       const label = s.id === 'tender' || s.id === 'pricing' ? `or ${s.label}` : s.label
-      return { id: s.id, label, state: 'skip', caption: 'Not needed' }
+      return { id: s.id, label, state: 'skip' as const, caption: 'Not required' }
     }
-    const ws = wsIn(a, b.id).filter((w) => w.service === s.id && !w.proposed)
+    const passed = phasesIn(a, b, s.id).filter(({ workstream, phase }) => phase.state === 'done' && (workstream.service !== s.id || isCompleted(workstream))).length
+    const movedOn = laterStarted(index) && (ws.length === 0 || ws.every((w) => w.owner === 'done'))
+    if (!kickoff && movedOn) {
+      return {
+        id: s.id,
+        label: s.label,
+        state: 'done' as const,
+        caption: noun(passed, 'project', 'projects'),
+        sub: `${passed} passed through`,
+      }
+    }
     if (kickoff || !ws.length) {
       const state: StageState = nextAssigned ? 'planned' : 'next'
       nextAssigned = true
@@ -556,19 +578,18 @@ export function routeStages(a: Account, b: Batch): RouteStage[] {
     }
     const doneWs = ws.filter((w) => w.owner === 'done')
     if (doneWs.length === ws.length) {
-      return { id: s.id, label: s.label, state: 'done', caption: `Done ${short(latestDone(ws))}` }
+      return { id: s.id, label: s.label, state: 'done' as const, caption: `Done ${short(latestDone(ws))}`, sub: routeSub(a, b, s.id) }
     }
     const liveWs = ws.filter((w) => w.owner !== 'done')
     const projects = new Set(liveWs.flatMap(projectKeys)).size
     return {
       id: s.id,
       label: s.label,
-      state: 'now',
+      state: 'now' as const,
       caption: noun(projects, 'project', 'projects'),
       sub: routeSub(a, b, s.id),
     }
   })
-  return [start, ...services]
 }
 
 function pilotPanels(a: Account, b: Batch): RoutePanel[] {
@@ -590,7 +611,7 @@ function pilotPanels(a: Account, b: Batch): RoutePanel[] {
   const first = b.lead?.split(' ')[0]
   panels.push({
     stageId: 'indicative',
-      heading: 'Indicative pricing needs',
+      heading: 'Estimates needs',
     solid: b.planState === 'live',
       span: 1,
     items: [
@@ -695,7 +716,7 @@ export function routePanels(a: Account, b: Batch): RoutePanel[] {
 export function routeAside(a: Account, b: Batch, variant: 'dashboard' | 'page') {
   if (variant === 'dashboard') {
     const n = wsIn(a, b.id).length
-    return `${b.buildingIds.length} buildings · ${noun(n, 'workstream', 'workstreams')}`
+    return `${nAssets(b.buildingIds.length)} · ${nPackages(n)}`
   }
   return `${noun(liveProjectCount(a, b), 'project', 'projects')} in progress`
 }
@@ -735,7 +756,7 @@ export function byCompleted(list: Workstream[]) {
   return [...list].sort((a, b) => (b.completedOn ? parse(b.completedOn) : 0) - (a.completedOn ? parse(a.completedOn) : 0))
 }
 
-function liveProjectCount(a: Account, b: Batch) {
+export function liveProjectCount(a: Account, b: Batch) {
   return new Set(wsIn(a, b.id).filter(isLive).flatMap(projectKeys)).size
 }
 
@@ -788,7 +809,7 @@ export function decisionLabel(p: ProjectRow): string {
   if (!p.decision || p.decision === 'waiting') return '—'
   if (p.decision === 'no' && p.paybackYears === 'over12') return 'Not proceeding — payback over 12 years'
   if (p.decision === 'no') return `Not now · ${short(p.decidedOn)}`
-  if (p.decision === 'scope') return `To Scope definition · ${short(p.decidedOn)}`
+  if (p.decision === 'scope') return `To Planning · ${short(p.decidedOn)}`
   return `Going ahead · ${short(p.decidedOn)}`
 }
 
@@ -802,7 +823,7 @@ export function decidedLine(w: Workstream): string {
   const when = short(w.completedOn)
   const tender = w.projects.filter((p) => p.destination === 'tender').length
   const scopeN = w.projects.filter((p) => p.destination === 'scope').length
-  if (tender && scopeN) return `You decided ${when} — ${tender} to Tender, ${scopeN} to Scope definition`
+  if (tender && scopeN) return `You decided ${when} — ${tender} to Tender, ${scopeN} to Planning`
   if (tender) return `You decided ${when} — all ${tender} to Tender`
   return w.outcome ? `${w.outcome} — ${when}` : `You decided ${when}`
 }
@@ -923,7 +944,7 @@ function stepPanel(a: Account, w: Workstream, i: number): StepColumn['panel'] {
     if (w.owner === 'done' && (scopeN || w.projects.some((p) => p.destination))) {
       const tender = w.projects.filter((p) => p.destination === 'tender').length
       const toScope = w.projects.filter((p) => p.destination === 'scope').length
-      text = toScope ? `${tender} to Tender, ${toScope} to Scope definition` : `All ${tender} to Tender`
+      text = toScope ? `${tender} to Tender, ${toScope} to Planning` : `All ${tender} to Tender`
     } else if (go && no) text = `${go} going ahead, ${no} not proceeding`
     else if (go) text = `${go} going ahead`
     else text = `${no} not proceeding`
@@ -987,7 +1008,7 @@ export function recordedVisits(w: Workstream): Visit[] {
 export function surveyLine(w: Workstream): string {
   const visits = recordedVisits(w)
   const note = w.surveyNote
-  if (!visits.length) return note ? `Not needed — ${note}` : 'Not needed'
+  if (!visits.length) return note ? `Not required — ${note}` : 'Not required'
   const done = visits.filter((v) => v.state === 'done').length
   const booked = visits.filter((v) => v.state === 'booked').length
   if (visits.every((v) => v.state === 'unbooked')) return `To be booked — ${visits.length}${note ? `, ${note}` : ''}`
@@ -1016,7 +1037,7 @@ export function visitBucket(w: Workstream): 'unbooked' | 'booked' | 'done' | nul
 }
 
 export function visitStateLabel(v: Visit): string {
-  if (v.state === 'skip') return 'Not needed'
+  if (v.state === 'skip') return 'Not required'
   if (v.state === 'unbooked') return 'Not booked yet'
   if (v.state === 'booked') return v.note ? `Booked — ${v.note}` : 'Booked — date to confirm'
   if (v.on) return `Done ${short(v.on)}`
@@ -1188,7 +1209,7 @@ export function deliveryLine(w: Workstream): string {
 
 export function deliveryProjectsAside(w: Workstream): string {
   const confirm = datesToConfirm(w)
-  return confirm ? `${w.projects.length} · ${confirm} to confirm` : String(w.projects.length)
+  return confirm ? `${w.projects.length} · ${noun(confirm, 'date', 'dates')} to confirm` : String(w.projects.length)
 }
 
 export function deliverySteps(a: Account, w: Workstream): StepColumn[] {
@@ -1376,7 +1397,7 @@ function scopePanel(a: Account, w: Workstream, i: number): StepColumn['panel'] {
       }
     }
     if (w.projects.length && w.projects.every((p) => p.visit?.state === 'skip')) {
-      return { heading: 'Not needed', tone: 'muted', items: [{ mark: 'tick', text: w.surveyNote ? w.surveyNote[0].toUpperCase() + w.surveyNote.slice(1) : 'Not needed' }] }
+      return { heading: 'Not required', tone: 'muted', items: [{ mark: 'tick', text: w.surveyNote ? w.surveyNote[0].toUpperCase() + w.surveyNote.slice(1) : 'Not required' }] }
     }
     const survey = w.needs.find((need) => need.owner === 'cquel' && !need.received)
     if (survey && w.projects.some((p) => p.visit?.state === 'unbooked')) {
@@ -1428,6 +1449,125 @@ export function priorProject(a: Account, w: Workstream, buildingId: string) {
   )
   const row = earlier?.projects.find((p) => p.buildingId === buildingId)
   return earlier && row ? { workstream: earlier, row } : null
+}
+
+/** Customer-facing solution name. LED stays LED; "EV Charging" reads "EV charging". */
+export function solutionName(id: SolutionId): string {
+  if (id === 'led') return 'LED'
+  if (id === 'ev') return 'EV charging'
+  return SOLUTIONS[id]
+}
+
+/** "Pilot · 8 cinemas" → cinemas. Otherwise assets. */
+export function placeNoun(batch: Batch): { one: string; many: string } {
+  const match = batch.name.match(/\d+\s+(\p{L}+)\s*$/u)
+  if (!match) return { one: WORDS.asset, many: WORDS.assets }
+  const many = match[1].toLowerCase()
+  const one = many.endsWith('s') ? many.slice(0, -1) : many
+  return { one, many }
+}
+
+export function foldText(value: string): string {
+  return value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
+export type BuildingProject = { workstream: Workstream; row: ProjectRow }
+
+/** Live projects at one building, across customer batches. */
+export function projectsAtBuilding(a: Account, buildingId: string): BuildingProject[] {
+  const batches = new Set(customerBatches(a).map((b) => b.id))
+  return a.workstreams.flatMap((w) => {
+    if (!batches.has(w.batchId)) return []
+    const row = activeProjects(w).find((p) => p.buildingId === buildingId)
+    return row ? [{ workstream: w, row }] : []
+  })
+}
+
+/** Dates that belong to this building, not the rest of its workstream.
+ *  A history line, or a delivery date taken from an invoice and still to confirm.
+ *  A confirmed plan date or a site-check date does not light the dot on its own.
+ */
+export function buildingLastChangedOn(a: Account, buildingId: string): string {
+  const found: string[] = []
+  for (const { row } of projectsAtBuilding(a, buildingId)) {
+    for (const item of row.history ?? []) if (item.date) found.push(item.date)
+    for (const phase of Object.values(row.delivery?.phases ?? {})) {
+      if (phase?.on && phase.state === 'from_invoice') found.push(phase.on)
+    }
+  }
+  if (!found.length) return ''
+  return found.reduce((best, d) => (days(d) < days(best) ? d : best))
+}
+
+/** Asset names whose building name, address or city contains the query. Null when there is no query. */
+export function assetMatchNames(a: Account, projects: ProjectRow[], needle: string): string[] | null {
+  const q = needle.trim().toLowerCase()
+  if (!q) return null
+  const names: string[] = []
+  for (const project of projects) {
+    const building = getBuilding(a, project.buildingId)
+    const hay = `${building.name} ${building.address ?? ''} ${building.city}`.toLowerCase()
+    if (hay.includes(q) && !names.includes(building.name)) names.push(building.name)
+  }
+  return names
+}
+
+/** "Kervelstraat 14, Am Hafen 12", or "Kervelstraat 14 and 3 more". */
+export function assetMatchLine(names: string[]): string {
+  if (names.length <= 2) return names.join(', ')
+  return `${names[0]} and ${names.length - 1} more`
+}
+
+/** Within 7 days of today, counting today. */
+export function buildingChanged(a: Account, buildingId: string): boolean {
+  const on = buildingLastChangedOn(a, buildingId)
+  if (!on) return false
+  const age = days(on)
+  return age >= 0 && age <= 7
+}
+
+export type BuildingListRow = { building: Building; batch: Batch; projects: BuildingProject[] }
+
+/** Changed buildings first, then buildings with a site photo, then newer batches, then A–Z. */
+export function buildingList(a: Account): BuildingListRow[] {
+  const batches = customerBatches(a)
+  const rank = new Map(batches.map((b, i) => [b.id, i]))
+  const rows: BuildingListRow[] = []
+  for (const batch of batches) {
+    for (const id of batch.buildingIds) {
+      const building = a.buildings.find((item) => item.id === id)
+      if (!building) continue
+      rows.push({ building, batch, projects: projectsAtBuilding(a, id).filter((item) => item.workstream.batchId === batch.id) })
+    }
+  }
+  return rows.sort((aRow, bRow) => {
+    const aChanged = buildingChanged(a, aRow.building.id)
+    const bChanged = buildingChanged(a, bRow.building.id)
+    if (aChanged !== bChanged) return aChanged ? -1 : 1
+    if (aChanged && bChanged) {
+      const age = days(buildingLastChangedOn(a, aRow.building.id)) - days(buildingLastChangedOn(a, bRow.building.id))
+      if (age !== 0) return age
+    }
+    const aPhoto = Boolean(aRow.building.photo)
+    const bPhoto = Boolean(bRow.building.photo)
+    if (aPhoto !== bPhoto) return aPhoto ? -1 : 1
+    const batchOrder = (rank.get(bRow.batch.id) ?? 0) - (rank.get(aRow.batch.id) ?? 0)
+    if (batchOrder !== 0) return batchOrder
+    return aRow.building.name.localeCompare(bRow.building.name, 'en', { sensitivity: 'base' })
+  })
+}
+
+/** Furthest service wins. A finished workstream counts as past Delivery. */
+export function mostAdvancedProject(projects: BuildingProject[]): BuildingProject | undefined {
+  if (!projects.length) return undefined
+  return [...projects].sort((a, b) => projectRank(b.workstream) - projectRank(a.workstream) || days(a.workstream.startedOn ?? '') - days(b.workstream.startedOn ?? ''))[0]
+}
+
+function projectRank(w: Workstream): number {
+  if (isCompleted(w)) return SERVICES.length + 1
+  const phase = w.phases.find((item) => item.state === 'now') ?? currentPhase(w)
+  const index = SERVICES.findIndex((item) => item.id === phase?.service)
+  return index < 0 ? 0 : index
 }
 
 export const needsByStage = (a: Account, b: Batch) => {

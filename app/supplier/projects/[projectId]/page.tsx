@@ -50,7 +50,7 @@ export default function SupplierProjectPage() {
 function SupplierProjectPageFallback() {
   return (
     <div className="mx-auto w-full max-w-screen-2xl px-6 py-8 sm:px-8 lg:px-10">
-      <div className="h-24 animate-pulse rounded-xl border border-cq-border bg-white" />
+      <div className="h-24 animate-pulse rounded-lg border border-cq-border bg-white" />
     </div>
   )
 }
@@ -118,7 +118,7 @@ function SupplierProjectPageInner() {
   return (
     <div className="mx-auto w-full max-w-screen-2xl px-6 py-8 sm:px-8 lg:px-10">
       <article className="space-y-6">
-        <header className="flex gap-4 rounded-xl border border-cq-border bg-white p-5 sm:p-6">
+        <header className="flex gap-4 rounded-lg border border-cq-border bg-white p-5 sm:p-6">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cq-border bg-cq-bg">
             <Building2 className="h-6 w-6 text-cq-text-secondary" aria-hidden />
           </div>
@@ -197,7 +197,7 @@ function SupplierProjectPageInner() {
           </div>
         )}
 
-        <div className={cn(screenTab !== 'questions' && 'rounded-xl border border-cq-border bg-white p-6 ')}>
+        <div className={cn(screenTab !== 'questions' && 'rounded-lg border border-cq-border bg-white p-6 ')}>
           {screenTab === 'questions' && mounted ? (
             <SupplierQuestionsTab
               projectId={projectId}

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 29, 05 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 30, 05 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -256,15 +256,18 @@ The slim top bar on detail pages: Back on the left, the account tools on the rig
 
 ## DetailsGrid
 
-Label-over-value facts inside a card, such as contract details or an ops record.
+Label-over-value facts inside a card: contract details, this asset's figures on a service tab, an ops record.
 
-### Rules
-Label `p7` text-secondary, value `h8` text-primary, 4 apart. Four columns (two on phones), 12 between rows, 24 between columns. Links (batch, package) are underlined.
-
-Not in customer page headers: batch, package and asset pages show their facts in PageHeader's facts row.
+### Rules (the same as PageHeader's facts row)
+- Each fact: the label in `p7` text-tertiary, 2 above the value in `p6` text-primary.
+- Optional third line inside cards only: `detail`, in `p7` text-secondary, 2 below the value ("from the site check"). Never in page headers.
+- Facts sit in a row: each at least 160 wide, 40 between facts (measured from the end of the wider line), 16 between rows when they wrap. Short facts therefore start on a 200 rhythm, so facts line up from card to card and with the page header.
+- A fact with no value is left out; with none left, nothing renders.
+- Links (batch, package) are underlined.
+- In page headers, PageHeader draws the same row itself; don't put a DetailsGrid there.
 
 ### The consumer provides
-`items`: `[{label, value, href?}]`.
+`items`: `[{label, value, detail?, href?}]`.
 
 ---
 
@@ -567,7 +570,7 @@ One header for the batch, package and asset pages: breadcrumb, type label, title
 
 ### Rules
 - **Type label:** TypeLabel for `kind` 'batch', 'package' or 'asset'. Its "i" never makes the row taller.
-- **Facts row:** each fact is a label in `p7` text-tertiary, 2 above a value in `p6` text-primary. 40 between facts, 16 between rows when they wrap. Two lines only: no source line. A fact with no value is left out; with no facts, the row is left out.
+- **Facts row:** each fact is a label in `p7` text-tertiary, 2 above a value in `p6` text-primary. Each fact is at least 160 wide; 40 between facts (from the end of the wider line), 16 between rows when they wrap. The same rule as DetailsGrid, so facts line up on every page. Two lines only: no source line. A fact with no value is left out; with no facts, the row is left out.
 - **Facts per page:**
   - Batch: Goal · Solution · Assets · Packages · Target (only when set, "Dec 2027", never shown as late).
   - Package: Batch · Solution · Assets · Supplier (once chosen).

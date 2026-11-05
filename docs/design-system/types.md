@@ -12,7 +12,8 @@ export interface IconButtonProps { icon: IconName; label: string; type?: 'second
 export interface TagProps { /** 'strong' is retired: don't use it in new screens */ type?: 'neutral' | 'accent' | 'strong' | 'info' | 'success' | 'warning' | 'danger'; size?: 'xsmall' | 'small' | 'big'; dot?: boolean; children: ReactNode }
 export interface ResponsibilityPillProps { owner: 'you' | 'cquel' | 'suppliers' | 'done'; /** 'customer' (default) renders only owner 'you' */ audience?: 'customer' | 'ops'; children?: ReactNode }
 export interface CardProps { title?: ReactNode; action?: ReactNode; flush?: boolean; /** grey strip under the body: a footer line and at most one link or button */ footer?: ReactNode; children: ReactNode; className?: string }
-export interface DetailsGridProps { items: { label: string; value: ReactNode; href?: string }[] }
+/** Same rule as PageHeader facts: label p7 tertiary, 2, value p6; min 160 wide, 40 apart, 16 between rows. detail: optional p7 third line, cards only. */
+export interface DetailsGridProps { items: { label: string; value: ReactNode; detail?: ReactNode; href?: string }[] }
 export interface KeyFigureProps { value: ReactNode; label: string; size?: 'big' | 'default' }
 export interface TableColumn { key: string; label?: string; width?: string; type?: 'title' | 'text' | 'twoLines' | 'owner' | 'chevron' | 'action' | 'number'; actionLabel?: string; /** twoLines: main line in h8 */ emphasis?: boolean }
 /** A 'title' cell may be a string or {main, detail}: detail is a p7 text-tertiary meta line ("Flagship sites · 6 assets"). */

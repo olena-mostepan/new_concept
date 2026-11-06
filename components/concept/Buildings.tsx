@@ -116,6 +116,7 @@ export function Buildings() {
         </FilterField>
         <FilterField label="Batch">
           <FilterSelect
+            label="Batch"
             value={batchId}
             onChange={(value) => write({ batch: value })}
           >
@@ -129,6 +130,7 @@ export function Buildings() {
         </FilterField>
         <FilterField label="Service">
           <FilterSelect
+            label="Service"
             value={serviceId}
             onChange={(value) => write({ service: value })}
           >

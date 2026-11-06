@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   SERVICES,
   service as serviceDef,
@@ -13,7 +13,7 @@ import {
 } from "@/lib/concept/model";
 import { getBuilding } from "@/lib/concept/derive";
 import { useConcept } from "./store";
-import { IconButton } from "./ui";
+import { Dropdown, IconButton } from "./ui";
 import {
   SERVICE_LINES,
   SOLUTION_OPTIONS,
@@ -58,6 +58,12 @@ export function OpsWorkstreamDrawer({
   const [lead, setLead] = useState(
     editing?.lead ?? batch.lead ?? leads[0] ?? "",
   );
+
+  useEffect(() => {
+    if (leads.length && !leads.includes(lead)) {
+      setLead(leads[0]!);
+    }
+  }, [leads, lead]);
   const [needs, setNeeds] = useState<string[]>(
     editing?.needs.length ? editing.needs.map((need) => need.label) : [""],
   );
@@ -152,19 +158,15 @@ export function OpsWorkstreamDrawer({
         <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
           <label className="block">
             <span className={labelClass}>Solution</span>
-            <select
-              className={fieldClass}
+            <Dropdown
+              ariaLabel="Solution"
               value={solution}
-              onChange={(event) =>
-                setSolution(event.target.value as SolutionId)
-              }
-            >
-              {SOLUTION_OPTIONS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => setSolution(value as SolutionId)}
+              options={SOLUTION_OPTIONS.map((item) => ({
+                value: item.id,
+                label: item.label,
+              }))}
+            />
           </label>
 
           <div>
@@ -244,17 +246,16 @@ export function OpsWorkstreamDrawer({
 
           <label className="block">
             <span className={labelClass}>Lead</span>
-            <select
-              className={fieldClass}
-              value={lead}
-              onChange={(event) => setLead(event.target.value)}
-            >
-              {leads.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            {leads.length === 0 ? (
+              <p className="p6 text-text-tertiary">Add a lead on the batch first</p>
+            ) : (
+              <Dropdown
+                ariaLabel="Lead"
+                value={leads.includes(lead) ? lead : leads[0]}
+                onValueChange={setLead}
+                options={leads.map((item) => ({ value: item, label: item }))}
+              />
+            )}
           </label>
 
           <div>

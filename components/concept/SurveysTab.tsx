@@ -17,17 +17,18 @@ import {
   isClosed,
 } from "@/lib/concept/derive";
 import { WORDS } from "@/lib/concept/words";
-import { Button, groupTitle, td, th } from "./ui";
+import {
+  Button,
+  Dropdown,
+  FilterField,
+  FilterSearch,
+  FilterSelect,
+  groupTitle,
+  td,
+  th,
+} from "./ui";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
-
-const fieldClass =
-  "h-10 rounded-md border border-border-dark bg-white p6 text-text-primary";
-const selectClass = `${fieldClass} min-w-0 flex-1 appearance-none bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat pl-3 pr-10`;
-const selectStyle = {
-  backgroundImage:
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234d5761' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-};
 
 const BUCKETS = [
   { id: "unbooked", title: "To be booked" },
@@ -90,59 +91,54 @@ export function SurveysTab({
     <>
       {!packageId && (
       <div className="mb-6 flex flex-wrap items-end gap-3">
-        <label className="flex w-full shrink-0 flex-col gap-1 sm:w-72">
-          <span className="p7 text-text-tertiary">Search</span>
-          <input
-            type="search"
+        <FilterField label="Search" className="w-full shrink-0 sm:w-72">
+          <FilterSearch
             value={q}
+            onChange={(value) => write({ q: value })}
             placeholder="Address or city"
-            aria-label="Search"
-            onChange={(e) => write({ q: e.target.value })}
-            className={`${fieldClass} w-full px-3`}
           />
-        </label>
-        <select
-          aria-label="Batch"
-          value={batch}
-          onChange={(e) => write({ batch: e.target.value })}
-          className={selectClass}
-          style={selectStyle}
-        >
-          <option value="">Batch</option>
-          {batches.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </select>
-        <select
-          aria-label="Service"
-          value={serviceId}
-          onChange={(e) => write({ service: e.target.value })}
-          className={selectClass}
-          style={selectStyle}
-        >
-          <option value="">Service</option>
-          {SERVICES.filter((s) => services.includes(s.id)).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        <select
-          aria-label="Status"
-          value={status}
-          onChange={(e) => write({ status: e.target.value })}
-          className={selectClass}
-          style={selectStyle}
-        >
-          <option value="">Status</option>
-          {BUCKETS.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.title}
-            </option>
-          ))}
-        </select>
+        </FilterField>
+        <FilterField label="Batch" className="min-w-0 flex-1 sm:max-w-[240px]">
+          <FilterSelect
+            label="Batch"
+            value={batch}
+            onChange={(value) => write({ batch: value })}
+          >
+            <option value="">All batches</option>
+            {batches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Service" className="min-w-0 flex-1 sm:max-w-[240px]">
+          <FilterSelect
+            label="Service"
+            value={serviceId}
+            onChange={(value) => write({ service: value })}
+          >
+            <option value="">All services</option>
+            {SERVICES.filter((s) => services.includes(s.id)).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Status" className="min-w-0 flex-1 sm:max-w-[240px]">
+          <Dropdown
+            ariaLabel="Status"
+            value={status === "" ? "__none" : status}
+            onValueChange={(v) => write({ status: v === "__none" ? "" : v })}
+            options={[
+              { value: "__none", label: "All status" },
+              ...BUCKETS.map((b) => ({ value: b.id, label: b.title })),
+            ]}
+            triggerClassName={status ? "border-black-6" : undefined}
+            valueClassName={status ? "text-text-primary" : "text-text-title"}
+          />
+        </FilterField>
       </div>
       )}
       <div className="space-y-6">

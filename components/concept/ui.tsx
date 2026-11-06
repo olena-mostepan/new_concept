@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Children, isValidElement, type CSSProperties, type ReactNode } from "react";
+import * as RadixSelect from "@radix-ui/react-select";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -383,14 +384,115 @@ function SummaryCard({
   );
 }
 
-const SELECT_CHEVRON =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234d5761' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
-
 export const filterSearchClass =
   "h-10 w-full rounded-md border border-border-dark bg-white p6 pl-9 pr-3 text-text-primary outline-none placeholder:text-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7";
 
-export const filterSelectClass =
-  "h-10 w-full min-w-0 cursor-pointer appearance-none rounded-md border border-border-dark bg-white bg-[length:16px] bg-[right_10px_center] bg-no-repeat p6 pl-3 pr-8 text-text-title outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 data-[set=true]:border-black-6 data-[set=true]:text-text-primary";
+/** Shared with FactSelect / PackagePicker menus */
+export const dropdownMenuContentClass =
+  "bg-white border border-border-dark rounded-md shadow-floating p-1.5 min-w-[var(--radix-select-trigger-width)] max-w-[360px] max-h-[320px] z-50";
+
+export const dropdownMenuItemClass =
+  "p6 text-text-primary px-3 py-2 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-bg-container-grey data-[state=checked]:h8 data-[state=checked]:bg-bg-container-grey";
+
+const dropdownTriggerBaseClass =
+  "flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border-dark bg-white px-3 outline-none transition-colors hover:border-black-4 data-[state=open]:border-black-6 focus-visible:border-black-6 data-[state=open]:outline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 data-[state=open]:outline-black-7 disabled:cursor-not-allowed disabled:bg-bg-container-grey disabled:text-text-tertiary";
+
+export function Dropdown({
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  ariaLabel,
+  size = "default",
+  disabled,
+  error,
+  triggerClassName,
+  valueClassName,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  ariaLabel: string;
+  size?: "default" | "small";
+  disabled?: boolean;
+  error?: boolean;
+  triggerClassName?: string;
+  valueClassName?: string;
+}) {
+  return (
+    <RadixSelect.Root value={value} onValueChange={onValueChange} disabled={disabled}>
+      <RadixSelect.Trigger
+        type="button"
+        aria-label={ariaLabel}
+        className={cn(
+          dropdownTriggerBaseClass,
+          size === "default" ? "h-10" : "h-8",
+          error &&
+            "border-status-danger-mark hover:border-status-danger-mark data-[state=open]:border-status-danger-mark focus-visible:border-status-danger-mark",
+          triggerClassName,
+        )}
+      >
+        <RadixSelect.Value
+          placeholder={placeholder}
+          className={cn(
+            "min-w-0 flex-1 truncate text-left p6 text-text-primary",
+            valueClassName,
+          )}
+        />
+        <span className="pointer-events-none flex h-4 w-4 shrink-0 items-center justify-center text-icon-dark">
+          <Icon name="chevron-down" size={16} />
+        </span>
+      </RadixSelect.Trigger>
+      <RadixSelect.Portal>
+        <RadixSelect.Content
+          position="popper"
+          sideOffset={4}
+          align="start"
+          className={cn(dropdownMenuContentClass, "overflow-hidden")}
+        >
+          <RadixSelect.Viewport className="max-h-[320px] overflow-y-auto p-0">
+            {options.map((opt) => (
+              <RadixSelect.Item
+                key={opt.value}
+                value={opt.value}
+                textValue={opt.label}
+                className={dropdownMenuItemClass}
+              >
+                <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
+              </RadixSelect.Item>
+            ))}
+          </RadixSelect.Viewport>
+        </RadixSelect.Content>
+      </RadixSelect.Portal>
+    </RadixSelect.Root>
+  );
+}
+
+const FILTER_ALL_VALUE = "__all";
+
+function optionChildrenToLabel(node: ReactNode): string {
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(optionChildrenToLabel).join("");
+  return "";
+}
+
+function parseFilterSelectChildren(children: ReactNode): {
+  allLabel: string;
+  options: { value: string; label: string }[];
+} {
+  let allLabel = "All";
+  const rest: { value: string; label: string }[] = [];
+  Children.forEach(children, (child) => {
+    if (!isValidElement<{ value?: string; children?: ReactNode }>(child)) return;
+    if (child.type !== "option") return;
+    const raw = child.props.value != null ? String(child.props.value) : "";
+    const label = optionChildrenToLabel(child.props.children);
+    if (raw === "") allLabel = label || "All";
+    else rest.push({ value: raw, label: label || raw });
+  });
+  return { allLabel, options: rest };
+}
 
 export function FilterField({
   label,
@@ -670,24 +772,36 @@ export function FilterSearch({
 }
 
 export function FilterSelect({
+  label,
   value,
   onChange,
   children,
+  allLabel: allLabelProp,
 }: {
+  label: string;
   value: string;
   onChange: (value: string) => void;
   children: ReactNode;
+  /** Overrides the first &lt;option value=""&gt; label when present */
+  allLabel?: string;
 }) {
+  const { allLabel: parsedAll, options } = parseFilterSelectChildren(children);
+  const allLabel = allLabelProp ?? parsedAll;
+  const internalValue = value === "" ? FILTER_ALL_VALUE : value;
+  const isAll = internalValue === FILTER_ALL_VALUE;
+  const dropdownOptions = [
+    { value: FILTER_ALL_VALUE, label: allLabel },
+    ...options,
+  ];
   return (
-    <select
-      value={value}
-      data-set={value ? "true" : undefined}
-      onChange={(e) => onChange(e.target.value)}
-      className={filterSelectClass}
-      style={{ backgroundImage: SELECT_CHEVRON }}
-    >
-      {children}
-    </select>
+    <Dropdown
+      ariaLabel={label}
+      value={internalValue}
+      onValueChange={(next) => onChange(next === FILTER_ALL_VALUE ? "" : next)}
+      options={dropdownOptions}
+      triggerClassName={cn(!isAll && "border-black-6")}
+      valueClassName={cn(isAll ? "text-text-title" : "text-text-primary")}
+    />
   );
 }
 
@@ -1046,118 +1160,109 @@ export function PackagePicker({
     .map((e) => e.option);
   const selected =
     flatOptions.find((item) => item.id === selectedId) ?? flatOptions[0];
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(0);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const listId = useId();
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("click", onPointer);
-    return () => document.removeEventListener("click", onPointer);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const idx = flatOptions.findIndex((item) => item.id === selectedId);
-    setActive(idx >= 0 ? idx : 0);
-  }, [open, flatOptions, selectedId]);
-
-  const pick = (id: string) => {
-    onSelect(id);
-    setOpen(false);
-  };
-
   return (
-    <div ref={rootRef} className="relative inline-block">
-      <button
+    <RadixSelect.Root value={selectedId} onValueChange={onSelect}>
+      <RadixSelect.Trigger
         type="button"
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-sm p6 text-text-primary",
+          "inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-sm p6 text-text-primary",
           focusRing,
-          (open || undefined) && "bg-bg-container-grey",
-          !open && "hover:bg-bg-container-grey",
           "-mx-1.5 -my-0.5 px-1.5 py-0.5",
+          "data-[state=open]:bg-bg-container-grey",
+          "hover:bg-bg-container-grey",
         )}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={listId}
         aria-label={`Package: ${selected?.name ?? ""}. ${selectedIndex} of ${total}. Change package`}
-        onClick={() => setOpen((value) => !value)}
-        onKeyDown={(event) => {
-          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-            event.preventDefault();
-            if (!open) setOpen(true);
-            else if (flatOptions.length) {
-              setActive((i) => {
-                const next =
-                  event.key === "ArrowDown"
-                    ? (i + 1) % flatOptions.length
-                    : (i - 1 + flatOptions.length) % flatOptions.length;
-                return next;
-              });
-            }
-          } else if (event.key === "Enter" && open) {
-            event.preventDefault();
-            pick(flatOptions[active]?.id ?? selectedId);
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            setOpen(false);
-          }
-        }}
       >
-        {selected?.name}
-        <Icon name="chevron-down" size={16} className="shrink-0 text-text-primary" />
-      </button>
-      {open && (
-        <ul
-          id={listId}
-          role="listbox"
-          className="absolute left-0 top-[calc(100%+8px)] z-20 w-[330px] list-none rounded-md border border-border-dark bg-bg-container p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+        <span className="min-w-0 truncate">{selected?.name}</span>
+        <Icon name="chevron-down" size={16} className="shrink-0 text-icon-dark" />
+      </RadixSelect.Trigger>
+      <RadixSelect.Portal>
+        <RadixSelect.Content
+          position="popper"
+          sideOffset={4}
+          align="start"
+          className={cn(dropdownMenuContentClass, "w-[min(330px,var(--radix-select-trigger-width))]")}
         >
-          {entries.map((entry, i) => {
-            if (entry.kind === "label") {
-              return (
-                <li key={`${entry.text}-${i}`} role="presentation" className="list-none">
-                  <p className="px-2 pb-1 pt-2 p7 text-text-tertiary">{entry.text}</p>
-                </li>
-              );
-            }
-            const item = entry.option;
-            const isSelected = item.id === selectedId;
-            const isActive = entry.optIndex === active;
-            return (
-              <li key={item.id} role="presentation" className="list-none">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  className={cn(
-                    "w-full rounded-sm px-2 py-1.5 text-left",
-                    focusRing,
-                    (isSelected || isActive) && "bg-bg-container-grey",
-                  )}
-                  onMouseEnter={() => setActive(entry.optIndex)}
-                  onClick={() => pick(item.id)}
-                >
-                  <span
-                    className={
-                      isSelected ? "h8 text-text-primary" : "p6 text-text-primary"
-                    }
-                  >
-                    {item.name}
-                  </span>
-                  <span className="mt-0.5 block p7 text-text-tertiary">{item.subline}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+          <RadixSelect.Viewport className="max-h-[320px] overflow-y-auto p-0">
+            {(() => {
+              const blocks: ReactNode[] = [];
+              let i = 0;
+              while (i < entries.length) {
+                const entry = entries[i];
+                if (entry.kind === "label") {
+                  const labelText = entry.text;
+                  i += 1;
+                  const groupItems: PackagePickerOption[] = [];
+                  while (i < entries.length && entries[i].kind === "opt") {
+                    groupItems.push(
+                      (entries[i] as { kind: "opt"; option: PackagePickerOption }).option,
+                    );
+                    i += 1;
+                  }
+                  blocks.push(
+                    <RadixSelect.Group key={`group-${labelText}-${i}`}>
+                      <RadixSelect.Label className="block px-3 pb-1 pt-2 p7 text-text-tertiary">
+                        {labelText}
+                      </RadixSelect.Label>
+                      {groupItems.map((item) => {
+                        const isSelected = item.id === selectedId;
+                        return (
+                          <RadixSelect.Item
+                            key={item.id}
+                            value={item.id}
+                            textValue={item.name}
+                            className={cn(
+                              dropdownMenuItemClass,
+                              "relative block w-full cursor-pointer text-left",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "block",
+                                isSelected ? "h8 text-text-primary" : "p6 text-text-primary",
+                              )}
+                            >
+                              {item.name}
+                            </span>
+                            <span className="mt-0.5 block p7 text-text-tertiary">{item.subline}</span>
+                          </RadixSelect.Item>
+                        );
+                      })}
+                    </RadixSelect.Group>,
+                  );
+                } else {
+                  const item = entry.option;
+                  const isSelected = item.id === selectedId;
+                  blocks.push(
+                    <RadixSelect.Item
+                      key={item.id}
+                      value={item.id}
+                      textValue={item.name}
+                      className={cn(
+                        dropdownMenuItemClass,
+                        "relative block w-full cursor-pointer text-left",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "block",
+                          isSelected ? "h8 text-text-primary" : "p6 text-text-primary",
+                        )}
+                      >
+                        {item.name}
+                      </span>
+                      <span className="mt-0.5 block p7 text-text-tertiary">{item.subline}</span>
+                    </RadixSelect.Item>,
+                  );
+                  i += 1;
+                }
+              }
+              return blocks;
+            })()}
+          </RadixSelect.Viewport>
+        </RadixSelect.Content>
+      </RadixSelect.Portal>
+    </RadixSelect.Root>
   );
 }
 

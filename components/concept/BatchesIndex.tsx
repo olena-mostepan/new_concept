@@ -140,6 +140,7 @@ export function BatchesIndex() {
         </FilterField>
         <FilterField label="Service">
           <FilterSelect
+            label="Service"
             value={service}
             onChange={(value) => write({ service: value })}
           >
@@ -153,6 +154,7 @@ export function BatchesIndex() {
         </FilterField>
         <FilterField label="Solution">
           <FilterSelect
+            label="Solution"
             value={solution}
             onChange={(value) => write({ solution: value })}
           >

@@ -176,6 +176,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
         </FilterField>
         <FilterField label="Batch">
           <FilterSelect
+            label="Batch"
             value={batchId}
             onChange={(value) => write({ batch: value })}
           >
@@ -189,6 +190,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
         </FilterField>
         <FilterField label="Service">
           <FilterSelect
+            label="Service"
             value={service}
             onChange={(value) => write({ service: value })}
           >
@@ -202,6 +204,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
         </FilterField>
         <FilterField label="Solution">
           <FilterSelect
+            label="Solution"
             value={solution}
             onChange={(value) => write({ solution: value })}
           >

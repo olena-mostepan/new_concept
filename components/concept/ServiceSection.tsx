@@ -244,6 +244,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
             </FilterField>
             <FilterField label="Batch">
               <FilterSelect
+                label="Batch"
                 value={batch}
                 onChange={(value) => write({ batch: value })}
               >
@@ -259,6 +260,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
             </FilterField>
             <FilterField label="Solution">
               <FilterSelect
+                label="Solution"
                 value={solution}
                 onChange={(value) => write({ solution: value })}
               >
@@ -273,6 +275,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
             {serviceId === "pricing" && (
               <FilterField label="Supplier">
                 <FilterSelect
+                  label="Supplier"
                   value={supplier}
                   onChange={(value) => write({ supplier: value })}
                 >

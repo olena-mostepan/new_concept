@@ -197,6 +197,7 @@ export function DeliverySection() {
             </FilterField>
             <FilterField label="Batch">
               <FilterSelect
+                label="Batch"
                 value={batch}
                 onChange={(value) => write({ batch: value })}
               >
@@ -216,6 +217,7 @@ export function DeliverySection() {
             </FilterField>
             <FilterField label="Solution">
               <FilterSelect
+                label="Solution"
                 value={solution}
                 onChange={(value) => write({ solution: value })}
               >
@@ -229,6 +231,7 @@ export function DeliverySection() {
             </FilterField>
             <FilterField label="Supplier">
               <FilterSelect
+                label="Supplier"
                 value={supplier}
                 onChange={(value) => write({ supplier: value })}
               >

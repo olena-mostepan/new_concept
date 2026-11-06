@@ -23,9 +23,12 @@ export const SERVICE_LINES: Record<ServiceId, string> = {
 
 export const filledBtn =
   "inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black-7 px-4 h8 text-white disabled:pointer-events-none disabled:opacity-50";
+/** Shared field chrome; pair {@link fieldInputClass} with inputs/selects for 40px height. */
 export const fieldClass =
-  "w-full rounded-md border border-border-dark bg-white px-3 py-2 p6 text-text-primary focus:border-black-7 focus:outline-none focus:ring-1 focus:ring-black-7";
-export const labelClass = "mb-1.5 block p6 text-text-primary";
+  "w-full rounded-md border border-border-dark bg-white px-3 py-2 p6 font-sans text-text-primary outline-none focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)]";
+/** Use with {@link fieldClass} on single-line inputs and month fields (not textareas). */
+export const fieldInputClass = "h-10 py-0";
+export const labelClass = "mb-1 block h9 text-text-title";
 
 export function workstreamName(
   solution: SolutionId,

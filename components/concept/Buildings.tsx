@@ -16,7 +16,22 @@ import {
   type BuildingListRow,
   type BuildingProject,
 } from "@/lib/concept/derive";
-import { Icon, ChangedDot, ClearFilters, FilterBar, FilterChips, FilterField, FilterSearch, FilterSelect, ListMore, PageHeader } from "./ui";
+import { cn } from "@/lib/utils";
+import {
+  Icon,
+  ChangedDot,
+  ClearFilters,
+  FilterBar,
+  FilterChips,
+  FilterField,
+  FilterSearch,
+  FilterSelect,
+  ListMore,
+  PageHeader,
+  focusRing,
+  tableRowNameCellClass,
+  tableRowShellClass,
+} from "./ui";
 import { hrefs, type BuildingFrom } from "./hrefs";
 import { WORDS } from "@/lib/concept/words";
 import { useConcept } from "./store";
@@ -236,18 +251,25 @@ function BuildingRow({
   );
   return (
     <div
-      className="relative grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1"
+      className={cn(
+        "relative grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+        tableRowShellClass,
+      )}
       style={grid}
     >
       <Link
         href={buildingHref}
-        className="absolute inset-0"
-        tabIndex={-1}
-        aria-hidden="true"
-      />
-      <Link href={buildingHref} className="relative z-10 min-w-0">
+        className={cn("relative z-10 min-w-0 outline-none rounded-sm", focusRing)}
+      >
         <ChangedDot on={buildingChanged(account, building.id)}>
-          <span className="block h8 text-text-title">{building.name}</span>
+          <span
+            className={cn(
+              "block h8 text-text-title",
+              tableRowNameCellClass,
+            )}
+          >
+            {building.name}
+          </span>
         </ChangedDot>
         <span className="mt-0.5 block p7 text-text-tertiary">
           {building.city}

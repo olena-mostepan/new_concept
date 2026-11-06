@@ -28,7 +28,22 @@ import {
   surveyLine,
   type PhaseRef,
 } from "@/lib/concept/derive";
-import { Icon, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly, groupTitle, ResponsibilityPill } from "./ui";
+import { cn } from "@/lib/utils";
+import {
+  Icon,
+  ChangedMark,
+  ClearFilters,
+  FilterBar,
+  FilterField,
+  FilterSearch,
+  FilterSelect,
+  PageHeader,
+  YourActionOnly,
+  groupTitle,
+  ResponsibilityPill,
+  tableRowNameCellClass,
+  tableRowShellClass,
+} from "./ui";
 import { hrefs } from "./hrefs";
 import { WORDS } from "@/lib/concept/words";
 import { useConcept } from "./store";
@@ -417,18 +432,19 @@ function ServiceRow({
   const workstreamHref = hrefs.workstream(source.id, "service");
   return (
     <div
-      className="relative grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1"
+      className={cn(
+        "relative grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+        tableRowShellClass,
+      )}
       style={rowGrid}
     >
       <Link
         href={workstreamHref}
-        className="absolute inset-0"
-        tabIndex={-1}
-        aria-hidden="true"
-      />
-      <Link
-        href={workstreamHref}
-        className={`relative z-10 min-w-0 h8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 ${past ? "text-text-tertiary" : "text-text-title"}`}
+        className={cn(
+          "relative z-10 min-w-0 h8 outline-none",
+          tableRowNameCellClass,
+          past ? "text-text-tertiary" : "text-text-title",
+        )}
       >
         {past ? (
           source.name
@@ -448,7 +464,10 @@ function ServiceRow({
       {b ? (
         <Link
           href={hrefs.batch(b.id)}
-          className={`relative z-10 min-w-0 truncate p6 underline underline-offset-[3px] decoration-border-dark ${muted}`}
+          className={cn(
+            "relative z-10 min-w-0 truncate p6 underline underline-offset-[3px] decoration-border-dark outline-none",
+            muted,
+          )}
         >
           {b.name}
         </Link>

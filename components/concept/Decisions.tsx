@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import type { Account } from "@/lib/concept/model";
 import {
   activeProjects,
@@ -9,7 +10,14 @@ import {
 } from "@/lib/concept/derive";
 import { nAssets } from "@/lib/concept/words";
 import { hrefs } from "./hrefs";
-import { Icon, Card, ChangedDot, OwnerPill } from "./ui";
+import {
+  Icon,
+  Card,
+  ChangedDot,
+  OwnerPill,
+  tableRowLinkClass,
+  tableRowNameCellClass,
+} from "./ui";
 
 const PREVIEW = 3;
 const grid = {
@@ -61,12 +69,22 @@ export function Decisions({ account }: { account: Account }) {
               <Link
                 key={w.id}
                 href={hrefs.workstream(w.id)}
-                className="grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                className={cn(
+                  "grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                  tableRowLinkClass,
+                )}
                 style={grid}
               >
                 <span className="min-w-0">
                   <ChangedDot on={changedRecently(w)}>
-                    <span className="block h8 text-text-title">{w.name}</span>
+                    <span
+                      className={cn(
+                        "block h8 text-text-title",
+                        tableRowNameCellClass,
+                      )}
+                    >
+                      {w.name}
+                    </span>
                   </ChangedDot>
                   <span className="mt-0.5 block p7 text-text-tertiary">
                     {batch?.name ?? "—"} · {nAssets(assets)}

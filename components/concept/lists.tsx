@@ -14,7 +14,15 @@ import {
   wsIn,
   yourNeeds,
 } from "@/lib/concept/derive";
-import { Bar, OwnerPill, ServiceTag, td, th } from "./ui";
+import {
+  Bar,
+  OwnerPill,
+  ServiceTag,
+  td,
+  th,
+  tableRowShellClass,
+  tableRowNameCellClass,
+} from "./ui";
 import { hrefs } from "./hrefs";
 import { nAssets, nPackages, WORDS } from "@/lib/concept/words";
 
@@ -47,9 +55,15 @@ export function WorkstreamTable({
           const done = doneCount(w);
           const mine = yourNeeds(w).length;
           return (
-            <tr key={w.id} className="hover:bg-bg-container-grey/60">
+            <tr key={w.id} className={tableRowShellClass}>
               <td className={td}>
-                <Link href={hrefFor(w.id)} className="h8 text-text-title hover:text-text-title focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7">
+                <Link
+                  href={hrefFor(w.id)}
+                  className={cn(
+                    "h8 text-text-title hover:text-text-title outline-none rounded-sm",
+                    tableRowNameCellClass,
+                  )}
+                >
                   {w.name}
                 </Link>
                 <div className="mt-1">

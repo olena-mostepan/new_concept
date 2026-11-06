@@ -24,6 +24,9 @@ pnpm-debug.log*
 *.local
 coverage/
 
-
+# Local build / tooling noise
+.next-part*/
+tsconfig.tsbuildinfo
+Claude outputs/
 
 .vercel

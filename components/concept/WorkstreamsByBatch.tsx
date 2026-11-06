@@ -22,8 +22,22 @@ import {
   short,
   stepNote,
 } from "@/lib/concept/derive";
+import { cn } from "@/lib/utils";
 import { useConcept } from "./store";
-import { Icon, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, SummaryCards, YourActionOnly, matchesResponsibility } from "./ui";
+import {
+  Icon,
+  ClearFilters,
+  FilterBar,
+  FilterField,
+  FilterSearch,
+  FilterSelect,
+  PageHeader,
+  SummaryCards,
+  YourActionOnly,
+  matchesResponsibility,
+  tableRowLinkClass,
+  tableRowNameCellClass,
+} from "./ui";
 import { ServiceTag } from "./ServiceTag";
 import { hrefs } from "./hrefs";
 import { WORDS } from "@/lib/concept/words";
@@ -37,17 +51,26 @@ function WorkstreamLine({ w, done }: { w: Workstream; done?: boolean }) {
   return (
     <Link
       href={hrefs.workstream(w.id, "batch")}
-      className="grid items-center gap-x-6 border-t border-border-light px-6 py-3 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+      className={cn(
+        "grid items-center gap-x-6 border-t border-border-light px-6 py-3",
+        tableRowLinkClass,
+      )}
       style={rowStyle}
     >
       {done ? (
         <p className="min-w-0">
-          <span className="h8 text-text-title">{w.name}</span>
+          <span
+            className={cn("h8 text-text-title", tableRowNameCellClass)}
+          >
+            {w.name}
+          </span>
           <span className="p7 text-text-tertiary"> · {projects}</span>
         </p>
       ) : (
         <div className="min-w-0">
-          <p className="h8 text-text-title">{w.name}</p>
+          <p className={cn("h8 text-text-title", tableRowNameCellClass)}>
+            {w.name}
+          </p>
           <p className="p7 text-text-tertiary">{projects}</p>
         </div>
       )}

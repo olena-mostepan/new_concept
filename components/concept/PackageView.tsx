@@ -44,6 +44,8 @@ import {
   type PackageCardChip,
   Page,
   TabDot,
+  tableRowLinkClass,
+  tableRowNameCellClass,
   tabListClass,
   tabTriggerClass,
 } from "./ui";
@@ -363,7 +365,8 @@ function OverviewAssets({
                 key={building.id}
                 href={href}
                 className={cn(
-                  "grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7",
+                  "grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                  tableRowLinkClass,
                   gridCols,
                   muted && "text-text-tertiary",
                 )}
@@ -373,6 +376,7 @@ function OverviewAssets({
                     <span
                       className={cn(
                         "block h8",
+                        tableRowNameCellClass,
                         muted ? "text-text-tertiary" : "text-text-title",
                       )}
                     >

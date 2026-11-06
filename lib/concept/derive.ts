@@ -1,4 +1,4 @@
-import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Building, type Need, type Owner, type Phase, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
+import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Building, type DeliveryPhaseId, type Need, type Owner, type Phase, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
 import { nAssets, nPackages, WORDS } from './words'
 
 /** Customers only see batches once a plan has been shared with them */
@@ -312,6 +312,30 @@ export const short = (d?: string) => {
   const todayYear = todayParts[2] ? Number(todayParts[2]) : 2026
   if (year !== todayYear) return `${day} ${mon} ${year}`
   return `${day} ${mon}`
+}
+
+const DEFAULT_HISTORY_YEAR = TODAY.split(' ')[2] ?? ''
+
+/** Calendar year for a History/Timeline row (uses year token when present, else current demo year). */
+export function historyEventYear(date: string): string {
+  const last = date.trim().split(' ').at(-1) ?? ''
+  return /^\d{4}$/.test(last) ? last : DEFAULT_HISTORY_YEAR
+}
+
+/** Lines that match a `confirmPhase` still on `from_invoice` (accent dot on Timeline). */
+const PENDING_HISTORY_SNIPPET: Partial<Record<DeliveryPhaseId, string>> = {
+  phase2: 'installing started',
+  complete: 'complete',
+}
+
+export function historyEventWaitsOnCustomer(row: ProjectRow, event: string): boolean {
+  const id = row.delivery?.confirmPhase
+  if (!id) return false
+  const phase = row.delivery?.phases[id]
+  if (phase?.state !== 'from_invoice') return false
+  const snippet = PENDING_HISTORY_SNIPPET[id]
+  if (!snippet) return false
+  return event.toLowerCase().includes(snippet)
 }
 
 /** True when this package carries a finished phase from the source named in `from`: same service on the fork, completed on or before the fork date. */
@@ -1014,10 +1038,19 @@ export function waitingForDecision(w: Workstream) {
   return w.projects.filter((p) => p.decision === 'waiting').length
 }
 
-export function projectHistory(a: Account, w: Workstream, row: ProjectRow) {
-  if (row.history?.length) return row.history
+export function projectHistory(
+  a: Account,
+  w: Workstream,
+  row: ProjectRow,
+): Array<{ event: string; detail: string; date: string; you?: boolean }> {
+  if (row.history?.length) {
+    return row.history.map((item) => ({
+      ...item,
+      you: historyEventWaitsOnCustomer(row, item.event),
+    }))
+  }
   const batch = getBatch(a, w.batchId)
-  const items: Array<{ event: string; detail: string; date: string }> = []
+  const items: Array<{ event: string; detail: string; date: string; you?: boolean }> = []
   if (row.presentedOn && row.estimate) {
     items.push({
       event: 'Estimate presented',
@@ -1026,7 +1059,11 @@ export function projectHistory(a: Account, w: Workstream, row: ProjectRow) {
     })
   }
   if (w.startedOn) {
-    items.push({ event: `Joined ${w.name}`, detail: `Allocated from ${batch?.name ?? 'the batch'}.`, date: short(w.startedOn) })
+    items.push({
+      event: `Joined ${w.name}`,
+      detail: `Allocated from ${batch?.name ?? 'the batch'}.`,
+      date: short(w.startedOn),
+    })
   }
   return items
 }

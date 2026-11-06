@@ -15,7 +15,13 @@ import {
 import { service, type ProjectRow, type Workstream } from "@/lib/concept/model";
 import { hrefs, type BuildingVia } from "./hrefs";
 import { WORDS } from "@/lib/concept/words";
-import { Icon, ChangedDot, ListMore } from "./ui";
+import {
+  Icon,
+  ChangedDot,
+  ListMore,
+  tableRowLinkClass,
+  tableRowNameCellClass,
+} from "./ui";
 import { useConcept } from "./store";
 import { cn } from "@/lib/utils";
 
@@ -185,7 +191,8 @@ export function ProjectsTable({
                   via,
                 })}
                 className={cn(
-                  "grid items-center gap-x-4 border-t border-border-light py-3 pl-8 pr-6 hover:bg-black-1",
+                  "grid items-center gap-x-4 border-t border-border-light py-3 pl-8 pr-6",
+                  tableRowLinkClass,
                   muted && "text-text-tertiary",
                 )}
                 style={{ gridTemplateColumns: template }}
@@ -197,6 +204,7 @@ export function ProjectsTable({
                     <span
                       className={cn(
                         "block h8",
+                        tableRowNameCellClass,
                         muted ? "text-text-tertiary" : "text-text-title",
                       )}
                     >

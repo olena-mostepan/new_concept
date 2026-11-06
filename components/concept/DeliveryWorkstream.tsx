@@ -11,7 +11,13 @@ import {
   type ServiceId,
   type Workstream,
 } from "@/lib/concept/model";
-import { getBatch } from "@/lib/concept/derive";
+import {
+  getBatch,
+  historyEventYear,
+  parse,
+  projectHistory,
+  short,
+} from "@/lib/concept/derive";
 import {
   keepShownDate,
   splitDeliveryId,
@@ -29,12 +35,14 @@ import {
   ResponsibilityPill,
   tabListClass,
   tabTriggerClass,
+  Timeline,
 } from "./ui";
 import { DetailsGrid } from "./DetailsGrid";
 import { ProjectRoute } from "./ProjectRoute";
 import { hrefs, type BuildingVia } from "./hrefs";
 import { WORDS } from "@/lib/concept/words";
 import { useConcept } from "./store";
+import { shortFact } from "./WorkstreamChrome";
 
 function buildingHref(
   workstreamId: string,
@@ -165,6 +173,10 @@ export function DeliveryProject({
   const searchParams = useSearchParams();
   const batch = getBatch(account, w.batchId)!;
   const project = toCustomerProject(account, w, row);
+  const historyRaw = projectHistory(account, w, row);
+  const historySorted = [...historyRaw].sort(
+    (a, b) => parse(b.date) - parse(a.date),
+  );
   const tab = searchParams.get("tab") === "contract" ? "contract" : "overview";
   const setTab = (next: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -264,26 +276,17 @@ export function DeliveryProject({
                 saveDelivery(keepShownDate(project, next))
               }
             />
-            {row.history && row.history.length > 0 && (
-              <Card title="History" bodyClassName="p-0">
-                <table className="w-full">
-                  <tbody>
-                    {row.history.map((item) => (
-                      <tr
-                        key={item.event}
-                        className="border-t border-border-light first:border-t-0"
-                      >
-                        <td className="px-5 py-3.5 p6">{item.event}</td>
-                        <td className="px-5 py-3.5 p6 text-text-secondary">
-                          {item.detail}
-                        </td>
-                        <td className="px-5 py-3.5 text-right p6 text-text-tertiary">
-                          {item.date}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {historySorted.length > 0 && (
+              <Card title="History">
+                <Timeline
+                  items={historySorted.map((item) => ({
+                    event: shortFact(item.event),
+                    detail: item.detail,
+                    date: short(item.date),
+                    year: historyEventYear(item.date),
+                    you: item.you,
+                  }))}
+                />
               </Card>
             )}
           </>

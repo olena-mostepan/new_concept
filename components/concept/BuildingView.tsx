@@ -7,7 +7,6 @@ import * as Tabs from "@radix-ui/react-tabs";
 import {
   service,
   SERVICES,
-  TODAY,
   type Account,
   type Building,
   type DeliveryPhase,
@@ -27,6 +26,8 @@ import {
   getBatch,
   getBuilding,
   getWorkstream,
+  historyEventWaitsOnCustomer,
+  historyEventYear,
   isClosed,
   isCompleted,
   money,
@@ -50,12 +51,14 @@ import {
   Card,
   CardLink,
   ChipTrack,
+  focusRing,
   DocumentList,
   PackagePicker,
   Page,
   PageHeader,
   ServiceIcon,
   TabDot,
+  Timeline,
   type FactItem,
   tabListClass,
   tabTriggerClass,
@@ -873,13 +876,6 @@ function phaseSource(
   return "";
 }
 
-const HISTORY_YEAR = TODAY.split(" ")[2] ?? "";
-
-function eventYear(date: string) {
-  const last = date.trim().split(" ").at(-1) ?? "";
-  return /^\d{4}$/.test(last) ? last : HISTORY_YEAR;
-}
-
 type HistoryMergedItem = {
   event: string;
   detail: string;
@@ -900,7 +896,7 @@ function mergeAssetHistory(
         event: "Joined package",
         detail: pkg,
         date: row.joined.on,
-        year: eventYear(row.joined.on),
+        year: historyEventYear(row.joined.on),
       });
     }
     if (row.hold?.since) {
@@ -908,7 +904,7 @@ function mergeAssetHistory(
         event: "On hold",
         detail: pkg,
         date: row.hold.since,
-        year: eventYear(row.hold.since),
+        year: historyEventYear(row.hold.since),
       });
     }
     if (row.left?.on && row.left.kind) {
@@ -921,7 +917,7 @@ function mergeAssetHistory(
         event: `Left package · ${leftHowLabel(row.left.kind)}`,
         detail: destPkg || pkg,
         date: row.left.on,
-        year: eventYear(row.left.on),
+        year: historyEventYear(row.left.on),
       });
     }
   }
@@ -930,60 +926,25 @@ function mergeAssetHistory(
       event: shortFact(item.event),
       detail: w.name,
       date: item.date,
-      year: eventYear(item.date),
+      year: historyEventYear(item.date),
+      you: historyEventWaitsOnCustomer(row, item.event),
     })),
   );
-  return [...synthetic, ...fromRows].sort(
-    (a, b) => parse(a.date) - parse(b.date),
-  );
+  const merged = [...synthetic, ...fromRows];
+  return merged.sort((a, b) => parse(b.date) - parse(a.date));
 }
 
 function HistoryMerged({ items }: { items: HistoryMergedItem[] }) {
-  const years = new Set(items.map((item) => item.year));
+  const timelineItems = items.map((item) => ({
+    event: item.event,
+    detail: item.detail,
+    date: short(item.date),
+    year: item.year,
+    you: item.you,
+  }));
   return (
     <Card title="History" className="h-full">
-      <ol className="flex flex-col gap-3.5">
-        {items.map((item, index) => {
-          const showYear = index === 0 || item.year !== items[index - 1]?.year;
-          const yearLabel = years.size > 1 ? showYear : index === 0;
-          return (
-            <li key={`${item.date}-${item.event}-${index}`}>
-              {yearLabel && (
-                <div className="grid grid-cols-[52px_16px_minmax(0,1fr)] gap-x-2.5 pb-2">
-                  <p className="col-start-3 s3 text-text-tertiary">{item.year}</p>
-                </div>
-              )}
-              <div className="grid grid-cols-[52px_16px_minmax(0,1fr)] gap-x-2.5">
-                <p className="h9 text-right text-text-title">
-                  {short(item.date)}
-                </p>
-                <div className="relative flex justify-center">
-                  <span
-                    className={cn(
-                      "z-10 mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                      item.you
-                        ? "bg-brand-6 shadow-[0_0_0_3px_var(--bg-accent)]"
-                        : "bg-black-4",
-                    )}
-                  />
-                  {index < items.length - 1 && (
-                    <span
-                      className="absolute top-3.5 -bottom-5 w-px bg-black-3"
-                      aria-hidden
-                    />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="h8 text-text-primary">{item.event}</p>
-                  {item.detail && (
-                    <p className="p7 text-text-secondary">{item.detail}</p>
-                  )}
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <Timeline items={timelineItems} />
     </Card>
   );
 }
@@ -1101,7 +1062,10 @@ function AssetPager({
         <Link
           href={hrefFor(previous.buildingId)}
           aria-label="Previous asset in this package"
-          className="text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+          className={cn(
+            "rounded-sm text-text-secondary outline-none hover:text-text-primary",
+            focusRing,
+          )}
         >
           ‹ {name(previous.buildingId)}
         </Link>
@@ -1115,7 +1079,10 @@ function AssetPager({
         <Link
           href={hrefFor(next.buildingId)}
           aria-label="Next asset in this package"
-          className="text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+          className={cn(
+            "rounded-sm text-text-secondary outline-none hover:text-text-primary",
+            focusRing,
+          )}
         >
           {name(next.buildingId)} ›
         </Link>

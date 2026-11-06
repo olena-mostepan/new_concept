@@ -25,7 +25,22 @@ import {
 import { WORDS } from "@/lib/concept/words";
 import { splitDeliveryId, toDeliveryPayload } from "@/lib/concept/delivery";
 import { CustomerDeliveryView } from "@/components/customer/delivery/CustomerDeliveryView";
-import { Icon, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly, groupTitle, ResponsibilityPill } from "./ui";
+import { cn } from "@/lib/utils";
+import {
+  Icon,
+  ChangedMark,
+  ClearFilters,
+  FilterBar,
+  FilterField,
+  FilterSearch,
+  FilterSelect,
+  PageHeader,
+  YourActionOnly,
+  groupTitle,
+  ResponsibilityPill,
+  tableRowNameCellClass,
+  tableRowShellClass,
+} from "./ui";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
 
@@ -370,18 +385,19 @@ function DeliveryRow({
   const workstreamHref = hrefs.workstream(w.id, "service");
   return (
     <div
-      className="relative grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1"
+      className={cn(
+        "relative grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+        tableRowShellClass,
+      )}
       style={rowGrid}
     >
       <Link
         href={workstreamHref}
-        className="absolute inset-0"
-        tabIndex={-1}
-        aria-hidden="true"
-      />
-      <Link
-        href={workstreamHref}
-        className={`relative z-10 min-w-0 h8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 ${past ? "text-text-tertiary" : "text-text-title"}`}
+        className={cn(
+          "relative z-10 min-w-0 h8 outline-none",
+          tableRowNameCellClass,
+          past ? "text-text-tertiary" : "text-text-title",
+        )}
       >
         {past ? w.name : <ChangedMark w={w}>{w.name}</ChangedMark>}
         {(() => {
@@ -397,7 +413,10 @@ function DeliveryRow({
       {b ? (
         <Link
           href={hrefs.batch(b.id)}
-          className={`relative z-10 min-w-0 truncate p6 underline underline-offset-[3px] decoration-border-dark ${muted}`}
+          className={cn(
+            "relative z-10 min-w-0 truncate p6 underline underline-offset-[3px] decoration-border-dark outline-none",
+            muted,
+          )}
         >
           {b.name}
         </Link>

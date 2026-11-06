@@ -111,10 +111,10 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={cn(
-        "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 py-3 p6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7",
+        "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border-b-2 py-3 p6 transition-colors outline-none focus-visible:shadow-focus",
         active
           ? "border-brand-6 text-text-primary"
-          : "border-transparent text-text-secondary hover:text-text-primary",
+          : "border-transparent text-text-secondary hover:text-text-primary hover:shadow-[inset_0_-2px_0_var(--black-3)]",
       )}
     >
       {item.label}

@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { groupTitle, Page, PageHeader } from "./ui";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
-import { Stepper, fieldClass, filledBtn, labelClass } from "./ops-shared";
+import { Stepper, fieldClass, fieldInputClass, filledBtn, labelClass } from "./ops-shared";
 import type { Building } from "@/lib/concept/model";
 
 type Source = "search" | "describe" | "files" | "manual";
@@ -342,7 +343,7 @@ export function OpsNewBatch() {
                           : key[0].toUpperCase() + key.slice(1)}
                       </span>
                       <input
-                        className={fieldClass}
+                        className={cn(fieldClass, fieldInputClass)}
                         value={manual[key]}
                         onChange={(event) =>
                           setManual((current) => ({
@@ -428,7 +429,7 @@ export function OpsNewBatch() {
                   <label className="block">
                     <span className={labelClass}>Name</span>
                     <input
-                      className={fieldClass}
+                      className={cn(fieldClass, fieldInputClass)}
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                     />
@@ -447,7 +448,7 @@ export function OpsNewBatch() {
                     <span className={labelClass}>Target date (optional)</span>
                     <input
                       type="month"
-                      className={fieldClass}
+                      className={cn(fieldClass, fieldInputClass)}
                       value={target}
                       onChange={(event) => setTarget(event.target.value)}
                     />
@@ -572,7 +573,7 @@ function PropertySearch({
       {" "}
       <input
         type="search"
-        className={fieldClass}
+        className={cn(fieldClass, fieldInputClass)}
         value={query}
         onChange={(event) => onQuery(event.target.value)}
         placeholder="Search by name, address or postcode"

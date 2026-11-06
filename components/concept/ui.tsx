@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Children, isValidElement, type CSSProperties, type ReactNode } from "react";
+import {
+  Children,
+  isValidElement,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import * as RadixSelect from "@radix-ui/react-select";
 import { cn } from "@/lib/utils";
 import {
@@ -119,7 +125,7 @@ export function TypeLabelInfo({ kind }: { kind: "batch" | "package" | "asset" })
           type="button"
           aria-label={aria}
           className={cn(
-            "inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-icon-default hover:bg-bg-container-grey hover:text-icon-strong",
+            "inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-icon-default hover:bg-black-2 active:bg-black-3 hover:text-icon-strong",
             focusRing,
           )}
         >
@@ -207,7 +213,7 @@ export const tabListClass =
   "mb-4 flex gap-8 border-b border-border-light";
 
 export const tabTriggerClass = cn(
-  "inline-flex h-8 shrink-0 items-start whitespace-nowrap border-b-2 border-transparent px-0 pb-3 pt-0 -mb-px p6 text-text-secondary outline-none transition-colors hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7",
+  "inline-flex h-8 shrink-0 items-start whitespace-nowrap border-b-2 border-transparent px-0 pb-3 pt-0 -mb-px p6 text-text-secondary outline-none transition-colors hover:text-text-primary hover:shadow-[inset_0_-2px_0_var(--black-3)] data-[state=active]:hover:shadow-none focus-visible:shadow-focus",
   "data-[state=active]:border-brand-6 data-[state=active]:h8 data-[state=active]:text-text-primary",
 );
 
@@ -215,8 +221,17 @@ export const pageTitle = "h4 text-text-primary";
 export const sectionTitle = "s3 text-text-tertiary";
 /** Group titles such as In progress, Needs your decision, Done. */
 export const groupTitle = "h7 text-text-primary";
-export const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7";
+export const focusRing = "outline-none focus-visible:shadow-focus";
+
+/** Mark table row containers for keyboard focus underline (see globals `.table-row-*-row`). */
+export const tableRowLinkClass = "table-row-link-row outline-none hover:bg-black-1 focus-visible:bg-black-2";
+
+/** Row shell with several tab stops (name link, batch link): focus underline follows inner focus. */
+export const tableRowShellClass =
+  "table-row-shell-row outline-none hover:bg-black-1 focus-within:bg-black-2";
+
+/** First-column name cell in a table row (gets underline when row/shell has keyboard focus). */
+export const tableRowNameCellClass = "table-row-name-cell";
 export const th = "px-4 py-2 pl-8 text-left s3 text-text-tertiary";
 export const td = "px-4 py-3 pl-8 align-top p6 text-text-primary";
 export const dot = <span className="mx-2 text-text-tertiary">·</span>;
@@ -385,17 +400,17 @@ function SummaryCard({
 }
 
 export const filterSearchClass =
-  "h-10 w-full rounded-md border border-border-dark bg-white p6 pl-9 pr-3 text-text-primary outline-none placeholder:text-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7";
+  "h-10 w-full rounded-md border border-border-dark bg-white p6 font-sans pl-9 pr-3 text-text-primary outline-none placeholder:text-text-tertiary focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)]";
 
 /** Shared with FactSelect / PackagePicker menus */
 export const dropdownMenuContentClass =
   "bg-white border border-border-dark rounded-md shadow-floating p-1.5 min-w-[var(--radix-select-trigger-width)] max-w-[360px] max-h-[320px] z-50";
 
 export const dropdownMenuItemClass =
-  "p6 text-text-primary px-3 py-2 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-bg-container-grey data-[state=checked]:h8 data-[state=checked]:bg-bg-container-grey";
+  "rounded-sm outline-none cursor-pointer data-[highlighted]:bg-black-2 data-[state=checked]:bg-transparent";
 
 const dropdownTriggerBaseClass =
-  "flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border-dark bg-white px-3 outline-none transition-colors hover:border-black-4 data-[state=open]:border-black-6 focus-visible:border-black-6 data-[state=open]:outline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 data-[state=open]:outline-black-7 disabled:cursor-not-allowed disabled:bg-bg-container-grey disabled:text-text-tertiary";
+  "flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border-dark bg-white px-3 p6 font-sans outline-none transition-colors hover:border-black-4 data-[state=open]:border-black-6 focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)] disabled:cursor-not-allowed disabled:bg-bg-container-grey disabled:text-text-tertiary";
 
 export function Dropdown({
   value,
@@ -429,7 +444,7 @@ export function Dropdown({
           dropdownTriggerBaseClass,
           size === "default" ? "h-10" : "h-8",
           error &&
-            "border-status-danger-mark hover:border-status-danger-mark data-[state=open]:border-status-danger-mark focus-visible:border-status-danger-mark",
+            "border-status-danger-mark hover:border-status-danger-mark data-[state=open]:border-status-danger-mark focus:border-status-danger-mark focus:shadow-[inset_0_0_0_1px_var(--danger-mark)]",
           triggerClassName,
         )}
       >
@@ -457,9 +472,19 @@ export function Dropdown({
                 key={opt.value}
                 value={opt.value}
                 textValue={opt.label}
-                className={dropdownMenuItemClass}
+                className={cn(
+                  dropdownMenuItemClass,
+                  "flex w-full items-center gap-2 px-3 py-2 text-left",
+                  "[&[data-state=checked]_.item-row-label]:h8",
+                  "[&[data-state=checked]_.item-row-label]:font-semibold",
+                )}
               >
-                <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
+                <RadixSelect.ItemText className="item-row-label min-w-0 flex-1 p6 text-text-primary">
+                  {opt.label}
+                </RadixSelect.ItemText>
+                <RadixSelect.ItemIndicator className="ml-auto shrink-0">
+                  <Icon name="check" size={16} className="text-icon-strong" />
+                </RadixSelect.ItemIndicator>
               </RadixSelect.Item>
             ))}
           </RadixSelect.Viewport>
@@ -588,7 +613,7 @@ export function Chip({
         focusRing,
         selected
           ? "border-black-7 bg-black-7 h8 text-white"
-          : "border-border-dark bg-bg-container p6 text-text-primary hover:bg-bg-container-grey",
+          : "border-border-dark bg-bg-container p6 text-text-primary hover:bg-black-2 active:bg-black-3",
       )
     : cn(
         "inline-flex items-center rounded-full",
@@ -723,7 +748,7 @@ export function YourActionOnly({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex h-10 cursor-pointer items-center gap-2">
+    <label className="flex h-10 cursor-pointer items-center gap-2 rounded-sm outline-none focus-within:shadow-focus">
       <input
         type="checkbox"
         className="peer sr-only"
@@ -732,7 +757,7 @@ export function YourActionOnly({
       />
       <span
         className={cn(
-          "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-black-7",
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]",
           checked
             ? "border-black-7 bg-black-7 text-white"
             : "border-black-6 bg-white",
@@ -745,29 +770,6 @@ export function YourActionOnly({
         Your action only
       </span>
     </label>
-  );
-}
-
-export function FilterSearch({
-  value,
-  onChange,
-  placeholder = `${WORDS.Package} or project name`,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <div className="relative w-full">
-      <Icon name="search" size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-icon-default" />
-      <input
-        type="search"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className={filterSearchClass}
-      />
-    </div>
   );
 }
 
@@ -1011,15 +1013,74 @@ export function Card({
   );
 }
 
+/** Design system Timeline ("History"): date first, newest first, `brand-6` dot when `you`. */
+export type TimelineItem = {
+  event: string;
+  detail?: string;
+  /** Short date for the left column (e.g. from `short()`). */
+  date: string;
+  year: string;
+  /** Waits on the customer — accent dot until settled. */
+  you?: boolean;
+};
+
+export function Timeline({ items }: { items: TimelineItem[] }) {
+  const years = new Set(items.map((item) => item.year));
+  return (
+    <ol className="flex flex-col gap-4">
+      {items.map((item, index) => {
+        const showYear =
+          years.size > 1
+            ? index === 0 || item.year !== items[index - 1]?.year
+            : index === 0;
+        return (
+          <li key={`${item.date}-${item.event}-${index}`}>
+            {showYear && (
+              <div className="grid grid-cols-[52px_16px_minmax(0,1fr)] gap-x-2.5 pb-2">
+                <p className="col-start-3 s3 text-text-tertiary">{item.year}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-[52px_16px_minmax(0,1fr)] gap-x-2.5">
+              <p className="h9 text-right text-text-title">{item.date}</p>
+              <div className="relative flex justify-center">
+                <span
+                  className={cn(
+                    "z-10 mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                    item.you
+                      ? "bg-brand-6 shadow-[0_0_0_3px_var(--bg-accent)]"
+                      : "bg-black-4",
+                  )}
+                />
+                {index < items.length - 1 && (
+                  <span
+                    className="absolute top-3.5 -bottom-5 w-px bg-black-3"
+                    aria-hidden
+                  />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="h8 text-text-primary">{item.event}</p>
+                {item.detail && (
+                  <p className="p7 text-text-secondary">{item.detail}</p>
+                )}
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 const BUTTON_TYPE = {
   primary: "bg-brand-6 text-white hover:bg-brand-7 active:bg-brand-8",
   strong: "bg-black-7 text-white hover:bg-black-6",
   secondary:
-    "border border-border-dark bg-bg-container text-text-primary hover:bg-black-1",
-  tertiary: "text-text-primary hover:bg-black-1",
+    "border border-border-dark bg-bg-container text-text-primary hover:bg-black-2 active:bg-black-3",
+  tertiary: "text-text-primary hover:bg-black-2 active:bg-black-3",
   link: "h-auto rounded-none px-0 text-text-primary underline decoration-border-dark underline-offset-2 hover:text-text-primary hover:decoration-text-primary",
   danger:
-    "border border-status-danger-border bg-bg-container text-status-danger-text",
+    "border border-status-danger-border bg-bg-container text-status-danger-text hover:bg-status-danger-bg active:bg-status-danger-border",
 } as const;
 
 const BUTTON_SIZE = {
@@ -1063,7 +1124,7 @@ export function Button({
 }) {
   const showIcon = Boolean(icon) && type !== "link";
   const cls = cn(
-    "inline-flex shrink-0 items-center justify-center whitespace-nowrap h8 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7 disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4",
+    "inline-flex shrink-0 items-center justify-center whitespace-nowrap h8 outline-none focus-visible:shadow-focus disabled:pointer-events-none disabled:bg-black-2 disabled:text-black-4",
     showIcon && (size === "small" ? "gap-1.5" : "gap-2"),
     BUTTON_TYPE[type],
     type !== "link" && BUTTON_SIZE[size],
@@ -1165,11 +1226,11 @@ export function PackagePicker({
       <RadixSelect.Trigger
         type="button"
         className={cn(
-          "inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-sm p6 text-text-primary",
+          "inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-sm p6 font-sans text-text-primary",
           focusRing,
           "-mx-1.5 -my-0.5 px-1.5 py-0.5",
-          "data-[state=open]:bg-bg-container-grey",
-          "hover:bg-bg-container-grey",
+          "data-[state=open]:bg-black-2",
+          "hover:bg-black-2",
         )}
         aria-label={`Package: ${selected?.name ?? ""}. ${selectedIndex} of ${total}. Change package`}
       >
@@ -1213,18 +1274,28 @@ export function PackagePicker({
                             textValue={item.name}
                             className={cn(
                               dropdownMenuItemClass,
-                              "relative block w-full cursor-pointer text-left",
+                              "flex w-full cursor-pointer items-start gap-2 text-left",
+                              "[&[data-state=checked]_.item-row-label]:font-semibold",
                             )}
                           >
-                            <span
-                              className={cn(
-                                "block",
-                                isSelected ? "h8 text-text-primary" : "p6 text-text-primary",
-                              )}
-                            >
-                              {item.name}
-                            </span>
-                            <span className="mt-0.5 block p7 text-text-tertiary">{item.subline}</span>
+                            <div className="min-w-0 flex-1">
+                              <RadixSelect.ItemText
+                                className={cn(
+                                  "item-row-label block",
+                                  isSelected
+                                    ? "h8 text-text-primary"
+                                    : "p6 text-text-primary",
+                                )}
+                              >
+                                {item.name}
+                              </RadixSelect.ItemText>
+                              <span className="mt-0.5 block p7 text-text-secondary">
+                                {item.subline}
+                              </span>
+                            </div>
+                            <RadixSelect.ItemIndicator className="ml-auto shrink-0">
+                              <Icon name="check" size={16} className="text-icon-strong" />
+                            </RadixSelect.ItemIndicator>
                           </RadixSelect.Item>
                         );
                       })}
@@ -1240,18 +1311,28 @@ export function PackagePicker({
                       textValue={item.name}
                       className={cn(
                         dropdownMenuItemClass,
-                        "relative block w-full cursor-pointer text-left",
+                        "flex w-full cursor-pointer items-start gap-2 text-left",
+                        "[&[data-state=checked]_.item-row-label]:font-semibold",
                       )}
                     >
-                      <span
-                        className={cn(
-                          "block",
-                          isSelected ? "h8 text-text-primary" : "p6 text-text-primary",
-                        )}
-                      >
-                        {item.name}
-                      </span>
-                      <span className="mt-0.5 block p7 text-text-tertiary">{item.subline}</span>
+                      <div className="min-w-0 flex-1">
+                        <RadixSelect.ItemText
+                          className={cn(
+                            "item-row-label block",
+                            isSelected
+                              ? "h8 text-text-primary"
+                              : "p6 text-text-primary",
+                          )}
+                        >
+                          {item.name}
+                        </RadixSelect.ItemText>
+                        <span className="mt-0.5 block p7 text-text-secondary">
+                          {item.subline}
+                        </span>
+                      </div>
+                      <RadixSelect.ItemIndicator className="ml-auto shrink-0">
+                        <Icon name="check" size={16} className="text-icon-strong" />
+                      </RadixSelect.ItemIndicator>
                     </RadixSelect.Item>,
                   );
                   i += 1;
@@ -1467,8 +1548,8 @@ export function IconButton({
     focusRing,
     ICON_BUTTON_SIZE[size],
     type === "secondary"
-      ? "border border-border-dark bg-bg-container text-text-primary hover:bg-bg-container-grey"
-      : "text-icon-default hover:bg-bg-container-grey hover:text-icon-strong",
+      ? "border border-border-dark bg-bg-container text-text-primary hover:bg-black-2 active:bg-black-3"
+      : "text-icon-default hover:bg-black-2 active:bg-black-3 hover:text-icon-strong",
     disabled && "pointer-events-none text-icon-disabled",
   );
   const glyph = <Icon name={icon} size={ICON_BUTTON_ICON[size]} />;
@@ -1505,6 +1586,53 @@ export function IconButton({
         {label}
       </span>
     </span>
+  );
+}
+
+export function FilterSearch({
+  value,
+  onChange,
+  placeholder = `${WORDS.Package} or project name`,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hasValue = value.length > 0;
+  const clear = () => {
+    onChange("");
+    queueMicrotask(() => inputRef.current?.focus());
+  };
+
+  return (
+    <div className="relative w-full">
+      <Icon name="search" size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-icon-default" />
+      <input
+        ref={inputRef}
+        type="search"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            clear();
+          }
+        }}
+        className={cn(filterSearchClass, hasValue && "pr-9")}
+      />
+      {hasValue && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onClick={clear}
+          className="absolute right-3 top-1/2 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-black-4 outline-none hover:text-black-7 focus-visible:text-black-7 focus-visible:shadow-[0_0_0_2px_var(--black-7)]"
+        >
+          <Icon name="cross" size={16} />
+        </button>
+      )}
+    </div>
   );
 }
 

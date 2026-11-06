@@ -18,7 +18,19 @@ import {
   wsIn,
 } from "@/lib/concept/derive";
 import { useConcept } from "./store";
-import { Icon, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly } from "./ui";
+import { cn } from "@/lib/utils";
+import {
+  Icon,
+  ClearFilters,
+  FilterBar,
+  FilterField,
+  FilterSearch,
+  FilterSelect,
+  PageHeader,
+  YourActionOnly,
+  tableRowLinkClass,
+  tableRowNameCellClass,
+} from "./ui";
 import { hrefs } from "./hrefs";
 import { nAssets, WORDS } from "@/lib/concept/words";
 
@@ -242,13 +254,20 @@ function BatchRow({
   return (
     <Link
       href={hrefs.batch(batch.id)}
-      className="grid items-center gap-x-6 border-t border-border-light px-6 py-3.5 hover:bg-black-1"
+      className={cn(
+        "grid items-center gap-x-6 border-t border-border-light px-6 py-3.5",
+        tableRowLinkClass,
+      )}
       style={{ gridTemplateColumns: batchColumns(showTarget) }}
       onFocus={() => setOpen(true)}
       onBlur={() => setOpen(false)}
     >
       <span className="min-w-0">
-        <span className="block h8 text-text-title">{batch.name}</span>
+        <span
+          className={cn("block h8 text-text-title", tableRowNameCellClass)}
+        >
+          {batch.name}
+        </span>
         <span className="block truncate p7 text-text-tertiary">
           {batch.goal}
         </span>

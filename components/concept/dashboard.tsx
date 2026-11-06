@@ -31,7 +31,8 @@ import {
   type Batch,
   type Building,
 } from "@/lib/concept/model";
-import { Icon, Card, CardLink } from "./ui";
+import { cn } from "@/lib/utils";
+import { Icon, Card, CardLink, focusRing } from "./ui";
 import { hrefs } from "./hrefs";
 import { Decisions } from "./Decisions";
 
@@ -507,7 +508,7 @@ function FindBuilding({ account }: { account: Account }) {
           }}
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
-          className="h-14 w-full rounded-[var(--radius-image)] border border-black-4 bg-white pl-12 pr-14 p6 text-text-primary outline-none placeholder:text-text-tertiary"
+          className="h-14 w-full rounded-[var(--radius-image)] border border-black-4 bg-white pl-12 pr-14 p6 font-sans text-text-primary outline-none placeholder:text-text-tertiary focus-visible:border-black-6 focus-visible:shadow-focus"
         />
         <kbd className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rounded border border-black-3 px-1.5 py-0.5 p7 text-text-tertiary">
           /
@@ -543,7 +544,10 @@ function FindBuilding({ account }: { account: Account }) {
               <Link
                 key={batch.id}
                 href={hrefs.batch(batch.id)}
-                className="block px-4 py-2 h8 text-text-title hover:bg-black-1"
+                className={cn(
+                  "block rounded-sm px-4 py-2 outline-none h8 text-text-title hover:bg-black-2",
+                  focusRing,
+                )}
               >
                 {batch.name}
               </Link>
@@ -576,7 +580,10 @@ function BuildingHit({
   return (
     <Link
       href={hrefs.building(building.id, { from: "search" })}
-      className="block px-4 py-2 hover:bg-black-1"
+      className={cn(
+        "block rounded-sm px-4 py-2 outline-none hover:bg-black-2",
+        focusRing,
+      )}
     >
       <p className="h8 text-text-title">{building.name}</p>
       <p className="p7 text-text-secondary">
@@ -618,7 +625,10 @@ function Batches({ account }: { account: Account }) {
             >
               <Link
                 href={hrefs.batch(batch.id)}
-                className="flex items-center gap-3 px-6 py-3.5 hover:bg-black-1"
+                className={cn(
+                  "flex items-center gap-3 rounded-sm px-6 py-3.5 outline-none hover:bg-black-2",
+                  focusRing,
+                )}
               >
                 <span className="min-w-0 flex-1">
                   <span className="block h8 text-text-title">{batch.name}</span>

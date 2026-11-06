@@ -17,17 +17,20 @@ import {
   moneyOne,
   paybackLabel,
   priorProject,
+  historyEventYear,
+  parse,
   projectHistory,
   scopeLine,
   short,
   visitStateLabel,
 } from "@/lib/concept/derive";
-import { Button, Card, Page, PageHeader, ResponsibilityPill } from "./ui";
+import { Button, Card, Page, PageHeader, ResponsibilityPill, Timeline } from "./ui";
 import { DetailsGrid } from "./DetailsGrid";
 import { ProjectRoute } from "./ProjectRoute";
 import { DeliveryProject } from "./DeliveryWorkstream";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
+import { shortFact } from "./WorkstreamChrome";
 import { cn } from "@/lib/utils";
 import { WORDS } from "@/lib/concept/words";
 
@@ -64,7 +67,8 @@ export function ProjectView({
   const def = serviceDef(w.service);
   const solutionLabel =
     w.solution === "ev" ? "EV charging" : SOLUTIONS[w.solution];
-  const history = projectHistory(account, w, row);
+  const historyRaw = projectHistory(account, w, row);
+  const history = [...historyRaw].sort((a, b) => parse(b.date) - parse(a.date));
   const basis = basisRows(w, row);
   const scopeCaptions = () => {
     const prior = priorProject(account, w, buildingId);
@@ -508,25 +512,16 @@ export function ProjectView({
         )}
 
         {history.length > 0 && (
-          <Card title="History" bodyClassName="p-0">
-            <table className="w-full">
-              <tbody>
-                {history.map((item) => (
-                  <tr
-                    key={item.event}
-                    className="border-t border-border-light first:border-t-0"
-                  >
-                    <td className="px-5 py-3.5 p6">{item.event}</td>
-                    <td className="px-5 py-3.5 p6 text-text-secondary">
-                      {item.detail}
-                    </td>
-                    <td className="px-5 py-3.5 text-right p6 text-text-tertiary">
-                      {item.date}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <Card title="History">
+            <Timeline
+              items={history.map((item) => ({
+                event: shortFact(item.event),
+                detail: item.detail,
+                date: short(item.date),
+                year: historyEventYear(item.date),
+                you: item.you,
+              }))}
+            />
           </Card>
         )}
       </div>

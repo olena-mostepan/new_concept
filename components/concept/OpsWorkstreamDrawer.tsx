@@ -13,11 +13,13 @@ import {
 } from "@/lib/concept/model";
 import { getBuilding } from "@/lib/concept/derive";
 import { useConcept } from "./store";
+import { cn } from "@/lib/utils";
 import { Dropdown, IconButton } from "./ui";
 import {
   SERVICE_LINES,
   SOLUTION_OPTIONS,
   fieldClass,
+  fieldInputClass,
   filledBtn,
   labelClass,
   solutionLabel,
@@ -269,7 +271,7 @@ export function OpsWorkstreamDrawer({
               {needs.map((need, index) => (
                 <input
                   key={index}
-                  className={fieldClass}
+                  className={cn(fieldClass, fieldInputClass)}
                   value={need}
                   onChange={(event) =>
                     setNeeds(

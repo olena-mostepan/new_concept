@@ -46,6 +46,8 @@ import {
   DocumentList,
   ListMore,
   focusRing,
+  tableRowLinkClass,
+  tableRowNameCellClass,
   tabListClass,
   tabTriggerClass,
 } from "./ui";
@@ -636,7 +638,7 @@ function BatchPage({
                   className={cn(
                     "relative overflow-hidden rounded-md border border-border-dark bg-bg-container px-4 py-3 text-left",
                     focusRing,
-                    !on && "cursor-pointer hover:bg-bg-container-grey",
+                    !on && "cursor-pointer hover:bg-black-2",
                   )}
                 >
                   {on && (
@@ -688,11 +690,19 @@ function BatchPage({
                         from: "batch",
                         batch: batch.id,
                       })}
-                      className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                      className={cn(
+                        "grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                        tableRowLinkClass,
+                      )}
                     >
                       <span className="min-w-0">
                         <ChangedDot on={buildingChanged(account, building.id)}>
-                          <span className="block h8 text-text-title">
+                          <span
+                            className={cn(
+                              "block h8 text-text-title",
+                              tableRowNameCellClass,
+                            )}
+                          >
                             {building.name}
                           </span>
                         </ChangedDot>
@@ -771,7 +781,10 @@ function BatchPage({
                     <button
                       type="button"
                       onClick={() => setOpenDropped(!openDropped)}
-                      className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                      className={cn(
+                        "grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left",
+                        tableRowLinkClass,
+                      )}
                     >
                       <span className="p6 text-text-tertiary">
                         {foldDropped.length} dropped
@@ -797,10 +810,18 @@ function BatchPage({
                               from: "batch",
                               batch: batch.id,
                             })}
-                            className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                            className={cn(
+                        "grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                        tableRowLinkClass,
+                      )}
                           >
                             <span className="min-w-0">
-                              <span className="block h8 text-text-title">
+                              <span
+                                className={cn(
+                                  "block h8 text-text-title",
+                                  tableRowNameCellClass,
+                                )}
+                              >
                                 {b.name}
                               </span>
                               <span className="mt-0.5 block p7 text-text-tertiary">
@@ -843,7 +864,10 @@ function BatchPage({
                     <button
                       type="button"
                       onClick={() => setOpenMoved(!openMoved)}
-                      className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                      className={cn(
+                        "grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left",
+                        tableRowLinkClass,
+                      )}
                     >
                       <span className="p6 text-text-tertiary">
                         {foldMoved.length} moved out
@@ -869,10 +893,18 @@ function BatchPage({
                               from: "batch",
                               batch: batch.id,
                             })}
-                            className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                            className={cn(
+                        "grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                        tableRowLinkClass,
+                      )}
                           >
                             <span className="min-w-0">
-                              <span className="block h8 text-text-title">
+                              <span
+                                className={cn(
+                                  "block h8 text-text-title",
+                                  tableRowNameCellClass,
+                                )}
+                              >
                                 {b.name}
                               </span>
                               <span className="mt-0.5 block p7 text-text-tertiary">
@@ -993,10 +1025,17 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
               <Link
                 key={w.id}
                 href={hrefs.workstream(w.id, "batch")}
-                className={`${gridClass} hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7`}
+                className={cn(gridClass, tableRowLinkClass)}
               >
                 <span className="min-w-0">
-                  <span className="block h8 text-text-title">{w.name}</span>
+                  <span
+                    className={cn(
+                      "block h8 text-text-title",
+                      tableRowNameCellClass,
+                    )}
+                  >
+                    {w.name}
+                  </span>
                 </span>
                 <span className="p6 text-text-primary">{batchNowLine(account, w)}</span>
                 <span className="p6 text-text-primary tabular-nums">{assetsN}</span>
@@ -1034,7 +1073,10 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
               <button
                 type="button"
                 onClick={() => setOpenClosed(!openClosed)}
-                className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                className={cn(
+                  "grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left",
+                  tableRowLinkClass,
+                )}
               >
                 <span className="p6 text-text-tertiary">
                   {folded.length} closed
@@ -1060,7 +1102,14 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
                   const nowCol = batchNowLine(account, w);
                   const body = (
                     <>
-                      <span className="min-w-0 h8 text-text-tertiary">{w.name}</span>
+                      <span
+                        className={cn(
+                          "min-w-0 h8 text-text-tertiary",
+                          tableRowNameCellClass,
+                        )}
+                      >
+                        {w.name}
+                      </span>
                       <span className="p6 text-text-tertiary">{nowCol}</span>
                       <span className="p6 text-text-tertiary tabular-nums">
                         {assetsCol}
@@ -1081,8 +1130,8 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
                       href={hrefs.workstream(w.id, "batch")}
                       className={cn(
                         gridClass,
+                        tableRowLinkClass,
                         isClosed(w) && "bg-black-1",
-                        "hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7",
                       )}
                     >
                       {body}

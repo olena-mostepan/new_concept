@@ -1,6 +1,6 @@
-# CQuel design system: handoff (4 Nov 2026, updated after version 38)
+# CQuel design system: handoff (4 Nov 2026, updated after version 41)
 
-For the next task on the design system. Read the published artifact first; it is the full, current copy. Version 38 supersedes anything below that it contradicts.
+For the next task on the design system. Read the published artifact first; it is the full, current copy. Version 41 supersedes anything below that it contradicts.
 
 ## Where it lives
 
@@ -78,7 +78,8 @@ The full write-up is `claude/design-system-update-tabs-chips.md`. The prototype 
 - **Tabs (v29) and facts (v30):** 32 between tabs, 32-high tabs, 16 to content; facts min 160 wide, 40 apart, label 2 above value, one rule for header and DetailsGrid.
 - **Asset tabs and moves (v35):** the asset page works like the package page: tabs scoped to the selected package (Overview, then each service the asset went through), display chips never clickable, PackageCard panel holds the current service's steps for this asset (Steps, PhaseStepper for Delivery), service tabs hold steps + figures. Steps README lists the five step lists; lines under steps only from data. "Moves" section in the README: one wording (Since/Joined/On hold since/Left · how), no reasons, never "migrated/transferred". IN PACKAGE column and heading alignment in Table. Batch page Assets/Packages tabs. StatusCard keeps a Closed variant (Olena, 6 Nov). Changed-key sits top right (v33). Prompts: parts 33–35 from the other chat; my detail-header prompt; part 34 service cards; part 35 changed key.
 - **Dropdowns (v37):** one CQuel menu for Select, FilterSelect and FactSelect; the field arrow is the chevron-down icon, centred; Progress and PlanTrack unused.
-- **Focus and hover (v38, Olena 6 Nov):** focus is a soft 4px ink halo (`focus-ring` 0 0 0 4px rgba(30,40,50,.14)), no black outline, keyboard only. Olena chose it knowing it's below the 3:1 contrast guidance for focus indicators. Hover fills are the light accent (bg-accent). Menus: highlighted row bg-accent, chosen row SemiBold with no fill, no ring.
+- **Focus and hover (v41, Olena 6 Nov; replaces the v38 halo):** keyboard focus is a black ring for accessibility: 2px black-7 with a 2px white gap (`focus-ring` 0 0 0 2px #fff, 0 0 0 4px black-7), `:focus-visible` only, on every button colour. Fields: a 2px black-7 border whenever focused. Table rows and menu rows never get a ring or border: a focused link row is black-2 with its name underlined; the menu's highlighted row is black-2. Hover and pressed stay in each element's own colour: primary brand-7 / brand-8; secondary, tertiary, icon buttons, chips, service cards black-2 / black-3; danger danger-1 / danger-2; table rows black-1. Never the light accent for hover. Menus: chosen row SemiBold plus a 16px check. The search clear × is a plain grey icon, no fill, no tooltip.
+- **Fields, one size (v40):** every field 40 high (small 32), typed text and placeholder p6 in the product font, labels h9 text-title 4 above; the Overview hero search is the only exception.
 - **Tab dot:** keeps both meanings: the current service on the package and asset pages, "new" elsewhere. InfoDrawer is unused but kept.
 - **DocumentList:** one list with no grouping. Each row has the file type as a neutral Tag at the new `xsmall` size (20px) before the detail, and a tertiary IconButton (download, or chevron-right for a set to view).
 

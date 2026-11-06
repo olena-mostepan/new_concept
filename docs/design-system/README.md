@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 40, 06 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 41, 06 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -18,9 +18,8 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - the active tab underline;
   - the selected service filter card on a batch page (4px top bar);
   - the `now` display Chip: the step, phase or service where work is under way (light accent, darker border, orange dot);
-  - the History dot of an event that still waits on the customer;
-  - the hover fill (`bg-accent`): where the pointer is.
-- Everything else is ink and greys: done and later chips, the pipeline bar, checkboxes, progress, focus rings.
+  - the History dot of an event that still waits on the customer.
+- Everything else is ink and greys: done and later chips, the pipeline bar, checkboxes, progress, hover fills and the black focus ring. Orange never means "the pointer is here".
 - **The one black pill** is the selected filter Chip. Tag `strong` stays retired.
 - **Dark means go there; orange means do this.** The `strong` Button (`black-7` fill) is the one way on from a page; the `primary` Button is the one action that moves the work on.
 - At most one `primary` Button per screen or panel.
@@ -99,8 +98,17 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - `radius-image` (10): photos and the Overview hero search.
   - `radius-full`: pills, dots and circles.
 - Cards sit flat with a `border-dark` line and no shadow. Only floating things cast one: `elevation-floating` for menus, popovers and tooltips, `elevation-overlay` for drawers and modals, on the `bg-scrim`.
-- **Focus** is one style everywhere, keyboard only (`:focus-visible`, never on a mouse click) and never orange: a soft 4px ink halo (`focus-ring`, `0 0 0 4px rgba(30,40,50,.14)`), no line, on buttons, links, tabs, chips, cards you can click, table rows, fields, checkboxes and radios. Fields also turn their border `black-6`. Inside menus there is no ring: the highlighted row gets the light accent fill.
-- **Hover** is the light accent (`bg-accent`) on anything with a hover fill: secondary and tertiary buttons, icon buttons, table rows, menu rows, filter chips and service filter cards. Fields and summary cards keep their border change. The selected filter chip stays black.
+- **Keyboard focus** is a black ring, for accessibility: 2px `black-7` with a 2px white gap (`focus-ring`, `0 0 0 2px #fff, 0 0 0 4px black-7`), `:focus-visible` only, never on a mouse click, never orange. The white gap keeps it readable on the orange primary button and on grey panels. It goes on buttons, icon buttons, links, the Back link, tabs (the orange underline stays inside it), chips, cards you can click, checkboxes and radios.
+  - **Fields** (inputs, the search field, Dropdown triggers): a 2px `black-7` border whenever focused, mouse too, since a field is always focused while you type. No halo.
+  - **Table rows and menu rows never get a ring or border.** A focused link row gets the `black-2` fill and its name underlined. In a menu, the row under the pointer or arrow keys gets the `black-2` fill; the menu's field already carries the focus.
+- **Hover and pressed stay in each element's own colour family.** Orange never means "the pointer is here".
+  - Primary (orange): hover `brand-7`, pressed `brand-8`.
+  - Secondary, tertiary and icon buttons, filter chips, service filter cards, the FactSelect value: hover `black-2`, pressed `black-3`.
+  - Danger: hover `danger-1`, pressed `danger-2`.
+  - Table rows: hover `black-1`. Menu rows: `black-2`.
+  - Inactive tabs: text to `text-primary` and a `black-3` underline. Links and the Pager: text darkens or underlines, no fill.
+  - Fields and summary cards: border to `black-4`. The selected filter chip stays black.
+- **Menus:** the chosen row is `h8` with a 16px `check` at the right, no fill. A row may carry a second line in `p7` text-secondary.
 - Off-scale gaps use `space-2` and `space-6`; nothing else sits between the steps.
 
 ## The concept pieces

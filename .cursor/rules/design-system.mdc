@@ -1,0 +1,17 @@
+---
+description: CQuel design system rules for concept UI
+alwaysApply: true
+---
+
+# Design system for concept UI
+
+The source of truth is `docs/design-system/` (exported from the CQuel design system). Read `README.md` and the component's section in `components.md` before changing UI.
+
+- Concept UI (`components/concept`, `app/concept`) uses only the pieces in `components/concept/ui.tsx`: Tabs (`tabListClass`, `tabTriggerClass`), Button, IconButton, Chip, Card, PageHeader, FactsRow, Tag, Icon and the rest.
+- Never import from `components/ui/*` (the generic shadcn kit) in concept code. Only `components/concept/ui.tsx` may wrap one of them, and every page uses the wrapper.
+- If `ui.tsx` has no piece for what you need, stop and say so. Don't build a one-off, borrow a shadcn component, or add a second variant for a different background.
+- No `text-sm`, `text-xs`, raw hex colours or pixel font sizes: use the type classes (`h4`…`h9`, `p6`, `p7`, `s3`) and the tokens in `app/globals.css`.
+
+Before you finish, run this; it must print nothing:
+
+    grep -rn "@/components/ui/" components/concept app/concept | grep -v "components/concept/ui.tsx"

@@ -99,10 +99,13 @@ export function ProjectsTable({
   w,
   rows,
   columns,
+  readOnly,
 }: {
   w: Workstream;
   rows?: ProjectRow[];
   columns?: Column[];
+  /** Inherited tab: no emphasized “your decision” prompts. */
+  readOnly?: boolean;
 }) {
   const { account } = useConcept();
   const params = useSearchParams();
@@ -145,8 +148,9 @@ export function ProjectsTable({
     return (
       <span
         className={cn(
-          decision.emphasis && "h8 text-text-primary",
+          !readOnly && decision.emphasis && "h8 text-text-primary",
           decision.muted && "text-text-tertiary",
+          !decision.muted && readOnly && "text-text-primary",
         )}
       >
         {decision.text}

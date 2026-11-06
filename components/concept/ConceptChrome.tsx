@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { changedRecently, isLive } from "@/lib/concept/derive";
+import { changedRecently, isClosed, isLive } from "@/lib/concept/derive";
 import type { Account } from "@/lib/concept/model";
 import { ConceptStoreProvider, useConcept } from "./store";
 import {
@@ -95,7 +95,7 @@ function ViewToggle({ ops }: { ops: boolean }) {
 function customerNav(account: Account): NavItem[] {
   const changed = new Set(
     account.workstreams
-      .filter((w) => isLive(w) && changedRecently(w))
+      .filter((w) => !isClosed(w) && isLive(w) && changedRecently(w))
       .map((w) => w.service),
   );
   return CUSTOMER_NAV.map((item) => ({

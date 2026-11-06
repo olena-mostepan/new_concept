@@ -22,7 +22,9 @@ export const hrefs = {
       via?: BuildingVia;
       batch?: string;
       package?: string;
+      /** @deprecated Ignored; use tab */
       service?: string;
+      tab?: string;
     },
   ) => {
     const sp = new URLSearchParams();
@@ -32,6 +34,7 @@ export const hrefs = {
     if (opts?.via) sp.set("via", opts.via);
     if (opts?.batch) sp.set("batch", opts.batch);
     if (opts?.package) sp.set("package", opts.package);
+    if (opts?.tab) sp.set("tab", opts.tab);
     if (opts?.service) sp.set("service", opts.service);
     const query = sp.toString();
     return `${BASE}/assets/${buildingId}${query ? `?${query}` : ""}`;

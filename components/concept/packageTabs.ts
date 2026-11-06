@@ -1,5 +1,5 @@
-import type { ServiceId, Workstream } from "@/lib/concept/model";
-import { presentedTotal, workstreamView } from "@/lib/concept/derive";
+import type { Account, ServiceId, Workstream } from "@/lib/concept/model";
+import { presentedTotal, phaseIsInheritedFrom, workstreamView } from "@/lib/concept/derive";
 import { offersIn } from "./TenderWorkstream";
 import { packagePrimaryTab } from "./packageStatus";
 
@@ -45,11 +45,16 @@ function hasContract(w: Workstream) {
   );
 }
 
-export function tabsFor(w: Workstream) {
+export function tabsFor(w: Workstream, account: Account) {
   const current = packagePrimaryTab(w);
-  const tabs: Array<{ id: PackageTabId; label: string; dot?: boolean }> = [
-    { id: "overview", label: "Overview" },
-  ];
+  const inheritedEstimates = phaseIsInheritedFrom(w, account, "indicative");
+  const tabs: Array<{
+    id: PackageTabId;
+    label: string;
+    dot?: boolean;
+    from?: boolean;
+    service?: ServiceId;
+  }> = [{ id: "overview", label: "Overview" }];
   const estimates = viewFor(w, "indicative");
   if (
     estimates &&
@@ -59,9 +64,12 @@ export function tabsFor(w: Workstream) {
     tabs.push({
       id: "estimates",
       label: "Estimates",
+      service: "indicative",
+      from: inheritedEstimates,
       dot:
-        current === "estimates" ||
-        estimates.projects.some((project) => project.decision === "waiting"),
+        !inheritedEstimates &&
+        (current === "estimates" ||
+          estimates.projects.some((project) => project.decision === "waiting")),
     });
   }
   if (started(w, "scope") && hasOpenVisit(w)) {
@@ -139,9 +147,9 @@ const SCOPE_ORDER: PackageTabId[] = [
 ];
 
 /** Package tabs this asset shares with others, for the asset page card. */
-export function assetPackageScopeLine(w: Workstream) {
+export function assetPackageScopeLine(w: Workstream, account: Account) {
   const byId = new Map(
-    tabsFor(w)
+    tabsFor(w, account)
       .filter((tab) => !SCOPE_SKIP.has(tab.id))
       .map((tab) => [tab.id, scopeLabel(tab.label)] as const),
   );

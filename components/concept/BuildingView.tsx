@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import * as Tabs from "@radix-ui/react-tabs";
 import {
   service,
   SERVICES,
@@ -14,6 +15,7 @@ import {
   type Doc,
   type ProjectRow,
   type ServiceId,
+  type Workstream,
 } from "@/lib/concept/model";
 import {
   DELIVERY_PHASES,
@@ -25,56 +27,85 @@ import {
   getBatch,
   getBuilding,
   getWorkstream,
+  isClosed,
   isCompleted,
   money,
   moneyOne,
   packageAssets,
+  parse,
   paybackLabel,
+  phaseIsInheritedFrom,
   projectsAtBuilding,
+  rowIsInactive,
   scopeLine,
   short,
-  solutionName,
   visitStateLabel,
   type BuildingProject,
 } from "@/lib/concept/derive";
+import { inPackageFactLine, leftHowLabel } from "@/lib/concept/moves";
 import { cn } from "@/lib/utils";
 import {
   PackageCard,
+  Button,
   Card,
   CardLink,
   ChipTrack,
   DocumentList,
-  FactsRow,
   PackagePicker,
   Page,
   PageHeader,
+  ServiceIcon,
+  TabDot,
   type FactItem,
-  type PackagePickerOption,
+  tabListClass,
+  tabTriggerClass,
 } from "./ui";
+import { DetailsGrid } from "./DetailsGrid";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
 import { shortFact } from "./WorkstreamChrome";
-import { assetPackageScopeLine } from "./packageTabs";
 import { buildingCrumbs } from "./crumbs";
 import { WORDS } from "@/lib/concept/words";
 import { phaseStarted } from "./serviceChips";
+import { packagePrimaryTab } from "./packageStatus";
 
 const STAGES = DELIVERY_PHASES.filter((phase) => phase.id !== "complete");
 
-const PANEL_TITLE: Record<ServiceId, string> = {
-  indicative: "Estimate at this asset",
-  scope: "Planning at this asset",
-  tender: "Tender at this asset",
-  pricing: "Price at this asset",
-  delivery: "Delivery at this asset",
+const BASE_ASSET = `${hrefs.buildings}`;
+
+const SERVICE_TITLE: Record<ServiceId, string> = {
+  indicative: "Estimates",
+  scope: "Planning",
+  tender: "Tender",
+  pricing: "Pricing",
+  delivery: "Delivery",
 };
+
+function assetAtTitle(sid: ServiceId): string {
+  return `${SERVICE_TITLE[sid]} at this asset`;
+}
+
+/** Package page tab → workstream service id for current dot. */
+function packagePrimaryService(w: Workstream): ServiceId {
+  const tab = packagePrimaryTab(w);
+  if (tab === "estimates") return "indicative";
+  if (tab === "survey") return "scope";
+  if (
+    tab === "brief" ||
+    tab === "supplier-matching" ||
+    tab === "tender-results"
+  )
+    return "tender";
+  if (tab === "contract") return "pricing";
+  return tab as ServiceId;
+}
 
 export function BuildingView({ buildingId }: { buildingId: string }) {
   const { account } = useConcept();
   const router = useRouter();
   const search = useSearchParams();
   const building = getBuilding(account, buildingId);
-  const projects = projectsAtBuilding(account, buildingId);
+  const allProjects = projectsAtBuilding(account, buildingId);
   if (!building) {
     return (
       <Page>
@@ -82,64 +113,67 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
       </Page>
     );
   }
+
+  const live = allProjects.filter(
+    (p) => !rowIsInactive(p.row) && !isClosed(p.workstream),
+  );
+  const earlier = allProjects.filter(
+    (p) => rowIsInactive(p.row) || isClosed(p.workstream),
+  );
+
   const crumbs = buildingCrumbs(account, buildingId, search).map(
     ({ label, href }) => ({ label, href }),
   );
 
-  const selectedId = resolvePackageId(projects, search);
+  const selectedId = resolvePackageId(live, earlier, search);
   const selected =
-    projects.find((item) => item.workstream.id === selectedId) ?? projects[0];
-  const packageOptions = packagePickerOptions(account, projects, selectedId);
-  const packageRank = [...projects].sort(
-    (a, b) => packageActivityDay(b) - packageActivityDay(a),
+    [...live, ...earlier].find((item) => item.workstream.id === selectedId) ??
+    live[0] ??
+    earlier[0];
+
+  const { flat, groups } = buildPickerData(account, live, earlier, selectedId);
+  const packageIndex = flat.findIndex((o) => o.id === selectedId) + 1;
+
+  const packagePickerValue = renderPackagePickerControl(
+    flat,
+    groups,
+    selectedId,
+    packageIndex || 1,
+    (id) => setPackageQuery(router, search, buildingId, id),
   );
-  const packageIndex =
-    packageRank.findIndex((item) => item.workstream.id === selectedId) + 1;
 
-  const headerFacts = selected
-    ? assetHeaderFacts(
-        account,
-        building,
-        selected,
-        projects.length,
-        packageIndex || 1,
-        projects.length >= 2 ? (
-          <PackagePicker
-            options={packageOptions}
-            selectedId={selected.workstream.id}
-            selectedIndex={packageIndex || 1}
-            total={projects.length}
-            onSelect={(id) => setPackageQuery(router, search, building.id, id)}
-          />
-        ) : (
-          selected.workstream.name
-        ),
-      )
-    : [];
+  const headerFacts =
+    selected &&
+    assetHeaderFacts(
+      account,
+      building,
+      selected,
+      flat.length,
+      packageIndex || 1,
+      packagePickerValue,
+    );
 
-  const historyOn = projects.some(({ row }) => (row.history ?? []).length > 0);
-  const docs = listedDocuments(account.buildings, projects, building.name);
+  const mergedHistory = mergeAssetHistory(account, allProjects);
+  const historyOn = mergedHistory.length > 0;
+  const docs = listedDocuments(account.buildings, allProjects, building.name);
 
-  const effectiveService = selected
-    ? resolveServiceId(selected, search.get("service"))
-    : undefined;
-  const panel =
-    selected && effectiveService
-      ? panelForService(selected, effectiveService)
+  const tabParam = search.get("tab") ?? "overview";
+  let tab: "overview" | ServiceId = "overview";
+  if (
+    tabParam !== "overview" &&
+    isServiceId(tabParam) &&
+    selected &&
+    assetHasServiceRow(selected, tabParam)
+  ) {
+    tab = tabParam;
+  }
+
+  const tabServices = selected ? servicesForAssetTabs(selected) : [];
+
+  const dotSid =
+    selected && !assetLeftPackage(selected)
+      ? packagePrimaryService(selected.workstream)
       : null;
-
-  const chipState =
-    selected && effectiveService
-      ? serviceChipItems(selected, effectiveService, (sid) =>
-          setServiceQuery(
-            router,
-            search,
-            building.id,
-            selected.workstream.id,
-            sid,
-          ),
-        )
-      : { switchable: false, chips: [] };
 
   const photo = building.photo ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -159,32 +193,54 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
             account={account}
             buildingId={building.id}
             search={search}
-            projects={projects}
+            projects={live}
           />
         }
         kind="asset"
         title={building.name}
-        facts={headerFacts}
+        facts={headerFacts ?? []}
         aside={photo}
       />
+      {selected && (
+        <Tabs.Root
+          value={tab}
+          onValueChange={(v) =>
+            setTabQuery(router, search, buildingId, selected.workstream.id, v)
+          }
+        >
+          <Tabs.List className={tabListClass} aria-label="Asset">
+            <Tabs.Trigger value="overview" className={tabTriggerClass}>
+              Overview
+            </Tabs.Trigger>
+            {tabServices.map((sid) => (
+              <Tabs.Trigger key={sid} value={sid} className={tabTriggerClass}>
+                <span className="inline-flex items-center gap-1.5">
+                  {SERVICE_TITLE[sid]}
+                  {dotSid === sid && (
+                    <TabDot label="Current service" />
+                  )}
+                </span>
+              </Tabs.Trigger>
+            ))}
+          </Tabs.List>
+          <div className="mt-6 space-y-6">
+            <Tabs.Content value="overview" className="outline-none">
+              <OverviewPanel account={account} building={building} item={selected} />
+            </Tabs.Content>
+            {tabServices.map((sid) => (
+              <Tabs.Content key={sid} value={sid} className="outline-none">
+                <ServiceTabPanel
+                  account={account}
+                  item={selected}
+                  serviceId={sid}
+                />
+              </Tabs.Content>
+            ))}
+          </div>
+        </Tabs.Root>
+      )}
+
       <div className="space-y-4 pb-12">
-        {selected && (
-          <PackageCard
-            packageName={selected.workstream.name}
-            chips={chipState.chips}
-            switchable={chipState.switchable}
-            scopeLine={assetPackageScopeLine(selected.workstream)}
-            openPackageHref={hrefs.workstream(
-              selected.workstream.id,
-              "building",
-              building.id,
-            )}
-            openPackageAriaLabel={`Open ${selected.workstream.name} package`}
-            panelTitle={panel?.title}
-            panelAside={panel?.aside}
-            panelChildren={panel?.children}
-          />
-        )}
         {(historyOn || docs.length > 0) && (
           <div
             className={cn(
@@ -192,7 +248,7 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
               historyOn && docs.length > 0 && "lg:grid-cols-2",
             )}
           >
-            {historyOn && <History projects={projects} />}
+            {historyOn && <HistoryMerged items={mergedHistory} />}
             {docs.length > 0 && (
               <Documents docs={docs} buildingId={building.id} />
             )}
@@ -203,6 +259,24 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
   );
 }
 
+function setTabQuery(
+  router: ReturnType<typeof useRouter>,
+  search: { toString(): string },
+  buildingId: string,
+  packageId: string,
+  value: string,
+) {
+  const params = new URLSearchParams(search.toString());
+  params.delete("service");
+  params.set("package", packageId);
+  if (value === "overview") params.delete("tab");
+  else params.set("tab", value);
+  const qs = params.toString();
+  router.replace(`${BASE_ASSET}/${buildingId}${qs ? `?${qs}` : ""}`, {
+    scroll: false,
+  });
+}
+
 function setPackageQuery(
   router: ReturnType<typeof useRouter>,
   search: { toString(): string },
@@ -210,30 +284,40 @@ function setPackageQuery(
   packageId: string,
 ) {
   const params = new URLSearchParams(search.toString());
-  params.delete("tab");
   params.delete("service");
+  params.delete("tab");
   params.set("package", packageId);
   const qs = params.toString();
-  router.replace(`${hrefs.building(buildingId)}${qs ? `?${qs}` : ""}`, {
+  router.replace(`${BASE_ASSET}/${buildingId}${qs ? `?${qs}` : ""}`, {
     scroll: false,
   });
 }
 
-function setServiceQuery(
-  router: ReturnType<typeof useRouter>,
-  search: { toString(): string },
-  buildingId: string,
-  packageId: string,
-  serviceId: ServiceId,
+function isServiceId(v: string): v is ServiceId {
+  return (
+    v === "indicative" ||
+    v === "scope" ||
+    v === "tender" ||
+    v === "pricing" ||
+    v === "delivery"
+  );
+}
+
+function resolvePackageId(
+  live: BuildingProject[],
+  earlier: BuildingProject[],
+  search: { get(key: string): string | null },
 ) {
-  const params = new URLSearchParams(search.toString());
-  params.delete("tab");
-  params.set("package", packageId);
-  params.set("service", serviceId);
-  const qs = params.toString();
-  router.replace(`${hrefs.building(buildingId)}${qs ? `?${qs}` : ""}`, {
-    scroll: false,
-  });
+  const fromWs =
+    search.get("from") === "workstream" ? search.get("ws") : null;
+  const all = [...live, ...earlier];
+  if (fromWs && all.some((item) => item.workstream.id === fromWs))
+    return fromWs;
+  const requested = search.get("package");
+  if (requested && all.some((item) => item.workstream.id === requested))
+    return requested;
+  if (live.length) return live[0].workstream.id;
+  return earlier[0]?.workstream.id ?? "";
 }
 
 function packageActivityDay(item: BuildingProject) {
@@ -246,21 +330,70 @@ function packageActivityDay(item: BuildingProject) {
   return Math.max(...dates.map((date) => days(date)));
 }
 
-function resolvePackageId(
-  projects: BuildingProject[],
-  search: { get(key: string): string | null },
-) {
-  if (!projects.length) return "";
-  const fromWs =
-    search.get("from") === "workstream" ? search.get("ws") : null;
-  if (fromWs && projects.some((item) => item.workstream.id === fromWs))
-    return fromWs;
-  const requested = search.get("package");
-  if (requested && projects.some((item) => item.workstream.id === requested))
-    return requested;
-  return [...projects].sort(
-    (a, b) => packageActivityDay(b) - packageActivityDay(a),
-  )[0].workstream.id;
+type PickerOpt = { id: string; name: string; subline: string };
+
+function buildPickerData(
+  account: Account,
+  live: BuildingProject[],
+  earlier: BuildingProject[],
+  selectedId: string,
+): { flat: PickerOpt[]; groups: Array<{ label?: string; options: PickerOpt[] }> | undefined } {
+  const liveOpts = orderPackages(live, selectedId).map((item) =>
+    toPickerOption(account, item, false),
+  );
+  const earlierOpts = orderPackages(earlier, selectedId).map((item) =>
+    toPickerOption(account, item, true),
+  );
+  const flat = [...liveOpts, ...earlierOpts];
+  const groups =
+    earlierOpts.length > 0
+      ? [
+          ...(liveOpts.length ? [{ options: liveOpts }] : []),
+          { label: "Earlier", options: earlierOpts },
+        ]
+      : undefined;
+  return { flat, groups };
+}
+
+function renderPackagePickerControl(
+  flat: PickerOpt[],
+  groups: Array<{ label?: string; options: PickerOpt[] }> | undefined,
+  selectedId: string,
+  selectedIndex: number,
+  onSelect: (id: string) => void,
+): ReactNode {
+  if (flat.length < 2) return flat[0]?.name ?? "—";
+  return (
+    <PackagePicker
+      groups={groups}
+      options={groups ? undefined : flat}
+      selectedId={selectedId}
+      selectedIndex={selectedIndex}
+      total={flat.length}
+      onSelect={onSelect}
+    />
+  );
+}
+
+function toPickerOption(
+  account: Account,
+  item: BuildingProject,
+  isEarlierGroup: boolean,
+): PickerOpt {
+  const w = item.workstream;
+  const batch = getBatch(account, w.batchId);
+  const batchName = batch?.name ?? "Batch";
+  let subline: string;
+  if (isClosed(w)) {
+    subline = "Closed";
+  } else if (isEarlierGroup && rowIsInactive(item.row)) {
+    subline = `${batchName} · Earlier`;
+  } else {
+    subline = isCompleted(w)
+      ? `${batchName} · Complete`
+      : `${batchName} · ${service(w.service).label}`;
+  }
+  return { id: w.id, name: w.name, subline };
 }
 
 function orderPackages(
@@ -274,20 +407,8 @@ function orderPackages(
   return selected ? [selected, ...rest] : rest;
 }
 
-function packagePickerOptions(
-  account: ReturnType<typeof useConcept>["account"],
-  projects: BuildingProject[],
-  selectedId: string,
-): PackagePickerOption[] {
-  return orderPackages(projects, selectedId).map((item) => {
-    const w = item.workstream;
-    const batch = getBatch(account, w.batchId);
-    const batchName = batch?.name ?? "Batch";
-    const subline = isCompleted(w)
-      ? `${batchName} · Complete`
-      : `${batchName} · ${service(w.service).label}`;
-    return { id: w.id, name: w.name, subline };
-  });
+function assetLeftPackage(item: BuildingProject): boolean {
+  return rowIsInactive(item.row);
 }
 
 function assetHeaderFacts(
@@ -300,7 +421,8 @@ function assetHeaderFacts(
 ): FactItem[] {
   const w = selected.workstream;
   const batch = getBatch(account, w.batchId);
-  const facts: FactItem[] = [
+  const inPkg = inPackageFactLine(account, w, selected.row);
+  return [
     {
       label:
         packageCount >= 2
@@ -308,56 +430,103 @@ function assetHeaderFacts(
           : "Package",
       value: packageValue,
     },
+    { label: "In package", value: inPkg },
+    ...(batch?.name
+      ? [
+          {
+            label: "Batch",
+            value: batch.name,
+            href: hrefs.batch(batch.id),
+          } as FactItem,
+        ]
+      : []),
+    ...(building.city ? [{ label: "City", value: building.city }] : []),
   ];
-  if (batch?.name) {
-    facts.push({
-      label: "Batch",
-      value: batch.name,
-      href: hrefs.batch(batch.id),
-    });
-  }
-  facts.push({
-    label: "Solution",
-    value: solutionName(w.solution),
-  });
-  if (building.city) facts.push({ label: "City", value: building.city });
-  return facts;
 }
 
-function resolveServiceId(
+function rowForService(
   item: BuildingProject,
-  requested: string | null,
-): ServiceId {
-  const w = item.workstream;
+  serviceId: ServiceId,
+): ProjectRow {
+  const { workstream: w, row } = item;
+  const phase = w.phases.find((entry) => entry.service === serviceId);
+  if (!phase || phase.state === "planned") return row;
+  const snap = phase.projects?.find(
+    (project) => project.buildingId === row.buildingId,
+  );
+  return snap ?? row;
+}
+
+function assetHasServiceRow(
+  item: BuildingProject,
+  sid: ServiceId,
+): boolean {
+  const { workstream: w, row } = item;
+  const phase = w.phases.find((p) => p.service === sid);
+  if (!phase || phase.state === "planned") return false;
+  if (phase.projects?.some((p) => p.buildingId === row.buildingId))
+    return true;
   if (
-    requested &&
-    isServiceId(requested) &&
-    assetServiceHasContent(item, requested)
-  ) {
-    return requested;
+    w.service === sid &&
+    w.projects.some((p) => p.buildingId === row.buildingId)
+  )
+    return true;
+  return false;
+}
+
+function servicesForAssetTabs(item: BuildingProject): ServiceId[] {
+  return SERVICES.map((s) => s.id).filter((sid) => assetHasServiceRow(item, sid));
+}
+
+function phaseDoneForService(
+  item: BuildingProject,
+  sid: ServiceId,
+): boolean {
+  const ph = item.workstream.phases.find((p) => p.service === sid);
+  return ph?.state === "done";
+}
+
+function serviceIsFinishedLater(item: BuildingProject, sid: ServiceId): boolean {
+  const idx = SERVICES.findIndex((s) => s.id === sid);
+  const { workstream: w } = item;
+  for (let j = idx + 1; j < SERVICES.length; j++) {
+    const next = SERVICES[j].id;
+    if (phaseStarted(w, next) && assetHasServiceRow(item, next)) return true;
+  }
+  return false;
+}
+
+function lastServiceForAsset(item: BuildingProject): ServiceId {
+  const w = item.workstream;
+  if (!assetLeftPackage(item)) return w.service;
+  for (let i = SERVICES.length - 1; i >= 0; i--) {
+    const sid = SERVICES[i].id;
+    const ph = w.phases.find((p) => p.service === sid);
+    if (!ph || ph.state === "planned") continue;
+    if (ph.projects?.some((p) => p.buildingId === item.row.buildingId)) {
+      return sid;
+    }
   }
   return w.service;
 }
 
-function isServiceId(value: string): value is ServiceId {
-  return (
-    value === "indicative" ||
-    value === "scope" ||
-    value === "tender" ||
-    value === "pricing" ||
-    value === "delivery"
-  );
-}
-
-function serviceChipItems(
-  item: BuildingProject,
-  activeService: ServiceId,
-  onSelect: (sid: ServiceId) => void,
-) {
+function OverviewPanel({
+  account,
+  building,
+  item,
+}: {
+  account: Account;
+  building: Building;
+  item: BuildingProject;
+}) {
   const w = item.workstream;
+  const sid = lastServiceForAsset(item);
+  const panelTitle = assetAtTitle(sid);
+  const panelAside = panelAsideForService(item, sid);
   const chips = SERVICES.flatMap((entry) => {
-    const phase = w.phases.find((candidate) => candidate.service === entry.id);
-    if (!phase || (phase.state !== "done" && phase.state !== "now")) return [];
+    const phase = w.phases.find((c) => c.service === entry.id);
+    if (!phase || (phase.state !== "done" && phase.state !== "now"))
+      return [];
     return [
       {
         id: entry.id,
@@ -366,176 +535,226 @@ function serviceChipItems(
       },
     ];
   });
-  const withData = chips.filter((chip) =>
-    assetServiceHasContent(item, chip.id as ServiceId),
+
+  const panelChildren =
+    sid === "delivery" && item.row.delivery ? (
+      <DeliveryTrack item={item} />
+    ) : (
+      <ServiceStepTrack item={item} serviceId={sid} />
+    );
+
+  const left = assetLeftPackage(item);
+  const headline = assetStatusHeadlineCopy(w, left);
+  const asideContent =
+    !left && headline.name ? (
+      <div className="flex shrink-0 items-center gap-6">
+        <div className="flex items-center gap-4">
+          <ServiceIcon service={w.service} size={72} className="shrink-0" />
+          <div className="min-w-0">
+            <p className="p7 text-text-tertiary">{headline.lead}</p>
+            <p className="h4 text-text-primary">{headline.name}</p>
+          </div>
+        </div>
+        <Button
+          type="strong"
+          size="large"
+          icon="chevron-right"
+          iconPosition="right"
+          href={hrefs.workstream(w.id, "building", building.id)}
+          ariaLabel={`Open ${w.name}`}
+          className="shrink-0"
+        >
+          Open package
+        </Button>
+      </div>
+    ) : (
+      <Button
+        type="strong"
+        size="large"
+        icon="chevron-right"
+        iconPosition="right"
+        href={hrefs.workstream(w.id, "building", building.id)}
+        ariaLabel={`Open ${w.name}`}
+        className="shrink-0"
+      >
+        Open package
+      </Button>
+    );
+
+  return (
+    <PackageCard
+      packageName={w.name}
+      chips={chips}
+      asideContent={asideContent}
+      panelTitle={panelTitle}
+      panelAside={panelAside}
+      panelChildren={panelChildren}
+    />
   );
-  const switchable = withData.length >= 2;
-  return {
-    switchable,
-    chips: chips.map((chip) => {
-      const sid = chip.id as ServiceId;
-      const hasData = assetServiceHasContent(item, sid);
-      return {
-        ...chip,
-        selectable: switchable && hasData,
-        selected: activeService === sid,
-        onSelect:
-          switchable && hasData ? () => onSelect(sid) : undefined,
-      };
-    }),
-  };
 }
 
-function panelForService(item: BuildingProject, serviceId: ServiceId) {
-  if (!assetServiceHasContent(item, serviceId)) return null;
-  const { workstream: w, row } = item;
-  if (serviceId === "delivery" && row.delivery) {
-    const supplier = w.supplier ? `${w.supplier} · ` : "";
-    return {
-      title: PANEL_TITLE.delivery,
-      aside: `${supplier}contract ${moneyOne(row.delivery.value ?? 0)}`,
-      children: <DeliveryTrack item={item} />,
-    };
+function assetStatusHeadlineCopy(w: Workstream, left: boolean) {
+  if (left) return { lead: "", name: null as string | null };
+  if (isClosed(w) && w.closedOn) {
+    return { lead: "This asset is in", name: `Closed · ${short(w.closedOn)}` };
   }
-  return {
-    title: PANEL_TITLE[serviceId],
-    aside: panelAside(item, serviceId),
-    children: (
-      <FactsRow facts={assetServiceFactItems(item, serviceId)} />
-    ),
-  };
+  if (isCompleted(w)) {
+    return { lead: "This asset is complete", name: null as string | null };
+  }
+  return { lead: "This asset is in", name: service(w.service).label };
 }
 
-function panelAside(item: BuildingProject, serviceId: ServiceId) {
+function panelAsideForService(item: BuildingProject, sid: ServiceId): string {
   const { workstream: w } = item;
-  const phase = w.phases.find((entry) => entry.service === serviceId);
+  const phase = w.phases.find((p) => p.service === sid);
   if (phase?.completedOn) return short(phase.completedOn);
   if (phase?.startedOn) return short(phase.startedOn);
-  return undefined;
+  return "—";
 }
 
-function assetServiceHasContent(item: BuildingProject, sid: ServiceId) {
-  if (sid === "delivery") {
-    return phaseStarted(item.workstream, sid) && Boolean(item.row.delivery);
-  }
-  return assetServiceFacts(item, sid).length > 0;
-}
-
-function AssetPager({
+function ServiceTabPanel({
   account,
-  buildingId,
-  search,
-  projects,
+  item,
+  serviceId,
 }: {
   account: Account;
-  buildingId: string;
-  search: { get(key: string): string | null; toString(): string };
-  projects: BuildingProject[];
+  item: BuildingProject;
+  serviceId: ServiceId;
 }) {
-  const router = useRouter();
-  const fromPackage = search.get("from") === "workstream";
-  const wsId = search.get("ws") ?? "";
-  const w = fromPackage && wsId ? getWorkstream(account, wsId) : undefined;
-  const assets = w ? packageAssets(w) : [];
-  const index = assets.findIndex((row) => row.buildingId === buildingId);
-  const previous = index > 0 ? assets[index - 1] : undefined;
-  const next =
-    index >= 0 && index < assets.length - 1 ? assets[index + 1] : undefined;
-  const via = search.get("via");
-  const hrefFor = (id: string) => {
-    const sp = new URLSearchParams();
-    if (w?.id) {
-      sp.set("project", w.id);
-      sp.set("from", "workstream");
-      sp.set("ws", w.id);
-      if (via === "service" || via === "batch") sp.set("via", via);
-    }
-    const pkg = search.get("package");
-    if (pkg) sp.set("package", pkg);
-    const svc = search.get("service");
-    if (svc) sp.set("service", svc);
-    const qs = sp.toString();
-    return `${hrefs.building(id)}${qs ? `?${qs}` : ""}`;
-  };
+  const w = item.workstream;
+  const row = rowForService(item, serviceId);
+  const inherited = phaseIsInheritedFrom(w, account, serviceId);
+  const fromWs = w.from ? getWorkstream(account, w.from.workstreamId) : null;
+  const phase = w.phases.find((p) => p.service === serviceId);
+  const rightDate =
+    inherited && fromWs
+      ? `From ${fromWs.name} · ${short(
+          phase?.completedOn ?? fromWs.completedOn ?? "",
+        )}`
+      : latestFactDate(row, serviceId, phase);
 
-  useEffect(() => {
-    if (!w || assets.length < 2 || index < 0) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "[" && event.key !== "]") return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      const target = event.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable)
-      )
-        return;
-      const row = event.key === "[" ? previous : next;
-      if (!row) return;
-      event.preventDefault();
-      router.push(hrefFor(row.buildingId));
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [w, assets.length, index, previous, next, router]);
+  const track =
+    serviceId === "delivery" && row.delivery ? (
+      <DeliveryTrack item={item} />
+    ) : (
+      <ServiceStepTrack item={item} serviceId={serviceId} />
+    );
 
-  if (!w || assets.length < 2 || index < 0) return null;
-  const name = (id: string) => getBuilding(account, id).name;
+  const facts = assetServiceFactsForTab(item, serviceId);
+
   return (
-    <div className="flex shrink-0 items-center gap-4 p6">
-      {previous ? (
-        <Link
-          href={hrefFor(previous.buildingId)}
-          aria-label="Previous asset in this package"
-          className="text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
-        >
-          ‹ {name(previous.buildingId)}
-        </Link>
-      ) : (
-        <span className="text-text-disabled">‹ Previous</span>
-      )}
-      <span className="text-text-tertiary">
-        {index + 1} of {assets.length} in this {WORDS.package}
-      </span>
-      {next ? (
-        <Link
-          href={hrefFor(next.buildingId)}
-          aria-label="Next asset in this package"
-          className="text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
-        >
-          {name(next.buildingId)} ›
-        </Link>
-      ) : (
-        <span className="text-text-disabled">Next ›</span>
-      )}
-    </div>
+    <Card
+      title={assetAtTitle(serviceId)}
+      right={<span className="p7 text-text-tertiary">{rightDate}</span>}
+    >
+      <div className="space-y-6">
+        {track}
+        {facts.length > 0 && <DetailsGrid items={facts} />}
+      </div>
+    </Card>
   );
 }
 
-function rowForService(item: BuildingProject, serviceId: ServiceId): ProjectRow {
-  const { workstream: w, row } = item;
-  const phase = w.phases.find((entry) => entry.service === serviceId);
-  const snap = phase?.projects?.find(
-    (project) => project.buildingId === row.buildingId,
-  );
-  return snap ?? row;
+function latestFactDate(
+  row: ProjectRow,
+  serviceId: ServiceId,
+  phase: { completedOn?: string; startedOn?: string } | undefined,
+): string {
+  const candidates: string[] = [];
+  if (phase?.completedOn) candidates.push(phase.completedOn);
+  if (phase?.startedOn) candidates.push(phase.startedOn);
+  if (serviceId === "indicative") {
+    if (row.presentedOn) candidates.push(row.presentedOn);
+    if (row.decidedOn) candidates.push(row.decidedOn);
+  }
+  if (serviceId === "scope" && row.visit?.on) candidates.push(row.visit.on);
+  if (serviceId === "tender" && row.visit?.state === "done" && row.visit.on) {
+    candidates.push(row.visit.on);
+  }
+  if (serviceId === "pricing" && row.decidedOn) candidates.push(row.decidedOn);
+  if (!candidates.length) return "—";
+  return short(candidates.reduce((a, b) => (parse(a) > parse(b) ? a : b)));
 }
 
-function assetServiceFacts(
+function ServiceStepTrack({
+  item,
+  serviceId,
+}: {
+  item: BuildingProject;
+  serviceId: ServiceId;
+}) {
+  const row = rowForService(item, serviceId);
+  const labels = service(serviceId).steps;
+  const w = item.workstream;
+  const finished =
+    serviceIsFinishedLater(item, serviceId) || phaseDoneForService(item, serviceId);
+  const steps = labels.map((label, i) => {
+    let lead: "done" | "now" | "next";
+    if (finished || row.step > i) lead = "done";
+    else if (row.step === i) lead = "now";
+    else lead = "next";
+    const noteText = stepNotes(item, serviceId, label, row);
+    return {
+      key: label,
+      lead,
+      label,
+      notes: noteText
+        ? [{ text: noteText, className: "p7 text-text-secondary" }]
+        : [],
+    };
+  });
+  return <ChipTrack steps={steps} />;
+}
+
+function stepNotes(
   item: BuildingProject,
   serviceId: ServiceId,
-): Array<{ label: string; value: string }> {
+  stepLabel: string,
+  row: ProjectRow,
+): string {
+  if (serviceId === "indicative") {
+    if (stepLabel === "Estimate" && row.estimate) return money(row.estimate);
+    if (stepLabel === "Presented" && row.presentedOn)
+      return short(row.presentedOn);
+    if (stepLabel === "Decision" && row.decision && row.decision !== "waiting")
+      return decisionLabel(row);
+  }
+  if (serviceId === "scope") {
+    if (stepLabel === "Gap found" && row.gap) return row.gap;
+    if (
+      stepLabel === "Survey done" &&
+      row.visit?.state === "done" &&
+      row.visit.on
+    ) {
+      return short(row.visit.on);
+    }
+  }
+  if (serviceId === "tender") {
+    if (stepLabel === "Supplier chosen" && item.workstream.supplier) {
+      return item.workstream.supplier;
+    }
+  }
+  if (serviceId === "pricing") {
+    if (stepLabel === "Decision" && row.decision && row.decision !== "waiting")
+      return decisionLabel(row);
+  }
+  return "";
+}
+
+function assetServiceFactsForTab(
+  item: BuildingProject,
+  serviceId: ServiceId,
+): FactItem[] {
   const { workstream: w } = item;
   const row = rowForService(item, serviceId);
   if (!phaseStarted(w, serviceId)) return [];
   if (serviceId === "indicative") {
-    const facts: Array<{ label: string; value: string }> = [];
+    const facts: FactItem[] = [];
     if (row.estimate) facts.push({ label: "Cost", value: money(row.estimate) });
-    if (row.paybackYears !== undefined)
+    if (row.paybackYears !== undefined) {
       facts.push({ label: "Payback", value: paybackLabel(row.paybackYears) });
-    if (row.decision)
+    }
+    if (row.decision) {
       facts.push({
         label: "Your decision",
         value:
@@ -543,23 +762,21 @@ function assetServiceFacts(
             ? "Waiting for your decision"
             : decisionLabel(row),
       });
+    }
     return facts;
   }
   if (serviceId === "scope") {
-    const facts: Array<{ label: string; value: string }> = [];
+    const facts: FactItem[] = [];
     if (row.gap) facts.push({ label: "Open gap", value: row.gap });
-    if (row.visit)
-      facts.push({
-        label: "Survey",
-        value: visitStateLabel(row.visit),
-      });
-    const scope = scopeLine(w, row);
-    if (scope && scope !== "\u2014")
-      facts.push({ label: "Scope", value: scope });
+    if (row.visit) {
+      facts.push({ label: "Survey", value: visitStateLabel(row.visit) });
+    }
+    const sc = scopeLine(w, row);
+    if (sc && sc !== "—") facts.push({ label: "Scope", value: sc });
     return facts;
   }
   if (serviceId === "tender") {
-    const facts: Array<{ label: string; value: string }> = [];
+    const facts: FactItem[] = [];
     if (w.supplier) facts.push({ label: "Supplier", value: w.supplier });
     if (row.price)
       facts.push({
@@ -582,10 +799,10 @@ function assetServiceFacts(
     return facts;
   }
   if (serviceId === "pricing") {
-    const facts: Array<{ label: string; value: string }> = [];
+    const facts: FactItem[] = [];
     if (row.price) facts.push({ label: "Price", value: moneyOne(row.price) });
     if (row.analysis) facts.push({ label: "Analysis", value: row.analysis });
-    if (row.decision)
+    if (row.decision) {
       facts.push({
         label: "Your decision",
         value:
@@ -593,19 +810,10 @@ function assetServiceFacts(
             ? "Waiting for your decision"
             : decisionLabel(row),
       });
+    }
     return facts;
   }
   return [];
-}
-
-function assetServiceFactItems(
-  item: BuildingProject,
-  serviceId: ServiceId,
-): FactItem[] {
-  return assetServiceFacts(item, serviceId).map((fact) => ({
-    label: fact.label,
-    value: fact.value,
-  }));
 }
 
 function DeliveryTrack({ item }: { item: BuildingProject }) {
@@ -625,15 +833,15 @@ function DeliveryTrack({ item }: { item: BuildingProject }) {
         const phase = phases[stage.id];
         const done = allDone || index < current;
         const now = !allDone && index === current;
-        const source = phaseSource(
+        const src = phaseSource(
           stage.id,
           phase,
           row.visit?.state === "done" ? row.visit.on : undefined,
         );
         const dateNote = deliveryPhaseDateNote(phase, !allDone && index === current);
         const notes = dateNote ? [dateNote] : [];
-        if (source) {
-          notes.push({ text: source, className: "p7 text-text-tertiary" });
+        if (src) {
+          notes.push({ text: src, className: "p7 text-text-tertiary" });
         }
         return {
           key: stage.id,
@@ -672,35 +880,65 @@ function eventYear(date: string) {
   return /^\d{4}$/.test(last) ? last : HISTORY_YEAR;
 }
 
-function waitsOnYou(
-  phaseId: DeliveryPhaseId | undefined,
-  phases: Partial<Record<DeliveryPhaseId, DeliveryPhase>> | undefined,
-  date: string,
-) {
-  if (!phaseId || !phases) return false;
-  const phase = phases[phaseId];
-  return phase?.state === "from_invoice" && Boolean(phase.on) && short(phase.on) === date;
+type HistoryMergedItem = {
+  event: string;
+  detail: string;
+  date: string;
+  year: string;
+  you?: boolean;
+};
+
+function mergeAssetHistory(
+  account: Account,
+  projects: BuildingProject[],
+): HistoryMergedItem[] {
+  const synthetic: HistoryMergedItem[] = [];
+  for (const { workstream: w, row } of projects) {
+    const pkg = w.name;
+    if (row.joined?.on) {
+      synthetic.push({
+        event: "Joined package",
+        detail: pkg,
+        date: row.joined.on,
+        year: eventYear(row.joined.on),
+      });
+    }
+    if (row.hold?.since) {
+      synthetic.push({
+        event: "On hold",
+        detail: pkg,
+        date: row.hold.since,
+        year: eventYear(row.hold.since),
+      });
+    }
+    if (row.left?.on && row.left.kind) {
+      const destPkg =
+        row.left.to &&
+        (getWorkstream(account, row.left.to)?.name ||
+          getBatch(account, row.left.to)?.name ||
+          "");
+      synthetic.push({
+        event: `Left package · ${leftHowLabel(row.left.kind)}`,
+        detail: destPkg || pkg,
+        date: row.left.on,
+        year: eventYear(row.left.on),
+      });
+    }
+  }
+  const fromRows = projects.flatMap(({ workstream: w, row }) =>
+    (row.history ?? []).map((item) => ({
+      event: shortFact(item.event),
+      detail: w.name,
+      date: item.date,
+      year: eventYear(item.date),
+    })),
+  );
+  return [...synthetic, ...fromRows].sort(
+    (a, b) => parse(a.date) - parse(b.date),
+  );
 }
 
-function History({ projects }: { projects: BuildingProject[] }) {
-  const several = projects.length > 1;
-  const items = projects
-    .flatMap(({ workstream, row }) =>
-      (row.history ?? []).map((item) => ({
-        event: shortFact(item.event),
-        detail: several
-          ? `${solutionName(workstream.solution)} · ${shortFact(item.detail)}`
-          : shortFact(item.detail),
-        date: item.date,
-        year: eventYear(item.date),
-        you: waitsOnYou(
-          row.delivery?.confirmPhase,
-          row.delivery?.phases,
-          item.date,
-        ),
-      })),
-    )
-    .sort((a, b) => days(a.date) - days(b.date));
+function HistoryMerged({ items }: { items: HistoryMergedItem[] }) {
   const years = new Set(items.map((item) => item.year));
   return (
     <Card title="History" className="h-full">
@@ -709,14 +947,16 @@ function History({ projects }: { projects: BuildingProject[] }) {
           const showYear = index === 0 || item.year !== items[index - 1]?.year;
           const yearLabel = years.size > 1 ? showYear : index === 0;
           return (
-            <li key={`${item.date}-${item.event}`}>
+            <li key={`${item.date}-${item.event}-${index}`}>
               {yearLabel && (
                 <div className="grid grid-cols-[52px_16px_minmax(0,1fr)] gap-x-2.5 pb-2">
                   <p className="col-start-3 s3 text-text-tertiary">{item.year}</p>
                 </div>
               )}
               <div className="grid grid-cols-[52px_16px_minmax(0,1fr)] gap-x-2.5">
-                <p className="h9 text-right text-text-title">{item.date.replace(/ \d{4}$/, "")}</p>
+                <p className="h9 text-right text-text-title">
+                  {short(item.date)}
+                </p>
                 <div className="relative flex justify-center">
                   <span
                     className={cn(
@@ -790,5 +1030,98 @@ function Documents({
     >
       <DocumentList docs={docs} />
     </Card>
+  );
+}
+
+function AssetPager({
+  account,
+  buildingId,
+  search,
+  projects,
+}: {
+  account: Account;
+  buildingId: string;
+  search: { get(key: string): string | null; toString(): string };
+  projects: BuildingProject[];
+}) {
+  const router = useRouter();
+  const fromPackage = search.get("from") === "workstream";
+  const wsId = search.get("ws") ?? "";
+  const w = fromPackage && wsId ? getWorkstream(account, wsId) : undefined;
+  const assets = w ? packageAssets(w) : [];
+  const index = assets.findIndex((row) => row.buildingId === buildingId);
+  const previous = index > 0 ? assets[index - 1] : undefined;
+  const next =
+    index >= 0 && index < assets.length - 1 ? assets[index + 1] : undefined;
+  const via = search.get("via");
+  const tab = search.get("tab");
+  const pkg = search.get("package");
+  const hrefFor = (id: string) => {
+    const sp = new URLSearchParams();
+    if (w?.id) {
+      sp.set("project", w.id);
+      sp.set("from", "workstream");
+      sp.set("ws", w.id);
+      if (via === "service" || via === "batch") sp.set("via", via);
+    }
+    if (pkg) sp.set("package", pkg);
+    if (tab) sp.set("tab", tab);
+    const qs = sp.toString();
+    return `${hrefs.building(id)}${qs ? `?${qs}` : ""}`;
+  };
+
+  useEffect(() => {
+    if (!w || assets.length < 2 || index < 0) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "[" && event.key !== "]") return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      )
+        return;
+      const row = event.key === "[" ? previous : next;
+      if (!row) return;
+      event.preventDefault();
+      router.push(hrefFor(row.buildingId));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [w, assets.length, index, previous, next, router]);
+
+  if (!w || assets.length < 2 || index < 0) return null;
+  const name = (id: string) => getBuilding(account, id).name;
+  return (
+    <div className="flex shrink-0 items-center gap-4 p6">
+      {previous ? (
+        <Link
+          href={hrefFor(previous.buildingId)}
+          aria-label="Previous asset in this package"
+          className="text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+        >
+          ‹ {name(previous.buildingId)}
+        </Link>
+      ) : (
+        <span className="text-text-disabled">‹ Previous</span>
+      )}
+      <span className="text-text-tertiary">
+        {index + 1} of {assets.length} in this {WORDS.package}
+      </span>
+      {next ? (
+        <Link
+          href={hrefFor(next.buildingId)}
+          aria-label="Next asset in this package"
+          className="text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+        >
+          {name(next.buildingId)} ›
+        </Link>
+      ) : (
+        <span className="text-text-disabled">Next ›</span>
+      )}
+    </div>
   );
 }

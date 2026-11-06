@@ -14,6 +14,7 @@ import {
   visitBucket,
   visitCountLabel,
   visitStateLabel,
+  isClosed,
 } from "@/lib/concept/derive";
 import { WORDS } from "@/lib/concept/words";
 import { Button, groupTitle, td, th } from "./ui";
@@ -44,7 +45,10 @@ function recency(w: Workstream) {
   return 9999;
 }
 
-export function SurveysTab({ packageId }: { packageId?: string } = {}) {
+export function SurveysTab({
+  packageId,
+  readOnly,
+}: { packageId?: string; readOnly?: boolean } = {}) {
   const { account } = useConcept();
   const router = useRouter();
   const params = useSearchParams();
@@ -65,7 +69,10 @@ export function SurveysTab({ packageId }: { packageId?: string } = {}) {
 
   const needle = q.trim().toLowerCase();
   const withVisits = account.workstreams.filter(
-    (w) => visitBucket(w) && (!packageId || w.id === packageId),
+    (w) =>
+      !isClosed(w) &&
+      visitBucket(w) &&
+      (!packageId || w.id === packageId),
   );
   const filtered = withVisits.filter((w) => {
     if (batch && w.batchId !== batch) return false;
@@ -222,7 +229,13 @@ export function SurveysTab({ packageId }: { packageId?: string } = {}) {
                                 </td>
                                 <td className={td}>{visitCountLabel(w)}</td>
                                 <td className={td}>
-                                  {w.surveyDocs ? (
+                                  {readOnly && packageId ? (
+                                    <span className="p6 text-text-secondary">
+                                      {w.surveyDocs
+                                        ? "Survey documents"
+                                        : "View"}
+                                    </span>
+                                  ) : w.surveyDocs ? (
                                     <Button type="secondary" size="small">
                                       Survey documents
                                     </Button>

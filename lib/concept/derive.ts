@@ -17,6 +17,25 @@ export const WORKSTREAM_ALIAS: Record<string, string> = {
 
 export const getWorkstream = (a: Account, id: string) => a.workstreams.find((w) => w.id === (WORKSTREAM_ALIAS[id] ?? id))
 
+/** Closed packages (all assets moved or dropped) stay out of live customer lists. */
+export const isClosed = (w: Workstream) => Boolean(w.closedOn)
+
+/** Row excluded from active project counts (dropped or no longer in this package). */
+export function rowIsInactive(p: ProjectRow): boolean {
+  if (p.dropped) return true
+  if (p.left?.kind === 'dropped') return true
+  if (p.left) return true
+  return false
+}
+
+/** Resolve `left.to` to a display name — batch or workstream id. */
+export function resolveMoveDestination(a: Account, id: string): string {
+  const batch = a.batches.find((b) => b.id === id)
+  if (batch) return batch.name
+  const ws = getWorkstream(a, id)
+  return ws?.name ?? id
+}
+
 /** The phase the workstream is in. Last phase when all are done, first when all are still planned. */
 export function currentPhase(w: Workstream): Phase {
   const now = w.phases.find((phase) => phase.state === 'now')
@@ -30,7 +49,9 @@ export const isCompleted = (w: Workstream) => w.phases.length > 0 && w.phases.ev
 
 /** Workstreams in this batch that have a phase for the service, with that phase. */
 export function phasesIn(a: Account, b: Batch, serviceId: ServiceId) {
-  return wsIn(a, b.id).flatMap((w) => {
+  return wsIn(a, b.id)
+    .filter((w) => !isClosed(w))
+    .flatMap((w) => {
     const phase = w.phases.find((item) => item.service === serviceId)
     return phase ? [{ workstream: w, phase }] : []
   })
@@ -89,7 +110,7 @@ export function workstreamMeta(w: Workstream, batchName?: string): string {
     return parts.join(' · ')
   }
   if (w.service === 'delivery') {
-    const complete = w.owner === 'done' ? n : w.projects.filter((project) => !project.dropped && project.step >= 5).length
+    const complete = w.owner === 'done' ? n : w.projects.filter((project) => !rowIsInactive(project) && project.step >= 5).length
     parts.push(`${complete} of ${n} complete`)
     if (w.deliveryProfile?.expectedCompletion) parts.push(`est ${short(w.deliveryProfile.expectedCompletion)}`)
     if (w.deliveryProfile?.contractValue) parts.push(`contract ${moneyOne(w.deliveryProfile.contractValue)}`)
@@ -143,7 +164,7 @@ export function phaseOutcome(serviceId: ServiceId, w: Workstream, phase: Phase):
   const when = short(phase.completedOn)
   if (serviceId === 'delivery') {
     const projects = phase.projects?.length ? phase.projects : w.projects
-    const n = projects.filter((p) => !p.dropped).length
+    const n = projects.filter((p) => !rowIsInactive(p)).length
     return { main: `All ${n} handed over ${when}`, detail: 'installed' }
   }
   const detail = `now in ${service(w.service).label}`
@@ -180,7 +201,7 @@ export function checkPhases(a: Account) {
       console.warn(`Workstream ${w.id}: ${nows} phases are now`)
     }
     for (const phase of w.phases) {
-      if (batch && !batch.route.includes(phase.service)) {
+      if (batch && !isClosed(w) && !batch.route.includes(phase.service)) {
         console.warn(`Workstream ${w.id}: ${phase.service} is not on the ${batch.name} route`)
       }
     }
@@ -192,18 +213,24 @@ export function checkPhases(a: Account) {
   }
 }
 export const getBuilding = (a: Account, id: string) => a.buildings.find((b) => b.id === id)!
-export const wsIn = (a: Account, batchId: string) => a.workstreams.filter((w) => w.batchId === batchId)
+
+/** All workstreams in a batch, including closed packages (batch page, ops). */
+export const wsInAll = (a: Account, batchId: string) => a.workstreams.filter((w) => w.batchId === batchId)
+
+/** Live customer lists: excludes closed packages. */
+export const wsIn = (a: Account, batchId: string) => wsInAll(a, batchId).filter((w) => !isClosed(w))
+
 export const batchesFor = (a: Account, buildingId: string) => a.batches.filter((b) => b.buildingIds.includes(buildingId))
 
 export const isLive = (w: Workstream) => w.owner !== 'done' && !w.proposed
 
 /** Projects done with this workstream's service (last step), dropped ones excluded */
 export const doneCount = (w: Workstream) => {
-  if (w.owner === 'done') return w.projects.filter((p) => !p.dropped).length
+  if (w.owner === 'done') return w.projects.filter((p) => !rowIsInactive(p)).length
   const last = service(w.service).steps.length - 1
-  return w.projects.filter((p) => p.step === last && !p.dropped).length
+  return w.projects.filter((p) => p.step === last && !rowIsInactive(p)).length
 }
-export const activeProjects = (w: Workstream) => w.projects.filter((p) => !p.dropped)
+export const activeProjects = (w: Workstream) => w.projects.filter((p) => !rowIsInactive(p))
 
 /** Same order as the delivery Assets card: dates to confirm, then complete, then in progress, then awaiting start. */
 export function packageAssetRank(w: Workstream, row: ProjectRow): number {
@@ -227,13 +254,13 @@ export function packageAssets(w: Workstream): ProjectRow[] {
 export function yourActionWorkstreams(a: Account): Workstream[] {
   const ids = new Set(customerBatches(a).map((batch) => batch.id))
   return a.workstreams
-    .filter((w) => !w.proposed && w.owner === 'you' && ids.has(w.batchId))
+    .filter((w) => !w.proposed && !isClosed(w) && w.owner === 'you' && ids.has(w.batchId))
     .sort((a, b) => parse(lastChangedOn(b) || '1 Jan 2000') - parse(lastChangedOn(a) || '1 Jan 2000') || a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
 }
 
 /** Distinct projects (building × solution) in a batch */
 export const projectCount = (a: Account, b: Batch) =>
-  new Set(wsIn(a, b.id).flatMap((w) => w.projects.map((p) => `${p.buildingId}:${w.solution}`))).size
+  new Set(wsIn(a, b.id).flatMap((w) => w.projects.filter((p) => !rowIsInactive(p)).map((p) => `${p.buildingId}:${w.solution}`))).size
 
 export const openNeeds = (w: Workstream) => w.needs.filter((n) => !n.received)
 export const yourNeeds = (w: Workstream) => openNeeds(w).filter((n) => n.owner === 'you')
@@ -266,14 +293,42 @@ export function batchSlots(a: Account, b: Batch): ServiceSlot[] {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const parse = (d: string) => {
+/** Parse display dates in the demo data, for sorting. */
+export const parse = (d: string) => {
   const [day, mon, year] = d.split(' ')
   return new Date(year ? Number(year) : 2026, MONTHS.indexOf(mon), Number(day)).getTime()
 }
 /** Days from a past date to today */
 export const days = (d: string) => Math.round((parse(TODAY) - parse(d)) / 86400000)
-/** "14 Oct 2026" → "14 Oct" */
-export const short = (d?: string) => (d ? d.split(' ').slice(0, 2).join(' ') : '')
+/** "14 Oct 2026" → "14 Oct"; includes year when not the same calendar year as TODAY. */
+export const short = (d?: string) => {
+  if (!d) return ''
+  const parts = d.split(' ')
+  const day = parts[0]
+  const mon = parts[1]
+  if (!mon) return d
+  const year = parts[2] ? Number(parts[2]) : 2026
+  const todayParts = TODAY.split(' ')
+  const todayYear = todayParts[2] ? Number(todayParts[2]) : 2026
+  if (year !== todayYear) return `${day} ${mon} ${year}`
+  return `${day} ${mon}`
+}
+
+/** True when this package carries a finished phase from the source named in `from`: same service on the fork, completed on or before the fork date. */
+export function phaseIsInheritedFrom(
+  w: Workstream,
+  a: Account,
+  serviceId: ServiceId,
+): boolean {
+  if (!w.from) return false
+  const fromWs = getWorkstream(a, w.from.workstreamId)
+  if (!fromWs) return false
+  const sourceHad = fromWs.phases.some((ph) => ph.service === serviceId)
+  if (!sourceHad) return false
+  const phase = w.phases.find((ph) => ph.service === serviceId)
+  if (!phase || phase.state !== 'done' || !phase.completedOn) return false
+  return parse(phase.completedOn) <= parse(w.from.on)
+}
 
 export const noun = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
@@ -291,7 +346,7 @@ export function nextLine(w: Workstream): string {
   }
   if (n.kind === 'decision') {
     const step = service(w.service).steps.indexOf('Presented')
-    const count = w.projects.filter((p) => p.step === step && !p.dropped).length
+    const count = w.projects.filter((p) => p.step === step && !rowIsInactive(p)).length
     return `Go or no-go on ${count} estimates — presented ${short(n.since)}`
   }
   if (n.kind === 'offers') {
@@ -420,7 +475,7 @@ export type ServiceCount = {
 export function servicePipeline(a: Account) {
   const batches = customerBatches(a)
   const ids = new Set(batches.map((b) => b.id))
-  const live = a.workstreams.filter((w) => !w.proposed && w.owner !== 'done' && ids.has(w.batchId))
+  const live = a.workstreams.filter((w) => !isClosed(w) && !w.proposed && w.owner !== 'done' && ids.has(w.batchId))
   const services: ServiceCount[] = SERVICES.map((s) => {
     const ws = live.filter((w) => w.service === s.id)
     const byBatch = batches.flatMap((b) => {
@@ -437,7 +492,7 @@ export function servicePipeline(a: Account) {
       byBatch,
     }
   })
-  const finished = a.workstreams.filter((w) => w.service === 'delivery' && w.owner === 'done' && !w.proposed && ids.has(w.batchId))
+  const finished = a.workstreams.filter((w) => !isClosed(w) && w.service === 'delivery' && w.owner === 'done' && !w.proposed && ids.has(w.batchId))
   return {
     services,
     completed: {
@@ -451,7 +506,7 @@ export function servicePipeline(a: Account) {
 }
 
 export function rightNow(a: Account) {
-  const visible = a.workstreams.filter((w) => !w.proposed && customerBatches(a).some((b) => b.id === w.batchId))
+  const visible = a.workstreams.filter((w) => !isClosed(w) && !w.proposed && customerBatches(a).some((b) => b.id === w.batchId))
   return {
     you: visible.filter((w) => w.owner === 'you'),
     progress: visible.filter((w) => w.owner === 'cquel' || w.owner === 'suppliers'),
@@ -627,7 +682,7 @@ function panelItems(w: Workstream): PanelItem[] {
   const n = w.next
   if (n?.kind === 'decision') {
     const step = service(w.service).steps.indexOf('Presented')
-    const count = w.projects.filter((p) => p.step === step && !p.dropped).length
+    const count = w.projects.filter((p) => p.step === step && !rowIsInactive(p)).length
     return [{ tone: 'you', text: `Go or no-go on ${count} ${w.name} estimates (Presented ${short(n.since)})`, action: 'estimates' }]
   }
   if (n?.kind === 'roof') {
@@ -761,7 +816,7 @@ export function liveProjectCount(a: Account, b: Batch) {
 }
 
 export function buildingNames(a: Account, w: Workstream) {
-  const names = w.projects.filter((p) => !p.dropped).map((p) => getBuilding(a, p.buildingId).name)
+  const names = w.projects.filter((p) => !rowIsInactive(p)).map((p) => getBuilding(a, p.buildingId).name)
   return { shown: names.slice(0, 4), extra: Math.max(0, names.length - 4) }
 }
 
@@ -779,7 +834,9 @@ export function doneFold(ws: Workstream[]) {
 }
 
 export function batchActivity(a: Account, b: Batch) {
-  return a.activity.filter((item) => item.batchId === b.id)
+  return [...a.activity.filter((item) => item.batchId === b.id)].sort(
+    (x, y) => parse(y.date) - parse(x.date),
+  )
 }
 
 export function money(range: [number, number]): string {
@@ -808,9 +865,9 @@ export function presentedTotal(w: Workstream): { text: string; count: number } {
 export function decisionLabel(p: ProjectRow): string {
   if (!p.decision || p.decision === 'waiting') return '—'
   if (p.decision === 'no' && p.paybackYears === 'over12') return 'Not proceeding — payback over 12 years'
-  if (p.decision === 'no') return `Not now · ${short(p.decidedOn)}`
-  if (p.decision === 'scope') return `To Planning · ${short(p.decidedOn)}`
-  return `Going ahead · ${short(p.decidedOn)}`
+  if (p.decision === 'no') return `No · ${short(p.decidedOn)}`
+  if (p.decision === 'scope') return `Planning first · ${short(p.decidedOn)}`
+  return `Go ahead · ${short(p.decidedOn)}`
 }
 
 export function waitingDays(w: Workstream): number {
@@ -888,7 +945,7 @@ export function indicativeSteps(a: Account, w: Workstream): StepColumn[] {
   const def = service(w.service)
   const happens = (def.happens ?? []).map((line, i) => (i === 0 && w.solution !== 'led' ? COLLECT[w.solution] ?? line : line))
   return def.steps.map((label, i) => {
-    const live = w.projects.filter((p) => !p.dropped)
+    const live = w.projects.filter((p) => !rowIsInactive(p))
     const here = live.filter((p) => p.step === i)
     const past = live.filter((p) => p.step > i)
     const finished = w.owner === 'done'
@@ -1473,14 +1530,25 @@ export function foldText(value: string): string {
 
 export type BuildingProject = { workstream: Workstream; row: ProjectRow }
 
-/** Live projects at one building, across customer batches. */
+/**
+ * Projects at one building, across customer batches.
+ * Live packages: one row per active project.
+ * "Earlier": closed packages and packages the asset left (inactive row), under part 35.
+ */
 export function projectsAtBuilding(a: Account, buildingId: string): BuildingProject[] {
   const batches = new Set(customerBatches(a).map((b) => b.id))
-  return a.workstreams.flatMap((w) => {
-    if (!batches.has(w.batchId)) return []
-    const row = activeProjects(w).find((p) => p.buildingId === buildingId)
-    return row ? [{ workstream: w, row }] : []
-  })
+  const out: BuildingProject[] = []
+  for (const w of a.workstreams) {
+    if (!batches.has(w.batchId)) continue
+    const row = w.projects.find((p) => p.buildingId === buildingId)
+    if (!row) continue
+    if (isClosed(w) || rowIsInactive(row)) {
+      out.push({ workstream: w, row })
+      continue
+    }
+    out.push({ workstream: w, row })
+  }
+  return out
 }
 
 /** Dates that belong to this building, not the rest of its workstream.

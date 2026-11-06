@@ -3,31 +3,52 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import * as Tabs from "@radix-ui/react-tabs";
 import {
   activeProjects,
   batchActivity,
   buildingChanged,
+  getBatch,
   getBuilding,
+  getWorkstream,
+  isClosed,
   isCompleted,
   noun,
+  parse,
   phasesIn,
   placeNoun,
-  projectsAtBuilding,
   routeStages,
+  rowIsInactive,
+  short,
   solutionName,
   wsIn,
+  wsInAll,
 } from "@/lib/concept/derive";
+import { leftHowLabel } from "@/lib/concept/moves";
 import { WORDS } from "@/lib/concept/words";
 import {
   pricingNotNeeded,
+  service as serviceDef,
   SERVICES,
   SERVICE_LABEL,
   SOLUTIONS,
   type Account,
   type Batch,
+  type ProjectRow,
+  type ServiceId,
   type Workstream,
 } from "@/lib/concept/model";
-import { Icon, Card, CardLink, ChangedDot, DocumentList, ListMore, focusRing } from "./ui";
+import {
+  Icon,
+  Card,
+  CardLink,
+  ChangedDot,
+  DocumentList,
+  ListMore,
+  focusRing,
+  tabListClass,
+  tabTriggerClass,
+} from "./ui";
 import { RouteWithNeeds } from "./RouteWithNeeds";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
@@ -62,6 +83,150 @@ function sentence(text: string) {
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }
 
+type ExtraFilter = "" | "dropped" | "moved";
+
+/** Building has at least one live (non-inactive) project row in this batch. */
+function batchProjectsForBuilding(
+  account: Account,
+  batch: Batch,
+  buildingId: string,
+): { workstream: Workstream; row: ProjectRow }[] {
+  const out: { workstream: Workstream; row: ProjectRow }[] = [];
+  for (const w of wsInAll(account, batch.id)) {
+    if (w.proposed) continue;
+    for (const row of w.projects) {
+      if (row.buildingId !== buildingId) continue;
+      if (!rowIsInactive(row)) out.push({ workstream: w, row });
+    }
+  }
+  return out;
+}
+
+function inactiveLeftRows(
+  account: Account,
+  batch: Batch,
+  buildingId: string,
+): { workstream: Workstream; row: ProjectRow }[] {
+  const out: { workstream: Workstream; row: ProjectRow }[] = [];
+  for (const w of wsInAll(account, batch.id)) {
+    if (w.proposed) continue;
+    for (const row of w.projects) {
+      if (row.buildingId !== buildingId) continue;
+      if (!rowIsInactive(row)) continue;
+      const k = row.left?.kind;
+      if (k === "dropped" || k === "moved") out.push({ workstream: w, row });
+    }
+  }
+  return out;
+}
+
+function countAssetsWithLiveInService(
+  account: Account,
+  batch: Batch,
+  serviceId: ServiceId,
+): number {
+  const ids = new Set<string>();
+  for (const w of wsIn(account, batch.id)) {
+    if (w.proposed || w.service !== serviceId) continue;
+    for (const row of w.projects) {
+      if (rowIsInactive(row)) continue;
+      ids.add(row.buildingId);
+    }
+  }
+  return ids.size;
+}
+
+function countAssetsAnyLive(account: Account, batch: Batch): number {
+  const ids = new Set<string>();
+  for (const w of wsIn(account, batch.id)) {
+    if (w.proposed) continue;
+    for (const row of w.projects) {
+      if (rowIsInactive(row)) continue;
+      ids.add(row.buildingId);
+    }
+  }
+  return ids.size;
+}
+
+function countDroppedAssets(account: Account, batch: Batch): number {
+  let n = 0;
+  for (const id of batch.buildingIds) {
+    const muted = inactiveLeftRows(account, batch, id).filter(
+      ({ row }) => row.left?.kind === "dropped",
+    );
+    const live = batchProjectsForBuilding(account, batch, id);
+    if (muted.length && !live.length) n += 1;
+  }
+  return n;
+}
+
+function countMovedOnlyAssets(account: Account, batch: Batch): number {
+  let n = 0;
+  for (const id of batch.buildingIds) {
+    const muted = inactiveLeftRows(account, batch, id).filter(
+      ({ row }) => row.left?.kind === "moved",
+    );
+    const live = batchProjectsForBuilding(account, batch, id);
+    if (muted.length && !live.length) n += 1;
+  }
+  return n;
+}
+
+function howItCameFrom(
+  account: Account,
+  w: Workstream,
+): { main: string; sub?: string } {
+  if (isClosed(w)) {
+    return {
+      main: `Closed · ${closedPackageFootprint(w)} at the start`,
+    };
+  }
+  if (w.from) {
+    const src = getWorkstream(account, w.from.workstreamId);
+    const pkg = src?.name ?? w.from.workstreamId;
+    return {
+      main: `From ${pkg} · ${leftHowLabel(w.from.kind)}`,
+    };
+  }
+  if (w.startedOn) return { main: `Started ${short(w.startedOn)}` };
+  return { main: w.proposed ? "—" : "Started" };
+}
+
+function closedPackageFootprint(w: Workstream): number {
+  const est = w.phases.find((ph) => ph.service === "indicative");
+  const snap = est?.projects;
+  if (snap?.length) {
+    return new Set(snap.map((p) => p.buildingId)).size;
+  }
+  return new Set(w.projects.map((p) => p.buildingId)).size;
+}
+
+function closedPackageOutcomeLine(w: Workstream): string {
+  const rows = w.projects.filter((p) => p.left);
+  const droppedN = rows.filter((p) => p.left?.kind === "dropped").length;
+  const splitTo = new Set(
+    rows
+      .filter((p) => p.left?.kind === "split" && p.left.to)
+      .map((p) => p.left!.to as string),
+  ).size;
+  const parts: string[] = [];
+  if (splitTo >= 2) parts.push(`Split in ${splitTo}`);
+  if (droppedN > 0) parts.push(`${droppedN} dropped`);
+  return parts.join(" · ");
+}
+
+function batchNowLine(account: Account, w: Workstream): string {
+  if (isClosed(w)) return `Closed · ${short(w.closedOn)}`;
+  if (w.proposed) return "Proposed";
+  if (isCompleted(w))
+    return `Complete · ${w.completedOn ? short(w.completedOn) : "—"}`;
+  return serviceDef(w.service).label;
+}
+
+function movedToBatchName(account: Account, batchId: string): string {
+  return getBatch(account, batchId)?.name ?? batchId;
+}
+
 function PilotDashboard({
   account,
   batch,
@@ -74,7 +239,7 @@ function PilotDashboard({
   const activity = batchActivity(account, batch);
   const docs = account.documents.filter((d) => d.batchId === batch.id);
   const projects = all.reduce(
-    (n, w) => n + w.projects.filter((p) => !p.dropped).length,
+    (n, w) => n + w.projects.filter((p) => !rowIsInactive(p)).length,
     0,
   );
   const needs = all.flatMap((w) =>
@@ -163,7 +328,7 @@ function PilotDashboard({
         <ul>
           {all.map((w, index) => {
             const sites = w.projects
-              .filter((p) => !p.dropped)
+              .filter((p) => !rowIsInactive(p))
               .map((p) => getBuilding(account, p.buildingId));
             const place = placeNoun(batch);
             return (
@@ -274,11 +439,20 @@ function passedProjects(account: Account, batch: Batch, serviceId: string) {
       (n, { phase, workstream }) =>
         n +
         (phase.projects ?? workstream.projects).filter(
-          (project) => !project.dropped,
+          (project) => !rowIsInactive(project),
         ).length,
       0,
     );
 }
+
+type AssetTableRow =
+  | {
+      kind: "building";
+      buildingId: string;
+      live: { workstream: Workstream; row: ProjectRow }[];
+      muted: { workstream: Workstream; row: ProjectRow }[];
+    }
+  | { kind: "fold"; variant: "dropped" | "moved"; ids: string[] };
 
 function BatchPage({
   account,
@@ -291,165 +465,470 @@ function BatchPage({
   const params = useSearchParams();
   const [showActivity, setShowActivity] = useState(false);
   const activity = batchActivity(account, batch);
-  const serviceId = params.get("service") ?? "";
-  const cards = [
+
+  const view = params.get("view") === "packages" ? "packages" : "assets";
+  const rawService = params.get("service") ?? "";
+  const extra: ExtraFilter =
+    rawService === "dropped" || rawService === "moved" ? rawService : "";
+
+  const serviceCards = [
     {
       id: "",
       label: "All",
-      count: SERVICES.reduce(
-        (n, item) => n + nowProjects(account, batch, item.id),
-        0,
-      ),
+      count: countAssetsAnyLive(account, batch),
       done: 0,
     },
     ...SERVICES.map((item) => ({
       id: item.id,
       label: item.label,
-      count: nowProjects(account, batch, item.id),
+      count: countAssetsWithLiveInService(account, batch, item.id),
       done: passedProjects(account, batch, item.id),
     })).filter((card) => card.count > 0),
   ];
-  const selected = cards.some((card) => card.id === serviceId) ? serviceId : "";
+
+  const nDroppedOnly = countDroppedAssets(account, batch);
+  const nMovedOnly = countMovedOnlyAssets(account, batch);
+  const moveCards: Array<{ id: ExtraFilter; label: string; count: number }> =
+    [];
+  if (nDroppedOnly > 0)
+    moveCards.push({ id: "dropped", label: "Dropped", count: nDroppedOnly });
+  if (nMovedOnly > 0)
+    moveCards.push({ id: "moved", label: "Moved out", count: nMovedOnly });
+
+  const cards = [...serviceCards, ...moveCards];
+
+  const validService = SERVICES.some((s) => s.id === rawService);
+  const selected =
+    rawService === "" ||
+    rawService === "dropped" ||
+    rawService === "moved" ||
+    validService
+      ? rawService
+      : "";
+
   const select = (id: string) => {
     const next = new URLSearchParams(params.toString());
     if (id) next.set("service", id);
     else next.delete("service");
     const qs = next.toString();
-    router.replace(qs ? `${hrefs.batch(batch.id)}?${qs}` : hrefs.batch(batch.id), {
-      scroll: false,
-    });
-  };
-  const rows = batch.buildingIds.flatMap((id) => {
-    const building = account.buildings.find((item) => item.id === id);
-    if (!building) return [];
-    const items = projectsAtBuilding(account, id).filter(
-      (item) =>
-        item.workstream.batchId === batch.id &&
-        !item.workstream.proposed &&
-        (!selected || item.workstream.service === selected),
+    router.replace(
+      qs ? `${hrefs.batch(batch.id)}?${qs}` : hrefs.batch(batch.id),
+      { scroll: false },
     );
-    return items.length ? [{ building, items }] : [];
+  };
+
+  const setView = (nextView: "assets" | "packages") => {
+    const next = new URLSearchParams(params.toString());
+    if (nextView === "packages") next.set("view", "packages");
+    else next.delete("view");
+    const qs = next.toString();
+    router.replace(
+      qs ? `${hrefs.batch(batch.id)}?${qs}` : hrefs.batch(batch.id),
+      { scroll: false },
+    );
+  };
+
+  const tableRows: AssetTableRow[] = [];
+  const foldDropped: string[] = [];
+  const foldMoved: string[] = [];
+
+  for (const id of batch.buildingIds) {
+    const liveAll = batchProjectsForBuilding(account, batch, id);
+    const allMuted = inactiveLeftRows(account, batch, id);
+
+    if (extra === "dropped" || extra === "moved") {
+      const muted = allMuted.filter((m) => m.row.left?.kind === extra);
+      if (!muted.length) continue;
+      const liveFiltered = selected
+        ? liveAll.filter((x) => x.workstream.service === selected)
+        : liveAll;
+      tableRows.push({
+        kind: "building",
+        buildingId: id,
+        live: liveFiltered,
+        muted,
+      });
+      continue;
+    }
+
+    const liveFiltered = selected
+      ? liveAll.filter((x) => x.workstream.service === selected)
+      : liveAll;
+
+    const mutedDropMove = allMuted.filter(
+      (m) => m.row.left?.kind === "dropped" || m.row.left?.kind === "moved",
+    );
+
+    if (liveFiltered.length) {
+      tableRows.push({
+        kind: "building",
+        buildingId: id,
+        live: liveFiltered,
+        muted: mutedDropMove,
+      });
+    } else if (mutedDropMove.length) {
+      if (mutedDropMove.some((m) => m.row.left?.kind === "dropped"))
+        foldDropped.push(id);
+      if (mutedDropMove.some((m) => m.row.left?.kind === "moved"))
+        foldMoved.push(id);
+    }
+  }
+
+  tableRows.sort((a, b) => {
+    if (a.kind === "fold" || b.kind === "fold") return 0;
+    const ba = account.buildings.find((x) => x.id === a.buildingId)!;
+    const bb = account.buildings.find((x) => x.id === b.buildingId)!;
+    const aLive = a.live.length > 0;
+    const bLive = b.live.length > 0;
+    if (aLive !== bLive) return aLive ? -1 : 1;
+    const aCh = buildingChanged(account, ba.id);
+    const bCh = buildingChanged(account, bb.id);
+    if (aCh !== bCh) return aCh ? -1 : 1;
+    return ba.name.localeCompare(bb.name);
   });
-  rows.sort((a, b) => {
-    const aChanged = buildingChanged(account, a.building.id);
-    const bChanged = buildingChanged(account, b.building.id);
-    if (aChanged !== bChanged) return aChanged ? -1 : 1;
-    return a.building.name.localeCompare(b.building.name);
-  });
-  const signature = `${selected}:${rows.map((row) => row.building.id).join("|")}`;
-  const [list, setList] = useState({ signature, open: false });
-  if (list.signature !== signature) setList({ signature, open: false });
-  const shown = list.open ? rows : rows.slice(0, 8);
+
+  const [openDropped, setOpenDropped] = useState(false);
+  const [openMoved, setOpenMoved] = useState(false);
+  const [list, setList] = useState({ sig: "", open: false });
+  const mainRows = tableRows.filter((r) => r.kind === "building");
+  const signature = `${view}:${selected}:${mainRows.map((r) => (r.kind === "building" ? r.buildingId : "")).join("|")}`;
+  if (list.sig !== signature) setList({ sig: signature, open: false });
+  const shownBuildings = list.open ? mainRows : mainRows.slice(0, 8);
+
+  const expandedDropped = extra === "dropped" || openDropped;
+  const expandedMoved = extra === "moved" || openMoved;
+
+  const packageCount = wsInAll(account, batch.id).filter((w) => !w.proposed)
+    .length;
 
   return (
     <div className="space-y-4">
-      <div
-        className="grid gap-2"
-        style={{
-          gridTemplateColumns: `repeat(${cards.length}, minmax(0, 1fr))`,
-        }}
+      <Tabs.Root
+        value={view}
+        onValueChange={(v) => setView(v === "packages" ? "packages" : "assets")}
       >
-        {cards.map((card) => {
-          const on = card.id === selected;
-          return (
-            <button
-              key={card.id || "all"}
-              type="button"
-              onClick={() => select(card.id)}
-              className={cn(
-                "relative overflow-hidden rounded-md border border-border-dark bg-bg-container px-4 py-3 text-left",
-                focusRing,
-                !on && "cursor-pointer hover:bg-bg-container-grey",
-              )}
-            >
-              {on && (
-                <span
-                  aria-hidden
-                  className="absolute inset-x-0 top-0 h-1 bg-brand-6"
-                />
-              )}
-              <p className="h8 text-text-primary">{card.label}</p>
-              <p className="h4 tabular-nums text-text-primary">{card.count}</p>
-              {card.done > 0 && (
-                <p className="p7 text-text-tertiary">+{card.done} done</p>
-              )}
-            </button>
-          );
-        })}
-      </div>
+        <Tabs.List className={tabListClass} aria-label={batch.name}>
+          <Tabs.Trigger value="assets" className={tabTriggerClass}>
+            {WORDS.Assets} ({batch.buildingIds.length})
+          </Tabs.Trigger>
+          <Tabs.Trigger value="packages" className={tabTriggerClass}>
+            {WORDS.Packages} ({packageCount})
+          </Tabs.Trigger>
+        </Tabs.List>
+      </Tabs.Root>
 
-      <Card
-        title={WORDS.Assets}
-        right={
-          <span className="p7 text-text-secondary">{rows.length}</span>
-        }
-        bodyClassName="p-0"
-      >
-        <div className="overflow-x-auto">
-          <div className="min-w-[720px]">
-            <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
-              <span className="s3 text-text-tertiary">{WORDS.Asset}</span>
-              <span className="s3 text-text-tertiary">{WORDS.Package}</span>
-              <span className="s3 text-text-tertiary">Service</span>
-              <span />
-            </div>
-            {shown.map(({ building, items }) => (
-              <Link
-                key={building.id}
-                href={hrefs.building(building.id, {
-                  from: "batch",
-                  batch: batch.id,
-                })}
-                className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
-              >
-                <span className="min-w-0">
-                  <ChangedDot on={buildingChanged(account, building.id)}>
-                    <span className="block h8 text-text-title">
-                      {building.name}
-                    </span>
-                  </ChangedDot>
-                  <span className="mt-0.5 block p7 text-text-tertiary">
-                    {building.city}
-                  </span>
-                </span>
-                <span className="min-w-0">
-                  {items.map((item) => (
+      {view === "assets" && (
+        <div className="mt-4 space-y-4">
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${cards.length}, minmax(0, 1fr))`,
+            }}
+          >
+            {cards.map((card) => {
+              const isMove = card.id === "dropped" || card.id === "moved";
+              const on = card.id === selected;
+              return (
+                <button
+                  key={card.id || "all"}
+                  type="button"
+                  onClick={() => select(card.id)}
+                  className={cn(
+                    "relative overflow-hidden rounded-md border border-border-dark bg-bg-container px-4 py-3 text-left",
+                    focusRing,
+                    !on && "cursor-pointer hover:bg-bg-container-grey",
+                  )}
+                >
+                  {on && (
                     <span
-                      key={item.workstream.id}
-                      className="block p6 text-text-secondary"
-                    >
-                      {item.workstream.name}
-                    </span>
-                  ))}
-                </span>
-                <span className="min-w-0">
-                  {items.map((item) => (
-                    <span
-                      key={item.workstream.id}
-                      className="block p6 text-text-primary"
-                    >
-                      {SERVICES.find((entry) => entry.id === item.workstream.service)
-                        ?.label ?? "—"}
-                    </span>
-                  ))}
-                </span>
-                <Icon
-                  name="chevron-right"
-                  size={16}
-                  className="text-text-tertiary"
-                />
-              </Link>
-            ))}
+                      aria-hidden
+                      className="absolute inset-x-0 top-0 h-1 bg-brand-6"
+                    />
+                  )}
+                  <p
+                    className={cn(
+                      "h8",
+                      isMove ? "text-text-tertiary" : "text-text-primary",
+                    )}
+                  >
+                    {card.label}
+                  </p>
+                  <p
+                    className={cn(
+                      "h4 tabular-nums",
+                      isMove ? "text-text-tertiary" : "text-text-primary",
+                    )}
+                  >
+                    {card.count}
+                  </p>
+                  {!isMove && "done" in card && card.done > 0 && (
+                    <p className="p7 text-text-tertiary">+{card.done} done</p>
+                  )}
+                </button>
+              );
+            })}
           </div>
+
+          <Card bodyClassName="p-0">
+            <div className="overflow-x-auto">
+              <div className="min-w-[720px]">
+                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
+                  <span className="s3 text-text-tertiary">{WORDS.Asset}</span>
+                  <span className="s3 text-text-tertiary">{WORDS.Package}</span>
+                  <span className="s3 text-text-tertiary">Service</span>
+                  <span />
+                </div>
+                {shownBuildings.map((row) => {
+                  if (row.kind !== "building") return null;
+                  const building = getBuilding(account, row.buildingId);
+                  return (
+                    <Link
+                      key={building.id}
+                      href={hrefs.building(building.id, {
+                        from: "batch",
+                        batch: batch.id,
+                      })}
+                      className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                    >
+                      <span className="min-w-0">
+                        <ChangedDot on={buildingChanged(account, building.id)}>
+                          <span className="block h8 text-text-title">
+                            {building.name}
+                          </span>
+                        </ChangedDot>
+                        <span className="mt-0.5 block p7 text-text-tertiary">
+                          {building.city}
+                        </span>
+                      </span>
+                      <span className="min-w-0 space-y-1">
+                        {row.live.map((item) => (
+                          <span
+                            key={`${item.workstream.id}-live`}
+                            className="block p6 text-text-secondary"
+                          >
+                            {item.workstream.name}
+                          </span>
+                        ))}
+                        {row.muted.map((item) => (
+                          <span
+                            key={`${item.workstream.id}-muted-${item.row.buildingId}`}
+                            className="block p6 text-text-tertiary"
+                          >
+                            {item.workstream.name}
+                          </span>
+                        ))}
+                      </span>
+                      <span className="min-w-0 space-y-1">
+                        {row.live.map((item) => (
+                          <span
+                            key={`${item.workstream.id}-svc`}
+                            className="block p6 text-text-primary"
+                          >
+                            {serviceDef(item.workstream.service).label}
+                          </span>
+                        ))}
+                        {row.muted.map((item) => {
+                          const lk = item.row.left?.kind;
+                          const reason = item.row.left?.reason ?? "";
+                          if (lk === "dropped") {
+                            return (
+                              <span
+                                key={`${item.workstream.id}-drop`}
+                                className="block p6 text-text-tertiary"
+                              >
+                                Dropped · {reason}
+                              </span>
+                            );
+                          }
+                          if (lk === "moved" && item.row.left?.to) {
+                            const dest = movedToBatchName(
+                              account,
+                              item.row.left.to,
+                            );
+                            return (
+                              <span
+                                key={`${item.workstream.id}-mv`}
+                                className="block p6 text-text-tertiary"
+                              >
+                                Moved to {dest} · {short(item.row.left.on)}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
+                      </span>
+                      <Icon
+                        name="chevron-right"
+                        size={16}
+                        className="mt-1 text-text-tertiary"
+                      />
+                    </Link>
+                  );
+                })}
+
+                {!extra && foldDropped.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setOpenDropped(!openDropped)}
+                      className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                    >
+                      <span className="p6 text-text-tertiary">
+                        {foldDropped.length} dropped
+                      </span>
+                      <span />
+                      <span />
+                      <Icon
+                        name={expandedDropped ? "chevron-up" : "chevron-down"}
+                        size={16}
+                        className="text-text-tertiary"
+                      />
+                    </button>
+                    {expandedDropped &&
+                      foldDropped.map((bid) => {
+                        const b = getBuilding(account, bid);
+                        const muted = inactiveLeftRows(account, batch, bid).filter(
+                          (m) => m.row.left?.kind === "dropped",
+                        );
+                        return (
+                          <Link
+                            key={bid}
+                            href={hrefs.building(bid, {
+                              from: "batch",
+                              batch: batch.id,
+                            })}
+                            className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                          >
+                            <span className="min-w-0">
+                              <span className="block h8 text-text-title">
+                                {b.name}
+                              </span>
+                              <span className="mt-0.5 block p7 text-text-tertiary">
+                                {b.city}
+                              </span>
+                            </span>
+                            <span className="min-w-0 space-y-1">
+                              {muted.map((m) => (
+                                <span
+                                  key={`${m.workstream.id}-f`}
+                                  className="block p6 text-text-tertiary"
+                                >
+                                  {m.workstream.name}
+                                </span>
+                              ))}
+                            </span>
+                            <span className="min-w-0 space-y-1">
+                              {muted.map((m) => (
+                                <span
+                                  key={`${m.workstream.id}-fd`}
+                                  className="block p6 text-text-tertiary"
+                                >
+                                  Dropped · {m.row.left?.reason ?? ""}
+                                </span>
+                              ))}
+                            </span>
+                            <Icon
+                              name="chevron-right"
+                              size={16}
+                              className="mt-1 text-text-tertiary"
+                            />
+                          </Link>
+                        );
+                      })}
+                  </>
+                )}
+
+                {!extra && foldMoved.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setOpenMoved(!openMoved)}
+                      className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                    >
+                      <span className="p6 text-text-tertiary">
+                        {foldMoved.length} moved out
+                      </span>
+                      <span />
+                      <span />
+                      <Icon
+                        name={expandedMoved ? "chevron-up" : "chevron-down"}
+                        size={16}
+                        className="text-text-tertiary"
+                      />
+                    </button>
+                    {expandedMoved &&
+                      foldMoved.map((bid) => {
+                        const b = getBuilding(account, bid);
+                        const muted = inactiveLeftRows(account, batch, bid).filter(
+                          (m) => m.row.left?.kind === "moved",
+                        );
+                        return (
+                          <Link
+                            key={bid}
+                            href={hrefs.building(bid, {
+                              from: "batch",
+                              batch: batch.id,
+                            })}
+                            className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                          >
+                            <span className="min-w-0">
+                              <span className="block h8 text-text-title">
+                                {b.name}
+                              </span>
+                              <span className="mt-0.5 block p7 text-text-tertiary">
+                                {b.city}
+                              </span>
+                            </span>
+                            <span className="min-w-0 space-y-1">
+                              {muted.map((m) => (
+                                <span
+                                  key={`${m.workstream.id}-fm`}
+                                  className="block p6 text-text-tertiary"
+                                >
+                                  {m.workstream.name}
+                                </span>
+                              ))}
+                            </span>
+                            <span className="min-w-0 space-y-1">
+                              {muted.map((m) => (
+                                <span
+                                  key={`${m.workstream.id}-fmt`}
+                                  className="block p6 text-text-tertiary"
+                                >
+                                  Moved to{" "}
+                                  {movedToBatchName(account, m.row.left!.to!)} ·{" "}
+                                  {short(m.row.left!.on)}
+                                </span>
+                              ))}
+                            </span>
+                            <Icon
+                              name="chevron-right"
+                              size={16}
+                              className="mt-1 text-text-tertiary"
+                            />
+                          </Link>
+                        );
+                      })}
+                  </>
+                )}
+              </div>
+            </div>
+            <ListMore
+              total={mainRows.length}
+              limit={8}
+              open={list.open}
+              noun={WORDS.assets}
+              onOpen={() => setList({ sig: signature, open: true })}
+            />
+          </Card>
         </div>
-        <ListMore
-          total={rows.length}
-          limit={8}
-          open={list.open}
-          noun={WORDS.assets}
-          onOpen={() => setList({ signature, open: true })}
-        />
-      </Card>
+      )}
+
+      {view === "packages" && (
+        <div className="mt-4">
+          <PackagesTable account={account} batch={batch} />
+        </div>
+      )}
 
       <Card
         title="Recent activity"
@@ -468,6 +947,153 @@ function BatchPage({
         <ActivityList items={showActivity ? activity : activity.slice(0, 5)} />
       </Card>
     </div>
+  );
+}
+
+function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
+  const inBatch = wsInAll(account, batch.id);
+  const proposed = inBatch
+    .filter((w) => w.proposed)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const rest = inBatch.filter((w) => !w.proposed);
+  const openPackages = rest
+    .filter((w) => !isClosed(w) && !isCompleted(w))
+    .sort(
+      (a, b) =>
+        parse(b.startedOn || "1 Jan 2000") - parse(a.startedOn || "1 Jan 2000") ||
+        a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+    );
+  const folded = rest
+    .filter((w) => isClosed(w) || isCompleted(w))
+    .sort(
+      (a, b) =>
+        parse(b.startedOn || "1 Jan 2000") - parse(a.startedOn || "1 Jan 2000") ||
+        a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+    );
+  const [openClosed, setOpenClosed] = useState(false);
+
+  const gridClass =
+    "grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6";
+
+  return (
+    <Card bodyClassName="p-0">
+      <div className="overflow-x-auto">
+        <div className="min-w-[900px]">
+          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
+            <span className="s3 text-text-tertiary">{WORDS.Package}</span>
+            <span className="s3 text-text-tertiary">Now</span>
+            <span className="s3 text-text-tertiary">{WORDS.Assets}</span>
+            <span className="s3 text-text-tertiary">How it came</span>
+          </div>
+
+          {openPackages.map((w) => {
+            const fromLine = howItCameFrom(account, w);
+            const assetsN = activeProjects(w).length;
+            return (
+              <Link
+                key={w.id}
+                href={hrefs.workstream(w.id, "batch")}
+                className={`${gridClass} hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7`}
+              >
+                <span className="min-w-0">
+                  <span className="block h8 text-text-title">{w.name}</span>
+                </span>
+                <span className="p6 text-text-primary">{batchNowLine(account, w)}</span>
+                <span className="p6 text-text-primary tabular-nums">{assetsN}</span>
+                <span className="min-w-0 p6 text-text-secondary">
+                  <span className="block">{fromLine.main}</span>
+                  {fromLine.sub && (
+                    <span className="mt-0.5 block p7 text-text-tertiary">
+                      {fromLine.sub}
+                    </span>
+                  )}
+                </span>
+              </Link>
+            );
+          })}
+
+          {proposed.map((w) => {
+            const fromLine = howItCameFrom(account, w);
+            const assetsN = activeProjects(w).length;
+            return (
+              <div key={w.id} className={gridClass}>
+                <span className="min-w-0">
+                  <span className="block h8 text-text-title">{w.name}</span>
+                </span>
+                <span className="p6 text-text-primary">Proposed</span>
+                <span className="p6 text-text-primary tabular-nums">{assetsN}</span>
+                <span className="min-w-0 p6 text-text-secondary">
+                  <span className="block">{fromLine.main}</span>
+                </span>
+              </div>
+            );
+          })}
+
+          {folded.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setOpenClosed(!openClosed)}
+                className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+              >
+                <span className="p6 text-text-tertiary">
+                  {folded.length} closed
+                </span>
+                <span />
+                <span />
+                <span className="flex justify-end">
+                  <Icon
+                    name={openClosed ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    className="text-text-tertiary"
+                  />
+                </span>
+              </button>
+              {openClosed &&
+                folded.map((w) => {
+                  const atStart = closedPackageFootprint(w);
+                  const outcome = closedPackageOutcomeLine(w);
+                  const fromLine = howItCameFrom(account, w);
+                  const assetsCol = isClosed(w)
+                    ? `${atStart} at the start`
+                    : String(activeProjects(w).length);
+                  const nowCol = batchNowLine(account, w);
+                  const body = (
+                    <>
+                      <span className="min-w-0 h8 text-text-tertiary">{w.name}</span>
+                      <span className="p6 text-text-tertiary">{nowCol}</span>
+                      <span className="p6 text-text-tertiary tabular-nums">
+                        {assetsCol}
+                      </span>
+                      <span className="min-w-0 p6 text-text-tertiary">
+                        <span className="block">{fromLine.main}</span>
+                        {isClosed(w) && outcome && (
+                          <span className="mt-0.5 block p7 text-text-tertiary">
+                            {outcome}
+                          </span>
+                        )}
+                      </span>
+                    </>
+                  );
+                  return (
+                    <Link
+                      key={w.id}
+                      href={hrefs.workstream(w.id, "batch")}
+                      className={cn(
+                        gridClass,
+                        isClosed(w) && "bg-black-1",
+                        "hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7",
+                      )}
+                    >
+                      {body}
+                    </Link>
+                  );
+                })}
+            </>
+          )}
+        </div>
+      </div>
+    </Card>
   );
 }
 

@@ -16,7 +16,7 @@ import {
   type BuildingListRow,
   type BuildingProject,
 } from "@/lib/concept/derive";
-import { Icon, ChangedDot, ChangedKey, ClearFilters, FilterBar, FilterChips, FilterField, FilterSearch, FilterSelect, ListMore, PageHeader } from "./ui";
+import { Icon, ChangedDot, ClearFilters, FilterBar, FilterChips, FilterField, FilterSearch, FilterSelect, ListMore, PageHeader } from "./ui";
 import { hrefs, type BuildingFrom } from "./hrefs";
 import { WORDS } from "@/lib/concept/words";
 import { useConcept } from "./store";
@@ -99,7 +99,7 @@ export function Buildings() {
     <>
       <PageHeader
         title={WORDS.Assets}
-        actions={<ChangedKey className="p7 text-text-secondary" />}
+        changedKey
       />
       <FilterChips
         options={[{ id: "", label: "All", count: base.length }, ...chips]}

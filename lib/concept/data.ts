@@ -103,11 +103,85 @@ const halvering: Account = {
   workstreams: [
     // Flagship
     {
-      id: 'solar-de', batchId: 'flagship', name: 'Solar PV DE', service: 'tender',
+      id: 'solar-est', batchId: 'flagship', name: 'Solar PV · Estimates', service: 'indicative',
       phases: [
         {
           service: 'indicative', state: 'done', startedOn: '20 May 2026', completedOn: '28 Aug 2026',
-          projects: ['f1', 'f5', 'f7', 'f12'].map((id) => p(id, 3, { estimate: [115, 140], decision: 'go', destination: 'tender', decidedOn: '28 Aug 2026' })),
+          projects: [
+            ...['f1', 'f5', 'f7', 'f12'].map((id) =>
+              p(id, 3, {
+                estimate: [115, 140],
+                decision: 'go',
+                destination: 'tender',
+                decidedOn: '28 Aug 2026',
+                left: { kind: 'split', to: 'solar-de', on: '1 Sep 2026' },
+              }),
+            ),
+            ...['f2', 'f8', 'f9'].map((id) =>
+              p(id, 3, {
+                estimate: [120, 145],
+                decision: 'scope',
+                destination: 'scope',
+                decidedOn: '28 Aug 2026',
+                left: { kind: 'split', to: 'solar-roof', on: '1 Sep 2026' },
+              }),
+            ),
+            p('f6', 3, {
+              estimate: [80, 95],
+              decision: 'no',
+              decidedOn: '28 Aug 2026',
+              dropped: true,
+              left: { kind: 'dropped', on: '28 Aug 2026' },
+            }),
+          ],
+        },
+      ],
+      solution: 'solar',
+      owner: 'done',
+      now: '',
+      startedOn: '20 May 2026',
+      closedOn: '28 Aug 2026',
+      completedOn: '28 Aug 2026',
+      needs: [],
+      projects: [
+        ...['f1', 'f5', 'f7', 'f12'].map((id) =>
+          p(id, 3, {
+            estimate: [115, 140],
+            decision: 'go',
+            destination: 'tender',
+            decidedOn: '28 Aug 2026',
+            left: { kind: 'split', to: 'solar-de', on: '1 Sep 2026' },
+          }),
+        ),
+        ...['f2', 'f8', 'f9'].map((id) =>
+          p(id, 3, {
+            estimate: [120, 145],
+            decision: 'scope',
+            destination: 'scope',
+            decidedOn: '28 Aug 2026',
+            left: { kind: 'split', to: 'solar-roof', on: '1 Sep 2026' },
+          }),
+        ),
+        p('f6', 3, {
+          estimate: [80, 95],
+          decision: 'no',
+          decidedOn: '28 Aug 2026',
+          dropped: true,
+          left: { kind: 'dropped', on: '28 Aug 2026' },
+        }),
+      ],
+      lead: 'Tamsin Quarrell',
+    },
+    {
+      id: 'solar-de', batchId: 'flagship', name: 'Solar PV DE', service: 'tender',
+      from: { workstreamId: 'solar-est', kind: 'split', on: '1 Sep 2026' },
+      phases: [
+        {
+          service: 'indicative', state: 'done', startedOn: '20 May 2026', completedOn: '28 Aug 2026',
+          projects: [
+            ...['f1', 'f5', 'f7', 'f12'].map((id) => p(id, 3, { estimate: [115, 140], decision: 'go', destination: 'tender', decidedOn: '28 Aug 2026' })),
+            p('f9', 3, { estimate: [120, 145], decision: 'scope', destination: 'scope', decidedOn: '28 Aug 2026' }),
+          ],
         },
         { service: 'tender', state: 'now', startedOn: '1 Sep 2026' },
         { service: 'delivery', state: 'planned' },
@@ -158,8 +232,16 @@ const halvering: Account = {
         p('f5', 2, { sizeKwp: 220, briefLabel: 'Workstream brief', visit: { state: 'skip' } }),
         p('f7', 2, { sizeKwp: 260, briefLabel: 'Workstream brief', visit: { state: 'skip' } }),
         p('f12', 2, { sizeKwp: 190, briefLabel: 'Workstream brief', visit: { state: 'skip' } }),
+        p('f9', 2, {
+          joined: { on: '4 Nov 2026', from: 'solar-roof' },
+          briefLabel: 'Workstream brief',
+          visit: { state: 'skip' },
+          sizeKwp: 200,
+          history: [{ event: 'Matched to brief', detail: 'Solar PV DE', date: '15 Sep 2026' }],
+        }),
       ],
       activity: [
+        { date: '4 Nov', title: 'Marktplatz 2 joined', text: 'From Solar PV · Missing roof data.' },
         { date: '12 Oct', title: 'Last 3 suppliers chased', text: '8 of 11 offers in.' },
         { date: '9 Oct', title: 'Brief addition sent to suppliers', text: 'Halverkamp 19: roof access by internal stairs only.' },
         { date: '8 Oct', title: 'Site check at Halverkamp 19', text: 'The roof can take the panels.' },
@@ -169,13 +251,14 @@ const halvering: Account = {
       documents: [
         { name: 'Site check — Halverkamp 19', type: 'PDF', meta: '8 Oct', action: 'Download' },
         { name: 'Brief — Solar PV DE', type: 'PDF', meta: 'agreed 10 Sep', action: 'Download' },
-        { name: 'Indicative estimates — Solar PV', type: 'PDF', meta: '28 Aug', action: 'Download' },
+        { name: 'Indicative estimates — Solar PV', type: 'PDF', meta: 'PDF · from Solar PV · Estimates · 28 Aug', action: 'Download' },
         { name: 'Results', meta: 'After all offers are in', muted: true },
       ],
       lead: 'Tamsin Quarrell',
     },
     {
       id: 'solar-roof', batchId: 'flagship', name: 'Solar PV · Missing roof data', service: 'scope',
+      from: { workstreamId: 'solar-est', kind: 'split', on: '1 Sep 2026' },
       phases: [
         {
           service: 'indicative', state: 'done', startedOn: '20 May 2026', completedOn: '28 Aug 2026',
@@ -199,14 +282,25 @@ const halvering: Account = {
       ],
       projects: [
         p('f2', 1, { gap: 'Roof drawings', visit: { state: 'unbooked', detail: 'CQuel books it once drawings are in' } }),
-        ...f(8, 9).map((id) => p(id, 1, { gap: 'Roof drawings', visit: { state: 'unbooked', detail: 'CQuel books it once drawings are in' } })),
+        p('f8', 1, {
+          gap: 'Roof drawings',
+          visit: { state: 'unbooked', detail: 'CQuel books it once drawings are in' },
+          hold: { since: '2 Oct 2026' },
+        }),
+        p('f9', 1, {
+          gap: 'Roof drawings',
+          joined: { on: '1 Sep 2026', from: 'solar-est' },
+          left: { kind: 'moved', to: 'solar-de', on: '4 Nov 2026' },
+          history: [{ event: 'Roof drawings requested', detail: 'Solar PV · Missing roof data', date: '2 Oct 2026' }],
+        }),
       ],
       activity: [
+        { date: '4 Nov', title: 'Marktplatz 2 moved', text: 'To Solar PV DE.' },
         { date: '2 Oct', title: 'Roof drawings requested', text: 'For 3 buildings, by email to you.' },
         { date: '1 Sep', title: 'Package started', text: '3 projects moved from Estimates — no roof drawings; survey needed before tender.' },
       ],
       documents: [
-        { name: 'Indicative estimates — Solar PV', type: 'PDF', meta: '28 Aug', action: 'Download' },
+        { name: 'Indicative estimates — Solar PV', type: 'PDF', meta: 'PDF · from Solar PV · Estimates · 28 Aug', action: 'Download' },
         { name: 'Files you sent', meta: 'you sent · site photos, 12 months of bills', action: 'View' },
       ],
       lead: 'Tamsin Quarrell',
@@ -426,6 +520,12 @@ const halvering: Account = {
     { date: '8 Oct', title: 'Solar PV DE', text: 'Halverkamp 19 · roof can take panels', batchId: 'flagship' },
     { date: '3 Oct', title: 'Offices DE, FR and BE', text: '6 assets joined', batchId: 'offices' },
     { date: '2 Oct', title: 'Solar PV · Missing roof data', text: 'Roof drawings requested for 3 buildings', batchId: 'flagship' },
+    {
+      date: '28 Aug',
+      title: 'Solar PV · Estimates split in two',
+      text: "4 ready to tender, 3 missing roof data. Am Hafen 12 dropped: roof can't take panels.",
+      batchId: 'flagship',
+    },
   ],
   documents: [],
   momentum: [

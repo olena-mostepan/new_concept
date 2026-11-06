@@ -83,10 +83,13 @@ export function ServiceIcon({
   service,
   size = 44,
   className,
+  grayscale,
 }: {
   service: ServiceId;
   size?: number;
   className?: string;
+  /** Closed package: last service icon in greyscale, drop shadow kept underneath. */
+  grayscale?: boolean;
 }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -98,7 +101,9 @@ export function ServiceIcon({
       height={size}
       className={cn("shrink-0 object-contain", className)}
       style={{
-        filter: "drop-shadow(0 10px 14px rgba(30,40,50,.12))",
+        filter: grayscale
+          ? "grayscale(1) drop-shadow(0 10px 14px rgba(30,40,50,.12))"
+          : "drop-shadow(0 10px 14px rgba(30,40,50,.12))",
       }}
     />
   );
@@ -750,6 +755,7 @@ export function PageHeader({
   meta,
   actions,
   legend,
+  changedKey,
 }: {
   crumbs?: Array<{ label: string; href?: string }>;
   crumbAside?: ReactNode;
@@ -760,6 +766,8 @@ export function PageHeader({
   meta?: ReactNode;
   actions?: ReactNode;
   legend?: ReactNode;
+  /** Design-system key: breadcrumb row (detail pages) or title row (section pages). */
+  changedKey?: boolean;
 }) {
   const typeText = kind ? TYPE_LABEL[kind].text : null;
 
@@ -783,7 +791,16 @@ export function PageHeader({
               </span>
             ))}
           </div>
-          {crumbAside}
+          {crumbAside ?? (
+            kind && (changedKey || actions) ? (
+              <div className="flex shrink-0 items-center justify-end gap-3">
+                {changedKey && (
+                  <ChangedKey className="p7 text-text-secondary" />
+                )}
+                {actions}
+              </div>
+            ) : null
+          )}
         </nav>
       )}
       {kind ? (
@@ -805,7 +822,7 @@ export function PageHeader({
           {aside}
         </div>
       ) : (
-        (title || meta || legend || actions) && (
+        (title || meta || legend || actions || changedKey) && (
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               {title && <h1 className={pageTitle}>{title}</h1>}
@@ -816,14 +833,16 @@ export function PageHeader({
                 </div>
               )}
             </div>
-            {actions && (
-              <div className="flex shrink-0 items-center gap-3">{actions}</div>
+            {(changedKey || actions) && (
+              <div className="flex shrink-0 items-center gap-3">
+                {changedKey && (
+                  <ChangedKey className="p7 text-text-secondary" />
+                )}
+                {actions}
+              </div>
             )}
           </div>
         )
-      )}
-      {kind && actions && (
-        <div className="mt-4 flex shrink-0 items-center gap-3">{actions}</div>
       )}
     </header>
   );
@@ -977,21 +996,56 @@ export type PackagePickerOption = {
   subline: string;
 };
 
+type PickerGroup = { label?: string; options: PackagePickerOption[] };
+
+function buildPickerEntries(
+  options: PackagePickerOption[] | undefined,
+  groups: PickerGroup[] | undefined,
+): Array<{ kind: "label"; text: string } | { kind: "opt"; option: PackagePickerOption; optIndex: number }> {
+  if (groups?.length) {
+    const out: Array<
+      { kind: "label"; text: string } | { kind: "opt"; option: PackagePickerOption; optIndex: number }
+    > = [];
+    let optIndex = 0;
+    for (const g of groups) {
+      if (g.label) out.push({ kind: "label", text: g.label });
+      for (const option of g.options) {
+        out.push({ kind: "opt", option, optIndex });
+        optIndex += 1;
+      }
+    }
+    return out;
+  }
+  return (options ?? []).map((option, optIndex) => ({
+    kind: "opt" as const,
+    option,
+    optIndex,
+  }));
+}
+
 /** Package switcher in the asset header when the asset is in more than one package. */
 export function PackagePicker({
   options,
+  groups,
   selectedId,
   selectedIndex,
   total,
   onSelect,
 }: {
-  options: PackagePickerOption[];
+  options?: PackagePickerOption[];
+  /** When set, options are shown in sections (e.g. Earlier). */
+  groups?: PickerGroup[];
   selectedId: string;
   selectedIndex: number;
   total: number;
   onSelect: (id: string) => void;
 }) {
-  const selected = options.find((item) => item.id === selectedId) ?? options[0];
+  const entries = buildPickerEntries(options, groups);
+  const flatOptions = entries
+    .filter((e): e is Extract<typeof e, { kind: "opt" }> => e.kind === "opt")
+    .map((e) => e.option);
+  const selected =
+    flatOptions.find((item) => item.id === selectedId) ?? flatOptions[0];
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -1008,9 +1062,9 @@ export function PackagePicker({
 
   useEffect(() => {
     if (!open) return;
-    const idx = options.findIndex((item) => item.id === selectedId);
+    const idx = flatOptions.findIndex((item) => item.id === selectedId);
     setActive(idx >= 0 ? idx : 0);
-  }, [open, options, selectedId]);
+  }, [open, flatOptions, selectedId]);
 
   const pick = (id: string) => {
     onSelect(id);
@@ -1037,18 +1091,18 @@ export function PackagePicker({
           if (event.key === "ArrowDown" || event.key === "ArrowUp") {
             event.preventDefault();
             if (!open) setOpen(true);
-            else {
+            else if (flatOptions.length) {
               setActive((i) => {
                 const next =
                   event.key === "ArrowDown"
-                    ? (i + 1) % options.length
-                    : (i - 1 + options.length) % options.length;
+                    ? (i + 1) % flatOptions.length
+                    : (i - 1 + flatOptions.length) % flatOptions.length;
                 return next;
               });
             }
           } else if (event.key === "Enter" && open) {
             event.preventDefault();
-            pick(options[active]?.id ?? selectedId);
+            pick(flatOptions[active]?.id ?? selectedId);
           } else if (event.key === "Escape") {
             event.preventDefault();
             setOpen(false);
@@ -1064,11 +1118,19 @@ export function PackagePicker({
           role="listbox"
           className="absolute left-0 top-[calc(100%+8px)] z-20 w-[330px] list-none rounded-md border border-border-dark bg-bg-container p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
         >
-          {options.map((item, index) => {
+          {entries.map((entry, i) => {
+            if (entry.kind === "label") {
+              return (
+                <li key={`${entry.text}-${i}`} role="presentation" className="list-none">
+                  <p className="px-2 pb-1 pt-2 p7 text-text-tertiary">{entry.text}</p>
+                </li>
+              );
+            }
+            const item = entry.option;
             const isSelected = item.id === selectedId;
-            const isActive = index === active;
+            const isActive = entry.optIndex === active;
             return (
-              <li key={item.id} role="presentation">
+              <li key={item.id} role="presentation" className="list-none">
                 <button
                   type="button"
                   role="option"
@@ -1078,10 +1140,14 @@ export function PackagePicker({
                     focusRing,
                     (isSelected || isActive) && "bg-bg-container-grey",
                   )}
-                  onMouseEnter={() => setActive(index)}
+                  onMouseEnter={() => setActive(entry.optIndex)}
                   onClick={() => pick(item.id)}
                 >
-                  <span className={isSelected ? "h8 text-text-primary" : "p6 text-text-primary"}>
+                  <span
+                    className={
+                      isSelected ? "h8 text-text-primary" : "p6 text-text-primary"
+                    }
+                  >
                     {item.name}
                   </span>
                   <span className="mt-0.5 block p7 text-text-tertiary">{item.subline}</span>
@@ -1104,45 +1170,12 @@ export type PackageCardChip = {
   onSelect?: () => void;
 };
 
-function selectableServiceChipClass(lead: "done" | "now") {
-  return cn(
-    "inline-flex h-8 items-center gap-2 rounded-full border px-[13px] h8",
-    focusRing,
-    lead === "done" &&
-      "border-border-dark bg-bg-container text-text-title pl-[7px] pr-[13px]",
-    lead === "now" &&
-      "border-brand-3 bg-bg-accent text-text-primary",
-    "cursor-pointer hover:border-border-dark",
-  );
-}
-
-function renderPackageCardChip(chip: PackageCardChip, switchable: boolean) {
+function renderPackageCardChip(chip: PackageCardChip, _switchable: boolean) {
   const display = (
     <Chip lead={chip.lead} size="big">
       {chip.label}
     </Chip>
   );
-  if (switchable && chip.selectable && chip.onSelect) {
-    return (
-      <button
-        key={chip.id}
-        type="button"
-        role="tab"
-        aria-selected={Boolean(chip.selected)}
-        className={selectableServiceChipClass(chip.lead)}
-        onClick={chip.onSelect}
-      >
-        {chip.lead === "done" && <RoundTick size={16} />}
-        {chip.lead === "now" && (
-          <span
-            className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
-            aria-hidden
-          />
-        )}
-        {chip.label}
-      </button>
-    );
-  }
   return <span key={chip.id}>{display}</span>;
 }
 
@@ -1151,10 +1184,12 @@ export function PackageCard({
   packageName,
   chips,
   switchable = false,
-  tablistLabel = "Services for this asset",
+  tablistLabel: _tablistLabel = "Services for this asset",
   scopeLine,
   openPackageHref,
   openPackageAriaLabel,
+  /** When set, replaces the scope line + Open package column. */
+  asideContent,
   panelTitle,
   panelAside,
   panelChildren,
@@ -1168,6 +1203,7 @@ export function PackageCard({
   scopeLine?: string;
   openPackageHref?: string;
   openPackageAriaLabel?: string;
+  asideContent?: ReactNode;
   panelTitle?: string;
   panelAside?: string;
   panelChildren?: ReactNode;
@@ -1176,20 +1212,14 @@ export function PackageCard({
     renderPackageCardChip(chip, switchable),
   );
 
-  const chipRow = switchable ? (
-    <div
-      role="tablist"
-      aria-label={tablistLabel}
-      className="flex flex-wrap gap-2"
-    >
-      {chipElements}
-    </div>
-  ) : (
+  /** Service chips are display-only (tabs switch panels). */
+  const chipRow = (
     <div className="flex flex-wrap gap-2">{chipElements}</div>
   );
 
   const openPackage =
-    scopeLine && openPackageHref ? (
+    asideContent ??
+    (scopeLine && openPackageHref ? (
       <div className="flex shrink-0 items-center gap-6">
         <p className="max-w-[280px] p7 text-right text-text-secondary">
           {scopeLine}
@@ -1206,7 +1236,19 @@ export function PackageCard({
           Open package
         </Button>
       </div>
-    ) : null;
+    ) : openPackageHref ? (
+      <Button
+        type="strong"
+        size="large"
+        icon="chevron-right"
+        iconPosition="right"
+        href={openPackageHref}
+        ariaLabel={openPackageAriaLabel}
+        className="shrink-0"
+      >
+        Open package
+      </Button>
+    ) : null);
 
   return (
     <section className="rounded-lg border border-border-dark bg-bg-container px-5 pb-5 pt-4">
@@ -1362,7 +1404,15 @@ export function IconButton({
 }
 
 /** One document row: file-type tag, meta, and a single icon action. */
-export function DocumentList({ docs }: { docs: Doc[] }) {
+export function DocumentList({
+  docs,
+  readOnly,
+}: {
+  docs: Doc[];
+  /** Inherited tab: no download / view controls. */
+  readOnly?: boolean;
+}) {
+  const hideActions = readOnly === true;
   return (
     <ul>
       {docs.map((doc, index) => (
@@ -1398,10 +1448,10 @@ export function DocumentList({ docs }: { docs: Doc[] }) {
               </p>
             </div>
           </div>
-          {!doc.muted && doc.action === "Download" && (
+          {!hideActions && !doc.muted && doc.action === "Download" && (
             <IconButton icon="download" label={`Download ${doc.name}`} />
           )}
-          {!doc.muted && doc.action === "View" && (
+          {!hideActions && !doc.muted && doc.action === "View" && (
             <IconButton icon="chevron-right" label={`View ${doc.name}`} />
           )}
         </li>

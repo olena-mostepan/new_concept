@@ -13,6 +13,8 @@ import {
 import {
   currentPhase,
   getBatch,
+  getWorkstream,
+  isClosed,
   moneyOne,
   presentedTotal,
   pricingTotal,
@@ -66,6 +68,7 @@ export function PackageStatusCard({ w }: { w: Workstream }) {
   const searchParams = useSearchParams();
   const sid = packageStatusService(w);
   const headline = packageStatusHeadline(w);
+  const closed = isClosed(w);
   const complete = isCompleted(w);
   const cta = packageStatusCta(w);
   const params = new URLSearchParams(searchParams.toString());
@@ -81,6 +84,7 @@ export function PackageStatusCard({ w }: { w: Workstream }) {
       <ServiceIcon
         service={sid}
         size={116}
+        grayscale={closed}
         className="pointer-events-none absolute left-[-30px] top-1/2 -translate-y-1/2"
       />
       <div className="flex items-center justify-between gap-4">
@@ -90,7 +94,7 @@ export function PackageStatusCard({ w }: { w: Workstream }) {
             <p className="h4 text-text-primary">{headline.name}</p>
           )}
         </div>
-        {!complete && (
+        {!closed && !complete && (
           <Button
             type="strong"
             size="large"
@@ -115,10 +119,11 @@ export function AssetStripStatus({
   href: string;
   ariaLabel: string;
 }) {
+  const { account } = useConcept();
   return (
     <div className="flex w-full items-center justify-between gap-6">
       <p className="min-w-0 flex-1 p6 text-text-secondary">
-        {assetPackageScopeLine(w)}
+        {assetPackageScopeLine(w, account)}
       </p>
       <Button
         type="strong"
@@ -142,16 +147,44 @@ export function WorkstreamHeader({ w }: { w: Workstream }) {
   const crumbs = workstreamCrumbs(account, w, searchParams).map(
     ({ label, href }) => ({ label, href }),
   );
-  const assets = activeProjects(w).length;
+  const assetsLive = activeProjects(w).length;
+  const leftCount = w.projects.filter((p) => p.left).length;
+  const fromWs = w.from ? getWorkstream(account, w.from.workstreamId) : undefined;
   const facts: FactItem[] = [
     {
       label: "Batch",
       value: batch?.name ?? "—",
       href: batch ? hrefs.batch(w.batchId) : undefined,
     },
-    { label: "Solution", value: SOLUTION_NAME[w.solution] },
-    { label: "Assets", value: String(assets) },
   ];
+  if (fromWs) {
+    facts.push({
+      label: "From",
+      value: fromWs.name,
+      href: hrefs.workstream(fromWs.id),
+    });
+  }
+  facts.push({ label: "Solution", value: SOLUTION_NAME[w.solution] });
+  if (isClosed(w)) {
+    facts.push({
+      label: "Assets",
+      value: `${w.projects.length} at the start`,
+    });
+    if (w.closedOn) {
+      facts.push({
+        label: "Closed",
+        value: short(w.closedOn),
+      });
+    }
+  } else {
+    facts.push({
+      label: "Assets",
+      value:
+        leftCount > 0
+          ? `${assetsLive} · ${leftCount} left`
+          : String(assetsLive),
+    });
+  }
   if (w.supplier) facts.push({ label: "Supplier", value: w.supplier });
 
   return (
@@ -161,6 +194,7 @@ export function WorkstreamHeader({ w }: { w: Workstream }) {
       title={w.name}
       facts={facts}
       aside={<PackageStatusCard w={w} />}
+      changedKey
       actions={
         w.owner === "you" ? <ResponsibilityPill owner="you" /> : undefined
       }

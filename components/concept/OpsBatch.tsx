@@ -10,7 +10,7 @@ import {
   type Owner,
   type SolutionId,
 } from "@/lib/concept/model";
-import { getBuilding, openNeeds, short, wsIn } from "@/lib/concept/derive";
+import { getBuilding, openNeeds, short, wsInAll } from "@/lib/concept/derive";
 import { Button, Icon, OwnerPill, Page, PageHeader, groupTitle } from "./ui";
 import { PlanSteps } from "./ops-bits";
 import { filledBtn } from "./ops-shared";
@@ -40,7 +40,7 @@ export function OpsBatch({ id }: { id: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const batch = account.batches.find((item) => item.id === id);
-  const streams = batch ? wsIn(account, batch.id) : [];
+  const streams = batch ? wsInAll(account, batch.id) : [];
   const firstId = streams[0]?.id ?? null;
   const [openId, setOpenId] = useState<string | null>(firstId);
   useEffect(() => {

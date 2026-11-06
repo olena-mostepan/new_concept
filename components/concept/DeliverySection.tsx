@@ -15,6 +15,7 @@ import {
   customerBatches,
   deliveryLine,
   historyInService,
+  isClosed,
   needsAttention,
   nextParts,
   phaseOutcome,
@@ -24,7 +25,7 @@ import {
 import { WORDS } from "@/lib/concept/words";
 import { splitDeliveryId, toDeliveryPayload } from "@/lib/concept/delivery";
 import { CustomerDeliveryView } from "@/components/customer/delivery/CustomerDeliveryView";
-import { Icon, ChangedKey, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly, groupTitle, ResponsibilityPill } from "./ui";
+import { Icon, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly, groupTitle, ResponsibilityPill } from "./ui";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
 
@@ -59,7 +60,11 @@ export function DeliverySection() {
   };
 
   const liveAll = account.workstreams.filter(
-    (w) => w.service === "delivery" && !w.proposed && w.owner !== "done",
+    (w) =>
+      !isClosed(w) &&
+      w.service === "delivery" &&
+      !w.proposed &&
+      w.owner !== "done",
   );
   const pastAll = historyInService(account, "delivery");
   const payload = toDeliveryPayload(account, liveAll);
@@ -139,7 +144,7 @@ export function DeliverySection() {
     <>
       <PageHeader
         title="Delivery"
-        actions={<ChangedKey className="p7 text-text-secondary" />}
+        changedKey
       />
       <div className="mt-4 flex gap-6 border-b border-border-light">
         <button

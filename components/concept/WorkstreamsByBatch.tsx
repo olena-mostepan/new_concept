@@ -17,6 +17,7 @@ import {
   byRecentChange,
   customerBatches,
   getBuilding,
+  isClosed,
   noun,
   short,
   stepNote,
@@ -101,8 +102,10 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
   const responsibility = params.get("responsibility") === "you" ? "you" : "";
 
   const batches = customerBatches(account);
-  const shared = account.workstreams.filter((w) =>
-    batches.some((b) => b.id === w.batchId),
+  const shared = account.workstreams.filter(
+    (w) =>
+      !isClosed(w) &&
+      batches.some((b) => b.id === w.batchId),
   );
 
   const write = (patch: {

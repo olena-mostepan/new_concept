@@ -8,6 +8,7 @@ import {
   doneCount,
   getBatch,
   isBatchDone,
+  isClosed,
   nextLine,
   short,
   wsIn,
@@ -107,7 +108,10 @@ export function GroupedByBatch({
   batches: Batch[];
 }) {
   const groups = batches
-    .map((b) => ({ b, ws: items.filter((w) => w.batchId === b.id) }))
+    .map((b) => ({
+      b,
+      ws: items.filter((w) => w.batchId === b.id && !isClosed(w)),
+    }))
     .filter((g) => g.ws.length > 0)
     .sort(
       (a, z) =>

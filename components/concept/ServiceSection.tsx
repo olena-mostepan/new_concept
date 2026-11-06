@@ -17,6 +17,7 @@ import {
   byRecentChange,
   customerBatches,
   historyInService,
+  isClosed,
   nextParts,
   noun,
   phaseOutcome,
@@ -27,7 +28,7 @@ import {
   surveyLine,
   type PhaseRef,
 } from "@/lib/concept/derive";
-import { Icon, ChangedKey, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly, groupTitle, ResponsibilityPill } from "./ui";
+import { Icon, ChangedMark, ClearFilters, FilterBar, FilterField, FilterSearch, FilterSelect, PageHeader, YourActionOnly, groupTitle, ResponsibilityPill } from "./ui";
 import { hrefs } from "./hrefs";
 import { WORDS } from "@/lib/concept/words";
 import { useConcept } from "./store";
@@ -92,7 +93,11 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   const batches = customerBatches(account);
   const needle = q.trim().toLowerCase();
   const liveAll = account.workstreams.filter(
-    (w) => w.service === serviceId && !w.proposed && w.owner !== "done",
+    (w) =>
+      !isClosed(w) &&
+      w.service === serviceId &&
+      !w.proposed &&
+      w.owner !== "done",
   );
   const pastAll = historyInService(account, serviceId);
   const keep = (w: Workstream, projects: Workstream["projects"]) =>
@@ -168,7 +173,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
     <>
       <PageHeader
         title={def.label}
-        actions={<ChangedKey className="p7 text-text-secondary" />}
+        changedKey
       />
       {serviceId === "scope" && (
         <div className="mt-4 flex gap-6 border-b border-border-light">

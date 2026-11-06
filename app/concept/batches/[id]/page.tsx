@@ -2,17 +2,17 @@
 
 import { Suspense } from "react";
 import { useParams } from "next/navigation";
-import { getBatch, solutionName, wsIn } from "@/lib/concept/derive";
+import { getBatch, solutionName, wsInAll } from "@/lib/concept/derive";
 import type { Batch } from "@/lib/concept/model";
-import { ChangedKey, Page, PageHeader } from "@/components/concept/ui";
+import { Page, PageHeader } from "@/components/concept/ui";
 import { BatchView } from "@/components/concept/BatchView";
 import { hrefs } from "@/components/concept/hrefs";
 import { useConcept } from "@/components/concept/store";
 
-function batchSolutions(account: Parameters<typeof wsIn>[0], batch: Batch) {
+function batchSolutions(account: Parameters<typeof wsInAll>[0], batch: Batch) {
   const seen = new Set<string>();
   const solutions: string[] = [];
-  for (const stream of wsIn(account, batch.id).filter(
+  for (const stream of wsInAll(account, batch.id).filter(
     (item) => !item.proposed,
   )) {
     if (seen.has(stream.solution)) continue;
@@ -23,10 +23,10 @@ function batchSolutions(account: Parameters<typeof wsIn>[0], batch: Batch) {
 }
 
 function batchFacts(
-  account: Parameters<typeof wsIn>[0],
+  account: Parameters<typeof wsInAll>[0],
   batch: Batch,
 ): Array<{ label: string; value: string }> {
-  const packages = wsIn(account, batch.id).filter((item) => !item.proposed)
+  const packages = wsInAll(account, batch.id).filter((item) => !item.proposed)
     .length;
   const facts: Array<{ label: string; value: string }> = [
     { label: "Goal", value: batch.goal },
@@ -65,7 +65,7 @@ export default function BatchPage() {
         kind="batch"
         title={b.name}
         facts={batchFacts(account, b)}
-        actions={<ChangedKey className="p7 text-text-secondary" />}
+        changedKey
       />
       <Suspense>
         <BatchView account={account} batch={b} variant="page" />

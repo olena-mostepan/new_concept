@@ -235,11 +235,19 @@ export interface HistoryItem {
   date: string
 }
 
+export type MoveKind = 'split' | 'continued' | 'tendered_again' | 'dropped' | 'moved' | 'not_chosen'
+
 export interface ProjectRow {
   buildingId: string
   step: number
   note?: string
   dropped?: boolean
+  /** Set on a closed package's rows: where this asset went. `to` is a workstream id or a batch id — resolve in data views. */
+  left?: { kind: MoveKind; to?: string; on: string; reason?: string }
+  /** Set when the asset came into this package after it started. */
+  joined?: { on: string; from?: string; reason?: string }
+  /** Still in the package, but waiting. */
+  hold?: { since: string; reason: string }
   /** € thousands, low–high */
   estimate?: [number, number]
   paybackYears?: number | 'over12'
@@ -369,6 +377,10 @@ export interface Workstream {
   found?: string
   /** Where a finished workstream moved, and why. */
   movedTo?: { workstreamId: string; reason: string }
+  /** Where this package came from. */
+  from?: { workstreamId: string; kind: Exclude<MoveKind, 'dropped'>; on: string; reason?: string }
+  /** Set when the package has ended because all its assets went elsewhere or were dropped. */
+  closedOn?: string
   tender?: TenderProfile
   pricing?: PricingInfo
   deliveryProfile?: DeliveryProfile

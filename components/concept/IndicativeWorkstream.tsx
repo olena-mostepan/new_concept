@@ -5,7 +5,14 @@ import { Card, DocumentList } from "./ui";
 import { ProjectsTable } from "./ProjectsTable";
 
 /** Estimates tab, with the files card that used to be its own tab. */
-export function EstimatesPanel({ w }: { w: Workstream }) {
+export function EstimatesPanel({
+  w,
+  readOnly,
+}: {
+  w: Workstream;
+  /** Inherited from `from` package: no customer actions on estimates or files. */
+  readOnly?: boolean;
+}) {
   const estimated = w.projects.filter((project) => project.estimate);
   const estimateDocs = (w.documents ?? []).filter((doc) =>
     /estimate/i.test(doc.name),
@@ -20,16 +27,17 @@ export function EstimatesPanel({ w }: { w: Workstream }) {
           w={w}
           rows={estimated}
           columns={["estimate", "decision"]}
+          readOnly={readOnly}
         />
         {estimateDocs.length > 0 && (
           <div className="border-t border-border-light px-6">
-            <DocumentList docs={estimateDocs} />
+            <DocumentList docs={estimateDocs} readOnly={readOnly} />
           </div>
         )}
       </Card>
       <Card title="Your files">
         {yourFiles.length > 0 ? (
-          <DocumentList docs={yourFiles} />
+          <DocumentList docs={yourFiles} readOnly={readOnly} />
         ) : (
           <p className="p6 text-text-secondary">No files yet</p>
         )}

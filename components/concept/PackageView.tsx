@@ -7,16 +7,23 @@ import * as Tabs from "@radix-ui/react-tabs";
 import {
   service,
   SERVICES,
+  type MoveKind,
+  type ProjectRow,
   type ServiceId,
   type Workstream,
 } from "@/lib/concept/model";
 import { DELIVERY_PHASES } from "@/lib/concept/delivery";
 import {
+  activeProjects,
   buildingChanged,
   days,
   deliverySteps,
   getBuilding,
+  getWorkstream,
   indicativeSteps,
+  isClosed,
+  parse,
+  phaseIsInheritedFrom,
   pricingSteps,
   scopeSteps,
   short,
@@ -24,6 +31,7 @@ import {
   workstreamView,
   type StepColumn,
 } from "@/lib/concept/derive";
+import { inPackageColumnLines } from "@/lib/concept/moves";
 import { WORDS } from "@/lib/concept/words";
 import { cn } from "@/lib/utils";
 import {
@@ -39,6 +47,7 @@ import {
   tabListClass,
   tabTriggerClass,
 } from "./ui";
+import { Tag } from "@/components/ds/tag";
 import {
   WorkstreamFacts,
   WorkstreamFrame,
@@ -108,7 +117,10 @@ function startedLine(w: Workstream, index: number) {
     const dates = phaseDates(w, index);
     return dates.length ? `started ${short(earliest(dates))}` : null;
   }
-  const since = w.next?.since;
+  const since =
+    w.next && "since" in w.next && typeof w.next.since === "string"
+      ? w.next.since
+      : undefined;
   if (!since) return null;
   const asked = w.needs.some(
     (need) => need.owner === "you" && need.since === since,
@@ -184,6 +196,7 @@ function StepsCard({
   account: ReturnType<typeof useConcept>["account"];
   w: Workstream;
 }) {
+  if (isClosed(w)) return null;
   if (w.owner === "done") return null;
   const title = `${service(w.service).label} for this package`;
   const columns =
@@ -208,6 +221,83 @@ function StepsCard({
   );
 }
 
+const LEFT_GROUP_ORDER: MoveKind[] = [
+  "split",
+  "moved",
+  "continued",
+  "tendered_again",
+  "not_chosen",
+  "dropped",
+];
+
+function leftGroupIndex(kind: MoveKind): number {
+  const i = LEFT_GROUP_ORDER.indexOf(kind);
+  return i === -1 ? 99 : i;
+}
+
+type OverviewRow = {
+  project: ProjectRow;
+  index: number;
+  building: ReturnType<typeof getBuilding>;
+};
+
+function overviewAssetRank(p: ProjectRow): 0 | 1 | 2 | 3 {
+  if (p.joined) return 0;
+  if (p.left) return 3;
+  if (p.hold) return 2;
+  return 1;
+}
+
+function compareOverviewRows(
+  account: ReturnType<typeof useConcept>["account"],
+  a: OverviewRow,
+  b: OverviewRow,
+): number {
+  const ra = overviewAssetRank(a.project);
+  const rb = overviewAssetRank(b.project);
+  if (ra !== rb) return ra - rb;
+  if (ra === 0) {
+    return (
+      parse(b.project.joined!.on) - parse(a.project.joined!.on)
+    );
+  }
+  if (ra === 3) {
+    const ga = leftGroupIndex(a.project.left!.kind);
+    const gb = leftGroupIndex(b.project.left!.kind);
+    if (ga !== gb) return ga - gb;
+    return a.building.name.localeCompare(b.building.name);
+  }
+  const aCh = buildingChanged(account, a.building.id);
+  const bCh = buildingChanged(account, b.building.id);
+  if (aCh !== bCh) return aCh ? -1 : 1;
+  return a.index - b.index;
+}
+
+function InheritedEstimatesIntro({
+  fromWs,
+  assetCount,
+}: {
+  fromWs: Workstream;
+  assetCount: number;
+}) {
+  if (!fromWs.closedOn) return null;
+  return (
+    <div className="mb-6 rounded-md border border-border-light bg-bg-container-grey px-4 py-2.5">
+      <p className="p6 text-text-secondary">
+        From{" "}
+        <Link
+          href={hrefs.workstream(fromWs.id)}
+          className="text-text-primary underline decoration-border-dark underline-offset-[3px]"
+        >
+          {fromWs.name}
+        </Link>{" "}
+        · closed {short(fromWs.closedOn)} · showing this package&apos;s{" "}
+        {assetCount} assets
+      </p>
+    </div>
+  );
+}
+
 function OverviewAssets({
   account,
   w,
@@ -217,30 +307,47 @@ function OverviewAssets({
 }) {
   const [open, setOpen] = useState(false);
   const labels = service(w.service).steps;
-  const rows = w.projects
-    .map((project, index) => ({
-      project,
-      index,
-      building: getBuilding(account, project.buildingId),
-    }))
-    .sort((a, b) => {
-      const aChanged = buildingChanged(account, a.building.id);
-      const bChanged = buildingChanged(account, b.building.id);
-      if (aChanged !== bChanged) return aChanged ? -1 : 1;
-      return a.index - b.index;
-    });
+  const baseRows = w.projects.map((project, index) => ({
+    project,
+    index,
+    building: getBuilding(account, project.buildingId),
+  }));
+  const rows = [...baseRows].sort((a, b) =>
+    compareOverviewRows(account, a, b),
+  );
   const shown = open ? rows : rows.slice(0, 8);
+  const liveN = activeProjects(w).length;
+  const leftN = w.projects.filter((p) => p.left).length;
+  const closed = isClosed(w);
+  // IN PACKAGE shows on every package, so the table reads the same everywhere.
+  const showInPackageColumn = true;
+  const titleRight = closed
+    ? `${w.projects.length} at the start`
+    : leftN > 0
+      ? `${liveN} · ${leftN} left`
+      : String(liveN);
+  const gridCols = showInPackageColumn
+    ? "grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.15fr)_16px]"
+    : "grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_16px]";
   return (
     <Card
       title={WORDS.Assets}
-      right={<span className="p7 text-text-secondary">{rows.length}</span>}
+      right={<span className="p7 text-text-secondary">{titleRight}</span>}
       bodyClassName="p-0"
     >
       <div className="overflow-x-auto">
         <div className="min-w-[640px]">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_16px] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
+          <div
+            className={cn(
+              "grid items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6",
+              gridCols,
+            )}
+          >
             <span className="s3 text-text-tertiary">{WORDS.Asset}</span>
             <span className="s3 text-text-tertiary">Step</span>
+            {showInPackageColumn && (
+              <span className="s3 text-text-tertiary">In package</span>
+            )}
             <span />
           </div>
           {shown.map(({ project, building }) => {
@@ -248,15 +355,27 @@ function OverviewAssets({
               from: "workstream",
               ws: w.id,
             });
+            const muted = Boolean(project.left);
+            const lines = inPackageColumnLines(account, w, project);
+            const stepLabel = labels[project.step] ?? "—";
             return (
               <Link
                 key={building.id}
                 href={href}
-                className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_16px] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7"
+                className={cn(
+                  "grid items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 hover:bg-black-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black-7",
+                  gridCols,
+                  muted && "text-text-tertiary",
+                )}
               >
                 <span className="min-w-0">
                   <ChangedDot on={buildingChanged(account, building.id)}>
-                    <span className="block h8 text-text-title">
+                    <span
+                      className={cn(
+                        "block h8",
+                        muted ? "text-text-tertiary" : "text-text-title",
+                      )}
+                    >
                       {building.name}
                     </span>
                   </ChangedDot>
@@ -264,13 +383,30 @@ function OverviewAssets({
                     {building.city}
                   </span>
                 </span>
-                <span className="p6 text-text-primary">
-                  {labels[project.step] ?? "—"}
+                <span
+                  className={cn(
+                    "p6",
+                    muted ? "text-text-tertiary" : "text-text-primary",
+                  )}
+                >
+                  {stepLabel}
                 </span>
+                {showInPackageColumn && (
+                  <div className="min-w-0">
+                    <span className="block p6 text-text-primary">
+                      {lines.line1}
+                    </span>
+                    {lines.line2 && (
+                      <span className="mt-0.5 block p7 text-text-tertiary">
+                        {lines.line2}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <Icon
                   name="chevron-right"
                   size={16}
-                  className="text-text-tertiary"
+                  className="justify-self-end text-text-tertiary"
                 />
               </Link>
             );
@@ -292,7 +428,7 @@ export function PackageView({ w }: { w: Workstream }) {
   const { account } = useConcept();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tabs = tabsFor(w);
+  const tabs = tabsFor(w, account);
   const requested = searchParams.get("tab");
   const mapped = requested ? (OLD_TAB[requested] ?? requested) : null;
   const serviceId = searchParams.get("service");
@@ -314,7 +450,16 @@ export function PackageView({ w }: { w: Workstream }) {
       scroll: false,
     });
   };
+  const activeTab = tabs.find((item) => item.id === tab);
+  const inheritedEstimates =
+    tab === "estimates" && Boolean(activeTab?.from);
+  const fromWsForIntro =
+    w.from && inheritedEstimates
+      ? getWorkstream(account, w.from.workstreamId)
+      : null;
   const estimates = viewFor(w, "indicative");
+  const estimatesAssetCount =
+    estimates?.projects.filter((p) => p.estimate).length ?? 0;
   const tender = viewFor(w, "tender");
   const delivery = viewFor(w, "delivery") ?? w;
 
@@ -329,7 +474,14 @@ export function PackageView({ w }: { w: Workstream }) {
                 value={item.id}
                 className={tabTriggerClass}
               >
-                {item.label}
+                <span className="inline-flex items-center gap-2">
+                  {item.label}
+                  {item.from && (
+                    <Tag type="neutral" size="xsmall" dot={false}>
+                      from
+                    </Tag>
+                  )}
+                </span>
                 {item.dot && (
                   <TabDot
                     label={
@@ -353,8 +505,23 @@ export function PackageView({ w }: { w: Workstream }) {
             />
           </>
         )}
-        {tab === "estimates" && estimates && <EstimatesPanel w={estimates} />}
-        {tab === "survey" && <SurveysTab packageId={w.id} />}
+        {tab === "estimates" && estimates && (
+          <>
+            {fromWsForIntro && (
+              <InheritedEstimatesIntro
+                fromWs={fromWsForIntro}
+                assetCount={estimatesAssetCount}
+              />
+            )}
+            <EstimatesPanel w={estimates} readOnly={inheritedEstimates} />
+          </>
+        )}
+        {tab === "survey" && (
+          <SurveysTab
+            packageId={w.id}
+            readOnly={phaseIsInheritedFrom(w, account, "scope")}
+          />
+        )}
         {tab === "brief" && tender && (
           <TenderPanel w={tender} tab="brief" />
         )}

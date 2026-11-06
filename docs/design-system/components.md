@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 31, 05 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 35, 06 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -179,6 +179,10 @@ A 6px `brand-6` dot that marks something changed or new for the customer.
 ### Rules
 - **On a row:** it means the package, asset or project changed in the last 7 days. It's centred on the first line, 16px to the left of the name, inside the row's 32px left padding. Nothing else on the row changes. Its accessible label is "Changed in the last 7 days".
 - **On a navigation tab or page tab:** something inside changed or is new, 6px after the label (see Tabs). Its accessible label is "New".
+- **The key** ("• Changed in the last 7 days", `p7` text-secondary, the dot 6 before the words) explains the dot once per page, only when the page has rows that can carry it. It sits in the **top right corner** of the page:
+  - detail pages (batch, package): on the breadcrumb row, right-aligned (PageHeader's `crumbAside`); the asset page has the Pager there and no key;
+  - section pages (Assets, service lists): on the title row, right-aligned.
+  Never under the facts, above a table, or inside a card.
 - It's derived from dates; there's no last-seen tracking.
 - It's never used for "Your action". That's the ResponsibilityPill.
 
@@ -213,12 +217,11 @@ A small pill that marks where something is (display) or chooses what a list show
 - 24 high, `radius-full`, `h9`. Not clickable: no hover and no focus.
 - **`lead: 'done'`**: white fill, a 1px `border-dark` border, label `text-title`, a 14px round tick in front (a filled `black-7` circle with a white tick).
 - **`lead: 'now'`**: `bg-accent` fill, a 1px `border-accent-strong` border, label `text-primary`, the 6px `brand-6` dot in front. Only where work is under way.
-- **`lead: 'next'`**: a 1px dashed `black-4` border, label `p7` text-tertiary. Its fill is the surface it sits on (`--cq-surface`: white by default, `bg-container-grey` inside the PackageStrip panel or a `cq-on-grey` wrapper), so a track line stops at its edge.
+- **`lead: 'next'`**: a 1px dashed `black-4` border, label `p7` text-tertiary. Its fill is the surface it sits on (`--cq-surface`: white by default, `bg-container-grey` inside a grey panel or a `cq-on-grey` wrapper), so a track line stops at its edge.
 - One look on white and on grey: nothing changes with the background.
-- **`size: 'big'`** (32 high, `h8`, `p6` for next, 16px tick, 12 side padding): an asset's services in the PackageStrip, so they outrank the 24px steps and phases under them. Same height as the filter chip and the big Tag.
-- **Selectable display chip** (`onSelect`): a display chip that switches a panel (PackageCard). Only chips with data are selectable; the rest stay display-only. It's a `role="tab"` button inside a `tablist`. Hover: `border-dark`. Selected: a 2px `black-7` outline, 1 out, `aria-selected`. Focus: the 2px outline, 2 out. The look is otherwise the display chip's: never the filter chip's black fill.
+- **`size: 'big'`** (32 high, `h8`, `p6` for next, 16px tick, 12 side padding): a package's services (PackageCard, package Overview card), so they outrank the 24px steps and phases under them. Same height as the filter chip and the big Tag.
 - `count` adds " · 3" after the label ("Installation · 1").
-- Used for an asset's services (PackageStrip), steps (Steps) and delivery phases (PhaseStepper).
+- Used for a package's services (PackageCard, the package Overview card), steps (Steps) and delivery phases (PhaseStepper).
 
 ### Filter chip (with `onClick`, a button)
 - 32 high, `radius-full`, 12 side padding, `p6`, white with a 1px `border-dark` border, the count after the label in text-tertiary.
@@ -227,12 +230,12 @@ A small pill that marks where something is (display) or chooses what a list show
 - Used by FilterChips.
 
 ### Rules
-- A chip with `onClick` is a filter; without it, a display chip. Never make a display chip clickable.
+- A chip with `onClick` is a filter; without it, a display chip. **A display chip is never clickable** and never switches anything: to move between services, use the page's tabs.
 - Orange only on the `now` display chip.
 - Not a Tag: Tag stays for categories and status inside rows; ResponsibilityPill stays "Your action".
 
 ### The consumer provides
-`children`, `lead`, `size`, `count`; for a selectable display chip `onSelect` and `selected`; for a filter `selected` and `onClick`.
+`children`, `lead`, `size`, `count`; for a filter `selected` and `onClick`.
 
 ---
 
@@ -314,11 +317,11 @@ A fact whose value switches what the page shows. Today only the asset's Package:
 - **One option:** a plain fact. No chevron, no count.
 - **Several live options:** the label reads "Package · <i> of <n>". The value is a button: the name in `p6` plus a 16px `chevron-down`, 6 apart. Hover and open: `bg-container-grey` behind it, `radius-sm`, padding 2/6 with matching negative margin so the text doesn't move. Focus: the 2px `black-7` outline.
 - **One live option plus earlier ones:** no count, but the chevron shows, because there's history.
-- **Menu:** 8 under the value, left-aligned, 330 wide, white, `border-dark`, `radius-md`, `elevation-floating`, padding 6. Each row: the name in `p6` (selected: `h8` on `bg-container-grey`) over a `p7` text-tertiary line ("Flagship solar · Tender", or "<batch> · Complete"). Order: the selected one first, then most recent activity.
-- **Earlier:** closed packages (an earlier tender round) under an "Earlier" label (`p7` text-tertiary) and a `border-light` line, in text-secondary. Their line says why they closed ("Closed 3 Mar · 6 offers · not chosen"). Picking one opens it read-only.
+- **Menu:** 8 under the value, left-aligned, 330 wide, white, `border-dark`, `radius-md`, `elevation-floating`, padding 6. Each row: the package name in `p6` (selected: `h8` on `bg-container-grey`) over a `p7` text-tertiary line with its current service ("Tender"), "Complete" or "Closed". Order: the selected one first, then most recent activity.
+- **Earlier:** packages the asset has left, and closed packages, under an "Earlier" label (`p7` text-tertiary) and a `border-light` line, in text-secondary. Their line uses the move wording ("Left 28 Aug · dropped", "Closed"); never a reason. Picking one opens it read-only.
 - **Keyboard:** listbox behaviour. Arrow keys move, Enter picks, Esc closes and returns focus to the value; a click outside closes it.
 - Screen-reader name: "Package: <name>. <i> of <n>. Change package".
-- Picking a package switches the facts that follow it (Batch, Solution), the PackageCard and its panel. History and Documents stay for the whole asset.
+- Picking a package switches the facts that follow it (In package, Batch), the tab row and the PackageCard. History and Documents stay for the whole asset.
 
 ### The consumer provides
 `options: [{id, name, line, earlier}]`, `value`, `onChange(id)`, `label`.
@@ -564,29 +567,25 @@ What we still need, under a route service or a package step.
 
 ## PackageCard
 
-On the asset page, under the header: the selected package at this asset. Where this asset is, the way to the package, and this asset's own figures. One card, for the package picked in the header's Package fact (FactSelect).
+On the asset page's Overview tab: the selected package at this asset. Where this asset is, the way to the package, and this asset's steps in the current service. One card, for the package picked in the header's Package fact (FactSelect).
 
 ### Rules
-- White, 1px `border-dark`, `radius-lg`, padding 16/20/20. 24 under the header.
-- **Head row:** the services as big display Chips (32px, 8 apart; done and now only) on the left. On the right, vertically centred: ServiceIcon at 72 (inline), 12 gap, "This asset is in" in `p7` text-tertiary over the service in `h4`, then the large `strong` Button "Open package" with the chevron on the right. Its screen-reader name is "Open <package> package".
+- White, 1px `border-dark`, `radius-lg`, padding 16/20/20. 16 under the tab row.
+- **Head row:** the package's services as big display Chips (32px, 8 apart): every service it went through, done ones as done chips and the current one as the now chip ("Estimates ✓ · • Tender"). Never only the current one. **Display only: chips never switch anything**; the tabs do.
+- **Right, vertically centred:** ServiceIcon at 72 (inline), 12 gap, "This asset is in" in `p7` text-tertiary over the service in `h4`, then the large `strong` Button "Open package" with the chevron on the right. Its screen-reader name is "Open <package> package".
 - No "Package" label and no package name in the card: the header names the package.
-- **Chips switch the panel:** a chip is selectable only when this asset has data for that service in this package (`selectable`); the others stay display-only, with no hover. Selectable chips sit in a `tablist` labelled "Services for this asset" (see Chip). The panel opens on the current service.
-- **Panel:** a `bg-container-grey` box 16 under the chips, `radius-md`, titled after the selected chip in `h8`, with an aside in `p7` text-tertiary ("Voltreny · contract €26k", or the date of the facts):
-
-| Chip | Panel title | Content |
-|---|---|---|
-| Estimates | Estimate at this asset | Cost · Payback · Your decision |
-| Planning | Planning at this asset | Open gap · Survey · Scope |
-| Tender | Tender at this asset | Supplier (once chosen) · Price for this asset · Site check |
-| Pricing | Price at this asset | Price · Analysis · Your decision |
-| Delivery | Delivery at this asset | PhaseStepper, Start to Handover |
-
-- Facts in the panel use DetailsGrid. Only this asset's figures: never offer counts, the brief, supplier matching or other assets. With no facts for the service, no panel.
-- **Completed:** "This asset is" over "Complete", the Delivery icon, every chip done, no panel. The button stays: the package still holds the results.
+- **Panel:** a `bg-container-grey` box 16 under the chips, `radius-md`, padding 12/16/16, titled "<Service> at this asset" in `h8`, with an aside in `p7` text-tertiary (the date, or "Voltreny · contract €26k" on Delivery). It holds that service's **steps for this asset**:
+  - Delivery: PhaseStepper (Start to Handover).
+  - Every other service: Steps, with the service's step list (see Steps).
+  - The asset's figures (cost, payback, price…) are on the service tabs, not here.
+- **Variants (only these two):**
+  - **Completed:** "This asset is" over "Complete", the Delivery icon, every chip done, no panel. The button stays: the package still holds the results.
+  - **A package the asset has left** (no `service`): its chips, its panel and "Open package"; no ServiceIcon and no "This asset is in". Nothing replaces them: the header's In package fact already says "Left 28 Aug · dropped".
+- Never: offer counts, the brief, supplier matching, other assets.
 - Replaces PackageStrip (retired 5 Nov 2026).
 
 ### The consumer provides
-`name` (for the button's screen-reader name), `service`, `completed`, `services: [{id, label, lead, selectable}]`, `selected`, `onSelect(id)`, `href`, `title`, `aside`, and the panel content as `children`.
+`name` (for the button's screen-reader name), `service` (omit for a package the asset has left), `completed`, `services: [{id, label, lead}]`, `href`, `title`, `aside`, and the steps as `children`.
 
 ---
 
@@ -614,7 +613,7 @@ One header for the batch, package and asset pages: breadcrumb, type label, title
 - **Facts per page:**
   - Batch: Goal · Solution · Assets · Packages · Target (only when set, "Dec 2027", never shown as late).
   - Package: Batch · Solution · Assets · Supplier (once chosen).
-  - Asset: Package · Batch · Solution · City. Package is a FactSelect when the asset is in more than one package (or has earlier ones); Batch and Solution follow the selected package. No Buildings (an asset is always 1).
+  - Asset: Package · In package · Batch · City, on one row. Package is a FactSelect when the asset has more than one package (or earlier ones); the other facts follow the selected package. In package uses the move wording (see the README's Moves): "Since 1 Sep", "Joined 4 Nov", "On hold since 2 Oct", "Left 28 Aug · dropped". No Solution (the batch has one) and no Buildings (an asset is always 1).
 - **Aside:** on the right, top-aligned with the type label, 32 from the left block, which takes the remaining width.
   - Package: StatusCard.
   - Asset: the site photo, 260×164, `radius-lg`, cropped to fill, only when we hold one. No placeholder.
@@ -660,10 +659,11 @@ Delivery phases, Start → Complete, as display Chips on a track, each date with
 - Done phases: `lead: 'done'`. The phase in progress: `lead: 'now'`. Later phases: `lead: 'next'`. No numbered circles.
 - Under each chip: the date in `p7` text-primary ("12 Aug"; estimates "Est. 4 Nov"), then its source in `p7` text-tertiary.
 - **Start's source**, the strongest known: "Contract start date", "Contract signed", "LOI signed", or "From invoice · date to confirm". With none: "Estimate" for an estimated date, otherwise no line.
+- **No date:** no line at all. Never a dash. The current phase with no date says "Date to confirm" in `p7` text-tertiary.
 - **Other phases:** "Site check report", "From invoice · date to confirm", or "Estimate".
 - A phase waiting on the customer (`needs-you`) shows "Confirm dates" with the orange dot under a plain chip.
 - No buttons.
-- The track line is 2px `border-dark`. Chips and line look the same on white and on the grey PackageStrip panel.
+- The track line is 2px `border-dark`. Chips and line look the same on white and on a grey panel.
 
 ### Compact (table rows)
 - `size="compact"` renders one Chip: the phase the asset is in (now), "Complete" (done) or "Start" (plain) when it hasn't started.
@@ -762,8 +762,8 @@ Every field has a visible label: wrap it in a FormField (forms) or use SearchFie
 Service filter cards on a batch page: they choose which assets the list below shows.
 
 ### Rules
-- **Cards:** "All" first with the batch's project count, then one card per service that has projects in the batch now, in service order. No card for a service with 0.
-- **Content:** the service name in `h8`, the project count in `h4` with tabular figures, and optionally "+<n> done" in `p7` text-tertiary when projects passed through that service. Nothing else.
+- **Cards:** "All" first with the batch's asset count, then one card per service that has assets in the batch now, in service order. No card for a service with 0.
+- **Content:** the service name in `h8`, the asset count in `h4` with tabular figures, and optionally "+<n> done" in `p7` text-tertiary when assets passed through that service. Nothing else.
 - **Shape:** `radius-md`, 12/16 padding, equal columns 8 apart.
 - **States:**
   - Default: white (`bg-container`) with the `border-dark` border.
@@ -772,6 +772,12 @@ Service filter cards on a batch page: they choose which assets the list below sh
   - Focus: the 2px `black-7` outline.
 - Borders never turn dark. Never fill a card with orange or black.
 - **Behaviour:** single select. Each card writes `?service=<id>`; "All" clears it. The Assets table below shows assets with a project in that service.
+
+### On the batch page
+- The batch page has two tabs under its header: "Assets (<n>)" and "Packages (<n>)". Recent activity sits under the tabs, on both.
+- ServiceCards count **assets**, sit on the Assets tab only, and filter only that tab's table.
+- "Dropped" and "Moved out" cards appear only when there are any, after the services, with label and count in text-tertiary.
+- On the Packages tab, closed packages fold into one "<n> closed" row at the end.
 
 ### The consumer provides
 - `options`: `[{id, label, count, done}]`, with `id: ''` for All
@@ -832,16 +838,17 @@ On the package page, in PageHeader's aside: which service the package is in, and
 | Delivery | See delivery |
 
 - **Completed:** "This package is" over "Complete", the Delivery icon, no button.
+- **Closed** (Olena, 6 Nov): "This package is" over "Closed · <date>" in text-secondary, the icon of the service it closed in shown grey (grayscale, 70% opacity), no button. The only other variant.
 - The tab of the current service carries the orange dot (see Tabs): it repeats where the package is.
 
 ### The consumer provides
-`service`, `href`, `completed`.
+`service`, `href`, `completed`, `closed`, `closedOn`.
 
 ---
 
 ## Steps
 
-A package's steps within one service, as display Chips on a track.
+A package's or an asset's steps within one service, as display Chips on a track.
 
 ### Rules
 - One equal column per step, a Chip in each, joined by a 2px `border-dark` line behind them.
@@ -851,8 +858,29 @@ A package's steps within one service, as display Chips on a track.
 - **Delivery:** assets that haven't started sit on a plain Start chip with "3 awaiting start" under it; Complete with assets is a done chip with its count ("Complete · 2") and "last 7 Oct" under it.
 - **On a package Overview:** no descriptions, no needs panels and no buttons.
 
+### Step lists
+The product uses one list per service (from `lib/concept/model.ts`):
+
+| Service | Steps |
+|---|---|
+| Estimates | Data collected · Estimate · Presented · Decision |
+| Planning | Gap found · Info requested · Survey booked · Survey done · Scope agreed |
+| Tender | Brief ready · Shortlisted · Invited · Responses in · Results · Supplier chosen |
+| Pricing | Supplier set · Price requested · Price received · Analysed · Decision · Contracting |
+| Delivery | Start · Design & survey · Installation · Commissioning · Handover · Complete (PhaseStepper) |
+
+### For one asset
+- **States:** steps before the current one are done, the current one is now, the rest are next. When the asset has finished the service, every step is done.
+- **The line under a step** comes only from data we hold: the estimate ("€80–95k"), the presented date, a decision ("No · 28 Aug"), the open gap, the survey date. Otherwise it's blank. Never write a line the data can't back.
+- No counts for one asset.
+
 ### The consumer provides
 `steps`: `[{label, state: 'done'|'now'|'next', count, line}]`
+
+### On the package Overview
+- One white Card (`border-dark`, `radius-lg`, padding 16/20/20), no title bar: the package's service chips first (big display chips, done and now), then 16 below a `bg-container-grey` panel (`radius-md`, padding 12/16/16) titled "<Service> for this package" in `h8`, with an aside in `p7` text-tertiary ("Voltreny · 6 assets"), and the Steps inside it.
+- The same anatomy as PackageCard on the asset page ("Delivery at this asset"), minus the status on the right: the package page has the StatusCard in its header.
+- No "Now" or other status word in the aside; the orange chip already says it. No card header bar and no second border inside the card.
 
 ---
 
@@ -887,6 +915,16 @@ Package, asset and project lists: a group header, column labels and light rows.
 - **Next step:** a "main — detail" pair whose detail ends with a date ("Choose a supplier" / "results sent 13 Oct"). No "waiting N days".
 - **Responsibility column:** the `owner` column shows only "Your action" on customer screens.
 - **Card:** put the table in a `flush` Card.
+
+### IN PACKAGE column (package page, Assets table)
+- Columns: ASSET · STEP · IN PACKAGE · chevron.
+- Shown only when some asset has joined, left or is on hold, or the package is closed. Otherwise the table has no such column.
+- Values use the move wording (see the README's Moves): "Since 1 Sep", "Joined 4 Nov", "On hold since 2 Oct", "Left 28 Aug · dropped". A second line, only here, names the other package ("Solar PV DE"); never a reason.
+- Rows that left are `muted`; their STEP is the step they left at.
+- Order: joined first, then the rest, then on hold, then left.
+
+### Heading alignment
+- The heading row and the body rows share one grid template and the same padding (12/16/12/32), so each label sits exactly over its column. Never give the heading row its own widths or padding.
 
 ### States
 - **Empty:** one line under the column labels, "Nothing here yet" or the list's own words (`empty`).
@@ -930,10 +968,13 @@ The sections inside one page, such as Overview · Estimates · Brief · Tender r
 - A long row (six tabs) never wraps on desktop; if it ever needs more room, shorten labels rather than the gaps.
 - A count goes in brackets after the label: "Offers (8)".
 - **The dot** (6px `brand-6`, after the label) keeps both meanings of orange: where you are, or what's new. It's only a dot: no number, no text.
-  - On the package page it marks **the current service** (`current`), the same service the StatusCard names. Accessible label "Current service".
+  - On the package and asset pages it marks **the current service** (`current`), the same service the StatusCard or PackageCard names. Accessible label "Current service".
   - Elsewhere it marks a tab holding something the customer hasn't seen yet (`isNew`). Accessible label "New".
   - Never both on one tab.
-- **The asset page has no tabs.** It picks a package in the header (FactSelect) and switches services with the selectable chips in its PackageCard.
+- **On the asset page,** tabs are scoped to the package picked in the header (FactSelect): Overview, then each service of that package the asset went through, in service order. The current service gets the current-service dot. Switching the package rebuilds the row.
+  - **Overview:** the PackageCard (with the current service's steps), then History (Timeline) and Documents (DocumentList).
+  - **A service tab:** one Card "<Service> at this asset" with the date on the right, or "From <package> · <date>" for a phase that came from an earlier package. Inside: Steps (PhaseStepper for Delivery), then 20 below a DetailsGrid of the asset's figures — Estimates: Cost · Payback · Your decision; Planning: Open gap · Survey · Scope; Tender: Supplier (once chosen) · Price for this asset · Site check; Pricing: Price · Analysis · Your decision; Delivery: none.
+  - Never on the asset page: offer counts, the brief, supplier matching, other assets.
 - Keyboard focus: a 2px black-7 outline.
 - Each tab shows one section. Never put actions in a tab label.
 
@@ -981,6 +1022,7 @@ Multi-line text. Same states as Input; at least 88 tall (4 lines), padding 8/12,
 - An event that still waits on the customer (`you`: a date to confirm, a decision) gets a `brand-6` dot with a 3px `bg-accent` ring. Once it's settled, the dot goes grey. No other orange.
 - The year in `s3` text-tertiary above the first event of each year (once, when all share a year).
 - Up to 5 events in the card, then "See all" in the card header.
+- **Moves:** "Joined package", "Left package · <how>" or "On hold", with the package name as the detail line. Never a reason.
 - With two or more projects, the detail starts with the solution ("EV charging · …"). Ranges keep their dash: "€23–28k".
 - **Empty:** hide the card (the asset page doesn't show empty History).
 

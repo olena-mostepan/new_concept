@@ -65,7 +65,7 @@ export type ServiceId = 'indicative' | 'scope' | 'tender' | 'pricing' | 'deliver
 /** 3D service illustration. Only in StatusCard (116) and PackageStrip (72). */
 export interface ServiceIconProps { service: ServiceId; size?: 116 | 72 }
 /** Package page aside: 'This package is in <service>' and the strong 'See …' button. */
-export interface StatusCardProps { service?: ServiceId; href?: string; onClick?: () => void; completed?: boolean }
+export interface StatusCardProps { service?: ServiceId; href?: string; onClick?: () => void; completed?: boolean; /** 'This package is Closed · <closedOn>', grey icon, no button */ closed?: boolean; closedOn?: string }
 /** Detail pages' top bar: Back on the left, account tools (children) on the right. Replaces the app header and section nav. */
 export interface DetailBarProps { backHref?: string; onBack?: () => void; backLabel?: string; children?: ReactNode }
 export interface SummaryCardProps { label: string; value: ReactNode; line?: string; /** makes it a filter toggle */ onClick?: () => void; pressed?: boolean }
@@ -81,13 +81,13 @@ export interface ServicesBarProps { services: { id: string; label: string; count
 export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean }
 export interface TooltipProps { content: ReactNode; children: ReactNode; /** 'definition': sentences, up to 300 wide; only for TypeLabel */ variant?: 'label' | 'definition' }
 export interface YourActionOnlyProps { checked: boolean; onChange: (checked: boolean) => void; label?: string }
-/** onSelect + selected: a selectable display chip (role tab) that switches a panel. Display chip (no onClick): 24px (size 'big': 32px, for PackageStrip services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
-export interface ChipProps { children: ReactNode; lead?: 'done' | 'now' | 'next'; /** Display chips only: 'big' is 32px, for PackageStrip services. */ size?: 'default' | 'big'; count?: number; selected?: boolean; onClick?: () => void; onSelect?: () => void }
+/** Display chip (no onClick, never clickable): 24px (size 'big': 32px, for PackageStrip services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
+export interface ChipProps { children: ReactNode; lead?: 'done' | 'now' | 'next'; /** Display chips only: 'big' is 32px, for PackageStrip services. */ size?: 'default' | 'big'; count?: number; selected?: boolean; onClick?: () => void }
 
 /** Momentum: cumulative lines over months. One accent series (brand-6 + soft fill); others ink, dashed. Hover shows a guide, ringed dots and a tooltip. */
 export interface TrendChartProps { labels: string[]; longLabels?: string[]; series: { name: string; values: number[]; accent?: boolean }[]; height?: number; active?: number; label?: string }
 /** The asset's Package fact: plain with one option, a menu with several (live first, 'Earlier' group for closed ones). */
 export interface FactSelectProps { options: { id: string; name: string; line?: string; earlier?: boolean }[]; value?: string; onChange?: (id: string) => void; label?: string }
-/** Asset page: the selected package. Chips on the left (selectable ones switch the panel), 'This asset is in <service>' + Open package on the right, this asset's panel below. Replaces PackageStrip. */
-export interface PackageCardProps { name?: string; service?: ServiceId; completed?: boolean; services?: { id: ServiceId; label: string; lead: 'done' | 'now'; selectable?: boolean }[]; selected?: ServiceId; onSelect?: (id: ServiceId) => void; href?: string; onOpen?: () => void; title?: string; aside?: string; children?: ReactNode }
+/** Asset page Overview: the selected package. Display chips, 'This asset is in <service>' + Open package, and the current service's steps for this asset as children. Omit service for a package the asset has left. */
+export interface PackageCardProps { name?: string; service?: ServiceId; completed?: boolean; services?: { id: ServiceId; label: string; lead: 'done' | 'now' }[]; href?: string; onOpen?: () => void; title?: string; aside?: string; children?: ReactNode }
 ```

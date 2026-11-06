@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 39, 06 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 40, 06 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -411,7 +411,7 @@ A labelled dropdown that filters a list (Batch, Service, Solution, Responsibilit
 Label, field and hint as one unit.
 
 ### Rules
-Label `h8` in text-title; hint `p7` text-secondary; error message `p7` text-error under the field. 4 between each part; stack fields 12 apart. Optional fields say "(optional)" in the label.
+Label `h9` (12, SemiBold) in text-title, the same as every field label in the product (filter bars too); hint `p7` text-secondary; error message `p7` text-error under the field. 4 between each part; stack fields 12 apart. Optional fields say "(optional)" in the label.
 
 ### The consumer provides
 `label`, `hint`, `error`, `children` (an Input, Select or Textarea), `width`.

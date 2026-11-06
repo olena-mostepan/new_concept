@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 38, 06 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 40, 06 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -91,6 +91,7 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - Card padding is 16, with a 12/16 header.
   - Table cells are padded 12/16, with 32 on the left of the first column for the changed dot.
   - Labels sit 4 from their content, and fields stack 12 apart.
+- **Fields, one size:** every field is 40 high (32 for `small`). The text you type or pick and the placeholder are `p6` (14/20) in the product font: search, dropdowns, inputs and textareas alike. Every field label is `h9` (12, SemiBold) in text-title, 4 above, in forms and filter bars. The one exception is the Overview hero search, which is larger because it's the page's main action. Never let a browser default (button font, 13px, serif) show through.
 - Radius:
   - `radius-sm` (4): checkboxes and Small buttons.
   - `radius-md` (8): buttons, inputs, check cards and needs panels.

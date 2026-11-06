@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 35, 06 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 38, 06 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -18,7 +18,8 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - the active tab underline;
   - the selected service filter card on a batch page (4px top bar);
   - the `now` display Chip: the step, phase or service where work is under way (light accent, darker border, orange dot);
-  - the History dot of an event that still waits on the customer.
+  - the History dot of an event that still waits on the customer;
+  - the hover fill (`bg-accent`): where the pointer is.
 - Everything else is ink and greys: done and later chips, the pipeline bar, checkboxes, progress, focus rings.
 - **The one black pill** is the selected filter Chip. Tag `strong` stays retired.
 - **Dark means go there; orange means do this.** The `strong` Button (`black-7` fill) is the one way on from a page; the `primary` Button is the one action that moves the work on.
@@ -97,7 +98,8 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - `radius-image` (10): photos and the Overview hero search.
   - `radius-full`: pills, dots and circles.
 - Cards sit flat with a `border-dark` line and no shadow. Only floating things cast one: `elevation-floating` for menus, popovers and tooltips, `elevation-overlay` for drawers and modals, on the `bg-scrim`.
-- **Focus** is one style everywhere and never orange: a 2px `black-7` outline 2px out on buttons, links, tabs, chips, cards you can click and table rows. Fields, checkboxes and radios get the `focus-ring` (a white gap and a black-7 ring), and fields also turn their border `black-6`.
+- **Focus** is one style everywhere, keyboard only (`:focus-visible`, never on a mouse click) and never orange: a soft 4px ink halo (`focus-ring`, `0 0 0 4px rgba(30,40,50,.14)`), no line, on buttons, links, tabs, chips, cards you can click, table rows, fields, checkboxes and radios. Fields also turn their border `black-6`. Inside menus there is no ring: the highlighted row gets the light accent fill.
+- **Hover** is the light accent (`bg-accent`) on anything with a hover fill: secondary and tertiary buttons, icon buttons, table rows, menu rows, filter chips and service filter cards. Fields and summary cards keep their border change. The selected filter chip stays black.
 - Off-scale gaps use `space-2` and `space-6`; nothing else sits between the steps.
 
 ## The concept pieces
@@ -154,6 +156,8 @@ An asset joins or leaves a package (split, moved to another package, continued, 
 - **ActivityList**, **DocumentList** and, on asset pages, **Timeline** ("History"): date first, newest first, an orange dot only on an event that still waits on the customer.
 - **Buttons with icons:** a 16px icon on the left for actions; on the right only the chevron, on a button that goes to another page. **IconButton** for icon-only actions (Close, Download, More), always with a label that becomes its tooltip.
 - **EmptyState** for anything with nothing to show, and **Banner** for errors and page-level messages.
+- **Dropdowns** (Select, FilterSelect, FactSelect) all open the one CQuel menu: white, `border-dark`, `radius-md`, floating shadow. The chosen row is SemiBold with no fill; the row under the pointer or keyboard gets the light accent. Never the browser's menu (no blue). The field's arrow is the `chevron-down` icon, vertically centred, 12 from the right.
+- **Progress** and **PlanTrack** are unused for now.
 - **Modal** for one short task (confirm a date). **Tooltip** on every icon-only button.
 - **Theme:** light only, for now. There are no dark tokens; don't add half of one.
 

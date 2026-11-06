@@ -1,6 +1,6 @@
-# CQuel design system: handoff (4 Nov 2026, updated after version 35)
+# CQuel design system: handoff (4 Nov 2026, updated after version 38)
 
-For the next task on the design system. Read the published artifact first; it is the full, current copy. Version 35 supersedes anything below that it contradicts.
+For the next task on the design system. Read the published artifact first; it is the full, current copy. Version 38 supersedes anything below that it contradicts.
 
 ## Where it lives
 
@@ -47,13 +47,13 @@ For the next task on the design system. Read the published artifact first; it is
 
 These came from the design review. The tracker is https://claude.ai/artifact/PaN9YctHUikEub2xXSWKX4, and the summary is `claude/design-review-2026-11-03.md`. The prototype fixes are in Cursor prompt part 24 (`claude/cursor-prompt-design-review-fixes.md`).
 
-- **Focus:** one style everywhere, never orange.
+- **Focus:** superseded in v38 by the soft halo.
 - **Table:** real table roles, plus empty and muted rows.
 - **New components:** Icon, Breadcrumbs, PageHeader and the furniture set.
 - **Tokens:** no 13px or 15px sizes. New tokens: `space-2`, `space-6`, `radius-image` and `bg-scrim`.
 - **Prototype words:** Estimates, Planning, Tender, Pricing, Delivery. A skipped service is "Not required".
 
-## Versions 15–35 (4 Nov): chips, steps, history, buttons, documents
+## Versions 15–38 (4 Nov): chips, steps, history, buttons, documents
 
 The full write-up is `claude/design-system-update-tabs-chips.md`. The prototype prompts are part 26 (`claude/cursor-prompt-chips-steps-history.md`), part 27 (`claude/cursor-prompt-documents.md`) and part 28 (`claude/cursor-prompt-chips-on-grey.md`).
 
@@ -77,6 +77,8 @@ The full write-up is `claude/design-system-update-tabs-chips.md`. The prototype 
 - **Asset page by package (v31):** the Package fact is a FactSelect (menu of the asset's packages, "Earlier" group for closed ones); one PackageCard (replaces PackageStrip) shows the selected package: big chips, selectable when the asset has data, "This asset is in <service>", Open package, and a panel for the selected chip. The asset page has no tabs. Asset facts: Package · Batch · Solution · City. Prototype: part 32 (`claude/cursor-prompt-asset-package-switch.md`), then part 33 (`claude/cursor-prompt-detail-header.md`).
 - **Tabs (v29) and facts (v30):** 32 between tabs, 32-high tabs, 16 to content; facts min 160 wide, 40 apart, label 2 above value, one rule for header and DetailsGrid.
 - **Asset tabs and moves (v35):** the asset page works like the package page: tabs scoped to the selected package (Overview, then each service the asset went through), display chips never clickable, PackageCard panel holds the current service's steps for this asset (Steps, PhaseStepper for Delivery), service tabs hold steps + figures. Steps README lists the five step lists; lines under steps only from data. "Moves" section in the README: one wording (Since/Joined/On hold since/Left · how), no reasons, never "migrated/transferred". IN PACKAGE column and heading alignment in Table. Batch page Assets/Packages tabs. StatusCard keeps a Closed variant (Olena, 6 Nov). Changed-key sits top right (v33). Prompts: parts 33–35 from the other chat; my detail-header prompt; part 34 service cards; part 35 changed key.
+- **Dropdowns (v37):** one CQuel menu for Select, FilterSelect and FactSelect; the field arrow is the chevron-down icon, centred; Progress and PlanTrack unused.
+- **Focus and hover (v38, Olena 6 Nov):** focus is a soft 4px ink halo (`focus-ring` 0 0 0 4px rgba(30,40,50,.14)), no black outline, keyboard only. Olena chose it knowing it's below the 3:1 contrast guidance for focus indicators. Hover fills are the light accent (bg-accent). Menus: highlighted row bg-accent, chosen row SemiBold with no fill, no ring.
 - **Tab dot:** keeps both meanings: the current service on the package and asset pages, "new" elsewhere. InfoDrawer is unused but kept.
 - **DocumentList:** one list with no grouping. Each row has the file type as a neutral Tag at the new `xsmall` size (20px) before the detail, and a tertiary IconButton (download, or chevron-right for a set to view).
 

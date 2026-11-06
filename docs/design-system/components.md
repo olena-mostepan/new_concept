@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 35, 06 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 40, 06 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -142,7 +142,7 @@ Buttons for actions and for the one way on from a page. Orange `primary` means t
 `children` (the label, sentence case), `icon`, `iconPosition`, `onClick` or `href`, `disabled`, `ariaLabel` when the label needs more context ("Open EV charging · Voltreny package").
 
 ### Focus
-Every button gets a 2px black-7 outline, 2px out, on keyboard focus. The same outline marks focus everywhere in the product.
+Every button gets the focus halo on keyboard focus (a soft 4px ink halo, `focus-ring`), the same as everywhere in the product. Secondary and tertiary buttons hover to `bg-accent`.
 
 ### Don't
 - Don't put two primary buttons, or two strong buttons, on one screen.
@@ -225,7 +225,7 @@ A small pill that marks where something is (display) or chooses what a list show
 
 ### Filter chip (with `onClick`, a button)
 - 32 high, `radius-full`, 12 side padding, `p6`, white with a 1px `border-dark` border, the count after the label in text-tertiary.
-- Hover: `bg-container-grey`. Focus: the 2px `black-7` outline.
+- Hover: `bg-accent`. Focus: the focus halo.
 - **Selected:** `black-7` fill and border, label `h8` and count in white. This is the one black pill in the system.
 - Used by FilterChips.
 
@@ -249,7 +249,7 @@ The slim top bar on detail pages: Back on the left, the account tools on the rig
 
 ### Rules
 - White, 64 high, `border-dark` line under it, page side padding (32). Sticky at the top.
-- **Back:** the `arrow-left` icon (16) and "Back" in `h8` text-primary, 6 apart. Hover underlines it; focus is the 2px black-7 outline.
+- **Back:** the `arrow-left` icon (16) and "Back" in `h8` text-primary, 6 apart. Hover underlines it; focus is the focus halo.
 - **Where Back goes:** to the page the person came from (a list, a service page, the package). If they landed on the page directly (a link, a refresh), to the parent level in the breadcrumb.
 - **Right:** the same tools as the app header, in the same order: Questions, the Customer/Ops switch (prototype only), the avatar. On ops, no "Create batch" here.
 - **No** customer logo, account name, section nav or page actions in the bar. Page actions belong in the page.
@@ -315,9 +315,9 @@ A fact whose value switches what the page shows. Today only the asset's Package:
 ### Rules
 - It lives in PageHeader's facts row, as the first fact. Pass it as `{label: 'Package', select: {options, value, onChange}}`; PageHeader renders the label and the control.
 - **One option:** a plain fact. No chevron, no count.
-- **Several live options:** the label reads "Package · <i> of <n>". The value is a button: the name in `p6` plus a 16px `chevron-down`, 6 apart. Hover and open: `bg-container-grey` behind it, `radius-sm`, padding 2/6 with matching negative margin so the text doesn't move. Focus: the 2px `black-7` outline.
+- **Several live options:** the label reads "Package · <i> of <n>". The value is a button: the name in `p6` plus a 16px `chevron-down`, 6 apart. Hover and open: `bg-accent` behind it, `radius-sm`, padding 2/6 with matching negative margin so the text doesn't move. Focus: the focus halo.
 - **One live option plus earlier ones:** no count, but the chevron shows, because there's history.
-- **Menu:** 8 under the value, left-aligned, 330 wide, white, `border-dark`, `radius-md`, `elevation-floating`, padding 6. Each row: the package name in `p6` (selected: `h8` on `bg-container-grey`) over a `p7` text-tertiary line with its current service ("Tender"), "Complete" or "Closed". Order: the selected one first, then most recent activity.
+- **Menu:** the one CQuel menu (shared with Select and FilterSelect), 8 under the value, left-aligned, 330 wide, white, `border-dark`, `radius-md`, `elevation-floating`, padding 6. Each row: the package name in `p6` (chosen: `h8`, no fill; under the pointer or keyboard: `bg-accent`) over a `p7` text-tertiary line with its current service ("Tender"), "Complete" or "Closed". Order: the selected one first, then most recent activity.
 - **Earlier:** packages the asset has left, and closed packages, under an "Earlier" label (`p7` text-tertiary) and a `border-light` line, in text-secondary. Their line uses the move wording ("Left 28 Aug · dropped", "Closed"); never a reason. Picking one opens it read-only.
 - **Keyboard:** listbox behaviour. Arrow keys move, Enter picks, Esc closes and returns focus to the value; a click outside closes it.
 - Screen-reader name: "Package: <name>. <i> of <n>. Change package".
@@ -379,7 +379,7 @@ A labelled dropdown that filters a list (Batch, Service, Solution, Responsibilit
 
 ### Anatomy
 - Label above in `h9` text-title, 4 above the control.
-- Control 40 tall: the standard field height, the same as form inputs and Large buttons. Radius-md, border-dark, white. Padding 0 32 0 12, with the chevron at right 10.
+- Control 40 tall: the standard field height, the same as form inputs and Large buttons. Radius-md, border-dark, white. Padding 0 12; the value on the left and the 16px `chevron-down` icon (icon-dark) on the right, both vertically centred, 8 apart. The value never wraps; it ends in an ellipsis if the field is too narrow.
 - In a FilterBar it fills its grid column, so the row spans the same width as the table below.
 
 ### Values
@@ -390,6 +390,11 @@ A labelled dropdown that filters a list (Batch, Service, Solution, Responsibilit
 - **Default value:** text in text-title, border border-dark.
 - **Chosen value:** text in text-primary, border black-6. You can see at a glance which filters are on.
 - **Hover:** border black-4. **Focus:** black-6 + focus-ring.
+
+### The menu
+- Never the browser's menu. It opens the CQuel menu (the same as FactSelect's): 4 under the field, left-aligned, at least the field's width (up to 360), white, `border-dark`, `radius-md`, `elevation-floating`, padding 6, up to 320 tall then it scrolls.
+- Rows: the option in `p6`, padding 8/12, `radius-sm`. The row under the pointer or keyboard: `bg-accent`. The chosen row: `h8`, no fill. No blue, no tick, no ring inside the menu.
+- Keyboard: Enter, Space or the arrow keys open it on the selected row; arrows, Home and End move; Enter picks; Esc or Tab closes and returns focus to the field. A click outside closes it.
 
 ### When to use which
 - **FilterSelect:** in filter bars, with up to about 10 options.
@@ -406,7 +411,7 @@ A labelled dropdown that filters a list (Batch, Service, Solution, Responsibilit
 Label, field and hint as one unit.
 
 ### Rules
-Label `h8` in text-title; hint `p7` text-secondary; error message `p7` text-error under the field. 4 between each part; stack fields 12 apart. Optional fields say "(optional)" in the label.
+Label `h9` (12, SemiBold) in text-title, the same as every field label in the product (filter bars too); hint `p7` text-secondary; error message `p7` text-error under the field. 4 between each part; stack fields 12 apart. Optional fields say "(optional)" in the label.
 
 ### The consumer provides
 `label`, `hint`, `error`, `children` (an Input, Select or Textarea), `width`.
@@ -477,7 +482,7 @@ A right-side panel with an item's details, for facts that don't belong on the pa
 The field box. Default 40, the standard height for every field, including filter bars. `small` 32 only for a dense toolbar inside a card.
 
 ### States
-Border border-dark; hover black-4; focus black-6 with a 3px black-2 ring (no orange); `error` danger mark border; `disabled` bg-container-grey with text-tertiary (no opacity fade). Placeholder text-tertiary. `search` adds the search icon in icon-default.
+Border border-dark; hover black-4; focus black-6 with the focus halo (no orange); `error` danger mark border; `disabled` bg-container-grey with text-tertiary (no opacity fade). Placeholder text-tertiary. `search` adds the search icon in icon-default.
 
 ### The consumer provides
 `value`/`defaultValue`, `placeholder`, `onChange`, `size`, `error`, `disabled`, `search`.
@@ -674,7 +679,9 @@ Delivery phases, Start → Complete, as display Chips on a track, each date with
 
 ---
 
-## PlanTrack
+## PlanTrack (unused)
+
+**Unused (6 Nov 2026).** No page uses it. It stays for a later ops need; check with Olena before using it.
 
 Ops plan state: draft → proposed → agreed → live, as four 6px dots.
 
@@ -683,7 +690,9 @@ Ops plan state: draft → proposed → agreed → live, as four 6px dots.
 
 ---
 
-## Progress
+## Progress (unused)
+
+**Unused (6 Nov 2026).** No page uses it: the prototype counts progress in words ("3 of 5"). It stays for a later need; check with Olena before using it.
 
 A thin progress bar: 4 high, black-2 track, black-6 fill. Not orange: progress isn't a call to action.
 
@@ -733,7 +742,8 @@ A labelled search box for filter bars and lists.
 
 ### Behaviour
 - Filters as you type (about 150ms after the last key). There's no submit button.
-- Esc clears the box. The browser's clear "×" shows once there's text.
+- Esc clears the box. Once there's text, a small tertiary IconButton `cross` ("Clear search") sits at the right, 6 in from the edge; it clears and returns focus to the box. Never the browser's own clear button (it draws a blue ×): hide it.
+- The typed text uses the product font (`p6`, Schibsted Grotesk). Inputs never fall back to the browser's default font.
 - No match: the list shows "No packages match “<text>”" with a "Clear search" link.
 
 ### States
@@ -747,10 +757,16 @@ Hover border black-4 · focus black-6 + focus-ring · disabled bg-container-grey
 
 ## Select
 
-A native select in the field box, with the chevron at right 12.
+A dropdown field in a form, inside a FormField.
+
+### Rules
+- The field box: 40 tall (`small` 32), radius-md, border-dark, white, padding 0 12. The value (`p6`) on the left, the placeholder in text-tertiary, and the 16px `chevron-down` icon (icon-dark) on the right, both vertically centred. Never a drawn chevron.
+- States as Input: hover border black-4; open and focus border black-6 with the focus-ring; `error` danger border; `disabled` grey with text-tertiary.
+- **The menu** is the one CQuel menu, the same as FilterSelect and FactSelect: white, `border-dark`, `radius-md`, `elevation-floating`, padding 6; rows `p6`; the row under the pointer or keyboard `bg-accent`; the chosen one `h8`, no fill. Never the browser's menu.
+- Keyboard: listbox behaviour (see FilterSelect).
 
 ### The consumer provides
-`options` (strings or `{value,label}`), `value`/`defaultValue`, `placeholder`, `onChange`, `size`, `error`, `disabled`.
+`options` (strings or `{value, label}`), `value`/`defaultValue`, `placeholder`, `onChange` (receives `{target: {value}}`) or `onValueChange(value)`, `size`, `error`, `disabled`.
 
 ### Labels
 Every field has a visible label: wrap it in a FormField (forms) or use SearchField / FilterSelect (filter bars). A placeholder is a hint, never the label.
@@ -767,9 +783,9 @@ Service filter cards on a batch page: they choose which assets the list below sh
 - **Shape:** `radius-md`, 12/16 padding, equal columns 8 apart.
 - **States:**
   - Default: white (`bg-container`) with the `border-dark` border.
-  - Hover: `bg-container-grey`, same border.
+  - Hover: `bg-accent`, same border.
   - Selected: white, same border, and a 4px `brand-6` bar along the top, inside the card and clipped by its radius. The content doesn't move.
-  - Focus: the 2px `black-7` outline.
+  - Focus: the focus halo.
 - Borders never turn dark. Never fill a card with orange or black.
 - **Behaviour:** single select. Each card writes `?service=<id>`; "All" clears it. The Assets table below shows assets with a project in that service.
 
@@ -906,7 +922,7 @@ Package, asset and project lists: a group header, column labels and light rows.
 - **Group header** (`h7` + count in text-tertiary): on service pages, Needs your decision / In progress / Passed through. On Delivery the last group is Completed. The Overview's "Needs your decision" is its own card (NeedsDecision).
 - **Column labels:** `s3` capitals in text-tertiary, heavier but lighter.
 - **Rows:**
-  - Padding 12/16/12/32, at least 56 tall, `border-light` between rows, hover `bg-container-grey`.
+  - Padding 12/16/12/32, at least 56 tall, `border-light` between rows, hover `bg-accent`.
   - Only the first column is SemiBold, in text-title. It can carry a meta line under the name in `p7` text-tertiary (`{main, detail}`).
   - Everything else is `p6`. Second columns and second lines are text-secondary.
   - Numbers are right-aligned in tabular figures.
@@ -975,7 +991,7 @@ The sections inside one page, such as Overview · Estimates · Brief · Tender r
   - **Overview:** the PackageCard (with the current service's steps), then History (Timeline) and Documents (DocumentList).
   - **A service tab:** one Card "<Service> at this asset" with the date on the right, or "From <package> · <date>" for a phase that came from an earlier package. Inside: Steps (PhaseStepper for Delivery), then 20 below a DetailsGrid of the asset's figures — Estimates: Cost · Payback · Your decision; Planning: Open gap · Survey · Scope; Tender: Supplier (once chosen) · Price for this asset · Site check; Pricing: Price · Analysis · Your decision; Delivery: none.
   - Never on the asset page: offer counts, the brief, supplier matching, other assets.
-- Keyboard focus: a 2px black-7 outline.
+- Keyboard focus: the focus halo, with square corners: never round the tab itself, or the underline curves at its ends. The active tab keeps its straight underline inside the halo.
 - Each tab shows one section. Never put actions in a tab label.
 
 ### The consumer provides

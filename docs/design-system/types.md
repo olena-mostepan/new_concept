@@ -21,7 +21,8 @@ export interface TableProps { title?: string; count?: number; /** accessible nam
 export interface ChangedDotProps {}
 export interface FormFieldProps { label: string; hint?: string; error?: string; width?: number | string; children: ReactNode }
 export interface InputProps { value?: string; defaultValue?: string; placeholder?: string; type?: string; size?: 'default' | 'small'; error?: boolean; disabled?: boolean; search?: boolean; onChange?: (e: any) => void }
-export interface SelectProps { options: (string | { value: string; label: string })[]; value?: string; defaultValue?: string; placeholder?: string; size?: 'default' | 'small'; error?: boolean; disabled?: boolean; onChange?: (e: any) => void }
+/** Opens the CQuel menu, never the browser's. onChange gets {target:{value}}. */
+export interface SelectProps { options: (string | { value: string; label: string })[]; value?: string; defaultValue?: string; placeholder?: string; size?: 'default' | 'small'; error?: boolean; disabled?: boolean; onChange?: (e: { target: { value: string } }) => void; onValueChange?: (value: string) => void }
 export interface TextareaProps { value?: string; defaultValue?: string; placeholder?: string; rows?: number; error?: boolean; disabled?: boolean; onChange?: (e: any) => void }
 export interface CheckboxProps { checked?: boolean; label: ReactNode; detail?: ReactNode; onChange?: (e: any) => void }
 export interface RadioProps { name?: string; checked?: boolean; label: ReactNode; onChange?: (e: any) => void }
@@ -32,11 +33,13 @@ export interface StepsProps { steps: { label: string; state?: 'done' | 'now' | '
 export interface NeedsPanelProps { needs: Need[] }
 /** source: where the date comes from. Start: 'Contract start date' | 'Contract signed' | 'LOI signed' | 'From invoice · date to confirm'. Other phases: 'Site check report' | 'From invoice · date to confirm' | 'Estimate'. */
 export interface PhaseStepperProps { /** 'compact': one Chip for the phase the asset is in (table rows) */ size?: 'default' | 'compact'; phases: { name: string; state?: 'done' | 'now' | 'next' | 'needs-you'; date?: string; source?: string; action?: string }[] }
+/** Unused for now. */
 export interface ProgressProps { value: number; max: number; label?: string }
+/** Unused for now. */
 export interface PlanTrackProps { done: 0 | 1 | 2 | 3 | 4 }
 export interface FilterFieldProps { label: string; children: ReactNode }
 export interface SearchFieldProps { label?: string; placeholder?: string; value?: string; defaultValue?: string; width?: number; onChange?: (e: any) => void }
-export interface FilterSelectProps { label: string; allLabel?: string; options: (string | { value: string; label: string })[]; value?: string; defaultValue?: string; onChange?: (e: any) => void }
+export interface FilterSelectProps { label: string; allLabel?: string; options: (string | { value: string; label: string })[]; value?: string; defaultValue?: string; onChange?: (e: { target: { value: string } }) => void; onValueChange?: (value: string) => void }
 export interface FilterBarProps { children: ReactNode; onClear?: () => void; aside?: ReactNode }
 /** The batch page's service filter: All, then each service with projects. */
 export interface ServiceCardsProps { options: { id: string; label: string; count: number; done?: number }[]; value?: string; onChange?: (id: string) => void; label?: string }
@@ -62,7 +65,7 @@ export interface BreadcrumbsProps { items: Crumb[] }
 export interface PageHeaderProps { crumbs?: Crumb[]; /** right of the breadcrumbs, e.g. a Pager */ crumbAside?: ReactNode; kind?: 'batch' | 'package' | 'asset'; title?: ReactNode; facts?: ({ label: string; value: ReactNode } | { label: string; select: FactSelectProps })[]; /** package: StatusCard; asset: the site photo; batch: none */ aside?: ReactNode }
 export interface TypeLabelProps { kind: 'batch' | 'package' | 'asset' }
 export type ServiceId = 'indicative' | 'scope' | 'tender' | 'pricing' | 'delivery';
-/** 3D service illustration. Only in StatusCard (116) and PackageStrip (72). */
+/** 3D service illustration. Only in StatusCard (116) and PackageCard (72). */
 export interface ServiceIconProps { service: ServiceId; size?: 116 | 72 }
 /** Package page aside: 'This package is in <service>' and the strong 'See …' button. */
 export interface StatusCardProps { service?: ServiceId; href?: string; onClick?: () => void; completed?: boolean; /** 'This package is Closed · <closedOn>', grey icon, no button */ closed?: boolean; closedOn?: string }
@@ -81,8 +84,8 @@ export interface ServicesBarProps { services: { id: string; label: string; count
 export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean }
 export interface TooltipProps { content: ReactNode; children: ReactNode; /** 'definition': sentences, up to 300 wide; only for TypeLabel */ variant?: 'label' | 'definition' }
 export interface YourActionOnlyProps { checked: boolean; onChange: (checked: boolean) => void; label?: string }
-/** Display chip (no onClick, never clickable): 24px (size 'big': 32px, for PackageStrip services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
-export interface ChipProps { children: ReactNode; lead?: 'done' | 'now' | 'next'; /** Display chips only: 'big' is 32px, for PackageStrip services. */ size?: 'default' | 'big'; count?: number; selected?: boolean; onClick?: () => void }
+/** Display chip (no onClick, never clickable): 24px (size 'big': 32px, for a package's services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
+export interface ChipProps { children: ReactNode; lead?: 'done' | 'now' | 'next'; /** Display chips only: 'big' is 32px, for a package's services. */ size?: 'default' | 'big'; count?: number; selected?: boolean; onClick?: () => void }
 
 /** Momentum: cumulative lines over months. One accent series (brand-6 + soft fill); others ink, dashed. Hover shows a guide, ringed dots and a tooltip. */
 export interface TrendChartProps { labels: string[]; longLabels?: string[]; series: { name: string; values: number[]; accent?: boolean }[]; height?: number; active?: number; label?: string }

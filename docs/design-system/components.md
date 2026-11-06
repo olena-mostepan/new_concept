@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 38, 06 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 39, 06 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -742,7 +742,8 @@ A labelled search box for filter bars and lists.
 
 ### Behaviour
 - Filters as you type (about 150ms after the last key). There's no submit button.
-- Esc clears the box. The browser's clear "×" shows once there's text.
+- Esc clears the box. Once there's text, a small tertiary IconButton `cross` ("Clear search") sits at the right, 6 in from the edge; it clears and returns focus to the box. Never the browser's own clear button (it draws a blue ×): hide it.
+- The typed text uses the product font (`p6`, Schibsted Grotesk). Inputs never fall back to the browser's default font.
 - No match: the list shows "No packages match “<text>”" with a "Clear search" link.
 
 ### States
@@ -990,7 +991,7 @@ The sections inside one page, such as Overview · Estimates · Brief · Tender r
   - **Overview:** the PackageCard (with the current service's steps), then History (Timeline) and Documents (DocumentList).
   - **A service tab:** one Card "<Service> at this asset" with the date on the right, or "From <package> · <date>" for a phase that came from an earlier package. Inside: Steps (PhaseStepper for Delivery), then 20 below a DetailsGrid of the asset's figures — Estimates: Cost · Payback · Your decision; Planning: Open gap · Survey · Scope; Tender: Supplier (once chosen) · Price for this asset · Site check; Pricing: Price · Analysis · Your decision; Delivery: none.
   - Never on the asset page: offer counts, the brief, supplier matching, other assets.
-- Keyboard focus: the focus halo; the active tab keeps its underline inside it.
+- Keyboard focus: the focus halo, with square corners: never round the tab itself, or the underline curves at its ends. The active tab keeps its straight underline inside the halo.
 - Each tab shows one section. Never put actions in a tab label.
 
 ### The consumer provides

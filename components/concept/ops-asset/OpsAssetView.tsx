@@ -11,6 +11,7 @@ import {
   short,
 } from "@/lib/concept/derive";
 import { checksFor } from "@/lib/concept/checks";
+import { cn } from "@/lib/utils";
 import { blockingCell, opsIndicativeSteps, stepLabel } from "@/lib/concept/opsAssetDerive";
 import { opsItemSubline } from "@/lib/concept/opsDisplay";
 import { service as serviceDef } from "@/lib/concept/model";
@@ -242,70 +243,70 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
                 />
               }
             />
-            <Card>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-light px-5 py-4">
-                <h2 className="h7 text-text-primary">
-                  Data for {serviceDef(w.service).label}
-                </h2>
+            <Card
+              title={`Data for ${serviceDef(w.service).label}`}
+              right={
                 <div className="flex gap-2">
                   <Button type="secondary" size="default" icon="upload" onClick={() => setEditOpen(true)}>
                     Upload documents
                   </Button>
-                  <Button
-                    type="secondary"
-                    size="default"
-                    icon="edit"
-                    onClick={() => setEditOpen(true)}
-                  >
+                  <Button type="secondary" size="default" icon="edit" onClick={() => setEditOpen(true)}>
                     Edit data
                   </Button>
                 </div>
-              </div>
+              }
+              bodyClassName="p-0"
+            >
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px]">
+                <table className="w-full min-w-[640px] border-collapse">
+                  <colgroup>
+                    <col className="w-[52px]" />
+                    <col className="w-[28%]" />
+                    <col className="w-[18%]" />
+                    <col className="w-[22%]" />
+                    <col />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-border-light">
-                      <th className="w-10 px-4 py-2" />
-                      <th className="px-4 py-2 text-left s3 text-text-tertiary">
-                        ITEM
-                      </th>
-                      <th className="px-4 py-2 text-left s3 text-text-tertiary">
-                        REQUIREMENT
-                      </th>
-                      <th className="px-4 py-2 text-left s3 text-text-tertiary">
-                        VALUE
-                      </th>
-                      <th className="px-4 py-2 text-left s3 text-text-tertiary">
-                        SOURCE
-                      </th>
+                      <th />
+                      {["Item", "Requirement", "Value", "Source"].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left align-middle s3 text-text-tertiary">
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {defs.map((def) => {
+                    {defs.map((def, i) => {
                       const item = bundle.items[def.key];
                       const mark =
-                        item?.state === "done"
+                        item?.state === "done" || (item?.state === "edit" && item.prev?.state === "done")
                           ? "done"
                           : item?.state === "na"
                             ? "na"
                             : "open";
+                      const source =
+                        item?.state === "confirm" && item.found
+                          ? `${item.found.file}${item.found.page != null ? `, page ${item.found.page}` : ""}`
+                          : item?.state === "done"
+                            ? item.source
+                            : undefined;
                       return (
-                        <tr key={def.key} className="border-b border-border-light">
-                          <td className="px-4 py-3">
-                            <StateMark state={mark} size={20} />
+                        <tr
+                          key={def.key}
+                          className={cn("h-14", i < defs.length - 1 && "border-b border-border-light")}
+                        >
+                          <td className="py-3 pl-4 align-middle">
+                            <span className="flex items-center">
+                              <StateMark state={mark} size={20} />
+                            </span>
                           </td>
-                          <td className="px-4 py-3 h8 text-text-title">
-                            {def.name}
-                          </td>
-                          <td className="px-4 py-3 p6 text-text-secondary">
+                          <td className="px-4 py-3 align-middle h8 text-text-title">{def.name}</td>
+                          <td className="px-4 py-3 align-middle p6 text-text-secondary">
                             {def.required ? "Required" : "Recommended"}
                           </td>
-                          <td className="px-4 py-3 p6 text-text-primary">
-                            {valueFor(item, def)}
-                          </td>
-                          <td className="px-4 py-3 p6 text-text-secondary">
-                            {item?.source ?? "—"}
-                          </td>
+                          <td className="px-4 py-3 align-middle p6 text-text-primary">{valueFor(item, def)}</td>
+                          <td className="px-4 py-3 align-middle p6 text-text-secondary">{source ?? "—"}</td>
                         </tr>
                       );
                     })}

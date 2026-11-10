@@ -114,21 +114,24 @@ export const OPS_NAV: NavItem[] = [
     id: "workstreams",
     group: "structure",
     label: WORDS.Packages,
-    href: hrefs.workstreams(),
-    match: (p) => p.startsWith(`${BASE}/packages`),
+    href: `${OPS}/packages`,
+    match: (p) => p === `${OPS}/packages` || p.startsWith(`${OPS}/packages?`),
   },
   ...SERVICES.map((s) => ({
     id: s.id,
     group: "services" as const,
     label: s.label,
-    href: hrefs.service(s.id),
-    match: (p: string) => p.startsWith(hrefs.service(s.id)),
+    href: `${OPS}/services/${s.id}`,
+    match: (p: string) => p.startsWith(`${OPS}/services/${s.id}`),
   })),
 ];
 
 /** Same place on the other side, or its home */
 export function counterpart(path: string): string {
   if (path.startsWith(OPS)) {
+    const svc = path.match(/\/ops\/services\/([^/?]+)/);
+    if (svc) return `${BASE}/services/${svc[1]}`;
+    if (/\/ops\/packages\/?$/.test(path)) return `${BASE}/packages`;
     const pkg = path.match(/\/ops\/packages\/([^/?]+)/);
     if (pkg) return hrefs.workstream(pkg[1]);
     const asset = path.match(/\/ops\/assets\/([^/?]+)/);
@@ -136,6 +139,9 @@ export function counterpart(path: string): string {
     const m = path.match(/\/ops\/batches\/([^/?]+)/);
     return m && m[1] !== "new" ? hrefs.batch(m[1]) : BASE;
   }
+  const svc = path.match(/\/concept\/services\/([^/?]+)/);
+  if (svc) return `${OPS}/services/${svc[1]}`;
+  if (/\/concept\/packages\/?$/.test(path)) return `${OPS}/packages`;
   const pkg = path.match(/\/concept\/packages\/([^/?]+)/);
   if (pkg) return hrefs.opsPackage(pkg[1]);
   const asset = path.match(/\/concept\/assets\/([^/?]+)/);

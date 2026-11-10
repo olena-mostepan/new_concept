@@ -41,7 +41,7 @@ import {
   tableRowNameCellClass,
   tableRowShellClass,
 } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 
 const rowGrid = {
@@ -50,6 +50,7 @@ const rowGrid = {
 };
 
 export function DeliverySection() {
+  const hrefs = useHrefs();
   const { account, saveDelivery } = useConcept();
   const router = useRouter();
   const params = useSearchParams();
@@ -379,6 +380,7 @@ function DeliveryRow({
   parts: { main: string; detail: string };
   past?: boolean;
 }) {
+  const hrefs = useHrefs();
   const b = account.batches.find((item) => item.id === w.batchId);
   const muted = past ? "text-text-tertiary" : "text-text-primary";
   const yours = !past && w.owner === "you";

@@ -39,7 +39,7 @@ import {
   tableRowNameCellClass,
 } from "./ui";
 import { ServiceTag } from "./ServiceTag";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { WORDS } from "@/lib/concept/words";
 
 const rowStyle = {
@@ -47,6 +47,7 @@ const rowStyle = {
 };
 
 function WorkstreamLine({ w, done }: { w: Workstream; done?: boolean }) {
+  const hrefs = useHrefs();
   const projects = noun(activeProjects(w).length, "project", "projects");
   return (
     <Link
@@ -112,6 +113,7 @@ function matchesQuery(
 }
 
 export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
+  const hrefs = useHrefs();
   const router = useRouter();
   const params = useSearchParams();
   const { account } = useConcept();

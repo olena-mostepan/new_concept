@@ -44,7 +44,7 @@ import {
   tableRowNameCellClass,
   tableRowShellClass,
 } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { WORDS } from "@/lib/concept/words";
 import { useConcept } from "./store";
 import { SurveysTab } from "./SurveysTab";
@@ -82,6 +82,7 @@ function matches(
 }
 
 export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const router = useRouter();
   const params = useSearchParams();
@@ -424,6 +425,7 @@ function ServiceRow({
   needle: string;
   outcome?: { main: string; detail: string };
 }) {
+  const hrefs = useHrefs();
   const b = account.batches.find((item) => item.id === source.batchId);
   const column = serviceColumn(serviceId, w);
   const parts = outcome ?? nextParts(source);

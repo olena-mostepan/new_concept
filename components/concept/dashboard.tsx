@@ -33,7 +33,7 @@ import {
 } from "@/lib/concept/model";
 import { cn } from "@/lib/utils";
 import { Icon, Card, CardLink, focusRing } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { Decisions } from "./Decisions";
 
 const SHADES = [0.16, 0.3, 0.44, 0.58, 0.74, 1];
@@ -49,6 +49,7 @@ function ServiceSegment({
   first: boolean;
   last: boolean;
 }) {
+  const hrefs = useHrefs();
   const [open, setOpen] = useState(false);
   const dark = shade >= 0.58;
   return (
@@ -122,6 +123,7 @@ function ServiceSegment({
 }
 
 function Services({ account }: { account: Account }) {
+  const hrefs = useHrefs();
   const pipe = servicePipeline(account);
   const services = pipe.services.filter((segment) => segment.projects > 0);
   const showCompleted = pipe.completed.projects > 0;
@@ -438,6 +440,7 @@ function Momentum({ account }: { account: Account }) {
 }
 
 function FindBuilding({ account }: { account: Account }) {
+  const hrefs = useHrefs();
   const batches = customerBatches(account);
   const buildings = batches.flatMap((batch) =>
     batch.buildingIds
@@ -568,6 +571,7 @@ function BuildingHit({
   batch: Batch;
   account: Account;
 }) {
+  const hrefs = useHrefs();
   const projects = projectsAtBuilding(account, building.id).filter(
     (item) => item.workstream.batchId === batch.id,
   );
@@ -607,6 +611,7 @@ function batchSolutions(account: Account, batch: Batch) {
 }
 
 function Batches({ account }: { account: Account }) {
+  const hrefs = useHrefs();
   const batches = customerBatches(account);
   if (batches.length < 2) return null;
   return (

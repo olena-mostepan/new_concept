@@ -23,7 +23,7 @@ import {
   tableRowShellClass,
   tableRowNameCellClass,
 } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { nAssets, nPackages, WORDS } from "@/lib/concept/words";
 
 /** Light table of workstreams — scales to 30+ rows */
@@ -31,13 +31,15 @@ export function WorkstreamTable({
   account,
   items,
   showBatch,
-  hrefFor = hrefs.workstream,
+  hrefFor: hrefForProp,
 }: {
   account: Account;
   items: Workstream[];
   showBatch?: boolean;
   hrefFor?: (id: string) => string;
 }) {
+  const hrefs = useHrefs();
+  const hrefFor = hrefForProp ?? ((id: string) => hrefs.workstream(id));
   return (
     <table className="w-full table-fixed">
       <thead className="border-b border-border-light">
@@ -121,6 +123,7 @@ export function GroupedByBatch({
   items: Workstream[];
   batches: Batch[];
 }) {
+  const hrefs = useHrefs();
   const groups = batches
     .map((b) => ({
       b,

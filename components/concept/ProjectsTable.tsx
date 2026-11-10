@@ -13,7 +13,8 @@ import {
   visitStateLabel,
 } from "@/lib/concept/derive";
 import { service, type ProjectRow, type Workstream } from "@/lib/concept/model";
-import { hrefs, type BuildingVia } from "./hrefs";
+import { type BuildingVia } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { WORDS } from "@/lib/concept/words";
 import {
   Icon,
@@ -113,6 +114,7 @@ export function ProjectsTable({
   /** Inherited tab: no emphasized “your decision” prompts. */
   readOnly?: boolean;
 }) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const params = useSearchParams();
   const [showAll, setShowAll] = useState(false);

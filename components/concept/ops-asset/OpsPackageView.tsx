@@ -1,30 +1,38 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { getBatch, getBuilding, getWorkstream, short } from "@/lib/concept/derive";
+import { useRouter, useSearchParams } from "next/navigation";
+import * as Tabs from "@radix-ui/react-tabs";
+import { getBuilding, getWorkstream, short } from "@/lib/concept/derive";
 import {
   blockingCell,
   groupOf,
+  opsIndicativeSteps,
   recCell,
   stepLabel,
 } from "@/lib/concept/opsAssetDerive";
 import { blockedCount, parseAssistantRoof, applySaveValue } from "@/lib/concept/opsMutations";
 import { checksFor } from "@/lib/concept/checks";
-import { service as serviceDef } from "@/lib/concept/model";
 import { cn } from "@/lib/utils";
-import { Chip, FilterChips, Page, PageHeader } from "../ui";
+import { fixAssetsAction } from "@/lib/concept/words";
+import {
+  FilterChips,
+  Page,
+  TabDot,
+  tabListClass,
+  tabTriggerClass,
+} from "../ui";
 import { hrefs } from "../hrefs";
 import { useConcept } from "../store";
 import { useOpsDetailBar } from "./OpsDetailBarActions";
-import { WorkstreamFrame, serviceChips } from "../WorkstreamChrome";
-import { packagePrimaryTab } from "../packageTabs";
+import { WorkstreamFrame, packagePrimaryTab } from "../WorkstreamChrome";
+import { PackageOverviewSteps } from "../PackageView";
+import { tabsFor, type PackageTabId } from "../packageTabs";
 import { AssetWindow } from "./AssetWindow";
 import {
   AssistantPanel,
   BlockingCellContent,
   OpsDataTable,
-  OpsFixStatusCard,
   RecCellContent,
   SelectionBar,
   UpdatedHighlight,
@@ -36,6 +44,7 @@ export function OpsPackageView({ id }: { id: string }) {
   const { account, patchOpsBundle, startEstimatesForAssets, markOpsUpdated } =
     useConcept();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const bar = useOpsDetailBar();
   const w = getWorkstream(account, id);
   const [filter, setFilter] = useState<Filter>("blocked");
@@ -53,21 +62,42 @@ export function OpsPackageView({ id }: { id: string }) {
       onUndo?: () => void;
     }>
   >([]);
+
   useEffect(() => {
     bar?.registerAskAssistant(() => setAssistantOpen(true));
     return () => bar?.registerAskAssistant(null);
-  }, [bar]);
+  }, [bar?.registerAskAssistant]);
+
+  const tabs = w ? tabsFor(w, account) : [];
+  const requested = searchParams.get("tab");
+  let tab: PackageTabId = "overview";
+  if (requested && tabs.some((item) => item.id === requested)) {
+    tab = requested as PackageTabId;
+  }
+  const setTab = (next: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    const qs = params.toString();
+    router.replace(`${hrefs.opsPackage(id)}${qs ? `?${qs}` : ""}`, {
+      scroll: false,
+    });
+  };
 
   if (!w) {
     return (
       <Page>
-        <PageHeader title="Package not found" />
+        <p className="h6 text-text-primary">Package not found</p>
       </Page>
     );
   }
 
-  const batch = getBatch(account, w.batchId);
   const blockedN = blockedCount(account, w);
+  const stepColumns = useMemo(
+    () => opsIndicativeSteps(account, w),
+    [account, w],
+  );
+
   const assetRows = useMemo(() => {
     const rows = w.projects.map((row) => {
       const bundle = account.opsAssetData?.[w.id]?.[row.buildingId];
@@ -158,7 +188,7 @@ export function OpsPackageView({ id }: { id: string }) {
     const text = assistantInput.trim();
     if (!text) return;
     setMessages((m) => [...m, { from: "me", text }]);
-  const parsed = parseAssistantRoof(text);
+    const parsed = parseAssistantRoof(text);
     if (parsed) {
       const row = assetRows.find((r) =>
         r.building?.name.toLowerCase().includes(parsed.assetQuery.toLowerCase()),
@@ -195,163 +225,177 @@ export function OpsPackageView({ id }: { id: string }) {
     setAssistantInput("");
   };
 
-  const crumbs = [
-    { label: "Overview", href: hrefs.ops },
-    { label: batch?.name ?? "Batch", href: batch ? hrefs.opsBatch(batch.id) : hrefs.ops },
-    { label: w.name },
-  ];
+  const currentTab = packagePrimaryTab(w);
 
   return (
     <div className={cn(assistantOpen && "mr-[min(400px,40vw)]")}>
-    <Page>
-      <PageHeader
-        crumbs={crumbs}
-        kind="package"
-        title={w.name}
-        facts={[
-          { label: "Batch", value: batch?.name ?? "—", href: batch ? hrefs.opsBatch(batch.id) : undefined },
-          { label: "Solution", value: "Solar PV" },
-          { label: "Assets", value: String(w.projects.length) },
-        ]}
-        aside={
-          <OpsFixStatusCard
-            serviceLabel={serviceDef(w.service).label}
-            blocked={blockedN}
-            onFix={() => openFix()}
-          />
-        }
-      />
-      <WorkstreamFrame live={w}>
-        <div className="mb-6 flex flex-wrap gap-2">
-          {serviceChips(w).map((chip) => (
-            <Chip key={chip.label} lead={chip.lead} size="big">
-              {chip.label}
-            </Chip>
-          ))}
-        </div>
-        <OpsDataTable
-          title="Assets"
-          count={filtered.length}
-          aside={
-            <FilterChips
-              options={[
-                { id: "blocked", label: "Blocked", count: counts.blocked },
-                { id: "ready", label: "Ready", count: counts.ready },
-                { id: "all", label: "All", count: counts.all },
-              ]}
-              value={filter}
-              onChange={(v) => setFilter(v as Filter)}
-            />
+      <Page>
+        <WorkstreamFrame
+          live={w}
+          ops
+          fix={
+            blockedN > 0
+              ? { count: blockedN, onClick: () => openFix() }
+              : undefined
           }
-          toolbar={
-            selected.length > 0 ? (
-              <SelectionBar
-                count={selected.length}
-                actionLabel={
-                  selectionHasBlocked
-                    ? `Fix ${selected.length} assets`
-                    : `Start estimates for ${selected.length}`
+        >
+          <Tabs.Root value={tab} onValueChange={setTab}>
+            <Tabs.List className={tabListClass} aria-label="Package">
+              {tabs.map((item) => (
+                <Tabs.Trigger
+                  key={item.id}
+                  value={item.id}
+                  className={tabTriggerClass}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {item.label}
+                  </span>
+                  {item.dot && (
+                    <TabDot
+                      label={
+                        item.id === currentTab
+                          ? "Current service"
+                          : "New"
+                      }
+                    />
+                  )}
+                </Tabs.Trigger>
+              ))}
+            </Tabs.List>
+          </Tabs.Root>
+
+          {tab === "overview" && (
+            <>
+              <PackageOverviewSteps
+                account={account}
+                w={w}
+                columns={stepColumns}
+              />
+              <OpsDataTable
+                title="Assets"
+                count={filtered.length}
+                aside={
+                  <FilterChips
+                    options={[
+                      { id: "blocked", label: "Blocked", count: counts.blocked },
+                      { id: "ready", label: "Ready", count: counts.ready },
+                      { id: "all", label: "All", count: counts.all },
+                    ]}
+                    value={filter}
+                    onChange={(v) => setFilter(v as Filter)}
+                  />
                 }
-                onAction={bulkAction}
-                onClear={() => setSelected([])}
+                toolbar={
+                  selected.length > 0 ? (
+                    <SelectionBar
+                      count={selected.length}
+                      actionLabel={
+                        selectionHasBlocked
+                          ? fixAssetsAction(selected.length)
+                          : `Start estimates for ${selected.length}`
+                      }
+                      onAction={bulkAction}
+                      onClear={() => setSelected([])}
+                    />
+                  ) : undefined
+                }
+                selectable
+                selected={selected}
+                onSelectRow={(id, on) =>
+                  setSelected((prev) =>
+                    on ? [...prev, id] : prev.filter((x) => x !== id),
+                  )
+                }
+                columns={[
+                  { key: "asset", label: "ASSET" },
+                  { key: "step", label: "STEP" },
+                  { key: "blocking", label: "BLOCKING THE NEXT STEP" },
+                  { key: "rec", label: "RECOMMENDED, MISSING" },
+                  { key: "since", label: "BLOCKED SINCE" },
+                ]}
+                rows={filtered.map((r) => ({
+                  id: r.id,
+                  selectable: r.selectable,
+                  blocked: r.blocked,
+                  asset: (
+                    <div>
+                      <p className="h8 text-text-title">{r.building?.name}</p>
+                      <p className="p7 text-text-tertiary">{r.building?.city}</p>
+                    </div>
+                  ),
+                  step: r.stepNode,
+                  blocking: r.block ? (
+                    <BlockingCellContent
+                      item={r.block.item}
+                      state={r.block.state}
+                      detail={r.block.detail}
+                    />
+                  ) : (
+                    <span className="p6 text-text-tertiary">—</span>
+                  ),
+                  rec: r.rec ? (
+                    <RecCellContent count={r.rec.count} names={r.rec.names} />
+                  ) : (
+                    <span className="p6 text-text-tertiary">—</span>
+                  ),
+                  since: r.bundle?.blockedSince ? (
+                    <span className="p6 text-text-secondary">
+                      {short(r.bundle.blockedSince)}
+                    </span>
+                  ) : (
+                    <span className="p6 text-text-tertiary">—</span>
+                  ),
+                }))}
+                onRowClick={(rowId, blocked) => {
+                  if (selected.length) return;
+                  if (blocked) openFix(rowId);
+                  else router.push(hrefs.opsAsset(rowId, { package: w.id }));
+                }}
               />
-            ) : undefined
-          }
-          selectable
-          selected={selected}
-          onSelectRow={(id, on) =>
-            setSelected((prev) =>
-              on ? [...prev, id] : prev.filter((x) => x !== id),
-            )
-          }
-          columns={[
-            { key: "asset", label: "ASSET" },
-            { key: "step", label: "STEP" },
-            { key: "blocking", label: "BLOCKING THE NEXT STEP" },
-            { key: "rec", label: "RECOMMENDED, MISSING" },
-            { key: "since", label: "BLOCKED SINCE" },
-          ]}
-          rows={filtered.map((r) => ({
-            id: r.id,
-            selectable: r.selectable,
-            blocked: r.blocked,
-            asset: (
-              <div>
-                <p className="h8 text-text-title">{r.building?.name}</p>
-                <p className="p7 text-text-tertiary">{r.building?.city}</p>
-              </div>
-            ),
-            step: r.stepNode,
-            blocking: r.block ? (
-              <BlockingCellContent
-                item={r.block.item}
-                state={r.block.state}
-                detail={r.block.detail}
-              />
-            ) : (
-              <span className="p6 text-text-tertiary">—</span>
-            ),
-            rec: r.rec ? (
-              <RecCellContent count={r.rec.count} names={r.rec.names} />
-            ) : (
-              <span className="p6 text-text-tertiary">—</span>
-            ),
-            since: r.bundle?.blockedSince ? (
-              <span className="p6 text-text-secondary">
-                {short(r.bundle.blockedSince)}
-              </span>
-            ) : (
-              <span className="p6 text-text-tertiary">—</span>
-            ),
-          }))}
-          onRowClick={(id, blocked) => {
-            if (selected.length) return;
-            if (blocked) openFix(id);
-            else router.push(hrefs.opsAsset(id, { package: w.id }));
+            </>
+          )}
+        </WorkstreamFrame>
+        <AssetWindow
+          open={windowOpen}
+          mode="fix"
+          w={w}
+          account={account}
+          assetId={windowAsset ?? w.projects[0].buildingId}
+          assetIds={w.projects.map((p) => p.buildingId)}
+          onSelectAsset={setWindowAsset}
+          onClose={() => setWindowOpen(false)}
+          onDone={() => setWindowOpen(false)}
+          dirty={false}
+          onCloseAttempt={() => true}
+          showAll={() => {
+            setWindowOpen(false);
+            setFilter("all");
+          }}
+          onPatch={(fn) => {
+            const bid = windowAsset ?? w.projects[0].buildingId;
+            onPatch(bid, fn);
           }}
         />
-      </WorkstreamFrame>
-      <AssetWindow
-        open={windowOpen}
-        mode="fix"
-        w={w}
-        account={account}
-        assetId={windowAsset ?? w.projects[0].buildingId}
-        assetIds={w.projects.map((p) => p.buildingId)}
-        onSelectAsset={setWindowAsset}
-        onClose={() => setWindowOpen(false)}
-        onDone={() => setWindowOpen(false)}
-        dirty={false}
-        onCloseAttempt={() => true}
-        showAll={() => {
-          setWindowOpen(false);
-          setFilter("all");
-        }}
-        onPatch={(fn) => {
-          const id = windowAsset ?? w.projects[0].buildingId;
-          onPatch(id, fn);
-        }}
-      />
-      <AssistantPanel
-        open={assistantOpen}
-        scope={w.name}
-        onClose={() => setAssistantOpen(false)}
-        messages={messages}
-        hint='Try: "Set Kelmsdorfer Straße 41 roof area to 610", or attach a file'
-        input={assistantInput}
-        onInputChange={setAssistantInput}
-        onSend={sendAssistant}
-        onAttach={() => {
-          setMessages((m) => [
-            ...m,
-            {
-              from: "assistant",
-              text: "Attached file added. Values stay to confirm until Ops press Use.",
-            },
-          ]);
-        }}
-      />
-    </Page>
+        <AssistantPanel
+          open={assistantOpen}
+          scope={w.name}
+          onClose={() => setAssistantOpen(false)}
+          messages={messages}
+          hint='Try: "Set Kelmsdorfer Straße 41 roof area to 610", or attach a file'
+          input={assistantInput}
+          onInputChange={setAssistantInput}
+          onSend={sendAssistant}
+          onAttach={() => {
+            setMessages((m) => [
+              ...m,
+              {
+                from: "assistant",
+                text: "Attached file added. Values stay to confirm until Ops press Use.",
+              },
+            ]);
+          }}
+        />
+      </Page>
     </div>
   );
 }

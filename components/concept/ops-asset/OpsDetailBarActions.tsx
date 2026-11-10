@@ -5,7 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useState,
+  useRef,
   type ReactNode,
 } from "react";
 
@@ -17,13 +17,13 @@ type Ctx = {
 const OpsDetailBarCtx = createContext<Ctx | null>(null);
 
 export function OpsDetailBarProvider({ children }: { children: ReactNode }) {
-  const [fn, setFn] = useState<(() => void) | null>(null);
+  const fnRef = useRef<(() => void) | null>(null);
   const registerAskAssistant = useCallback((next: (() => void) | null) => {
-    setFn(() => next);
+    fnRef.current = next;
   }, []);
   const askAssistant = useCallback(() => {
-    fn?.();
-  }, [fn]);
+    fnRef.current?.();
+  }, []);
   const value = useMemo(
     () => ({ askAssistant, registerAskAssistant }),
     [askAssistant, registerAskAssistant],

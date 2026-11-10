@@ -21,7 +21,7 @@ import {
   OpsDetailBarProvider,
   useOpsDetailBar,
 } from "./ops-asset/OpsDetailBarActions";
-import { Button, focusRing, Icon } from "./ui";
+import { AssistantButton, Button, focusRing, Icon } from "./ui";
 
 function AccountToggle() {
   const router = useRouter();
@@ -222,7 +222,7 @@ function AppHeader({
             <Button
               href={hrefs.opsNewBatch}
               type="primary"
-              size="small"
+              size="large"
               icon="plus"
             >
               Create batch
@@ -286,16 +286,10 @@ function DetailBar() {
         </button>
         <div className="flex items-center gap-4 sm:gap-5">
           {showAssistant && (
-            <button
-              type="button"
+            <AssistantButton
+              inline
               onClick={() => opsBar?.askAssistant()}
-              className={cn(
-                "inline-flex h-10 items-center gap-2 rounded-md bg-black-7 px-3 h8 text-white hover:bg-black-6",
-                focusRing,
-              )}
-            >
-              Ask the assistant
-            </button>
+            />
           )}
           <Link
             href="/clarifications"

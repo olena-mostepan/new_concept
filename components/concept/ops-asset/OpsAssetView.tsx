@@ -42,7 +42,7 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
   useEffect(() => {
     bar?.registerAskAssistant(() => setAssistantOpen(true));
     return () => bar?.registerAskAssistant(null);
-  }, [bar]);
+  }, [bar?.registerAskAssistant]);
 
   if (!w || !building || !bundle) {
     return (

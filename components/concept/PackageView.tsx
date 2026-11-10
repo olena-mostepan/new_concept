@@ -157,7 +157,7 @@ function PhaseSteps({ w, columns }: { w: Workstream; columns: StepColumn[] }) {
         } else if (underway) {
           lead = "now";
           label = `${column.label} · ${column.count}`;
-          note = startedLine(w, index);
+          note = (startedLine(w, index) ?? column.happens) || null;
         }
         return {
           key: column.label,
@@ -191,6 +191,26 @@ function packagePanelAside(w: Workstream) {
   return w.supplier ? `${w.supplier} · ${assets}` : assets;
 }
 
+export function PackageOverviewSteps({
+  account,
+  w,
+  columns,
+}: {
+  account: ReturnType<typeof useConcept>["account"];
+  w: Workstream;
+  columns: StepColumn[];
+}) {
+  const title = `${service(w.service).label} for this package`;
+  return (
+    <PackageCard
+      chips={packageCardChips(w)}
+      panelTitle={title}
+      panelAside={packagePanelAside(w)}
+      panelChildren={<PhaseSteps w={w} columns={columns} />}
+    />
+  );
+}
+
 function StepsCard({
   account,
   w,
@@ -200,7 +220,6 @@ function StepsCard({
 }) {
   if (isClosed(w)) return null;
   if (w.owner === "done") return null;
-  const title = `${service(w.service).label} for this package`;
   const columns =
     w.service === "delivery"
       ? deliverySteps(account, w)
@@ -213,14 +232,7 @@ function StepsCard({
             : w.service === "pricing"
               ? pricingSteps(w)
               : [];
-  return (
-    <PackageCard
-      chips={packageCardChips(w)}
-      panelTitle={title}
-      panelAside={packagePanelAside(w)}
-      panelChildren={<PhaseSteps w={w} columns={columns} />}
-    />
-  );
+  return <PackageOverviewSteps account={account} w={w} columns={columns} />;
 }
 
 const LEFT_GROUP_ORDER: MoveKind[] = [

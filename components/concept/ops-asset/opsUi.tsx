@@ -474,46 +474,6 @@ function motion({
   return <div className={className}>{children}</div>;
 }
 
-export function OpsFixStatusCard({
-  serviceLabel,
-  blocked,
-  onFix,
-}: {
-  serviceLabel: string;
-  blocked: number;
-  onFix: () => void;
-}) {
-  return (
-    <div
-      className="relative ml-[30px] shrink-0 rounded-2xl border border-border-dark bg-bg-container py-[18px] pl-[84px] pr-5"
-      style={{ minWidth: "min(100%, 420px)" }}
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="p7 text-text-tertiary">This package is in</p>
-          <p className="h4 text-text-primary">{serviceLabel}</p>
-          {blocked > 0 && (
-            <p className="mt-1 p7 text-text-secondary">
-              {blocked} assets need fixing first
-            </p>
-          )}
-        </div>
-        {blocked > 0 && (
-          <Button
-            type="strong"
-            size="large"
-            icon="chevron-right"
-            iconPosition="right"
-            onClick={onFix}
-          >
-            Fix {blocked} assets
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export function BlockingCellContent({
   item,
   state,

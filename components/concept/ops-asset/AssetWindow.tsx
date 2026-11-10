@@ -22,6 +22,7 @@ import {
   stepLabel,
 } from "@/lib/concept/opsAssetDerive";
 import { getBuilding } from "@/lib/concept/derive";
+import { fixAssetsAction } from "@/lib/concept/words";
 import type { Account, Workstream } from "@/lib/concept/model";
 import { service as serviceDef } from "@/lib/concept/model";
 import { cn } from "@/lib/utils";
@@ -363,7 +364,9 @@ export function AssetWindow({
   if (!bundle || !building) return null;
 
   const title =
-    mode === "fix" ? `Fix ${groups.todo.length} assets` : "Edit asset data";
+    mode === "fix"
+      ? fixAssetsAction(groups.todo.length)
+      : "Edit asset data";
   const subtitle = w.name;
 
   const tryClose = () => {

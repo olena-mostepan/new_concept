@@ -6,6 +6,15 @@ import {
   type CheckItemState,
   type CheckKey,
 } from "./checks";
+import type { Account, Workstream } from "./model";
+import { parse, short, type StepColumn } from "./derive";
+
+const ESTIMATE_STEP_LABELS = [
+  "Data collected",
+  "Estimate",
+  "Presented",
+  "Decision",
+] as const;
 
 export type AssetGroup = "blocked" | "started" | "ready";
 
@@ -108,6 +117,36 @@ export function recCell(
 }
 
 export function stepLabel(step: number): string {
-  const labels = ["Data collected", "Estimate", "Presented", "Decision"];
-  return labels[step] ?? "Data collected";
+  return ESTIMATE_STEP_LABELS[step] ?? "Data collected";
+}
+
+export function opsIndicativeSteps(
+  account: Account,
+  w: Workstream,
+): StepColumn[] {
+  const bundles = account.opsAssetData?.[w.id];
+  const startedOn = w.projects
+    .map((p) => bundles?.[p.buildingId]?.estimateStartedOn)
+    .filter((d): d is string => Boolean(d));
+  const estimateLine =
+    startedOn.length > 0
+      ? `started ${short([...startedOn].sort((a, b) => parse(a) - parse(b))[0])}`
+      : "";
+
+  return ESTIMATE_STEP_LABELS.map((label, i) => {
+    let here = 0;
+    let past = 0;
+    for (const project of w.projects) {
+      const step = bundles?.[project.buildingId]?.projectStep ?? 0;
+      if (step === i) here++;
+      else if (step > i) past++;
+    }
+    const state = here > 0 ? "now" : past > 0 ? "passed" : "upcoming";
+    return {
+      label,
+      state,
+      count: here,
+      happens: i === 1 && here > 0 ? estimateLine : "",
+    };
+  });
 }

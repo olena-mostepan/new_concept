@@ -37,7 +37,11 @@ import {
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
 import { workstreamCrumbs } from "./crumbs";
-import { nAssets } from "@/lib/concept/words";
+import {
+  assetsNeedFixingFirst,
+  fixAssetsAction,
+  nAssets,
+} from "@/lib/concept/words";
 import { activeProjects, isCompleted } from "@/lib/concept/derive";
 import {
   packagePrimaryTab,
@@ -64,7 +68,13 @@ export function shortFact(text: string): string {
     .replace(/\.\s*$/, "");
 }
 
-export function PackageStatusCard({ w }: { w: Workstream }) {
+export function PackageStatusCard({
+  w,
+  fix,
+}: {
+  w: Workstream;
+  fix?: { count: number; href?: string; onClick?: () => void };
+}) {
   const searchParams = useSearchParams();
   const sid = packageStatusService(w);
   const headline = packageStatusHeadline(w);
@@ -75,6 +85,7 @@ export function PackageStatusCard({ w }: { w: Workstream }) {
   params.set("tab", cta.tab);
   const qs = params.toString();
   const href = `${hrefs.workstream(w.id)}?${qs}`;
+  const showFix = fix && fix.count > 0;
 
   return (
     <div
@@ -93,8 +104,25 @@ export function PackageStatusCard({ w }: { w: Workstream }) {
           {headline.name && (
             <p className="h4 text-text-primary">{headline.name}</p>
           )}
+          {showFix && (
+            <p className="mt-1 p7 text-text-secondary">
+              {assetsNeedFixingFirst(fix.count)}
+            </p>
+          )}
         </div>
-        {!closed && !complete && (
+        {!closed && !complete && showFix && (
+          <Button
+            type="strong"
+            size="large"
+            icon="chevron-right"
+            iconPosition="right"
+            href={fix.href}
+            onClick={fix.onClick}
+          >
+            {fixAssetsAction(fix.count)}
+          </Button>
+        )}
+        {!closed && !complete && !showFix && (
           <Button
             type="strong"
             size="large"
@@ -140,13 +168,36 @@ export function AssetStripStatus({
   );
 }
 
-export function WorkstreamHeader({ w }: { w: Workstream }) {
+export function WorkstreamHeader({
+  w,
+  ops,
+  changedKey = !ops,
+  fix,
+  statusAside,
+}: {
+  w: Workstream;
+  /** Ops routes and no changed key. */
+  ops?: boolean;
+  changedKey?: boolean;
+  fix?: { count: number; onClick?: () => void };
+  statusAside?: ReactNode;
+}) {
   const { account } = useConcept();
   const searchParams = useSearchParams();
   const batch = getBatch(account, w.batchId);
-  const crumbs = workstreamCrumbs(account, w, searchParams).map(
-    ({ label, href }) => ({ label, href }),
-  );
+  const crumbs = ops
+    ? [
+        { label: "Overview", href: hrefs.ops },
+        {
+          label: batch?.name ?? "Batch",
+          href: batch ? hrefs.opsBatch(batch.id) : hrefs.ops,
+        },
+        { label: w.name },
+      ]
+    : workstreamCrumbs(account, w, searchParams).map(({ label, href }) => ({
+        label,
+        href,
+      }));
   const assetsLive = activeProjects(w).length;
   const leftCount = w.projects.filter((p) => p.left).length;
   const fromWs = w.from ? getWorkstream(account, w.from.workstreamId) : undefined;
@@ -154,7 +205,11 @@ export function WorkstreamHeader({ w }: { w: Workstream }) {
     {
       label: "Batch",
       value: batch?.name ?? "—",
-      href: batch ? hrefs.batch(w.batchId) : undefined,
+      href: batch
+        ? ops
+          ? hrefs.opsBatch(w.batchId)
+          : hrefs.batch(w.batchId)
+        : undefined,
     },
   ];
   if (fromWs) {
@@ -187,16 +242,24 @@ export function WorkstreamHeader({ w }: { w: Workstream }) {
   }
   if (w.supplier) facts.push({ label: "Supplier", value: w.supplier });
 
+  const aside =
+    statusAside ??
+    (fix
+      ? <PackageStatusCard w={w} fix={fix} />
+      : <PackageStatusCard w={w} />);
+
   return (
     <PageHeader
       crumbs={crumbs}
       kind="package"
       title={w.name}
       facts={facts}
-      aside={<PackageStatusCard w={w} />}
-      changedKey
+      aside={aside}
+      changedKey={changedKey}
       actions={
-        w.owner === "you" ? <ResponsibilityPill owner="you" /> : undefined
+        !ops && w.owner === "you" ? (
+          <ResponsibilityPill owner="you" />
+        ) : undefined
       }
     />
   );
@@ -400,13 +463,17 @@ export function WorkstreamFacts({
 export function WorkstreamFrame({
   live,
   children,
+  ops,
+  fix,
 }: {
   live: Workstream;
   children: ReactNode;
+  ops?: boolean;
+  fix?: { count: number; onClick?: () => void };
 }) {
   return (
     <>
-      <WorkstreamHeader w={live} />
+      <WorkstreamHeader w={live} ops={ops} fix={fix} />
       <div className="space-y-6 pb-12">{children}</div>
     </>
   );

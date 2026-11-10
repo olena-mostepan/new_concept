@@ -1575,6 +1575,44 @@ export function IconButton({
   );
 }
 
+/** Ops detail bar: inline pill (36 high) or floating assistant control. */
+export function AssistantButton({
+  onClick,
+  label = "Ask the assistant",
+  inline,
+}: {
+  onClick?: () => void;
+  label?: string;
+  inline?: boolean;
+}) {
+  const mark = (
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full bg-white",
+        inline ? "size-6" : "size-7",
+      )}
+      aria-hidden
+    >
+      <Icon
+        name="info"
+        size={inline ? 12 : 14}
+        className="text-black-7"
+      />
+    </span>
+  );
+  const cls = cn(
+    "inline-flex items-center gap-2 rounded-full bg-black-7 pr-4 text-white hover:bg-black-6",
+    focusRing,
+    inline ? "h-9 pl-2.5 h8" : "fixed bottom-8 right-8 z-20 h-12 pl-3 pr-4 h8 shadow-floating",
+  );
+  return (
+    <button type="button" className={cls} onClick={onClick}>
+      {mark}
+      {label}
+    </button>
+  );
+}
+
 export function FilterSearch({
   value,
   onChange,

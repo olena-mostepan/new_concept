@@ -6,7 +6,7 @@ The props each design-system component takes, as TypeScript. Documentation only:
 // CQuel components — window.CQuelDS. Types are documentation.
 import type { ReactNode } from 'react';
 
-export interface ButtonProps { /** strong: dark fill, the one way on from an orientation page. primary: orange, the one action that moves the work on. */ type?: 'primary' | 'strong' | 'secondary' | 'tertiary' | 'link' | 'danger'; size?: 'large' | 'default' | 'small'; /** 16px (14 on small), 8 from the label. Left for actions; right only 'chevron-right' on a button that goes to another page. Never on 'link'. */ icon?: IconName; iconPosition?: 'left' | 'right'; disabled?: boolean; href?: string; onClick?: () => void; ariaLabel?: string; children: ReactNode; className?: string }
+export interface ButtonProps { /** strong: dark fill, the one way on from an orientation page. primary: orange, the one action that moves the work on. */ type?: 'primary' | 'strong' | 'secondary' | 'tertiary' | 'soft' | 'link' | 'danger'; size?: 'large' | 'default' | 'small'; /** 16px (14 on small), 8 from the label. Left for actions; right only 'chevron-right' on a button that goes to another page. Never on 'link'. */ icon?: IconName; iconPosition?: 'left' | 'right'; disabled?: boolean; href?: string; onClick?: () => void; ariaLabel?: string; children: ReactNode; className?: string }
 /** Square icon-only button. label is required: it's the tooltip and the screen-reader name. */
 export interface IconButtonProps { icon: IconName; label: string; type?: 'secondary' | 'tertiary'; size?: 'large' | 'default' | 'small'; href?: string; onClick?: () => void; disabled?: boolean }
 export interface TagProps { /** 'strong' is retired: don't use it in new screens */ type?: 'neutral' | 'accent' | 'strong' | 'info' | 'success' | 'warning' | 'danger'; size?: 'xsmall' | 'small' | 'big'; dot?: boolean; children: ReactNode }
@@ -97,24 +97,24 @@ export interface PackageCardProps { name?: string; service?: ServiceId; complete
 /* ---------- Ops asset setup (v42) ---------- */
 export interface FoundValueProps { value: string; file: string; page?: number | string; /** the file's own words */ quote?: string; viewHref?: string; onView?: () => void; /** actions on the right: Use, Enter another */ children?: ReactNode }
 export type RequirementState = 'done' | 'confirm' | 'disagree' | 'nofile' | 'missing' | 'na' | 'edit';
-export interface RequirementRowProps { /** CQuel icon for the item's tile: location, size, running-cost, building, solar, home */ icon?: IconName; hint?: string; name: string; state: RequirementState; required?: boolean; value?: string; source?: string; unit?: string; found?: FoundValueProps; options?: FoundValueProps[]; uploadLabel?: string; placeholder?: string;
+export interface RequirementRowProps { hint?: string; name: string; state: RequirementState; required?: boolean; value?: string; source?: string; unit?: string; found?: FoundValueProps; options?: FoundValueProps[]; uploadLabel?: string; placeholder?: string;
   edit?: { value?: string; sources?: string[]; source?: string; /** "860 m² · from Kervelstraat_plans.pdf, page 1" */ was?: string; /** shown when the asset has moved on */ warning?: { title: string; text: ReactNode } };
   onUse?: (found?: FoundValueProps) => void; onEnterAnother?: () => void; onUpload?: () => void; onNotAvailable?: () => void; onSave?: () => void; onUndo?: () => void; onEdit?: () => void; onCancel?: () => void }
 /** s3 header with a count: "Blocking the next step · 1" */
-export interface RequirementGroupProps { label: string; count?: number; /** one line on what the group means */ hint?: string; children: ReactNode }
+export interface RequirementGroupProps { label: string; count?: number; /** after the count in the pill: 'open', 'missing' */ countLabel?: string; /** pill text instead of the count */ pill?: string; children: ReactNode }
 export interface UploadedFile { name: string; type?: string; state?: 'typed' | 'reading' | 'unknown'; onChooseType?: () => void }
 export interface UploadRowProps { onUpload?: () => void; label?: string; files?: UploadedFile[]; /** false: only the file list */ drop?: boolean }
 /** Fix assets / Edit asset data: a ~1000 Modal with a 260 side list. Footer: Done only. dirty: asks before closing. */
-export interface AssetWindowProps { open?: boolean; inline?: boolean; title: string; subtitle?: string; progress?: { done: number; total: number }; groups: { label: string; count?: number; empty?: string; items: { id: string; name: string; line?: string; toFix?: boolean; icon?: IconName }[] }[]; value?: string; onSelect?: (id: string) => void; showAll?: { count: number; href?: string; onClick?: () => void }; asset: { name: string; meta?: string; icon?: IconName; link?: { label: string; href?: string; onClick?: () => void } }; dirty?: boolean; onDone?: () => void; onClose?: () => void; children: ReactNode }
+export interface AssetWindowProps { open?: boolean; inline?: boolean; title: string; subtitle?: string; groups: { label: string; count?: number; items: { id: string; name: string; line?: string; toFix?: boolean }[] }[]; value?: string; onSelect?: (id: string) => void; showAll?: { count: number; href?: string; onClick?: () => void }; asset: { name: string; meta?: string; link?: { label: string; href?: string; onClick?: () => void } }; dirty?: boolean; onDone?: () => void; onClose?: () => void; children: ReactNode }
 export interface SelectionBarProps { names?: string[]; count?: number; action?: { label: string; onClick?: () => void }; onClear?: () => void }
 export interface AssistantMessage { from: 'me' | 'assistant'; text: string; file?: string; changes?: string[]; note?: string; onUndo?: () => void }
 /** Rough first release: a 400 side panel on the current package. */
-export interface AssistantPanelProps { /** 'Works on Solar PV · Estimates' */ scope?: string; messages: AssistantMessage[]; hint?: string; placeholder?: string; onClose?: () => void; onAttach?: () => void }
+export interface AssistantPanelProps { messages: AssistantMessage[]; hint?: string; placeholder?: string; onClose?: () => void; onAttach?: () => void }
 export interface AssistantButtonProps { onClick?: () => void; label?: string; /** static instead of fixed bottom right */ inline?: boolean }
 /** 2px ink outline on a changed cell plus an UPDATED tag. */
 export interface UpdatedHighlightProps { children: ReactNode }
 /** The assistant's mark: ink circle with the idea icon. */
 export interface AiMarkProps { size?: 'default' | 'small'; inverse?: boolean }
-/** done: green tick; open: dashed ring; na: grey minus. */
+/** The checklist square: done ink with a tick; open empty; na grey dash. */
 export interface StateMarkProps { state: 'done' | 'open' | 'na'; size?: number }
 ```

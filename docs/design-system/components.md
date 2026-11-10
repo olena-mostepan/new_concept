@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 45, 10 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 46, 10 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -92,32 +92,32 @@ Retired on 5 Nov 2026. The asset page uses **PageHeader** with `kind: 'asset'`: 
 
 ## AssetWindow
 
-The Fix assets and Edit asset data windows on Ops screens: one window where Ops fix an asset's data in place, item by item.
+The Fix assets and Edit asset data windows on Ops screens: one window where Ops fix an asset's data in place, item by item, like a checklist.
 
 ### Where it opens
 - **Fix assets:** from the StatusCard's "Fix 3 assets" button, or from a blocked row in the package's Assets table (it opens at that asset).
 - **Edit asset data:** from "Edit data" on the asset page's Data card. Same window, one asset.
 
 ### Anatomy
-- A Modal about 1040 wide, white, `radius-lg`, on the scrim. The body has no padding of its own.
-- **Header:** the title in `h5` ("Fix 3 assets", "Edit asset data"), the subtitle in `p6` text-secondary ("Solar PV · Estimates"), then a progress line: a 200 × 6 bar (`black-2` track, `success` fill) and "0 of 3 fixed" in `p7`. Close on the right.
-- **Side list,** 280 wide, on `black-1`:
-  - group labels in `s3` capitals with a count: "TO FIX · 3", "DONE · 0" (empty: "Fixed assets move here"). Edit mode has one group, "ASSET · 1".
-  - each asset: a 28px white tile with the `building` icon, the name in `h8`, and its first blocking item in `p7` after the 6px orange dot ("● Roof area · to confirm"); in Done, a small green tick instead of the dot.
-  - hover `black-2`; **the selected asset** is `bg-accent` with a `border-accent` border: where you are.
-  - "Show all 6" (tertiary, `chevron-down`) at the bottom.
-  - Clicking an asset switches to it. No Previous / Next.
-- **Content,** 24 padding, sections 16 apart:
-  - a 52px tile with the asset icon, the name in `h5`, "Cologne · Data collected · blocked since 6 Nov" in `p6`; on the right a secondary button with `chevron-right`: "Open asset page" (Fix assets) or "Open package" (Edit asset data).
-  - UploadRow, then RequirementGroup cards: "Blocking the next step", "Recommended, missing", "Files".
-- **Footer:** on the left an `info` note in `p7`, "Each change saves with its own button."; on the right **Done**, a large `primary` button.
+- A Modal about 1000 wide, white, `radius-lg`, on the scrim. The body has no padding of its own.
+- **Header:** the title in `h5` ("Fix 3 assets", "Edit asset data"), the subtitle in `p6` text-secondary ("Solar PV · Estimates"), Close.
+- **Side list,** 260 wide, on `black-1`:
+  - group labels in `s3` capitals with a count: "TO FIX · 3", "DONE · 0". Edit mode has one group, "ASSET · 1".
+  - rows: the asset name in `h8`, and its first blocking item in `p7` after the 6px orange dot ("● Roof area · to confirm").
+  - hover `black-2`; the selected row is white with a `border-dark` border.
+  - "Show all 6" as a link at the bottom.
+  - Clicking a row switches to that asset. No Previous / Next.
+- **Content,** 20/24 padding:
+  - the asset name in `h5` over city and step in `p6` ("Cologne · Data collected"); on the right a tertiary button with `chevron-right`: "Open asset page" (Fix assets) or "Open package" (Edit asset data).
+  - the UploadRow, then the checklist sections: "Blocking the next step", "Recommended, missing", "Files" (RequirementGroup).
+- **Footer:** Done only, a large `primary` button on the right.
 
 ### Saving
 - Nothing in the window saves by itself. Each item saves with its own button (Use, Save, Not available, an upload); Done only closes.
-- **Closing with an unsaved edit** (Close, Esc, the scrim) asks first: the footer turns into an `alert` line "You have an unsaved change. Close without saving it?" with "Keep editing" (tertiary) and "Close without saving" (secondary). Pass `dirty` while an edit is open.
+- **Closing with an unsaved edit** (Close, Esc, the scrim) asks first: the footer turns into "You have an unsaved change. Close without saving it?" with "Keep editing" (soft) and "Close without saving" (secondary). Pass `dirty` while an edit is open.
 
 ### The consumer provides
-`title`, `subtitle`, `progress: {done, total}`, `groups: [{label, count?, empty?, items: [{id, name, line, toFix, icon?}]}]`, `value`, `onSelect(id)`, `showAll: {count, onClick | href}`, `asset: {name, meta, icon?, link: {label, href | onClick}}`, `dirty`, `onDone`, `onClose`, and the content (UploadRow, RequirementGroups) as children.
+`title`, `subtitle`, `groups: [{label, count?, items: [{id, name, line, toFix}]}]`, `value`, `onSelect(id)`, `showAll: {count, onClick | href}`, `asset: {name, meta, link: {label, href | onClick}}`, `dirty`, `onDone`, `onClose`, and the content (UploadRow, RequirementGroups) as children.
 
 ---
 
@@ -127,11 +127,11 @@ The Ops assistant, first release: rough, to show the opportunity. It works on th
 
 ### AssistantPanel
 - A 400 wide side panel next to the page (the page narrows; nothing is covered), white, `border-dark` on the left.
-- **Header,** 64 high: the assistant mark (a 28px `black-7` circle with the white `idea` icon), "Assistant" in `h8` over "Works on Solar PV · Estimates" in `p7`, and Close on the right.
-- **Messages** on `black-1`, 20 apart:
-  - the person's message on the right: a `black-7` bubble with white text, max 300 wide; an attached file sits above the text as a white chip with its file tile and name.
-  - the assistant's reply on the left, after the small mark: a white bubble with `border-light`; the text, each change with a green tick ("Usable roof area: 540 m² (page 3)"), a `p7` note ("Nothing is blocking it now. Both changes are in its History."), and a small secondary "Undo" (`refresh`).
-- **Input** at the bottom: a 40px secondary IconButton "Attach files" (`plus`), then an Input "Add or change something…". A `p7` hint above it with the `idea` icon ("Try: “Set Kelmsdorfer Straße 41 roof area to 610”").
+- **Header,** 56 high: the assistant mark (a 28px `black-7` circle with the white `idea` icon), "Assistant" in `h8`, and Close on the right.
+- **Messages,** 16 apart:
+  - the person's message on the right, on `black-2`, `radius-lg`, max 300 wide; an attached file sits above the text as a white chip (`document` icon, name in `h9`).
+  - the assistant's reply on the left after the small mark: the text, each change with a small done mark ("Usable roof area: 540 m² (page 3)"), a `p7` note ("Nothing is blocking it now. Both changes are in its History."), and a small soft "Undo".
+- **Input** at the bottom: a 40px secondary IconButton "Attach files" (`plus`), then an Input "Add or change something…". A `p7` hint above it ("Try: “Set Kelmsdorfer Straße 41 roof area to 610”").
 - Same rules as everywhere: it never chooses between values that disagree, and every change it makes goes to the asset's History.
 
 ### UpdatedHighlight
@@ -141,7 +141,7 @@ The Ops assistant, first release: rough, to show the opportunity. It works on th
 - A floating pill at the bottom right of Ops package and asset pages, 32 from the edges: 48 high, `black-7`, the assistant mark (white circle, ink `idea` icon) and "Ask the assistant" in `h8` white. Hover `black-6`. It opens the panel.
 
 ### The consumer provides
-AssistantPanel: `scope`, `messages: [{from: 'me' | 'assistant', text, file?, changes?, note?, onUndo?}]`, `hint`, `placeholder`, `onClose`, `onAttach`. UpdatedHighlight: children. AssistantButton: `onClick`, `label`.
+AssistantPanel: `messages: [{from: 'me' | 'assistant', text, file?, changes?, note?, onUndo?}]`, `hint`, `placeholder`, `onClose`, `onAttach`. UpdatedHighlight: children. AssistantButton: `onClick`, `label`.
 
 ---
 
@@ -186,6 +186,7 @@ Buttons for actions and for the one way on from a page. Orange `primary` means t
 - `strong` — dark fill (`black-7`, white text): the one way on from an orientation page, such as "Open package" (with the chevron icon) on an asset page. On orientation pages (Overview, asset, package Overview) it takes the place of `primary`, which doesn't appear there.
 - `secondary` — every other action.
 - `tertiary` — Cancel, low-emphasis actions beside a primary.
+- `soft` — grey fill (`black-2`, hover `black-3`, pressed `black-4`), no border. Per-item actions in Ops checklists ("Use 420 m²", "Upload bills or meter data", "Not available", Save), where many sit on one screen.
 - `link` — See all, Show; inline navigation. Ink with an underline, never blue.
 - `danger` — Remove, Delete. Danger text on white, never a red fill.
 
@@ -485,16 +486,15 @@ Label `h9` (12, SemiBold) in text-title, the same as every field label in the pr
 A value we read from a file and haven't used yet. Ops confirm it before it counts.
 
 ### Anatomy
-- A tinted panel: `status-info-bg` with a `status-info-border` border, `radius-md`, 12/16 padding.
-- First line, `p7` text-secondary: the `document` icon and "Found in **Dachplan_Halle_A.pdf** · page 2" (the file name in `h9`). This line says where the value came from; there's no separate AI badge.
-- The value in `h6`, tabular figures ("420 m²").
-- The file's own words in `p7`, in quotes and in the file's language, then "View" (opens the file at that page).
-- Actions on the right, vertically centred ("Use 420 m²" secondary, "Enter another" tertiary).
+- A grey box: `black-1`, 1px `border-dark`, `radius-md`, 12/16 padding.
+- First line in `h8`: the `info` icon (16, icon-dark) and "Found 420 m² in Dachplan_Halle_A.pdf, page 2".
+- Under it, lined up with the text after the icon: the file's own words in `p7` text-secondary, in quotes and in the file's language, then "View" (opens the file at that page).
+- Then the actions, 6 below, `soft` buttons: "Use 420 m²", "Enter another".
 
 ### Rules
 - Never pre-select or pre-fill a found value: it isn't the asset's value until Ops press Use.
-- Two files that disagree show two panels, one per file, each with its own Use.
-- Blue tint means "information found", the status `info` colour. Never orange.
+- Two files that disagree show two boxes, one per file, each with its own Use.
+- Ink and grey, never orange. No "AI" badge: "Found … in <file>" already says where it came from.
 
 ### The consumer provides
 `value`, `file`, `page`, `quote`, `viewHref` or `onView`, and the actions as children.
@@ -796,41 +796,37 @@ A 16px round choice; checked is a 5px black-7 ring.
 
 ## RequirementRow
 
-One check on one asset, fixed in place: "Usable roof area", "Consumption data". Used in the AssetWindow, inside RequirementGroup cards.
+One check on one asset, as a checklist row: "Usable roof area", "Consumption data". Used in the AssetWindow under RequirementGroup sections.
 
 ### Checks
 Each service has a list of checks per solution. A **Required** check blocks the asset's next step; a **Recommended** one helps but never blocks. Estimates · Solar PV: Required are address and usable roof area; Recommended are consumption data, site or floor plans, roof drawings and roof covering. An asset is blocked while any required item isn't Done.
 
 ### Anatomy
-- A three-column grid, vertically centred: the **item tile** (36), the text, the actions. 12 between columns, 12/16 padding, at least 64 tall, `border-light` between rows.
-- **Item tile:** 36px, `radius-md`, `black-1` with a `border-light` border, the item's icon (16, `icon-dark`) from the CQuel set: address `location`, roof area `size`, consumption `running-cost`, plans `building`, roof drawings `solar`, roof covering `home`.
-  - **Done:** the tile turns `success` (green tint, green icon) with a 16px green tick badge on its top-right corner.
-  - **Required and not done:** an 8px orange dot badge in the same corner. The only orange in a row.
-  - **Not available:** the icon goes `icon-disabled`.
-- **Text:** the name in `h8` text-title, then the state as an `xsmall` Tag, then "Required" in `p7` text-tertiary for required items. Under it one `p7` text-secondary line (the value and source, or what's needed).
-- **Actions** on the right, 8 apart, all 32 high so they line up with each other and with the inputs.
-- Anything that opens under a row (FoundValue, the edit box) starts at the text column, not under the tile.
+- A grid: the 20px mark, 16 gap, the text, and at most one action on the right. 16 above and below, a `border-light` rule under each row.
+- **Mark** (StateMark): a 20px square, 5 radius. Done: `black-7` with a white tick. Not done: empty with a 1.5px `black-4` border. Not available: `black-2` with a grey dash. Never orange.
+- **Text:** the name in `h8` text-primary, one `p7` text-secondary line under it when there's something to say (the value and source, what's wanted).
+- **Under the text,** 12 below and starting at the text column: the found value box, the buttons, or the input. Per-item buttons are `soft` (grey fill), 8 apart.
 
 ### States
-| State | Tag | Line | Actions |
+| State | Line | Under the text | Right |
 |---|---|---|---|
-| `done` | none (green tile) | value · source | Edit (tertiary, `edit` icon) |
-| `confirm` | To confirm (info) | "Read from a file. It counts once you use it." | a FoundValue under it with "Use 420 m²" (secondary) and "Enter another" (tertiary) |
-| `disagree` | Files disagree (warning) | "Two files give different values. Choose one, or enter another." | one FoundValue per file, each with "Use <value>"; then "Another value" (tertiary) |
-| `nofile` | No file (neutral) | what's wanted ("Bills or half-hourly meter data") | "Not available" (tertiary, recommended only), the item's upload (secondary, `upload`: "Upload bills") |
-| `missing` | Missing (neutral) | optional hint | a small Input (220) and its own Save (secondary) |
-| `na` | Not available | "Marked not available" | Undo (tertiary) |
-| `edit` | none | "Editing" | an edit box under the row (below) |
+| `done` | value · source | — | Edit (tertiary) |
+| `confirm` | — | a FoundValue with "Use 420 m²" and "Enter another" | — |
+| `disagree` | "The files disagree. Choose one, or enter another value." | one FoundValue per file, each with "Use <value>"; then "Another value" | — |
+| `nofile` | what's wanted ("Bills or half-hourly meter data") | the item's upload ("Upload bills or meter data") and "Not available" (recommended items only) | — |
+| `missing` | optional hint | a small Input (260) and Save | — |
+| `na` | "Not available" (the name muted) | — | Undo (tertiary) |
+| `edit` | — | the edit box (below) | — |
 
-- **Edit box:** `black-1`, `border-light`, `radius-md`, 16 padding. Value (with its unit) and Source (a file and page, or "Typed") side by side; "Was 860 m² · from Kervelstraat_plans.pdf, page 1" with the `time` icon; if the asset has moved on, a warning Banner ("This asset's estimate has started" / "It used 860 m². After saving, its Estimate step shows 'Roof area changed · check the estimate'."); then Cancel (tertiary) and "Save 820 m²" (primary) on the right.
+- **Edit box:** the same grey box as FoundValue. Value (with its unit) and Source (a file and page, or "Typed") side by side; "Was 860 m² · from Kervelstraat_plans.pdf, page 1"; if the asset has moved on, a warning Banner ("This asset's estimate has started" / "It used 860 m². After saving, its Estimate step shows 'Roof area changed · check the estimate'."); then "Save 820 m²" (primary) and Cancel (soft).
 - Values that disagree are never chosen for Ops. A value read from a file is never used until Ops press Use.
-- **"Use <value>" stays secondary.** Several items can be waiting at once; an orange Use on each would make a column of orange buttons.
+- **"Use <value>" stays soft.** Several items can wait at once; orange on each would make a column of orange buttons.
 
 ### RequirementGroup
-A card: white, `border-dark`, `radius-lg`. Its head is `black-1`, 12/16 padding: the title in `h7`, the count in a grey 20px pill, and on the right one `p7` text-tertiary line on what the group means ("Needed before the estimate can start", "Helps the estimate, never blocks").
+A section, not a card: the title in `h6` text-primary, then a pill (`h9`, white, `border-dark`, `radius-full`, 24 high) with the count and its word ("1 open", "3 missing", "3"), 16 above and 8 below, and a `border-light` rule under it.
 
 ### The consumer provides
-`icon`, `name`, `state`, `required`, `value`, `source`, `unit`, `hint`, `found` (FoundValue props), `options` (two FoundValues), `uploadLabel`, `placeholder`, `edit: {value, sources, source, was, warning: {title, text}}`, and `onUse`, `onEnterAnother`, `onUpload`, `onNotAvailable`, `onSave`, `onUndo`, `onEdit`, `onCancel`. RequirementGroup takes `label`, `count`, `hint`, children.
+`name`, `state`, `required`, `value`, `source`, `unit`, `hint`, `found` (FoundValue props), `options` (two FoundValues), `uploadLabel`, `placeholder`, `edit: {value, sources, source, was, warning: {title, text}}`, and `onUse`, `onEnterAnother`, `onUpload`, `onNotAvailable`, `onSave`, `onUndo`, `onEdit`, `onCancel`. RequirementGroup takes `label`, `count`, `countLabel` ("open", "missing") or `pill` (any text), children.
 
 ---
 
@@ -902,8 +898,8 @@ Every field has a visible label: wrap it in a FormField (forms) or use SearchFie
 Above a Table while rows are selected: what's selected, the one bulk action, and Clear.
 
 ### Anatomy
-- `black-1` ground, `border-dark`, `radius-md`, padding 8/8/8/12, inside the table card between its header and the column labels (Table's `toolbar`).
-- The count in a 24px `black-7` pill, "selected" in `h8`, the names in `p6` text-secondary ("Halverkamp 19, Lindenhof 3", cut with an ellipsis); on the right a tertiary "Clear", then one `primary` button that names the action and count ("Start estimates for 2").
+- `black-2` ground, `radius-md`, padding 8/8/8/16, inside the table card between its header and the column labels (Table's `toolbar`).
+- "2 selected" in `h8`, the names in `p6` text-secondary ("Halverkamp 19, Lindenhof 3", cut with an ellipsis); on the right a tertiary "Clear", then one `primary` button that names the action and count ("Start estimates for 2").
 
 ### Rules
 - Only ready rows can be selected; a row that's blocked or already started has no checkbox.
@@ -1095,7 +1091,7 @@ Package, asset and project lists: a group header, column labels and light rows.
 
 ### Ops: the Data card on the asset page
 - A flush Card titled "Data for <service>", with two secondary buttons on the right: "Upload documents" (`upload` icon) and "Edit data" (opens the AssetWindow in edit mode).
-- A read-only Table: a `check` column (StateMark: a green tick when Done, a dashed ring when missing, a grey minus when not available), then ITEM (title) · REQUIREMENT (Required / Recommended) · VALUE · SOURCE ("Roof_layout_HH.pdf · page 1", "Asset record", "—").
+- A read-only Table: a `check` column (StateMark: the checklist square, ink with a tick when Done, empty when missing, a grey dash when Not available), then ITEM (title) · REQUIREMENT (Required / Recommended) · VALUE · SOURCE ("Roof_layout_HH.pdf · page 1", "Asset record", "—").
 - Read-only. Every change goes through Edit data.
 
 ### Heading alignment
@@ -1268,20 +1264,20 @@ Says what kind of thing a page is, above its title, with a definition one hover 
 
 ## UploadRow
 
-Where documents come in: the drop zone, and the list of files with what we read from each.
+Where documents come in: one slim drop row, and the list of files with what we read from each.
 
-### The drop zone
-- 1.5px dashed `black-3` border, `radius-lg`, `black-1`, 16 padding; on hover and while dragging the border goes `black-4` and the ground white.
-- A 44px white circle with the `upload` icon (20, icon-strong); "Drop documents here" in `h8` over "We read them and fill what we can. Plans, bills, surveys, photos." in `p7` text-secondary; the secondary "Upload documents" button (`upload` icon) on the right.
+### The drop row
+- One row, 1.5px dashed `black-3` border (`black-4` on hover), `radius-md`, white, padding 6/6/6/16.
+- The `upload` icon (16, icon-strong), "Drop documents here" in `h8`, then " · we read them and fill what we can" in `p6` text-secondary, and the `soft` button "Upload documents" on the right.
 - Files can also come in through an item's own upload, Upload documents on the asset page, or the assistant.
 
 ### The file list
-- Rows of a three-column grid like RequirementRow: a 32px tile with `document` (or `image` for photos), the name in `h8` over the type in `p7`, the state on the right.
-- **Typed:** "Roof drawings" and a green tick.
+- One row per file, a `border-light` rule under each: the name in `h8` over its type in `p7` text-secondary, the state on the right.
+- **Typed:** the type ("Roof drawings") and a 16px done mark.
 - **Reading:** "Reading…" and a 16px spinner (still under reduced motion).
-- **Couldn't tell:** "Couldn't tell what this is" and a small secondary "Choose a type".
+- **Couldn't tell:** "Couldn't tell what this is" and a small soft "Choose a type".
 - Values a file contains become "to confirm" on the right item.
-- In the AssetWindow the list sits in its own "Files" RequirementGroup card (`drop: false`).
+- In the AssetWindow the list sits under its own "Files" section (`drop: false`).
 
 ### The consumer provides
 `onUpload`, `label`, `files: [{name, type, state: 'typed' | 'reading' | 'unknown', onChooseType}]`, `drop: false` for the list only.

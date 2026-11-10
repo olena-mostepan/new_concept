@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   checksFor,
   type AssetCheckBundle,
@@ -352,24 +352,37 @@ export function AssetWindow({
     ? recommendedMissing(bundle, w.service, w.solution)
     : [];
 
+  // The window works on the assets that were blocked when it opened.
+  // Fixed ones move to Done; assets that were already ready never show here.
+  const [opened, setOpened] = useState<string[]>([]);
+  useEffect(() => {
+    if (!open) return;
+    setOpened(
+      assetIds.filter((id) => {
+        const b = account.opsAssetData?.[w.id]?.[id];
+        return b && groupOf(b, w.service, w.solution) === "blocked";
+      }),
+    );
+    // only when the window opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
   const groups = useMemo(() => {
     const todo: typeof assetIds = [];
     const done: typeof assetIds = [];
-    for (const id of assetIds) {
+    for (const id of mode === "fix" ? opened : assetIds) {
       const b = account.opsAssetData?.[w.id]?.[id];
       if (!b) continue;
       if (groupOf(b, w.service, w.solution) === "blocked") todo.push(id);
-      else if (mode === "fix" && groupOf(b, w.service, w.solution) === "ready")
-        done.push(id);
+      else if (mode === "fix") done.push(id);
     }
     return { todo, done };
-  }, [account, assetIds, mode, w]);
+  }, [account, assetIds, opened, mode, w]);
 
   if (!bundle || !building) return null;
 
   const title =
     mode === "fix"
-      ? fixAssetsAction(groups.todo.length)
+      ? fixAssetsAction(opened.length || groups.todo.length)
       : "Edit asset data";
   const subtitle = w.name;
 
@@ -553,7 +566,7 @@ export function AssetWindow({
             <RequirementGroup
               label="FILES"
               count={bundle.files.length}
-              countLabel={`${bundle.files.length} files`}
+              countLabel={`${bundle.files.length} ${bundle.files.length === 1 ? "file" : "files"}`}
             >
               {bundle.files.map((file) => (
                 <div

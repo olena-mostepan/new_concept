@@ -12,7 +12,7 @@ import {
 } from "@/lib/concept/derive";
 import { checksFor } from "@/lib/concept/checks";
 import { opsIndicativeSteps, stepLabel } from "@/lib/concept/opsAssetDerive";
-import { opsFileValueDisplay, opsItemSubline } from "@/lib/concept/opsDisplay";
+import { opsItemSubline } from "@/lib/concept/opsDisplay";
 import { service as serviceDef } from "@/lib/concept/model";
 import type { CheckItemState } from "@/lib/concept/checks";
 import {
@@ -97,8 +97,9 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
     if (item.state === "disagree") return "Files disagree";
     if (item.state === "na") return "Not available";
     if (item.state === "done") {
-      const fileLine = opsFileValueDisplay(item);
-      return fileLine ?? item.value ?? "—";
+      // File items: the Source column names the file, so the value is just the count.
+      if (def.file) return "1 file";
+      return item.value ?? "—";
     }
     return opsItemSubline(def, item) || "—";
   };
@@ -183,7 +184,8 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
       </Tabs.Root>
 
       <div className="mt-6 space-y-6">
-        {tab === "overview" && (
+        {/* Ops work happens on the current service tab (and Overview): package card + Data card. */}
+        {(tab === "overview" || tab === packagePrimaryTab(w)) && (
           <>
             <PackageCard
               chips={chips}
@@ -228,6 +230,9 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
                         ITEM
                       </th>
                       <th className="px-4 py-2 text-left s3 text-text-tertiary">
+                        REQUIREMENT
+                      </th>
+                      <th className="px-4 py-2 text-left s3 text-text-tertiary">
                         VALUE
                       </th>
                       <th className="px-4 py-2 text-left s3 text-text-tertiary">
@@ -252,6 +257,9 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
                           <td className="px-4 py-3 h8 text-text-title">
                             {def.name}
                           </td>
+                          <td className="px-4 py-3 p6 text-text-secondary">
+                            {def.required ? "Required" : "Recommended"}
+                          </td>
                           <td className="px-4 py-3 p6 text-text-primary">
                             {valueFor(item, def)}
                           </td>
@@ -267,7 +275,7 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
             </Card>
           </>
         )}
-        {tab === "estimates" && (
+        {tab === "estimates" && tab !== packagePrimaryTab(w) && (
           <PackageOverviewSteps account={account} w={w} columns={stepColumns} />
         )}
       </div>

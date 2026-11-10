@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -23,11 +24,11 @@ export function StateMark({
   if (state === "done") {
     return (
       <span
-        className="inline-flex items-center justify-center rounded-full bg-status-success-bg"
+        className="inline-flex items-center justify-center rounded-full bg-black-7"
         style={{ width: size, height: size }}
         aria-hidden
       >
-        <Icon name="check" size={10} className="text-status-success-mark" />
+        <Icon name="check" size={size >= 20 ? 12 : 10} className="text-white" />
       </span>
     );
   }
@@ -286,6 +287,7 @@ export function OpsDataTable({
   onSelectRow: (id: string, on: boolean) => void;
   onRowClick: (id: string, blocked: boolean) => void;
 }) {
+  const router = useRouter();
   return (
     <section className="overflow-hidden rounded-lg border border-border-dark bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-light px-5 py-4">
@@ -351,127 +353,30 @@ export function OpsDataTable({
                   </td>
                 </>
               );
-              if (selectionMode) {
-                return (
-                  <tr
-                    key={row.id}
-                    className={cn(
-                      "border-b border-border-light",
-                      isSel && "bg-black-1",
-                    )}
-                  >
-                    {cells}
-                  </tr>
-                );
-              }
-              if (row.href) {
-                return (
-                  <tr key={row.id} className="border-b border-border-light">
-                    <td
-                      colSpan={columns.length + (selectable ? 2 : 1)}
-                      className="p-0"
-                    >
-                      <Link
-                        href={row.href}
-                        className={cn(
-                          "grid w-full items-center",
-                          selectable
-                            ? "grid-cols-[40px_1.4fr_1fr_1.15fr_1fr_1fr_40px]"
-                            : "grid-cols-[1.4fr_1fr_1.15fr_1fr_1fr_40px]",
-                          tableRowLinkClass,
-                          isSel && "bg-black-1",
-                        )}
-                      >
-                        {selectable && (
-                          <span
-                            className="pl-8"
-                            onClick={(e) => e.preventDefault()}
-                          >
-                            {row.selectable ? (
-                              <label className="flex cursor-pointer items-center">
-                                <input
-                                  type="checkbox"
-                                  className="peer sr-only"
-                                  checked={isSel}
-                                  onChange={(e) =>
-                                    onSelectRow(row.id, e.target.checked)
-                                  }
-                                />
-                                <span className="flex size-4 items-center justify-center rounded-[4px] border-[1.5px] border-black-6 bg-white peer-focus-visible:shadow-focus peer-checked:border-black-7 peer-checked:bg-black-7">
-                                  {isSel && (
-                                    <Icon name="check" size={12} className="text-white" />
-                                  )}
-                                </span>
-                              </label>
-                            ) : null}
-                          </span>
-                        )}
-                        {columns.map((col) => (
-                          <span key={col.key} className={cn(td, "block")}>
-                            {row[col.key]}
-                          </span>
-                        ))}
-                        <span className="px-4 py-3">
-                          <Icon name="chevron-right" size={16} className="text-icon-dark" />
-                        </span>
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              }
+              const go = () => {
+                if (row.href) router.push(row.href);
+                else onRowClick(row.id, Boolean(row.blocked));
+              };
               return (
-                <tr key={row.id} className="border-b border-border-light">
-                  <td
-                    colSpan={columns.length + (selectable ? 2 : 1)}
-                    className="p-0"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onRowClick(row.id, Boolean(row.blocked))}
-                      className={cn(
-                        "grid w-full items-center text-left",
-                        selectable
-                          ? "grid-cols-[40px_1.4fr_1fr_1.15fr_1fr_1fr_40px]"
-                          : "grid-cols-[1.4fr_1fr_1.15fr_1fr_1fr_40px]",
-                        tableRowLinkClass,
-                        focusRing,
-                        isSel && "bg-black-1",
-                      )}
-                    >
-                      {selectable && (
-                        <span
-                          className="pl-8"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {row.selectable ? (
-                            <label className="flex cursor-pointer items-center">
-                              <input
-                                type="checkbox"
-                                className="peer sr-only"
-                                checked={isSel}
-                                onChange={(e) =>
-                                  onSelectRow(row.id, e.target.checked)
-                                }
-                              />
-                              <span className="flex size-4 items-center justify-center rounded-[4px] border-[1.5px] border-black-6 bg-white peer-focus-visible:shadow-focus peer-checked:border-black-7 peer-checked:bg-black-7">
-                                {isSel && (
-                                  <Icon name="check" size={12} className="text-white" />
-                                )}
-                              </span>
-                            </label>
-                          ) : null}
-                        </span>
-                      )}
-                      {columns.map((col) => (
-                        <span key={col.key} className={cn(td, "block")}>
-                          {row[col.key]}
-                        </span>
-                      ))}
-                      <span className="px-4 py-3">
-                        <Icon name="chevron-right" size={16} className="text-icon-dark" />
-                      </span>
-                    </button>
-                  </td>
+                <tr
+                  key={row.id}
+                  className={cn(
+                    "border-b border-border-light",
+                    isSel && "bg-black-1",
+                    !selectionMode && "cursor-pointer hover:bg-black-1 focus-visible:bg-black-2 focus-visible:outline-none",
+                  )}
+                  tabIndex={selectionMode ? undefined : 0}
+                  aria-label={selectionMode ? undefined : `Open ${row.label ?? row.id}`}
+                  onClick={selectionMode ? undefined : go}
+                  onKeyDown={
+                    selectionMode
+                      ? undefined
+                      : (e) => {
+                          if (e.key === "Enter") go();
+                        }
+                  }
+                >
+                  {cells}
                 </tr>
               );
             })}

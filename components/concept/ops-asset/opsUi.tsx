@@ -432,12 +432,12 @@ export function AssistantPanel({
           </div>
         ))}
       </div>
-      <motion className="shrink-0 border-t border-border-light p-4">
+      <div className="shrink-0 border-t border-border-light p-4">
         <p className="mb-2 p7 text-text-secondary">
           <Icon name="info" size={12} className="mr-1 inline-block" />
           {hint}
         </p>
-        <motion className="flex gap-2">
+        <div className="flex gap-2">
           <button
             type="button"
             aria-label="Attach files"
@@ -458,21 +458,12 @@ export function AssistantPanel({
               if (e.key === "Enter") onSend();
             }}
           />
-        </motion>
-      </motion>
+        </div>
+      </div>
     </aside>
   );
 }
 
-function motion({
-  className,
-  children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) {
-  return <div className={className}>{children}</div>;
-}
 
 export function BlockingCellContent({
   item,

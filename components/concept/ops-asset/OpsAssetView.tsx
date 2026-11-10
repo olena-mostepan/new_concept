@@ -113,7 +113,7 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
             </Button>
           </div>
         </div>
-        <motion className="overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-border-light">
@@ -153,9 +153,9 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
               })}
             </tbody>
           </table>
-        </motion>
+        </div>
       </Card>
-      <motion className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Documents">
           <DocumentList
             readOnly
@@ -179,7 +179,7 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
             ))}
           </ol>
         </Card>
-      </motion>
+      </div>
       <AssetWindow
         open={editOpen}
         mode="edit"
@@ -209,12 +209,3 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
   );
 }
 
-function motion({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return <div className={className}>{children}</div>;
-}

@@ -303,7 +303,8 @@ export function OpsPackageView({ id }: { id: string }) {
             </Tabs.List>
           </Tabs.Root>
 
-          {tab === "overview" && (
+          {/* Ops work happens on the current service tab (and Overview): steps + Assets table. */}
+          {(tab === "overview" || tab === currentTab) && (
             <>
               <PackageOverviewSteps
                 account={account}
@@ -397,7 +398,7 @@ export function OpsPackageView({ id }: { id: string }) {
               />
             </>
           )}
-          {tab === "estimates" && <EstimatesPanel w={w} readOnly />}
+          {tab === "estimates" && tab !== currentTab && <EstimatesPanel w={w} readOnly />}
         </WorkstreamFrame>
         <AssetWindow
           open={windowOpen}

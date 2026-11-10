@@ -252,6 +252,7 @@ function ItemRow({
   mode: Mode;
 }) {
   const item = bundle.items[def.key] ?? { state: "missing" as const };
+  const st = item.state;
   const blocked = def.required && item.state !== "done" && item.state !== "na" && item.state !== "edit";
   return (
     <div className="grid grid-cols-[36px_1fr_auto] items-start gap-3 px-4 py-4">
@@ -277,15 +278,17 @@ function ItemRow({
             {item.source ? ` · ${item.source}` : ""}
           </p>
         )}
-        <RequirementActions
-          def={def}
-          item={item}
-          bundle={bundle}
-          w={w}
-          buildingId={buildingId}
-          patch={patch}
-          mode={mode}
-        />
+        {(st === "confirm" || st === "disagree" || st === "edit") && (
+          <RequirementActions
+            def={def}
+            item={item}
+            bundle={bundle}
+            w={w}
+            buildingId={buildingId}
+            patch={patch}
+            mode={mode}
+          />
+        )}
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {st !== "confirm" && st !== "disagree" && st !== "edit" && (

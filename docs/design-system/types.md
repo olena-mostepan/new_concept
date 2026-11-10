@@ -15,12 +15,12 @@ export interface CardProps { title?: ReactNode; action?: ReactNode; flush?: bool
 /** Same rule as PageHeader facts: label p7 tertiary, 2, value p6; min 160 wide, 40 apart, 16 between rows. detail: optional p7 third line, cards only. */
 export interface DetailsGridProps { items: { label: string; value: ReactNode; detail?: ReactNode; href?: string }[] }
 export interface KeyFigureProps { value: ReactNode; label: string; size?: 'big' | 'default' }
-export interface TableColumn { key: string; label?: string; width?: string; type?: 'title' | 'text' | 'twoLines' | 'owner' | 'chevron' | 'action' | 'number'; actionLabel?: string; /** twoLines: main line in h8 */ emphasis?: boolean }
+export interface TableColumn { key: string; label?: string; width?: string; /** Ops: blocking {item, state, detail} | recommended {count, names} | check boolean */ type?: 'title' | 'text' | 'twoLines' | 'owner' | 'chevron' | 'action' | 'number' | 'blocking' | 'recommended' | 'check'; actionLabel?: string; /** twoLines: main line in h8 */ emphasis?: boolean }
 /** A 'title' cell may be a string or {main, detail}: detail is a p7 text-tertiary meta line ("Flagship sites · 6 assets"). */
-export interface TableProps { title?: string; count?: number; /** accessible name when there's no title */ label?: string; /** text when there are no rows */ empty?: string; columns: TableColumn[]; rows: (Record<string, any> & { id?: string; changed?: boolean; href?: string; muted?: boolean })[] }
+export interface TableProps { title?: string; count?: number; /** accessible name when there's no title */ label?: string; /** text when there are no rows */ empty?: string; columns: TableColumn[]; rows: (Record<string, any> & { id?: string; changed?: boolean; href?: string; muted?: boolean; /** Ops: only ready rows */ selectable?: boolean; label?: string })[]; /** right of the title: FilterChips */ aside?: ReactNode; /** above the column labels: the SelectionBar */ toolbar?: ReactNode; selectable?: boolean; selected?: string[]; onSelect?: (ids: string[]) => void }
 export interface ChangedDotProps {}
 export interface FormFieldProps { label: string; hint?: string; error?: string; width?: number | string; children: ReactNode }
-export interface InputProps { value?: string; defaultValue?: string; placeholder?: string; type?: string; size?: 'default' | 'small'; error?: boolean; disabled?: boolean; search?: boolean; onChange?: (e: any) => void }
+export interface InputProps { value?: string; defaultValue?: string; placeholder?: string; type?: string; size?: 'default' | 'small'; error?: boolean; disabled?: boolean; search?: boolean; /** shown inside on the right: 'm²' */ unit?: string; ariaLabel?: string; onChange?: (e: any) => void }
 /** Opens the CQuel menu, never the browser's. onChange gets {target:{value}}. */
 export interface SelectProps { options: (string | { value: string; label: string })[]; value?: string; defaultValue?: string; placeholder?: string; size?: 'default' | 'small'; error?: boolean; disabled?: boolean; onChange?: (e: { target: { value: string } }) => void; onValueChange?: (value: string) => void }
 export interface TextareaProps { value?: string; defaultValue?: string; placeholder?: string; rows?: number; error?: boolean; disabled?: boolean; onChange?: (e: any) => void }
@@ -68,7 +68,7 @@ export type ServiceId = 'indicative' | 'scope' | 'tender' | 'pricing' | 'deliver
 /** 3D service illustration. Only in StatusCard (116) and PackageCard (72). */
 export interface ServiceIconProps { service: ServiceId; size?: 116 | 72 }
 /** Package page aside: 'This package is in <service>' and the strong 'See …' button. */
-export interface StatusCardProps { service?: ServiceId; href?: string; onClick?: () => void; completed?: boolean; /** 'This package is Closed · <closedOn>', grey icon, no button */ closed?: boolean; closedOn?: string }
+export interface StatusCardProps { service?: ServiceId; href?: string; onClick?: () => void; completed?: boolean; /** 'This package is Closed · <closedOn>', grey icon, no button */ closed?: boolean; closedOn?: string; /** Ops: '<n> assets need fixing first' and the strong 'Fix <n> assets' button instead of the service button */ fix?: { count: number; href?: string; onClick?: () => void } }
 /** Detail pages' top bar: Back on the left, account tools (children) on the right. Replaces the app header and section nav. */
 export interface DetailBarProps { backHref?: string; onBack?: () => void; backLabel?: string; children?: ReactNode }
 export interface SummaryCardProps { label: string; value: ReactNode; line?: string; /** makes it a filter toggle */ onClick?: () => void; pressed?: boolean }
@@ -81,7 +81,7 @@ export interface DocumentListProps { items: { name: string; type?: string; meta?
 /** Date first. you: the event still waits on the customer (orange dot). year: shown above the first event of each year. */
 export interface TimelineProps { items: { event: string; detail?: string; date: string; year?: string; you?: boolean }[]; empty?: string }
 export interface ServicesBarProps { services: { id: string; label: string; count: number; line?: string; href?: string }[]; completed?: { count: number; line?: string } }
-export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean }
+export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean; /** px; only AssetWindow goes wide (1000) */ width?: number; /** body without padding */ flush?: boolean; /** under the subtitle, e.g. a progress line */ headExtra?: ReactNode }
 export interface TooltipProps { content: ReactNode; children: ReactNode; /** 'definition': sentences, up to 300 wide; only for TypeLabel */ variant?: 'label' | 'definition' }
 export interface YourActionOnlyProps { checked: boolean; onChange: (checked: boolean) => void; label?: string }
 /** Display chip (no onClick, never clickable): 24px (size 'big': 32px, for a package's services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
@@ -93,4 +93,28 @@ export interface TrendChartProps { labels: string[]; longLabels?: string[]; seri
 export interface FactSelectProps { options: { id: string; name: string; line?: string; earlier?: boolean }[]; value?: string; onChange?: (id: string) => void; label?: string }
 /** Asset page Overview: the selected package. Display chips, 'This asset is in <service>' + Open package, and the current service's steps for this asset as children. Omit service for a package the asset has left. */
 export interface PackageCardProps { name?: string; service?: ServiceId; completed?: boolean; services?: { id: ServiceId; label: string; lead: 'done' | 'now' }[]; href?: string; onOpen?: () => void; title?: string; aside?: string; children?: ReactNode }
+
+/* ---------- Ops asset setup (v42) ---------- */
+export interface FoundValueProps { value: string; file: string; page?: number | string; /** the file's own words */ quote?: string; viewHref?: string; onView?: () => void; /** actions on the right: Use, Enter another */ children?: ReactNode }
+export type RequirementState = 'done' | 'confirm' | 'disagree' | 'nofile' | 'missing' | 'na' | 'edit';
+export interface RequirementRowProps { /** CQuel icon for the item's tile: location, size, running-cost, building, solar, home */ icon?: IconName; hint?: string; name: string; state: RequirementState; required?: boolean; value?: string; source?: string; unit?: string; found?: FoundValueProps; options?: FoundValueProps[]; uploadLabel?: string; placeholder?: string;
+  edit?: { value?: string; sources?: string[]; source?: string; /** "860 m² · from Kervelstraat_plans.pdf, page 1" */ was?: string; /** shown when the asset has moved on */ warning?: { title: string; text: ReactNode } };
+  onUse?: (found?: FoundValueProps) => void; onEnterAnother?: () => void; onUpload?: () => void; onNotAvailable?: () => void; onSave?: () => void; onUndo?: () => void; onEdit?: () => void; onCancel?: () => void }
+/** s3 header with a count: "Blocking the next step · 1" */
+export interface RequirementGroupProps { label: string; count?: number; /** one line on what the group means */ hint?: string; children: ReactNode }
+export interface UploadedFile { name: string; type?: string; state?: 'typed' | 'reading' | 'unknown'; onChooseType?: () => void }
+export interface UploadRowProps { onUpload?: () => void; label?: string; files?: UploadedFile[]; /** false: only the file list */ drop?: boolean }
+/** Fix assets / Edit asset data: a ~1000 Modal with a 260 side list. Footer: Done only. dirty: asks before closing. */
+export interface AssetWindowProps { open?: boolean; inline?: boolean; title: string; subtitle?: string; progress?: { done: number; total: number }; groups: { label: string; count?: number; empty?: string; items: { id: string; name: string; line?: string; toFix?: boolean; icon?: IconName }[] }[]; value?: string; onSelect?: (id: string) => void; showAll?: { count: number; href?: string; onClick?: () => void }; asset: { name: string; meta?: string; icon?: IconName; link?: { label: string; href?: string; onClick?: () => void } }; dirty?: boolean; onDone?: () => void; onClose?: () => void; children: ReactNode }
+export interface SelectionBarProps { names?: string[]; count?: number; action?: { label: string; onClick?: () => void }; onClear?: () => void }
+export interface AssistantMessage { from: 'me' | 'assistant'; text: string; file?: string; changes?: string[]; note?: string; onUndo?: () => void }
+/** Rough first release: a 400 side panel on the current package. */
+export interface AssistantPanelProps { /** 'Works on Solar PV · Estimates' */ scope?: string; messages: AssistantMessage[]; hint?: string; placeholder?: string; onClose?: () => void; onAttach?: () => void }
+export interface AssistantButtonProps { onClick?: () => void; label?: string; /** static instead of fixed bottom right */ inline?: boolean }
+/** 2px ink outline on a changed cell plus an UPDATED tag. */
+export interface UpdatedHighlightProps { children: ReactNode }
+/** The assistant's mark: ink circle with the idea icon. */
+export interface AiMarkProps { size?: 'default' | 'small'; inverse?: boolean }
+/** done: green tick; open: dashed ring; na: grey minus. */
+export interface StateMarkProps { state: 'done' | 'open' | 'na'; size?: number }
 ```

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 41, 06 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 45, 10 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -19,6 +19,7 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - the selected service filter card on a batch page (4px top bar);
   - the `now` display Chip: the step, phase or service where work is under way (light accent, darker border, orange dot);
   - the History dot of an event that still waits on the customer.
+- **On Ops data screens:** the dot on what blocks (a blocked row in the Assets table, an asset under "To fix", the badge on a required item's tile), and `bg-accent` on the asset selected in the AssetWindow (where you are). Found values are the blue `info` tint; Done is `success` green; the assistant mark and the UPDATED highlight are ink.
 - Everything else is ink and greys: done and later chips, the pipeline bar, checkboxes, progress, hover fills and the black focus ring. Orange never means "the pointer is here".
 - **The one black pill** is the selected filter Chip. Tag `strong` stays retired.
 - **Dark means go there; orange means do this.** The `strong` Button (`black-7` fill) is the one way on from a page; the `primary` Button is the one action that moves the work on.
@@ -37,7 +38,13 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - **project**: one asset × one solution.
   - **batch**: unchanged for now. "Programme" may replace it later.
   - **Services**, in route order: Estimates, Planning, Tender, Pricing, Delivery. A service a project skips is "Not required".
-- **Ops screens** use the ops words: the nav is Portfolio · Workstreams · the five services, and ops tools say **property** and **workstream** ("Choose properties", "Add workstream", "Properties (12)"). Cards that ops shares with the customer Overview keep the customer words (asset, package, Your action).
+- **Ops screens say package and asset too** (10 Nov): the Ops package page, the Ops asset page, the Fix assets and Edit asset data windows, and every data screen use **package** and **asset**, the same as the customer screens. The old ops words (**property**, **workstream**) stay only where an existing Ops tool still shows them (the ops nav, "Choose properties", "Add workstream"), until that tool is reworked.
+- **Ops data words** are fixed. Use them exactly:
+  - **Required**: a check that blocks the asset's next step. **Recommended**: a check that helps but never blocks.
+  - **Blocking the next step** and **Recommended, missing**: the two group headers, with a count ("Blocking the next step · 1").
+  - **Blocked since**: the date the oldest required item became open.
+  - **To fix** and **Done**: the two groups of assets in the Fix assets window ("To fix · 3", "Done · 0").
+- **Ops rows say what is there and what is missing**, never who acts: no "you", "customer" or Your action labels on Ops data rows ("Roof area · to confirm" / "420 m² found in Dachplan_Halle_A.pdf").
 - **Responsibility** on customer screens is only "Your action". Nothing marks CQuel's or suppliers' action; ops screens keep all four labels ("Your action", "CQuel's action", "Suppliers' action", "Done"). With a count, the label comes first: "Your action: 2", never "2 your action".
 - **Every line says something specific.** A next step is one "main — detail" pair that ends with a date: "Choose a supplier" / "results sent 13 Oct". No "waiting N days" counts.
 - **No invented future dates or data.** Estimates are labelled ("Est. Nov"). Things not booked yet say so ("Booked — date to confirm"). Nothing the platform doesn't hold: no benchmarks, no "savings".
@@ -152,6 +159,25 @@ An asset joins or leaves a package (split, moved to another package, continued, 
 - **Batch page:** two tabs, "Assets (<n>)" and "Packages (<n>)". ServiceCards count assets and filter only the Assets tab; "Dropped" and "Moved out" cards appear only when there are any, in text-tertiary. Closed packages fold into one "<n> closed" row on the Packages tab. Recent activity sits under the tabs.
 - **A closed package's StatusCard:** "This package is / Closed · <date>", grey icon, no button.
 
+## Ops asset setup and editing
+
+The Ops package page, the Ops asset page, the AssetWindow (Fix assets, Edit asset data) and the assistant. They keep the customer pages' structure and add the pieces below. Example throughout: package Solar PV · Estimates, Flagship sites, 6 assets.
+
+- **Checks:** each service has a list of checks per solution. **Required** blocks the asset's next step; **Recommended** helps and never blocks. An asset is **blocked** while any required item isn't Done; **Blocked since** is the date the oldest required item became open. Item states: Done, to confirm, files disagree, no file, Not available (RequirementRow).
+- **Pieces:** StatusCard with `fix` ("3 assets need fixing first", "Fix 3 assets"); the Assets table with BlockingCell, RecommendedCell, FilterChips (Blocked · Ready · All) and selection with the SelectionBar; AssetWindow with UploadRow, RequirementGroup and RequirementRow (FoundValue inside); the asset page's Data card (a read-only Table); AssistantPanel, AssistantButton and UpdatedHighlight.
+- **Saving:** every change is saved by its own button: "Use 420 m²", "Save 820 m²", "Not available", or an upload. Nothing autosaves; Done only closes. Closing a window with an unsaved edit asks first ("You have an unsaved change. Close without saving it?").
+- **A value read from a file is never used until Ops confirm it,** and values that disagree are never chosen for Ops, by the window or by the assistant.
+- **Look** (Olena, 10 Nov: "work harder"): Ops data screens are designed, not bare lists. Every item has its own icon from the CQuel set in a 36px tile (address `location`, roof area `size`, consumption `running-cost`, plans `building`, roof drawings `solar`, roof covering `home`); a green tick badge on the tile when Done, the orange dot when it blocks. Groups are cards with a grey head (title, count, one line on what the group means). State reads as a Tag next to the name (To confirm, Files disagree, No file, Missing, Not available). Done is status green (`success`), never a black blob. Never emoji.
+- **Alignment:** a row is a three-column grid (36 tile · text · actions), vertically centred; anything that opens under a row (a found value, an edit) starts at the text column.
+- **Buttons,** one `primary` per screen or panel:
+  - `primary` (orange): the one action that moves work on: "Start estimates for 2" in the SelectionBar, and "Save <value>" in an open edit.
+  - `primary` also for Done in the AssetWindow footer (Olena, 10 Nov): it closes the job Ops came to do.
+  - `strong` (dark): "Fix 3 assets" in the StatusCard.
+  - `secondary`: per-item actions ("Use 420 m²", "Enter another", "Upload bills or meter data", "Not available", Save next to a missing value) and "Upload documents".
+  - "Use <value>" stays secondary: it's one of several per-item actions, and orange on each would make a column of orange buttons. The edit's "Save <value>" is the primary because only one edit is open at a time.
+- **History:** every saved change becomes a Timeline event with the old value ("Usable roof area changed · 860 → 820 m²", "Usable roof area added · 1,150 m² · from Roof_layout_HH.pdf"), whoever made it, the assistant included.
+- **Documents** on the asset page list the files, with no drop zone. Files come in through Upload documents, an item's own upload, the UploadRow, or the assistant.
+
 ## Page furniture
 
 - **Two kinds of page, two tops.**
@@ -167,7 +193,7 @@ An asset joins or leaves a package (split, moved to another package, continued, 
 - **EmptyState** for anything with nothing to show, and **Banner** for errors and page-level messages.
 - **Dropdowns** (Select, FilterSelect, FactSelect) all open the one CQuel menu: white, `border-dark`, `radius-md`, floating shadow. The chosen row is SemiBold with no fill; the row under the pointer or keyboard gets the light accent. Never the browser's menu (no blue). The field's arrow is the `chevron-down` icon, vertically centred, 12 from the right.
 - **Progress** and **PlanTrack** are unused for now.
-- **Modal** for one short task (confirm a date). **Tooltip** on every icon-only button.
+- **Modal** for one short task (confirm a date). The AssetWindow is the one wide exception. **Tooltip** on every icon-only button.
 - **Theme:** light only, for now. There are no dark tokens; don't add half of one.
 
 ## Iconography

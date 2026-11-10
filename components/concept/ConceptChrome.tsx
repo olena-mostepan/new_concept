@@ -235,7 +235,7 @@ function AppHeader({
       <Nav
         items={nav}
         path={path}
-        grouped={!ops}
+        grouped
         activeId={ops ? undefined : activeId}
       />
     </header>

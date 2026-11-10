@@ -71,9 +71,11 @@ export function shortFact(text: string): string {
 export function PackageStatusCard({
   w,
   fix,
+  ops,
 }: {
   w: Workstream;
   fix?: { count: number; href?: string; onClick?: () => void };
+  ops?: boolean;
 }) {
   const searchParams = useSearchParams();
   const sid = packageStatusService(w);
@@ -84,7 +86,9 @@ export function PackageStatusCard({
   const params = new URLSearchParams(searchParams.toString());
   params.set("tab", cta.tab);
   const qs = params.toString();
-  const href = `${hrefs.workstream(w.id)}?${qs}`;
+  const href = ops
+    ? `${hrefs.opsPackage(w.id)}?tab=estimates`
+    : `${hrefs.workstream(w.id)}?${qs}`;
   const showFix = fix && fix.count > 0;
 
   return (
@@ -244,9 +248,11 @@ export function WorkstreamHeader({
 
   const aside =
     statusAside ??
-    (fix
-      ? <PackageStatusCard w={w} fix={fix} />
-      : <PackageStatusCard w={w} />);
+    (fix ? (
+      <PackageStatusCard w={w} fix={fix} ops={ops} />
+    ) : (
+      <PackageStatusCard w={w} ops={ops} />
+    ));
 
   return (
     <PageHeader

@@ -172,7 +172,7 @@ function PhaseSteps({ w, columns }: { w: Workstream; columns: StepColumn[] }) {
   );
 }
 
-function packageCardChips(w: Workstream): PackageCardChip[] {
+export function packageCardChips(w: Workstream): PackageCardChip[] {
   return SERVICES.flatMap((entry) => {
     const phase = w.phases.find((candidate) => candidate.service === entry.id);
     if (!phase || (phase.state !== "done" && phase.state !== "now")) return [];
@@ -195,15 +195,18 @@ export function PackageOverviewSteps({
   account,
   w,
   columns,
+  chips,
 }: {
   account: ReturnType<typeof useConcept>["account"];
   w: Workstream;
   columns: StepColumn[];
+  chips?: PackageCardChip[];
 }) {
   const title = `${service(w.service).label} for this package`;
+  const chipList = chips ?? packageCardChips(w);
   return (
     <PackageCard
-      chips={packageCardChips(w)}
+      chips={chipList}
       panelTitle={title}
       panelAside={packagePanelAside(w)}
       panelChildren={<PhaseSteps w={w} columns={columns} />}

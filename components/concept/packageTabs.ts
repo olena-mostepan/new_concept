@@ -45,6 +45,28 @@ function hasContract(w: Workstream) {
   );
 }
 
+/** Ops package page: tabs do not wait on customer estimate data. */
+export function opsTabsFor(w: Workstream) {
+  const current = packagePrimaryTab(w);
+  const tabs: Array<{
+    id: PackageTabId;
+    label: string;
+    dot?: boolean;
+  }> = [{ id: "overview", label: "Overview" }];
+  const indicative = w.phases.find((p) => p.service === "indicative");
+  if (
+    w.service === "indicative" ||
+    (indicative && indicative.state !== "planned")
+  ) {
+    tabs.push({
+      id: "estimates",
+      label: "Estimates",
+      dot: current === "estimates",
+    });
+  }
+  return tabs;
+}
+
 export function tabsFor(w: Workstream, account: Account) {
   const current = packagePrimaryTab(w);
   const inheritedEstimates = phaseIsInheritedFrom(w, account, "indicative");

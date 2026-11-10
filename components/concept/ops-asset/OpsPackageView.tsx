@@ -26,8 +26,11 @@ import { hrefs } from "../hrefs";
 import { useConcept } from "../store";
 import { useOpsDetailBar } from "./OpsDetailBarActions";
 import { WorkstreamFrame, packagePrimaryTab } from "../WorkstreamChrome";
-import { PackageOverviewSteps } from "../PackageView";
-import { tabsFor, type PackageTabId } from "../packageTabs";
+import { EstimatesPanel } from "../IndicativeWorkstream";
+import { PackageOverviewSteps, packageCardChips } from "../PackageView";
+import { opsTabsFor, type PackageTabId } from "../packageTabs";
+import { service, type Workstream } from "@/lib/concept/model";
+import type { PackageCardChip } from "../ui";
 import { AssetWindow } from "./AssetWindow";
 import {
   AssistantPanel,
@@ -39,6 +42,18 @@ import {
 } from "./opsUi";
 
 type Filter = "blocked" | "ready" | "all";
+
+function opsDisplayChips(w: Workstream): PackageCardChip[] {
+  const fromPhases = packageCardChips(w);
+  if (fromPhases.length) return fromPhases;
+  return [
+    {
+      id: w.service,
+      label: service(w.service).label,
+      lead: "now",
+    },
+  ];
+}
 
 export function OpsPackageView({ id }: { id: string }) {
   const { account, patchOpsBundle, startEstimatesForAssets, markOpsUpdated } =
@@ -68,7 +83,7 @@ export function OpsPackageView({ id }: { id: string }) {
     return () => bar?.registerAskAssistant(null);
   }, [bar?.registerAskAssistant]);
 
-  const tabs = w ? tabsFor(w, account) : [];
+  const tabs = w ? opsTabsFor(w) : [];
   const requested = searchParams.get("tab");
   let tab: PackageTabId = "overview";
   if (requested && tabs.some((item) => item.id === requested)) {
@@ -84,21 +99,13 @@ export function OpsPackageView({ id }: { id: string }) {
     });
   };
 
-  if (!w) {
-    return (
-      <Page>
-        <p className="h6 text-text-primary">Package not found</p>
-      </Page>
-    );
-  }
-
-  const blockedN = blockedCount(account, w);
   const stepColumns = useMemo(
-    () => opsIndicativeSteps(account, w),
+    () => (w ? opsIndicativeSteps(account, w) : []),
     [account, w],
   );
 
   const assetRows = useMemo(() => {
+    if (!w) return [];
     const rows = w.projects.map((row) => {
       const bundle = account.opsAssetData?.[w.id]?.[row.buildingId];
       const building = getBuilding(account, row.buildingId);
@@ -139,6 +146,16 @@ export function OpsPackageView({ id }: { id: string }) {
     );
     return rows;
   }, [account, w]);
+
+  if (!w) {
+    return (
+      <Page>
+        <p className="h6 text-text-primary">Package not found</p>
+      </Page>
+    );
+  }
+
+  const blockedN = blockedCount(account, w);
 
   function days(d: string) {
     if (!d) return 0;
@@ -270,6 +287,7 @@ export function OpsPackageView({ id }: { id: string }) {
                 account={account}
                 w={w}
                 columns={stepColumns}
+                chips={opsDisplayChips(w)}
               />
               <OpsDataTable
                 title="Assets"
@@ -354,6 +372,7 @@ export function OpsPackageView({ id }: { id: string }) {
               />
             </>
           )}
+          {tab === "estimates" && <EstimatesPanel w={w} readOnly />}
         </WorkstreamFrame>
         <AssetWindow
           open={windowOpen}

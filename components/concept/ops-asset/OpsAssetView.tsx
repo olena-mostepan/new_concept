@@ -11,14 +11,17 @@ import {
   short,
 } from "@/lib/concept/derive";
 import { checksFor } from "@/lib/concept/checks";
-import { opsIndicativeSteps, stepLabel } from "@/lib/concept/opsAssetDerive";
+import { blockingCell, opsIndicativeSteps, stepLabel } from "@/lib/concept/opsAssetDerive";
 import { opsItemSubline } from "@/lib/concept/opsDisplay";
 import { service as serviceDef } from "@/lib/concept/model";
 import type { CheckItemState } from "@/lib/concept/checks";
 import {
   Button,
   Card,
+  ChipTrack,
   IconButton,
+  ServiceIcon,
+  Timeline,
   Page,
   PageHeader,
   PackageCard,
@@ -32,7 +35,7 @@ import { hrefs } from "../hrefs";
 import { useConcept } from "../store";
 import { useOpsDetailBar } from "./OpsDetailBarActions";
 import { AssetWindow } from "./AssetWindow";
-import { AssistantPanel, StateMark } from "./opsUi";
+import { AssetFileList, AssistantPanel, StateMark } from "./opsUi";
 import { packagePrimaryTab } from "../WorkstreamChrome";
 import { PackageOverviewSteps, packageCardChips } from "../PackageView";
 import { opsTabsFor, type PackageTabId } from "../packageTabs";
@@ -157,13 +160,6 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
         ]}
         title={building.name}
         facts={facts}
-        aside={
-          bundle.blockedSince ? (
-            <p className="p6 text-text-secondary">
-              Blocked since {short(bundle.blockedSince)}
-            </p>
-          ) : undefined
-        }
       />
 
       <Tabs.Root value={tab} onValueChange={setTab}>
@@ -188,18 +184,62 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
         {(tab === "overview" || tab === packagePrimaryTab(w)) && (
           <>
             <PackageCard
+              packageName={w.name}
               chips={chips}
-              panelTitle={`${serviceDef(w.service).label} at this asset`}
-              panelAside={`${w.name} · ${stepLabel(bundle.projectStep)}`}
-              openPackageHref={hrefs.opsPackage(w.id)}
-              openPackageAriaLabel="Open package"
+              asideContent={
+                <div className="flex shrink-0 items-center gap-6">
+                  <div className="flex items-center gap-4">
+                    <ServiceIcon service={w.service} size={72} className="shrink-0" />
+                    <div className="min-w-0">
+                      <p className="p7 text-text-tertiary">This asset is in</p>
+                      <p className="h4 text-text-primary">{serviceDef(w.service).label}</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="strong"
+                    size="large"
+                    icon="chevron-right"
+                    iconPosition="right"
+                    href={hrefs.opsPackage(w.id)}
+                    ariaLabel={`Open ${w.name}`}
+                  >
+                    Open package
+                  </Button>
+                </div>
+              }
+              panelTitle={`${serviceDef(w.service).label} for this asset`}
+              panelAside={
+                bundle.blockedSince
+                  ? `Blocked since ${short(bundle.blockedSince)}`
+                  : bundle.estimateStartedOn
+                    ? `Started ${short(bundle.estimateStartedOn)}`
+                    : undefined
+              }
               panelChildren={
-                <p className="p6 text-text-secondary">
-                  {bundle.stepLineOverride ??
-                    (bundle.estimateStartedOn
-                      ? `In Estimate since ${short(bundle.estimateStartedOn)}`
-                      : stepLabel(bundle.projectStep))}
-                </p>
+                <ChipTrack
+                  steps={serviceDef(w.service).steps.map((label, i) => {
+                    const lead: "done" | "now" | "next" =
+                      bundle.projectStep > i ? "done" : bundle.projectStep === i ? "now" : "next";
+                    const block = blockingCell(bundle, w.service, w.solution);
+                    const note =
+                      lead !== "now"
+                        ? ""
+                        : bundle.stepLineOverride ??
+                          (block
+                            ? `${block.item} · ${block.state}`
+                            : i === 0
+                              ? "Ready for Estimate"
+                              : bundle.estimateStartedOn
+                                ? `since ${short(bundle.estimateStartedOn)}`
+                                : "");
+                    return {
+                      key: label,
+                      lead,
+                      label,
+                      notes: note ? [{ text: note, className: "p7 text-text-secondary" }] : [],
+                    };
+                  })}
+                />
               }
             />
             <Card>
@@ -208,7 +248,7 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
                   Data for {serviceDef(w.service).label}
                 </h2>
                 <div className="flex gap-2">
-                  <Button type="secondary" size="default" icon="upload">
+                  <Button type="secondary" size="default" icon="upload" onClick={() => setEditOpen(true)}>
                     Upload documents
                   </Button>
                   <Button
@@ -282,33 +322,21 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
 
       <div className="mt-6 grid gap-6 pb-12 lg:grid-cols-2">
         <Card title="Documents">
-          <ul className="divide-y divide-border-light">
-            {bundle.files.map((f) => (
-              <li
-                key={f.name}
-                className="flex items-center justify-between gap-3 px-5 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="h8 text-text-primary">{f.name}</p>
-                  <p className="p7 text-text-secondary">{f.what ?? f.type ?? "File"}</p>
-                </div>
-                <IconButton icon="download" label="Download" type="secondary" />
-              </li>
-            ))}
-          </ul>
+          <AssetFileList files={bundle.files} empty="No documents yet" />
         </Card>
         <Card title="History">
-          <ol className="divide-y divide-border-light px-5">
-            {bundle.history.map((ev) => (
-              <li key={`${ev.date}-${ev.title}-${ev.detail ?? ""}`} className="py-3">
-                <p className="h8 text-text-primary">{ev.title}</p>
-                {ev.detail && (
-                  <p className="p7 text-text-secondary">{ev.detail}</p>
-                )}
-                <p className="p7 text-text-tertiary">{ev.date}</p>
-              </li>
-            ))}
-          </ol>
+          {bundle.history.length ? (
+            <Timeline
+              items={bundle.history.map((ev) => ({
+                event: ev.title,
+                detail: ev.detail,
+                date: short(ev.date),
+                year: "2026",
+              }))}
+            />
+          ) : (
+            <p className="p6 text-text-secondary">Nothing yet</p>
+          )}
         </Card>
       </div>
 

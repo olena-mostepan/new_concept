@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Tag } from "@/components/ds/tag";
 import {
   Button,
   Icon,
+  IconButton,
   focusRing,
   filterSearchClass,
   th,
@@ -538,5 +540,46 @@ export function RecCellContent({
     <p className="p6 text-text-primary">
       {count} · {names}
     </p>
+  );
+}
+
+/** An asset's files in the DS DocumentList look: name, type tag and what it is, Download. */
+export function AssetFileList({
+  files,
+  empty = "No files yet",
+}: {
+  files: { name: string; type?: string; what?: string; state?: "reading" | "unknown" }[];
+  empty?: string;
+}) {
+  if (!files.length) return <p className="py-3 p6 text-text-secondary">{empty}</p>;
+  return (
+    <ul>
+      {files.map((f, i) => {
+        const ext = (f.name.split(".").pop() ?? "").toUpperCase();
+        const meta =
+          f.state === "reading" ? "Reading…" : f.state === "unknown" ? "Couldn\u2019t tell what this is" : f.what ?? "File";
+        return (
+          <li
+            key={f.name}
+            className={cn("flex items-center justify-between gap-4 py-3", i > 0 && "border-t border-border-light")}
+          >
+            <div className="min-w-0">
+              <p className="h8 text-text-title">{f.name}</p>
+              <div className="mt-0.5 flex items-center gap-1.5">
+                {ext && <Tag type="neutral" size="xsmall">{ext}</Tag>}
+                <p className="p7 text-text-secondary">{meta}</p>
+              </div>
+            </div>
+            {f.state === "reading" ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-black-3 border-t-black-6" role="img" aria-label="Reading" />
+            ) : f.state === "unknown" ? (
+              <Button type="secondary" size="small">Choose a type</Button>
+            ) : (
+              <IconButton icon="download" label={`Download ${f.name}`} />
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

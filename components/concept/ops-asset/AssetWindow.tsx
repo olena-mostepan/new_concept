@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { Button, Dropdown, Icon, IconButton, focusRing } from "../ui";
 import { hrefs } from "../hrefs";
 import {
+  AssetFileList,
   FoundValue,
   OpsModal,
   RequirementGroup,
@@ -204,11 +205,11 @@ function RequirementActions({
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="primary" size="default" onClick={save} disabled={!shown}>
-            {shown ? `Save ${shown}${def.unit ? ` ${def.unit}` : ""}` : "Save"}
-          </Button>
-          <Button type="secondary" size="default" onClick={cancel}>
+          <Button type="secondary" size="large" onClick={cancel}>
             Cancel
+          </Button>
+          <Button type="primary" size="large" onClick={save} disabled={!shown}>
+            {shown ? `Save ${shown}${def.unit ? ` ${def.unit}` : ""}` : "Save"}
           </Button>
         </div>
       </div>
@@ -616,25 +617,7 @@ export function AssetWindow({
               count={bundle.files.length}
               countLabel={`${bundle.files.length} ${bundle.files.length === 1 ? "file" : "files"}`}
             >
-              {bundle.files.map((file) => (
-                <div
-                  key={file.name}
-                  className="flex items-center justify-between gap-3 px-4 py-3"
-                >
-                  <div>
-                    <p className="h8 text-text-primary">{file.name}</p>
-                    <p className="p7 text-text-secondary">
-                      {file.type ?? (file.state === "reading" ? "Reading…" : "—")}
-                      {file.what ? ` · ${file.what}` : ""}
-                    </p>
-                  </div>
-                  {file.state === "reading" ? (
-                    <span className="p7 text-text-tertiary">Reading…</span>
-                  ) : (
-                    <IconButton icon="download" label={`Download ${file.name}`} type="secondary" />
-                  )}
-                </div>
-              ))}
+              <AssetFileList files={bundle.files} />
             </RequirementGroup>
           </div>
         </div>

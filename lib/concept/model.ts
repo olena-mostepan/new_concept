@@ -247,7 +247,7 @@ export interface ProjectRow {
   /** Set when the asset came into this package after it started. */
   joined?: { on: string; from?: string; reason?: string }
   /** Still in the package, but waiting. */
-  hold?: { since: string; reason: string }
+  hold?: { since: string; reason?: string }
   /** € thousands, low–high */
   estimate?: [number, number]
   paybackYears?: number | 'over12'

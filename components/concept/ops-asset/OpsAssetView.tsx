@@ -321,9 +321,6 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
       </div>
 
       <div className="mt-6 grid gap-6 pb-12 lg:grid-cols-2">
-        <Card title="Documents">
-          <AssetFileList files={bundle.files} empty="No documents yet" />
-        </Card>
         <Card title="History">
           {bundle.history.length ? (
             <Timeline
@@ -337,6 +334,9 @@ export function OpsAssetView({ buildingId }: { buildingId: string }) {
           ) : (
             <p className="p6 text-text-secondary">Nothing yet</p>
           )}
+        </Card>
+        <Card title="Documents">
+          <AssetFileList files={bundle.files} empty="No documents yet" />
         </Card>
       </div>
 

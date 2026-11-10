@@ -64,7 +64,7 @@ export function SelectionBar({
   onClear: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border-dark bg-bg-accent px-3 py-2">
+    <div className="flex items-center justify-between gap-3 rounded-md bg-bg-accent py-2 pl-4 pr-2">
       <span className="h8 text-[var(--accent-hover)]">{count} selected</span>
       <div className="flex items-center gap-2">
         <button
@@ -341,7 +341,7 @@ export function OpsDataTable({
                               onSelectRow(row.id, e.target.checked)
                             }
                           />
-                          <span className="flex size-4 items-center justify-center rounded-[4px] border-[1.5px] border-black-6 bg-white peer-focus-visible:shadow-focus peer-checked:border-black-7 peer-checked:bg-black-7">
+                          <span className="flex size-4 items-center justify-center rounded-sm border border-border-dark bg-white peer-focus-visible:shadow-focus peer-checked:border-black-7 peer-checked:bg-black-7">
                             {isSel && (
                               <Icon name="check" size={12} className="text-white" />
                             )}

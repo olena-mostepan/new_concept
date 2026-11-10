@@ -3,6 +3,89 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Type scale as @utility so variants like data-[state=active]:h8 compile (plain .h8 in @layer components does not). */
+@utility h3 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility h4 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility h5 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility h6 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility h7 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility h8 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility h9 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility p6 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility p7 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+@utility s3 {
+  font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 :root {
   /* primitives */
   --black-1: #f9fafb;

@@ -213,8 +213,8 @@ export const tabListClass =
   "mb-4 flex gap-8 border-b border-border-light";
 
 export const tabTriggerClass = cn(
-  "inline-flex h-8 shrink-0 items-start whitespace-nowrap border-b-2 border-transparent px-0 pb-3 pt-0 -mb-px p6 text-text-secondary outline-none transition-colors hover:text-text-primary hover:shadow-[inset_0_-2px_0_var(--black-3)] data-[state=active]:hover:shadow-none focus-visible:shadow-focus",
-  "data-[state=active]:border-brand-6 data-[state=active]:h8 data-[state=active]:text-text-primary",
+  "inline-flex h-8 shrink-0 items-start whitespace-nowrap rounded-none border-b-2 border-transparent px-0 pb-3 pt-0 -mb-px text-text-secondary outline-none transition-colors hover:text-text-primary hover:shadow-[inset_0_-2px_0_var(--black-3)] data-[state=active]:hover:shadow-none focus-visible:shadow-focus",
+  "data-[state=inactive]:p6 data-[state=active]:h8 data-[state=active]:text-text-primary data-[state=active]:border-brand-6",
 );
 
 export const pageTitle = "h4 text-text-primary";
@@ -404,13 +404,13 @@ export const filterSearchClass =
 
 /** Shared with FactSelect / PackagePicker menus */
 export const dropdownMenuContentClass =
-  "bg-white border border-border-dark rounded-md shadow-floating p-1.5 min-w-[var(--radix-select-trigger-width)] max-w-[360px] max-h-[320px] z-50";
+  "bg-white border border-border-dark rounded-md p6 font-sans shadow-floating p-1.5 min-w-[var(--radix-select-trigger-width)] max-w-[360px] max-h-[320px] z-50";
 
 export const dropdownMenuItemClass =
   "rounded-sm outline-none cursor-pointer data-[highlighted]:bg-black-2 data-[state=checked]:bg-transparent";
 
 const dropdownTriggerBaseClass =
-  "flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border-dark bg-white px-3 p6 font-sans outline-none transition-colors hover:border-black-4 data-[state=open]:border-black-6 focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)] disabled:cursor-not-allowed disabled:bg-bg-container-grey disabled:text-text-tertiary";
+  "flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border-dark bg-white px-3 p6 font-sans text-text-primary outline-none transition-colors hover:border-black-4 data-[state=open]:border-black-6 focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)] disabled:cursor-not-allowed disabled:bg-bg-container-grey disabled:text-text-tertiary";
 
 export function Dropdown({
   value,
@@ -448,12 +448,10 @@ export function Dropdown({
           triggerClassName,
         )}
       >
+        {/* Radix Select.Value does not forward className — typography lives on the trigger. */}
         <RadixSelect.Value
           placeholder={placeholder}
-          className={cn(
-            "min-w-0 flex-1 truncate text-left p6 text-text-primary",
-            valueClassName,
-          )}
+          className={cn("min-w-0 flex-1 truncate text-left", valueClassName)}
         />
         <span className="pointer-events-none flex h-4 w-4 shrink-0 items-center justify-center text-icon-dark">
           <Icon name="chevron-down" size={16} />
@@ -467,26 +465,28 @@ export function Dropdown({
           className={cn(dropdownMenuContentClass, "overflow-hidden")}
         >
           <RadixSelect.Viewport className="max-h-[320px] overflow-y-auto p-0">
-            {options.map((opt) => (
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
               <RadixSelect.Item
                 key={opt.value}
                 value={opt.value}
                 textValue={opt.label}
                 className={cn(
                   dropdownMenuItemClass,
-                  "flex w-full items-center gap-2 px-3 py-2 text-left",
-                  "[&[data-state=checked]_.item-row-label]:h8",
-                  "[&[data-state=checked]_.item-row-label]:font-semibold",
+                  "flex w-full items-center gap-2 px-3 py-2 text-left font-sans text-text-primary",
+                  isSelected ? "h8" : "p6",
                 )}
               >
-                <RadixSelect.ItemText className="item-row-label min-w-0 flex-1 p6 text-text-primary">
+                <RadixSelect.ItemText className="item-row-label min-w-0 flex-1">
                   {opt.label}
                 </RadixSelect.ItemText>
                 <RadixSelect.ItemIndicator className="ml-auto shrink-0">
                   <Icon name="check" size={16} className="text-icon-strong" />
                 </RadixSelect.ItemIndicator>
               </RadixSelect.Item>
-            ))}
+            );
+            })}
           </RadixSelect.Viewport>
         </RadixSelect.Content>
       </RadixSelect.Portal>
@@ -748,7 +748,7 @@ export function YourActionOnly({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex h-10 cursor-pointer items-center gap-2 rounded-sm outline-none focus-within:shadow-focus">
+    <label className="flex h-10 cursor-pointer items-center gap-2">
       <input
         type="checkbox"
         className="peer sr-only"
@@ -757,7 +757,7 @@ export function YourActionOnly({
       />
       <span
         className={cn(
-          "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px]",
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] outline-none peer-focus-visible:shadow-focus",
           checked
             ? "border-black-7 bg-black-7 text-white"
             : "border-black-6 bg-white",
@@ -1274,19 +1274,12 @@ export function PackagePicker({
                             textValue={item.name}
                             className={cn(
                               dropdownMenuItemClass,
-                              "flex w-full cursor-pointer items-start gap-2 text-left",
-                              "[&[data-state=checked]_.item-row-label]:font-semibold",
+                              "flex w-full cursor-pointer items-start gap-2 text-left font-sans text-text-primary",
+                              isSelected ? "h8" : "p6",
                             )}
                           >
                             <div className="min-w-0 flex-1">
-                              <RadixSelect.ItemText
-                                className={cn(
-                                  "item-row-label block",
-                                  isSelected
-                                    ? "h8 text-text-primary"
-                                    : "p6 text-text-primary",
-                                )}
-                              >
+                              <RadixSelect.ItemText className="item-row-label block">
                                 {item.name}
                               </RadixSelect.ItemText>
                               <span className="mt-0.5 block p7 text-text-secondary">
@@ -1311,19 +1304,12 @@ export function PackagePicker({
                       textValue={item.name}
                       className={cn(
                         dropdownMenuItemClass,
-                        "flex w-full cursor-pointer items-start gap-2 text-left",
-                        "[&[data-state=checked]_.item-row-label]:font-semibold",
+                        "flex w-full cursor-pointer items-start gap-2 text-left font-sans text-text-primary",
+                        isSelected ? "h8" : "p6",
                       )}
                     >
                       <div className="min-w-0 flex-1">
-                        <RadixSelect.ItemText
-                          className={cn(
-                            "item-row-label block",
-                            isSelected
-                              ? "h8 text-text-primary"
-                              : "p6 text-text-primary",
-                          )}
-                        >
+                        <RadixSelect.ItemText className="item-row-label block">
                           {item.name}
                         </RadixSelect.ItemText>
                         <span className="mt-0.5 block p7 text-text-secondary">

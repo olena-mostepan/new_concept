@@ -908,14 +908,9 @@ function mergeAssetHistory(
       });
     }
     if (row.left?.on && row.left.kind) {
-      const destPkg =
-        row.left.to &&
-        (getWorkstream(account, row.left.to)?.name ||
-          getBatch(account, row.left.to)?.name ||
-          "");
       synthetic.push({
         event: `Left package · ${leftHowLabel(row.left.kind)}`,
-        detail: destPkg || pkg,
+        detail: pkg,
         date: row.left.on,
         year: historyEventYear(row.left.on),
       });

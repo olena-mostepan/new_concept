@@ -237,7 +237,6 @@ const halvering: Account = {
           briefLabel: 'Workstream brief',
           visit: { state: 'skip' },
           sizeKwp: 200,
-          history: [{ event: 'Matched to brief', detail: 'Solar PV DE', date: '15 Sep 2026' }],
         }),
       ],
       activity: [

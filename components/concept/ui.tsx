@@ -1594,7 +1594,7 @@ export function AssistantButton({
       aria-hidden
     >
       <Icon
-        name="info"
+        name="idea"
         size={inline ? 12 : 14}
         className="text-black-7"
       />

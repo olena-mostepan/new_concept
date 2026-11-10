@@ -389,7 +389,7 @@ export function AssistantPanel({
       <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border-light px-4">
         <div className="flex items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-full bg-black-7">
-            <Icon name="info" size={14} className="text-white" />
+            <Icon name="idea" size={14} className="text-white" />
           </span>
           <div>
             <p className="h8 text-text-primary">Assistant</p>

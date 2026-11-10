@@ -11,7 +11,14 @@ import {
   recCell,
   stepLabel,
 } from "@/lib/concept/opsAssetDerive";
-import { blockedCount, parseAssistantRoof, applySaveValue } from "@/lib/concept/opsMutations";
+import {
+  applyAssistantAttachAmHafen,
+  applySaveValue,
+  blockedCount,
+  parseAssistantRoof,
+  revertOpsChange,
+} from "@/lib/concept/opsMutations";
+import type { CheckItemState } from "@/lib/concept/checks";
 import { checksFor } from "@/lib/concept/checks";
 import { cn } from "@/lib/utils";
 import { fixAssetsAction } from "@/lib/concept/words";
@@ -85,7 +92,11 @@ export function OpsPackageView({ id }: { id: string }) {
 
   const tabs = w ? opsTabsFor(w) : [];
   const requested = searchParams.get("tab");
-  let tab: PackageTabId = "overview";
+  const primary = w ? (packagePrimaryTab(w) as PackageTabId) : "overview";
+  let tab: PackageTabId =
+    !requested && w && tabs.some((item) => item.id === primary)
+      ? primary
+      : "overview";
   if (requested && tabs.some((item) => item.id === requested)) {
     tab = requested as PackageTabId;
   }
@@ -212,11 +223,15 @@ export function OpsPackageView({ id }: { id: string }) {
       );
       const roof = checksFor(w.service, w.solution).find((c) => c.key === "roof");
       if (row && roof) {
-        onPatch(row.id, (b) =>
-          applySaveValue(b, roof, parsed.value, "Typed", w, row.id),
-        );
+        let prior: CheckItemState | undefined;
+        onPatch(row.id, (b) => {
+          prior = JSON.parse(JSON.stringify(b.items.roof));
+          applySaveValue(b, roof, parsed.value, "Typed", w, row.id);
+        });
         markOpsUpdated(w.id, row.id, true);
         setFilter("all");
+        const historyTitle = `${roof.name} added`;
+        const snap = prior;
         setMessages((m) => [
           ...m,
           {
@@ -225,7 +240,14 @@ export function OpsPackageView({ id }: { id: string }) {
             changes: [`Usable roof area: ${parsed.value} m²`],
             note:
               "Nothing is blocking it now. The change is in its History.",
-            onUndo: () => markOpsUpdated(w.id, row.id, false),
+            onUndo: () => {
+              if (snap) {
+                onPatch(row.id, (b) =>
+                  revertOpsChange(b, "roof", snap, historyTitle),
+                );
+              }
+              markOpsUpdated(w.id, row.id, false);
+            },
           },
         ]);
       }
@@ -335,6 +357,9 @@ export function OpsPackageView({ id }: { id: string }) {
                   id: r.id,
                   selectable: r.selectable,
                   blocked: r.blocked,
+                  href: r.blocked
+                    ? undefined
+                    : hrefs.opsAsset(r.id, { package: w.id }),
                   asset: (
                     <div>
                       <p className="h8 text-text-title">{r.building?.name}</p>
@@ -404,15 +429,43 @@ export function OpsPackageView({ id }: { id: string }) {
           input={assistantInput}
           onInputChange={setAssistantInput}
           onSend={sendAssistant}
-          onAttach={() => {
-            setMessages((m) => [
-              ...m,
-              {
-                from: "assistant",
-                text: "Attached file added. Values stay to confirm until Ops press Use.",
+        onAttach={() => {
+          const row = assetRows.find((r) => r.id === "f6");
+          if (!row) return;
+          let prior: CheckItemState | undefined;
+          let priorDrawings: CheckItemState | undefined;
+          onPatch("f6", (b) => {
+            prior = JSON.parse(JSON.stringify(b.items.roof));
+            priorDrawings = JSON.parse(JSON.stringify(b.items.drawings));
+            applyAssistantAttachAmHafen(b);
+          });
+          markOpsUpdated(w.id, "f6", true);
+          setFilter("all");
+          setMessages((m) => [
+            ...m,
+            {
+              from: "assistant",
+              text: `Added Dachplan_AmHafen.pdf to ${row.building?.name}.`,
+              changes: [
+                "Roof drawings · 1 file",
+                "Usable roof area · 380 m² to confirm",
+              ],
+              note: "Press Use when the value is right.",
+              onUndo: () => {
+                if (prior && priorDrawings) {
+                  onPatch("f6", (b) => {
+                    revertOpsChange(b, "roof", prior!, "File added");
+                    b.items.drawings = priorDrawings!;
+                    b.files = b.files.filter(
+                      (f) => f.name !== "Dachplan_AmHafen.pdf",
+                    );
+                  });
+                }
+                markOpsUpdated(w.id, "f6", false);
               },
-            ]);
-          }}
+            },
+          ]);
+        }}
         />
       </Page>
     </div>

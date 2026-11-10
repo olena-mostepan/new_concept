@@ -74,7 +74,7 @@ export const CHECKS: Record<
     solar: [
       {
         key: "address",
-        name: "Site address",
+        name: "Address",
         short: "Address",
         required: true,
         icon: "location",
@@ -194,7 +194,9 @@ export function seedOpsEstimatesAssets(): Record<string, AssetCheckBundle> {
         covering: { state: "missing" },
       },
       files: [],
-      history: [],
+      history: [
+        { date: "1 Sep", title: "Added to package", detail: "Solar PV · Estimates" },
+      ],
     },
     f2: {
       projectStep: 0,
@@ -209,15 +211,18 @@ export function seedOpsEstimatesAssets(): Record<string, AssetCheckBundle> {
           ],
         },
         bills: { state: "na" },
-        plans: { state: "done", value: "On file", source: "Kelmsdorfer_plans.pdf" },
-        drawings: { state: "done", value: "On file", source: "Kelmsdorfer_roof_A.pdf" },
+        plans: { state: "done", value: "1 file · Kelmsdorfer_plans.pdf", source: "Kelmsdorfer_plans.pdf" },
+        drawings: { state: "done", value: "1 file · Kelmsdorfer_roof_A.pdf", source: "Kelmsdorfer_roof_A.pdf" },
         covering: { state: "done", value: "Gravel", source: "Typed" },
       },
       files: [
         { name: "Kelmsdorfer_roof_A.pdf", type: "PDF", what: "Roof area" },
         { name: "Kelmsdorfer_layout.pdf", type: "PDF", what: "Layout" },
       ],
-      history: [],
+      history: [
+        { date: "1 Sep", title: "Added to package", detail: "Solar PV · Estimates" },
+        { date: "12 Jun", title: "File added", detail: "Kelmsdorfer_roof_A.pdf" },
+      ],
     },
     f8: {
       projectStep: 0,
@@ -234,12 +239,15 @@ export function seedOpsEstimatesAssets(): Record<string, AssetCheckBundle> {
           },
         },
         bills: { state: "nofile" },
-        plans: { state: "done", value: "On file", source: "Dachplan_Halle_A.pdf" },
+        plans: { state: "done", value: "1 file · Dachplan_Halle_A.pdf", source: "Dachplan_Halle_A.pdf" },
         drawings: { state: "nofile" },
         covering: { state: "missing" },
       },
       files: [{ name: "Dachplan_Halle_A.pdf", type: "PDF", what: "Roof plan" }],
-      history: [],
+      history: [
+        { date: "1 Sep", title: "Added to package", detail: "Solar PV · Estimates" },
+        { date: "28 Oct", title: "File added", detail: "Dachplan_Halle_A.pdf" },
+      ],
     },
     f3: {
       projectStep: 1,
@@ -248,8 +256,8 @@ export function seedOpsEstimatesAssets(): Record<string, AssetCheckBundle> {
         address: { state: "done", value: "Kervelstraat 14", source: "Asset record" },
         roof: { state: "done", value: "860 m²", source: "Kervelstraat_plans.pdf, page 1" },
         bills: { state: "done", value: "12 months", source: "Bills_2025.zip" },
-        plans: { state: "done", value: "On file", source: "Kervelstraat_plans.pdf" },
-        drawings: { state: "done", value: "On file", source: "Kervelstraat_roof.pdf" },
+        plans: { state: "done", value: "1 file · Kervelstraat_plans.pdf", source: "Kervelstraat_plans.pdf" },
+        drawings: { state: "done", value: "1 file · Kervelstraat_roof.pdf", source: "Kervelstraat_roof.pdf" },
         covering: { state: "done", value: "PVC membrane", source: "Typed" },
       },
       files: [
@@ -257,7 +265,13 @@ export function seedOpsEstimatesAssets(): Record<string, AssetCheckBundle> {
         { name: "Bills_2025.zip", type: "ZIP", what: "Bills" },
       ],
       history: [
+        { date: "1 Sep", title: "Added to package", detail: "Solar PV · Estimates" },
         { date: "30 Oct", title: "Estimate started", detail: "Roof area 860 m²" },
+        {
+          date: "28 Oct",
+          title: "Usable roof area added",
+          detail: "860 m² · from Kervelstraat_plans.pdf, page 1",
+        },
       ],
     },
     f1: {
@@ -265,26 +279,44 @@ export function seedOpsEstimatesAssets(): Record<string, AssetCheckBundle> {
       items: {
         address: { state: "done", value: "Halverkamp 19", source: "Asset record" },
         roof: { state: "done", value: "540 m²", source: "Roof_layout_HH.pdf, page 1" },
-        bills: { state: "done", value: "On file", source: "Halverkamp_bills.pdf" },
-        plans: { state: "done", value: "On file", source: "Halverkamp_plans.pdf" },
-        drawings: { state: "done", value: "On file", source: "Roof_layout_HH.pdf" },
+        bills: { state: "done", value: "1 file · Halverkamp_bills.pdf", source: "Halverkamp_bills.pdf" },
+        plans: { state: "done", value: "1 file · Halverkamp_plans.pdf", source: "Halverkamp_plans.pdf" },
+        drawings: { state: "done", value: "1 file · Roof_layout_HH.pdf", source: "Roof_layout_HH.pdf" },
         covering: { state: "missing" },
       },
-      files: [{ name: "Roof_layout_HH.pdf", type: "PDF", what: "Roof" }],
-      history: [],
+      files: [
+        { name: "Roof_layout_HH.pdf", type: "PDF", what: "Roof drawings" },
+        { name: "Halverkamp_bills.pdf", type: "PDF", what: "Consumption data" },
+        { name: "Halverkamp_plans.pdf", type: "PDF", what: "Site or floor plans" },
+      ],
+      history: [
+        { date: "1 Sep", title: "Added to package", detail: "Solar PV · Estimates" },
+        {
+          date: "22 Oct",
+          title: "Usable roof area added",
+          detail: "540 m² · from Roof_layout_HH.pdf, page 1",
+        },
+        { date: "22 Oct", title: "File added", detail: "Halverkamp_bills.pdf" },
+      ],
     },
     f5: {
       projectStep: 0,
       items: {
         address: { state: "done", value: "Lindenhof 3", source: "Asset record" },
         roof: { state: "done", value: "720 m²", source: "Lindenhof_roof.pdf" },
-        bills: { state: "done", value: "On file", source: "Lindenhof_bills.pdf" },
-        plans: { state: "done", value: "On file", source: "Lindenhof_plans.pdf" },
-        drawings: { state: "done", value: "On file", source: "Lindenhof_roof.pdf" },
+        bills: { state: "done", value: "1 file · Lindenhof_bills.pdf", source: "Lindenhof_bills.pdf" },
+        plans: { state: "done", value: "1 file · Lindenhof_plans.pdf", source: "Lindenhof_plans.pdf" },
+        drawings: { state: "done", value: "1 file · Lindenhof_roof.pdf", source: "Lindenhof_roof.pdf" },
         covering: { state: "done", value: "Bitumen", source: "Typed" },
       },
-      files: [],
-      history: [],
+      files: [
+        { name: "Lindenhof_bills.pdf", type: "PDF", what: "Consumption data" },
+        { name: "Lindenhof_plans.pdf", type: "PDF", what: "Site or floor plans" },
+        { name: "Lindenhof_roof.pdf", type: "PDF", what: "Roof drawings" },
+      ],
+      history: [
+        { date: "1 Sep", title: "Added to package", detail: "Solar PV · Estimates" },
+      ],
     },
   };
 }

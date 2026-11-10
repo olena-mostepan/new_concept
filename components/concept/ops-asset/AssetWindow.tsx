@@ -16,11 +16,14 @@ import {
   setCheckEdit,
 } from "@/lib/concept/opsMutations";
 import {
+  blockingCell,
   blockingItem,
   groupOf,
   recommendedMissing,
   stepLabel,
 } from "@/lib/concept/opsAssetDerive";
+import { opsItemSubline } from "@/lib/concept/opsDisplay";
+import { short } from "@/lib/concept/derive";
 import { getBuilding } from "@/lib/concept/derive";
 import { fixAssetsAction } from "@/lib/concept/words";
 import type { Account, Workstream } from "@/lib/concept/model";
@@ -32,6 +35,7 @@ import {
   FoundValue,
   OpsModal,
   RequirementGroup,
+  StateMark,
   UploadRow,
 } from "./opsUi";
 
@@ -128,12 +132,15 @@ function RequirementActions({
           </p>
         )}
         {bundle.estimateStartedOn && def.key === "roof" && (
-          <p className="mt-2 p7 text-status-warning-text">
-            This asset&apos;s estimate has started. It used {item.prev?.value ?? item.value}. After
-            saving, its Estimate step shows &ldquo;Roof area changed · check the estimate&rdquo;.
-          </p>
+          <div className="mt-3 rounded-md border border-status-warning-border bg-status-warning-bg px-4 py-3">
+            <p className="h8 text-text-primary">This asset&apos;s estimate has started</p>
+            <p className="mt-1 p6 text-text-secondary">
+              It used {item.prev?.value ?? item.value}. After saving, its Estimate step shows
+              &ldquo;Roof area changed · check the estimate&rdquo;.
+            </p>
+          </div>
         )}
-        <div className="mt-3 flex justify-end gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <Button
             type="tertiary"
             size="default"
@@ -168,18 +175,18 @@ function RequirementActions({
   if (st === "nofile") {
     return (
       <>
+        <Button type="secondary" size="default" icon="upload">
+          {def.uploadLabel ?? "Upload"}
+        </Button>
         {!def.required && (
           <Button
-            type="tertiary"
+            type="secondary"
             size="default"
             onClick={() => patch((b) => applyNotAvailable(b, def))}
           >
             Not available
           </Button>
         )}
-        <Button type="secondary" size="default" icon="plus">
-          {def.uploadLabel ?? "Upload"}
-        </Button>
       </>
     );
   }
@@ -225,7 +232,7 @@ function RequirementActions({
       <Button
         type="tertiary"
         size="default"
-        icon="plus"
+        icon="edit"
         onClick={() => patch((b) => setCheckEdit(b, def.key, true))}
       >
         Edit
@@ -253,45 +260,39 @@ function ItemRow({
 }) {
   const item = bundle.items[def.key] ?? { state: "missing" as const };
   const st = item.state;
-  const blocked = def.required && item.state !== "done" && item.state !== "na" && item.state !== "edit";
+  const mark =
+    item.state === "done"
+      ? "done"
+      : item.state === "na"
+        ? "na"
+        : "open";
+  const subline = opsItemSubline(def, item);
+  const inlineActions =
+    st === "confirm" || st === "disagree" || st === "edit";
   return (
-    <div className="grid grid-cols-[36px_1fr_auto] items-start gap-3 px-4 py-4">
-      <span
-        className={cn(
-          "relative flex size-9 items-center justify-center rounded-md border border-border-light bg-black-1",
-          item.state === "done" && "border-status-success-border bg-status-success-bg",
-        )}
-      >
-        <Icon name="info" size={16} className="text-icon-dark" />
-        {blocked && (
-          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand-6" aria-hidden />
-        )}
-      </span>
+    <div className="grid grid-cols-[20px_1fr_auto] items-start gap-3 px-4 py-4">
+      <StateMark state={mark} size={20} />
       <div className="min-w-0">
         <p className="h8 text-text-title">{def.name}</p>
-        <p className="p7 text-text-tertiary">
-          {def.required ? "Required" : "Recommended"}
-        </p>
-        {item.state === "done" && item.value && (
-          <p className="p7 text-text-secondary">
-            {item.value}
-            {item.source ? ` · ${item.source}` : ""}
-          </p>
+        {subline && !inlineActions && (
+          <p className="p7 text-text-secondary">{subline}</p>
         )}
-        {(st === "confirm" || st === "disagree" || st === "edit") && (
-          <RequirementActions
-            def={def}
-            item={item}
-            bundle={bundle}
-            w={w}
-            buildingId={buildingId}
-            patch={patch}
-            mode={mode}
-          />
+        {inlineActions && (
+          <div className="mt-3">
+            <RequirementActions
+              def={def}
+              item={item}
+              bundle={bundle}
+              w={w}
+              buildingId={buildingId}
+              patch={patch}
+              mode={mode}
+            />
+          </div>
         )}
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {st !== "confirm" && st !== "disagree" && st !== "edit" && (
+        {!inlineActions && (
           <RequirementActions
             def={def}
             item={item}
@@ -417,13 +418,10 @@ export function AssetWindow({
               </p>
               {groups.todo.map((id) => {
                 const b = getBuilding(account, id);
-                const bl = blockingItem(
-                  account.opsAssetData![w.id]![id],
-                  w.service,
-                  w.solution,
-                );
-                const cell = bl
-                  ? `${bl.short} · ${account.opsAssetData![w.id]![id].items[bl.key]?.state === "confirm" ? "to confirm" : "missing"}`
+                const bundle = account.opsAssetData![w.id]![id];
+                const cell = blockingCell(bundle, w.service, w.solution);
+                const line = cell
+                  ? `${cell.item} · ${cell.state}`
                   : "";
                 return (
                   <button
@@ -432,18 +430,16 @@ export function AssetWindow({
                     onClick={() => onSelectAsset(id)}
                     className={cn(
                       "flex w-full gap-2 border-b border-border-light px-4 py-3 text-left hover:bg-black-2",
-                      id === assetId && "border border-border-accent bg-bg-accent",
+                      id === assetId &&
+                        "border border-border-dark bg-bg-container",
                       focusRing,
                     )}
                   >
-                    <Icon name="info" size={16} className="mt-0.5 shrink-0" />
+                    <Icon name="building" size={16} className="mt-0.5 shrink-0 text-icon-dark" />
                     <div>
                       <p className="h8 text-text-primary">{b?.name}</p>
-                      {cell && (
-                        <p className="p7 text-text-secondary">
-                          <span className="mr-1 text-brand-6">●</span>
-                          {cell}
-                        </p>
+                      {line && (
+                        <p className="p7 text-text-secondary">{line}</p>
                       )}
                     </div>
                   </button>
@@ -455,8 +451,12 @@ export function AssetWindow({
               {groups.done.map((id) => {
                 const b = getBuilding(account, id);
                 return (
-                  <div key={id} className="px-4 py-2 p7 text-text-secondary">
-                    {b?.name} · Ready for Estimate
+                  <div key={id} className="flex gap-2 border-b border-border-light px-4 py-3">
+                    <Icon name="building" size={16} className="mt-0.5 shrink-0 text-icon-dark" />
+                    <div>
+                      <p className="h8 text-text-primary">{b?.name}</p>
+                      <p className="p7 text-text-secondary">Ready for Estimate</p>
+                    </div>
                   </div>
                 );
               })}
@@ -474,7 +474,7 @@ export function AssetWindow({
           {mode === "edit" && (
             <>
               <p className="px-4 py-4 s3 text-text-tertiary">ASSET · 1</p>
-              <div className="border border-border-accent bg-bg-accent px-4 py-3">
+              <div className="border border-border-dark bg-bg-container px-4 py-3">
                 <p className="h8 text-text-primary">{building.name}</p>
                 <p className="p7 text-text-secondary">
                   {blockingItem(bundle, w.service, w.solution)
@@ -490,8 +490,13 @@ export function AssetWindow({
             <div>
               <h3 className="h5 text-text-primary">{building.name}</h3>
               <p className="p6 text-text-secondary">
-                {building.city} · {stepLabel(bundle.projectStep)}
-                {bundle.blockedSince ? ` · blocked since ${bundle.blockedSince.split(" ").slice(0, 2).join(" ")}` : ""}
+                {mode === "edit" && bundle.estimateStartedOn
+                  ? `${building.city} · In Estimate since ${short(bundle.estimateStartedOn)}`
+                  : `${building.city} · ${stepLabel(bundle.projectStep)}${
+                      bundle.blockedSince
+                        ? ` · blocked since ${short(bundle.blockedSince)}`
+                        : ""
+                    }`}
               </p>
             </div>
             <Button
@@ -499,15 +504,19 @@ export function AssetWindow({
               size="default"
               icon="chevron-right"
               iconPosition="right"
-              href={hrefs.opsAsset(assetId, { package: w.id })}
+              href={
+                mode === "edit"
+                  ? hrefs.opsPackage(w.id)
+                  : hrefs.opsAsset(assetId, { package: w.id })
+              }
             >
-              Open asset page
+              {mode === "edit" ? "Open package" : "Open asset page"}
             </Button>
           </div>
           <UploadRow onUpload={() => {}} />
           <div className="mt-4 space-y-4">
             <RequirementGroup
-              label="BLOCKING THE NEXT STEP"
+              label={mode === "edit" ? "REQUIRED" : "BLOCKING THE NEXT STEP"}
               count={openBlocking.length}
               countLabel={openBlocking.length ? `${openBlocking.length} open` : "0 open"}
               accentPill={openBlocking.length > 0}
@@ -525,7 +534,7 @@ export function AssetWindow({
               ))}
             </RequirementGroup>
             <RequirementGroup
-              label="RECOMMENDED, MISSING"
+              label={mode === "edit" ? "RECOMMENDED" : "RECOMMENDED, MISSING"}
               count={openRec.length}
               countLabel={`${openRec.length} missing`}
             >

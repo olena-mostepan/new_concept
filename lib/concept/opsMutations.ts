@@ -151,6 +151,42 @@ export function setCheckEdit(
   }
 }
 
+export function revertOpsChange(
+  bundle: AssetCheckBundle,
+  key: CheckKey,
+  prior: CheckItemState,
+  historyTitle?: string,
+) {
+  bundle.items[key] = JSON.parse(JSON.stringify(prior));
+  if (historyTitle) {
+    const i = bundle.history.findIndex((e) => e.title === historyTitle);
+    if (i >= 0) bundle.history.splice(i, 1);
+  }
+}
+
+/** Reference attach: Dachplan_AmHafen.pdf on Am Hafen 12. */
+export function applyAssistantAttachAmHafen(bundle: AssetCheckBundle) {
+  const file = "Dachplan_AmHafen.pdf";
+  if (!bundle.files.some((f) => f.name === file)) {
+    bundle.files.push({ name: file, type: "PDF", what: "Roof plan" });
+  }
+  bundle.items.drawings = {
+    state: "done",
+    value: `1 file · ${file}`,
+    source: file,
+  };
+  bundle.items.roof = {
+    state: "confirm",
+    found: {
+      value: "380 m²",
+      file,
+      page: 1,
+      quote: "Nutzfläche 380 m²",
+    },
+  };
+  pushHistory(bundle, "File added", file);
+}
+
 export function parseAssistantRoof(
   text: string,
 ): { assetQuery: string; value: string } | null {

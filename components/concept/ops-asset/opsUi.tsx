@@ -10,6 +10,7 @@ import {
   filterSearchClass,
   th,
   td,
+  tableRowLinkClass,
 } from "../ui";
 
 export function StateMark({
@@ -111,14 +112,18 @@ export function FoundValue({
     <div className="flex flex-col gap-3 rounded-md border border-status-warning-border bg-status-warning-bg p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="p7 text-text-secondary">
-          <Icon name="info" size={14} className="mr-1 inline-block align-middle text-status-warning-text" />
-          Found in <span className="h9 text-text-primary">{file}</span>
-          {page != null && ` · page ${page}`}
+          Found {value} in {file}
+          {page != null && `, page ${page}`}
         </p>
-        <p className="h6 tabular-nums text-text-primary">{value}</p>
         {quote && <p className="p7 text-text-secondary">&ldquo;{quote}&rdquo;</p>}
+        <button
+          type="button"
+          className={cn("mt-2 p7 text-text-primary underline underline-offset-[3px]", focusRing)}
+        >
+          View
+        </button>
       </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">{children}</div>
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{children}</div>
     </div>
   );
 }
@@ -137,8 +142,8 @@ export function RequirementGroup({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border-dark bg-bg-container">
-      <div className="flex items-center justify-between gap-3 bg-black-1 px-4 py-3">
+    <section>
+      <div className="flex items-center justify-between gap-3 border-b border-border-light pb-2">
         <h3 className="s3 text-text-tertiary">{label}</h3>
         {count != null && (
           <span
@@ -167,7 +172,7 @@ export function UploadRow({
     <div className="flex flex-col gap-3 rounded-md border border-dashed border-border-dark bg-black-2 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border-dark bg-white">
-          <Icon name="plus" size={20} className="text-icon-dark" />
+          <Icon name="upload" size={20} className="text-icon-dark" />
         </span>
         <div>
           <p className="h8 text-text-primary">Drop documents here</p>
@@ -176,7 +181,7 @@ export function UploadRow({
           </p>
         </div>
       </div>
-      <Button type="secondary" size="default" icon="plus" onClick={onUpload}>
+      <Button type="secondary" size="default" icon="upload" onClick={onUpload}>
         Upload documents
       </Button>
     </div>
@@ -266,7 +271,14 @@ export function OpsDataTable({
   title: string;
   count: number;
   columns: { key: string; label: string }[];
-  rows: Array<Record<string, ReactNode> & { id: string; selectable?: boolean; blocked?: boolean }>;
+  rows: Array<
+    Record<string, ReactNode> & {
+      id: string;
+      selectable?: boolean;
+      blocked?: boolean;
+      href?: string;
+    }
+  >;
   toolbar?: ReactNode;
   aside?: ReactNode;
   selectable?: boolean;
@@ -302,18 +314,16 @@ export function OpsDataTable({
           <tbody>
             {rows.map((row) => {
               const isSel = selected.includes(row.id);
-              return (
-                <tr
-                  key={row.id}
-                  className={cn(
-                    "border-b border-border-light hover:bg-black-1",
-                    isSel && "bg-black-1",
-                  )}
-                >
+              const selectionMode = selected.length > 0;
+              const cells = (
+                <>
                   {selectable && (
                     <td className="px-4 py-3 pl-8">
                       {row.selectable ? (
-                        <label className="flex cursor-pointer items-center">
+                        <label
+                          className="flex cursor-pointer items-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <input
                             type="checkbox"
                             className="peer sr-only"
@@ -337,13 +347,129 @@ export function OpsDataTable({
                     </td>
                   ))}
                   <td className="px-4 py-3">
+                    <Icon name="chevron-right" size={16} className="text-icon-dark" />
+                  </td>
+                </>
+              );
+              if (selectionMode) {
+                return (
+                  <tr
+                    key={row.id}
+                    className={cn(
+                      "border-b border-border-light",
+                      isSel && "bg-black-1",
+                    )}
+                  >
+                    {cells}
+                  </tr>
+                );
+              }
+              if (row.href) {
+                return (
+                  <tr key={row.id} className="border-b border-border-light">
+                    <td
+                      colSpan={columns.length + (selectable ? 2 : 1)}
+                      className="p-0"
+                    >
+                      <Link
+                        href={row.href}
+                        className={cn(
+                          "grid w-full items-center",
+                          selectable
+                            ? "grid-cols-[40px_1.4fr_1fr_1.15fr_1fr_1fr_40px]"
+                            : "grid-cols-[1.4fr_1fr_1.15fr_1fr_1fr_40px]",
+                          tableRowLinkClass,
+                          isSel && "bg-black-1",
+                        )}
+                      >
+                        {selectable && (
+                          <span
+                            className="pl-8"
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            {row.selectable ? (
+                              <label className="flex cursor-pointer items-center">
+                                <input
+                                  type="checkbox"
+                                  className="peer sr-only"
+                                  checked={isSel}
+                                  onChange={(e) =>
+                                    onSelectRow(row.id, e.target.checked)
+                                  }
+                                />
+                                <span className="flex size-4 items-center justify-center rounded-[4px] border-[1.5px] border-black-6 bg-white peer-focus-visible:shadow-focus peer-checked:border-black-7 peer-checked:bg-black-7">
+                                  {isSel && (
+                                    <Icon name="check" size={12} className="text-white" />
+                                  )}
+                                </span>
+                              </label>
+                            ) : null}
+                          </span>
+                        )}
+                        {columns.map((col) => (
+                          <span key={col.key} className={cn(td, "block")}>
+                            {row[col.key]}
+                          </span>
+                        ))}
+                        <span className="px-4 py-3">
+                          <Icon name="chevron-right" size={16} className="text-icon-dark" />
+                        </span>
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              }
+              return (
+                <tr key={row.id} className="border-b border-border-light">
+                  <td
+                    colSpan={columns.length + (selectable ? 2 : 1)}
+                    className="p-0"
+                  >
                     <button
                       type="button"
-                      className={cn("p6 text-icon-dark", focusRing)}
-                      aria-label="Open"
                       onClick={() => onRowClick(row.id, Boolean(row.blocked))}
+                      className={cn(
+                        "grid w-full items-center text-left",
+                        selectable
+                          ? "grid-cols-[40px_1.4fr_1fr_1.15fr_1fr_1fr_40px]"
+                          : "grid-cols-[1.4fr_1fr_1.15fr_1fr_1fr_40px]",
+                        tableRowLinkClass,
+                        focusRing,
+                        isSel && "bg-black-1",
+                      )}
                     >
-                      <Icon name="chevron-right" size={16} />
+                      {selectable && (
+                        <span
+                          className="pl-8"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {row.selectable ? (
+                            <label className="flex cursor-pointer items-center">
+                              <input
+                                type="checkbox"
+                                className="peer sr-only"
+                                checked={isSel}
+                                onChange={(e) =>
+                                  onSelectRow(row.id, e.target.checked)
+                                }
+                              />
+                              <span className="flex size-4 items-center justify-center rounded-[4px] border-[1.5px] border-black-6 bg-white peer-focus-visible:shadow-focus peer-checked:border-black-7 peer-checked:bg-black-7">
+                                {isSel && (
+                                  <Icon name="check" size={12} className="text-white" />
+                                )}
+                              </span>
+                            </label>
+                          ) : null}
+                        </span>
+                      )}
+                      {columns.map((col) => (
+                        <span key={col.key} className={cn(td, "block")}>
+                          {row[col.key]}
+                        </span>
+                      ))}
+                      <span className="px-4 py-3">
+                        <Icon name="chevron-right" size={16} className="text-icon-dark" />
+                      </span>
                     </button>
                   </td>
                 </tr>

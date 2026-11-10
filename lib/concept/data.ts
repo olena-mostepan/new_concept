@@ -23,7 +23,7 @@ const route = (services: ServiceId[], now: ServiceId, startedOn?: string): Phase
 /* ------------------------------------------------------------ Halvering */
 
 const FLAGSHIP = b('f', [
-  ['Halverkamp 19', 'Hamburg'],
+  ['Halverkamp 19', '22145 Hamburg'],
   ['Kelmsdorfer Straße 41', 'Berlin'],
   ['Kervelstraat 14', 'Antwerp'],
   ['Speicherallee 7', 'Hamburg'],
@@ -190,6 +190,7 @@ const halvering: Account = {
       projects: (['f6', 'f2', 'f8', 'f3', 'f1', 'f5'] as const).map((buildingId) => ({
         buildingId,
         step: buildingId === 'f3' ? 1 : 0,
+        joined: { on: '1 Sep 2026', from: 'solar-est' },
         ...(buildingId === 'f3' ? { note: 'Estimate' } : {}),
       })),
       needs: [],

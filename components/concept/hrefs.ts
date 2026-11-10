@@ -101,19 +101,19 @@ export const CUSTOMER_NAV: NavItem[] = [
   })),
 ];
 
-/** The ops bar stays the previous customer nav: Portfolio, Workstreams, then the services. */
+/** The ops bar: Overview, Packages, then the services. Ops screens say package and asset. */
 export const OPS_NAV: NavItem[] = [
   {
     id: "ops-portfolio",
     group: "structure",
-    label: "Portfolio",
+    label: "Overview",
     href: hrefs.ops,
     match: (p) => p === OPS || p === `${OPS}/`,
   },
   {
     id: "workstreams",
     group: "structure",
-    label: "Workstreams",
+    label: WORDS.Packages,
     href: hrefs.workstreams(),
     match: (p) => p.startsWith(`${BASE}/packages`),
   },

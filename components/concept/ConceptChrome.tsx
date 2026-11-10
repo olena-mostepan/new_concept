@@ -222,7 +222,7 @@ function AppHeader({
             <Button
               href={hrefs.opsNewBatch}
               type="primary"
-              size="large"
+              size="small"
               icon="plus"
             >
               Create batch

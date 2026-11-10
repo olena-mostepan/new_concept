@@ -4,6 +4,8 @@
  * Batch = buildings with a goal. Workstream = one solution, one set of projects, and its own route of services.
  */
 
+import type { AssetCheckBundle } from './checks'
+
 export type ServiceId = 'indicative' | 'scope' | 'tender' | 'pricing' | 'delivery'
 export type SolutionId = 'generic' | 'ev' | 'solar' | 'led' | 'ashp'
 
@@ -434,6 +436,9 @@ export interface TenderProfile {
   offers?: OfferSplit
 }
 
+/** Per-package asset check data for Ops asset setup. */
+export type OpsPackageAssetData = Record<string, AssetCheckBundle>
+
 export interface Account {
   id: string
   customer: string
@@ -449,6 +454,10 @@ export interface Account {
   momentum?: Array<{ month: string; started: number; finished: number }>
   /** Properties ops still need to reconcile into the portfolio */
   toReconcile?: number
+  /** Ops: checks, files and history per package × asset */
+  opsAssetData?: Record<string, OpsPackageAssetData>
+  /** Ops assistant: asset ids highlighted as UPDATED until undo or reload */
+  opsUpdatedAssets?: Record<string, string[]>
 }
 
 export const service = (id: ServiceId) => SERVICES.find((s) => s.id === id)!

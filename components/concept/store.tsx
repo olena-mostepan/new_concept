@@ -32,6 +32,12 @@ import {
   type Workstream,
 } from "@/lib/concept/model";
 import { nPackages, WORDS } from "@/lib/concept/words";
+import type { AssetCheckBundle } from "@/lib/concept/checks";
+import {
+  ensureOpsData,
+  getBundle,
+  startEstimates as startEstimatesMut,
+} from "@/lib/concept/opsMutations";
 
 /**
  * Prototype state: both accounts, the selected one, and the few writes ops and
@@ -84,6 +90,13 @@ interface Store {
   ) => void;
   agreeScope: (workstreamId: string, buildingId: string) => void;
   saveDelivery: (next: CustomerDeliveryPayload | CustomerProject) => void;
+  patchOpsBundle: (
+    packageId: string,
+    buildingId: string,
+    fn: (bundle: AssetCheckBundle, account: Account) => void,
+  ) => void;
+  startEstimatesForAssets: (packageId: string, buildingIds: string[]) => void;
+  markOpsUpdated: (packageId: string, buildingId: string, on: boolean) => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -345,6 +358,29 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
               ...(row.history ?? []),
             ];
         }
+      }),
+    patchOpsBundle: (packageId, buildingId, fn) =>
+      update((a) => {
+        ensureOpsData(a, packageId);
+        if (!a.opsAssetData![packageId]![buildingId]) return;
+        let bundle = a.opsAssetData![packageId]![buildingId];
+        bundle = JSON.parse(JSON.stringify(bundle));
+        a.opsAssetData![packageId]![buildingId] = bundle;
+        fn(bundle, a);
+      }),
+    startEstimatesForAssets: (packageId, buildingIds) =>
+      update((a) => {
+        const w = a.workstreams.find((item) => item.id === packageId);
+        if (!w) return;
+        startEstimatesMut(a, w, buildingIds);
+      }),
+    markOpsUpdated: (packageId, buildingId, on) =>
+      update((a) => {
+        if (!a.opsUpdatedAssets) a.opsUpdatedAssets = {};
+        if (!a.opsUpdatedAssets[packageId]) a.opsUpdatedAssets[packageId] = [];
+        const list = a.opsUpdatedAssets[packageId];
+        if (on && !list.includes(buildingId)) list.push(buildingId);
+        if (!on) a.opsUpdatedAssets[packageId] = list.filter((id) => id !== buildingId);
       }),
     agreePlan: (batchId) =>
       update((a) => {

@@ -55,6 +55,16 @@ export const hrefs = {
   ops: OPS,
   opsNewBatch: `${OPS}/batches/new`,
   opsBatch: (id: string) => `${OPS}/batches/${id}`,
+  opsPackage: (id: string) => `${OPS}/packages/${id}`,
+  opsAsset: (
+    buildingId: string,
+    opts?: { package?: string },
+  ) => {
+    const sp = new URLSearchParams();
+    if (opts?.package) sp.set("package", opts.package);
+    const q = sp.toString();
+    return `${OPS}/assets/${buildingId}${q ? `?${q}` : ""}`;
+  },
 };
 
 export interface NavItem {
@@ -119,9 +129,17 @@ export const OPS_NAV: NavItem[] = [
 /** Same place on the other side, or its home */
 export function counterpart(path: string): string {
   if (path.startsWith(OPS)) {
+    const pkg = path.match(/\/ops\/packages\/([^/?]+)/);
+    if (pkg) return hrefs.workstream(pkg[1]);
+    const asset = path.match(/\/ops\/assets\/([^/?]+)/);
+    if (asset) return hrefs.building(asset[1]);
     const m = path.match(/\/ops\/batches\/([^/?]+)/);
     return m && m[1] !== "new" ? hrefs.batch(m[1]) : BASE;
   }
+  const pkg = path.match(/\/concept\/packages\/([^/?]+)/);
+  if (pkg) return hrefs.opsPackage(pkg[1]);
+  const asset = path.match(/\/concept\/assets\/([^/?]+)/);
+  if (asset) return hrefs.opsAsset(asset[1]);
   const m = path.match(/\/concept\/batches\/([^/?]+)/);
   return m ? hrefs.opsBatch(m[1]) : OPS;
 }

@@ -19,6 +19,19 @@ export function detailFallbackHref(
     return w ? hrefs.batch(w.batchId) : hrefs.overview;
   }
 
+  const opsPkg = pathname.match(/^\/concept\/ops\/packages\/([^/]+)/);
+  if (opsPkg) {
+    const w = getWorkstream(account, opsPkg[1]);
+    return w ? hrefs.opsBatch(w.batchId) : hrefs.ops;
+  }
+
+  const opsAsset = pathname.match(/^\/concept\/ops\/assets\/([^/]+)/);
+  if (opsAsset) {
+    const pkg = query.get("package");
+    if (pkg) return hrefs.opsPackage(pkg);
+    return hrefs.ops;
+  }
+
   const asset = pathname.match(/^\/concept\/assets\/([^/]+)/);
   if (asset) {
     const project = query.get("project") || query.get("ws");
@@ -38,6 +51,8 @@ export function detailFallbackHref(
 }
 
 export function isDetail(pathname: string) {
+  if (/^\/concept\/ops\/packages\/[^/]+/.test(pathname)) return true;
+  if (/^\/concept\/ops\/assets\/[^/]+/.test(pathname)) return true;
   if (/^\/concept\/ops\/batches\/[^/]+/.test(pathname)) return true;
   if (/^\/concept\/batches\/[^/]+/.test(pathname)) return true;
   if (/^\/concept\/packages\/[^/]+/.test(pathname)) return true;

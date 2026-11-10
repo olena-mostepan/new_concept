@@ -1,4 +1,5 @@
 import type { Account, Building, Phase, ProjectRow, ServiceId } from './model'
+import { OPS_ESTIMATES_PACKAGE_ID, seedOpsEstimatesAssets } from './checks'
 
 /**
  * Two example accounts.
@@ -170,6 +171,29 @@ const halvering: Account = {
           left: { kind: 'dropped', on: '28 Aug 2026' },
         }),
       ],
+      lead: 'Tamsin Quarrell',
+    },
+    {
+      id: OPS_ESTIMATES_PACKAGE_ID,
+      batchId: 'flagship',
+      name: 'Solar PV · Estimates',
+      service: 'indicative',
+      solution: 'solar',
+      owner: 'cquel',
+      now: '3 assets need data before estimates',
+      startedOn: '20 May 2026',
+      phases: route(
+        ['indicative', 'scope', 'tender', 'pricing', 'delivery'],
+        'indicative',
+        '20 May 2026',
+      ),
+      projects: (['f6', 'f2', 'f8', 'f3', 'f1', 'f5'] as const).map((buildingId) => ({
+        buildingId,
+        step: buildingId === 'f3' ? 1 : 0,
+        ...(buildingId === 'f3' ? { note: 'Estimate' } : {}),
+      })),
+      needs: [],
+      documents: [],
       lead: 'Tamsin Quarrell',
     },
     {
@@ -527,6 +551,9 @@ const halvering: Account = {
     },
   ],
   documents: [],
+  opsAssetData: {
+    [OPS_ESTIMATES_PACKAGE_ID]: seedOpsEstimatesAssets(),
+  },
   momentum: [
     { month: 'Mar 26', started: 0, finished: 0 },
     { month: 'Apr 26', started: 0, finished: 0 },

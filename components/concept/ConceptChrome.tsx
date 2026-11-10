@@ -17,6 +17,10 @@ import {
 } from "./hrefs";
 import { activeCustomerTab } from "./crumbs";
 import { detailFallbackHref, isDetail } from "./detailNav";
+import {
+  OpsDetailBarProvider,
+  useOpsDetailBar,
+} from "./ops-asset/OpsDetailBarActions";
 import { Button, focusRing, Icon } from "./ui";
 
 function AccountToggle() {
@@ -243,6 +247,10 @@ function DetailBar() {
   const pathname = usePathname() ?? "";
   const search = useSearchParams();
   const { account } = useConcept();
+  const opsBar = useOpsDetailBar();
+  const showAssistant =
+    /^\/concept\/ops\/packages\//.test(pathname) ||
+    /^\/concept\/ops\/assets\//.test(pathname);
   const ops = pathname.startsWith(OPS);
   const hasHistory = useRef(false);
   const booted = useRef(false);
@@ -277,6 +285,18 @@ function DetailBar() {
           </span>
         </button>
         <div className="flex items-center gap-4 sm:gap-5">
+          {showAssistant && (
+            <button
+              type="button"
+              onClick={() => opsBar?.askAssistant()}
+              className={cn(
+                "inline-flex h-10 items-center gap-2 rounded-md bg-black-7 px-3 h8 text-white hover:bg-black-6",
+                focusRing,
+              )}
+            >
+              Ask the assistant
+            </button>
+          )}
           <Link
             href="/clarifications"
             className="p6 text-text-primary hover:text-text-primary"
@@ -321,11 +341,13 @@ function Shell({ children }: { children: ReactNode }) {
 export function ConceptChrome({ children }: { children: ReactNode }) {
   return (
     <ConceptStoreProvider>
-      <Suspense
-        fallback={<div className="min-h-screen bg-bg-container-grey" />}
-      >
-        <Shell>{children}</Shell>
-      </Suspense>
+      <OpsDetailBarProvider>
+        <Suspense
+          fallback={<div className="min-h-screen bg-bg-container-grey" />}
+        >
+          <Shell>{children}</Shell>
+        </Suspense>
+      </OpsDetailBarProvider>
     </ConceptStoreProvider>
   );
 }

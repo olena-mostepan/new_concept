@@ -45,7 +45,7 @@ export function StateMark({
   }
   return (
     <span
-      className="inline-block rounded-full border border-dashed border-black-5 bg-white"
+      className="inline-block rounded-full border-[1.5px] border-dashed border-black-4"
       style={{ width: size, height: size }}
       aria-hidden
     />
@@ -110,21 +110,28 @@ export function FoundValue({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-status-warning-border bg-status-warning-bg p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="grid gap-3 rounded-md border border-status-warning-border bg-status-warning-bg px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
       <div className="min-w-0">
-        <p className="p7 text-text-secondary">
-          Found {value} in {file}
-          {page != null && `, page ${page}`}
+        <p className="flex items-center gap-2 h8 text-text-primary">
+          <Icon name="info" size={16} className="shrink-0 text-status-warning-text" />
+          <span>
+            Found {value} in {file}
+            {page != null && `, page ${page}`}
+          </span>
         </p>
-        {quote && <p className="p7 text-text-secondary">&ldquo;{quote}&rdquo;</p>}
-        <button
-          type="button"
-          className={cn("mt-2 p7 text-text-primary underline underline-offset-[3px]", focusRing)}
-        >
-          View
-        </button>
+        {quote && (
+          <p className="mt-0.5 pl-6 p7 text-text-secondary">
+            &ldquo;{quote}&rdquo; ·{" "}
+            <button
+              type="button"
+              className={cn("text-text-primary underline underline-offset-[3px]", focusRing)}
+            >
+              View
+            </button>
+          </p>
+        )}
       </div>
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{children}</div>
+      {children && <div className="flex shrink-0 flex-wrap items-center gap-2 pl-6 sm:pl-0">{children}</div>}
     </div>
   );
 }
@@ -149,10 +156,10 @@ export function RequirementGroup({
         {count != null && (
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 h9",
+              "inline-flex h-6 items-center rounded-full border px-2 h9",
               accentPill
-                ? "bg-bg-accent text-[var(--accent-hover)]"
-                : "bg-black-2 text-text-secondary",
+                ? "border-border-accent bg-bg-accent text-[var(--accent-hover)]"
+                : "border-border-dark bg-white text-text-title",
             )}
           >
             {countLabel ?? `${count} open`}

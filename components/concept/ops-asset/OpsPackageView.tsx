@@ -39,11 +39,9 @@ import { opsTabsFor, type PackageTabId } from "../packageTabs";
 import { service, type Workstream } from "@/lib/concept/model";
 import type { PackageCardChip } from "../ui";
 import { AssetWindow } from "./AssetWindow";
+import { OpsAssetsTable } from "./OpsAssetsTable";
 import {
   AssistantPanel,
-  BlockingCellContent,
-  OpsDataTable,
-  RecCellContent,
   SelectionBar,
   UpdatedHighlight,
 } from "./opsUi";
@@ -69,7 +67,9 @@ export function OpsPackageView({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const bar = useOpsDetailBar();
   const w = getWorkstream(account, id);
-  const [filter, setFilter] = useState<Filter>("blocked");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const [windowMode, setWindowMode] = useState<"fix" | "edit">("fix");
   const [selected, setSelected] = useState<string[]>([]);
   const [windowOpen, setWindowOpen] = useState(false);
   const [windowAsset, setWindowAsset] = useState<string | null>(null);
@@ -191,6 +191,7 @@ export function OpsPackageView({ id }: { id: string }) {
       assetRows.find((r) => r.grp === "blocked")?.id ??
       assetRows[0]?.id;
     if (first) {
+      setWindowMode("fix");
       setWindowAsset(first);
       setWindowOpen(true);
     }
@@ -312,8 +313,8 @@ export function OpsPackageView({ id }: { id: string }) {
                 columns={stepColumns}
                 chips={opsDisplayChips(w)}
               />
-              <OpsDataTable
-                title="Assets"
+              <OpsAssetsTable
+                w={w}
                 count={filtered.length}
                 aside={
                   <FilterChips
@@ -340,61 +341,36 @@ export function OpsPackageView({ id }: { id: string }) {
                     />
                   ) : undefined
                 }
-                selectable
                 selected={selected}
                 onSelectRow={(id, on) =>
                   setSelected((prev) =>
                     on ? [...prev, id] : prev.filter((x) => x !== id),
                   )
                 }
-                columns={[
-                  { key: "asset", label: "ASSET" },
-                  { key: "step", label: "STEP" },
-                  { key: "blocking", label: "BLOCKING THE NEXT STEP" },
-                  { key: "rec", label: "RECOMMENDED, MISSING" },
-                  { key: "since", label: "BLOCKED SINCE" },
-                ]}
+                expanded={expanded}
+                onToggle={(id) =>
+                  setExpanded((prev) =>
+                    prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+                  )
+                }
+                onFix={(id) => {
+                  setWindowMode("fix");
+                  openFix(id);
+                }}
+                onEdit={(id) => {
+                  setWindowMode("edit");
+                  setWindowAsset(id);
+                  setWindowOpen(true);
+                }}
+                onOpen={(id) => router.push(hrefs.opsAsset(id, { package: w.id }))}
+                empty={filter === "blocked" ? "Nothing is blocked" : "No assets here"}
                 rows={filtered.map((r) => ({
                   id: r.id,
-                  selectable: r.selectable,
-                  blocked: r.blocked,
-                  href: r.blocked
-                    ? undefined
-                    : hrefs.opsAsset(r.id, { package: w.id }),
-                  asset: (
-                    <div>
-                      <p className="h8 text-text-title">{r.building?.name}</p>
-                      <p className="p7 text-text-tertiary">{r.building?.city}</p>
-                    </div>
-                  ),
+                  name: r.building?.name ?? r.id,
+                  city: r.building?.city,
+                  bundle: r.bundle,
                   step: r.stepNode,
-                  blocking: r.block ? (
-                    <BlockingCellContent
-                      item={r.block.item}
-                      state={r.block.state}
-                      detail={r.block.detail}
-                    />
-                  ) : (
-                    <span className="p6 text-text-tertiary">—</span>
-                  ),
-                  rec: r.rec ? (
-                    <RecCellContent count={r.rec.count} names={r.rec.names} />
-                  ) : (
-                    <span className="p6 text-text-tertiary">—</span>
-                  ),
-                  since: r.bundle?.blockedSince ? (
-                    <span className="p6 text-text-secondary">
-                      {short(r.bundle.blockedSince)}
-                    </span>
-                  ) : (
-                    <span className="p6 text-text-tertiary">—</span>
-                  ),
                 }))}
-                onRowClick={(rowId, blocked) => {
-                  if (selected.length) return;
-                  if (blocked) openFix(rowId);
-                  else router.push(hrefs.opsAsset(rowId, { package: w.id }));
-                }}
               />
             </>
           )}
@@ -402,11 +378,11 @@ export function OpsPackageView({ id }: { id: string }) {
         </WorkstreamFrame>
         <AssetWindow
           open={windowOpen}
-          mode="fix"
+          mode={windowMode}
           w={w}
           account={account}
           assetId={windowAsset ?? w.projects[0].buildingId}
-          assetIds={w.projects.map((p) => p.buildingId)}
+          assetIds={windowMode === "edit" && windowAsset ? [windowAsset] : w.projects.map((p) => p.buildingId)}
           onSelectAsset={setWindowAsset}
           onClose={() => setWindowOpen(false)}
           onDone={() => setWindowOpen(false)}

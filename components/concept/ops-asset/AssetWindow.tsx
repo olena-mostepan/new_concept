@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   checksFor,
   type AssetCheckBundle,
@@ -94,6 +94,7 @@ function RequirementActions({
   buildingId,
   patch,
   onUpload,
+  onView,
 }: {
   def: CheckDef;
   item: CheckItemState;
@@ -102,6 +103,7 @@ function RequirementActions({
   buildingId: string;
   patch: (fn: (b: AssetCheckBundle) => void) => void;
   onUpload: (key: CheckDef["key"]) => void;
+  onView: (doc: PreviewDoc) => void;
 }) {
   const st = item.state;
   const [draft, setDraft] = useState(
@@ -119,7 +121,7 @@ function RequirementActions({
   if (st === "confirm" && item.found) {
     const f = item.found;
     return (
-      <FoundValue {...f}>
+      <FoundValue {...f} onView={() => onView({ file: f.file, page: Number(f.page ?? 1), quote: f.quote, value: f.value })}>
         <Button type="secondary" size="default" onClick={() => patch((b) => applyUseFound(b, def, f))}>
           Use {f.value}
         </Button>
@@ -134,7 +136,14 @@ function RequirementActions({
     return (
       <div className="space-y-2">
         {item.options.map((opt) => (
-          <FoundValue key={opt.file} value={opt.value} file={opt.file} page={opt.page} quote={opt.quote}>
+          <FoundValue
+            key={opt.file}
+            value={opt.value}
+            file={opt.file}
+            page={opt.page}
+            quote={opt.quote}
+            onView={() => onView({ file: opt.file, page: Number(opt.page ?? 1), quote: opt.quote, value: opt.value })}
+          >
             <Button type="secondary" size="default" onClick={() => patch((b) => applyUseFound(b, def, opt))}>
               Use {opt.value}
             </Button>
@@ -280,6 +289,7 @@ function ItemRow({
   buildingId,
   patch,
   onUpload,
+  onView,
 }: {
   def: CheckDef;
   bundle: AssetCheckBundle;
@@ -287,6 +297,7 @@ function ItemRow({
   buildingId: string;
   patch: (fn: (b: AssetCheckBundle) => void) => void;
   onUpload: (key: CheckDef["key"]) => void;
+  onView: (doc: PreviewDoc) => void;
 }) {
   const item = bundle.items[def.key] ?? { state: "missing" as const };
   const st = item.state;
@@ -313,6 +324,7 @@ function ItemRow({
       buildingId={buildingId}
       patch={patch}
       onUpload={onUpload}
+      onView={onView}
     />
   );
   return (
@@ -328,6 +340,100 @@ function ItemRow({
         {!below && actions}
       </div>
       {below && <div className="col-start-2 col-end-4 mt-3">{actions}</div>}
+    </div>
+  );
+}
+
+type PreviewDoc = { file: string; page: number; quote?: string; value?: string };
+
+const DOC_KIND: Array<[RegExp, string, number]> = [
+  [/dach|roof|aufmass/i, "Roof plan", 3],
+  [/lageplan|plans|site|grundriss/i, "Site plan", 2],
+  [/strom|bill|rechnung/i, "Electricity bill", 2],
+  [/img|jpg|photo/i, "Site photo", 1],
+];
+const kindOf = (name: string): [string, number] => {
+  const k = DOC_KIND.find(([re]) => re.test(name));
+  return k ? [k[1], k[2]] : ["Document", 1];
+};
+
+/** Mock preview of a file: a drawn page with the words we read highlighted. */
+function DocPreview({ doc, onBack, onClose }: { doc: PreviewDoc; onBack: () => void; onClose: () => void }) {
+  const [kind, pages] = kindOf(doc.file);
+  const [page, setPage] = useState(Math.min(doc.page, pages));
+  const hit = Boolean(doc.quote) && page === doc.page;
+  const bars = [92, 78, 85, 60, 88, 70, 95, 54];
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex items-center gap-1 border-b border-border-light bg-white py-3 pl-2 pr-3">
+        <IconButton icon="arrow-left" label="All documents" onClick={onBack} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate h8 text-text-primary">{doc.file}</p>
+          <p className="p7 text-text-secondary">
+            {kind} · page {page} of {pages}
+          </p>
+        </div>
+        <IconButton icon="chevron-left" label="Previous page" disabled={page <= 1} onClick={() => setPage(page - 1)} />
+        <IconButton icon="chevron-right" label="Next page" disabled={page >= pages} onClick={() => setPage(page + 1)} />
+        <span className="ws-only-narrow">
+          <IconButton icon="cross" label="Close documents" onClick={onClose} />
+        </span>
+      </div>
+      {doc.quote && (
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-2 border-b px-4 py-2 p7",
+            hit
+              ? "border-status-warning-border bg-status-warning-bg text-text-primary"
+              : "border-border-light bg-white text-text-secondary",
+          )}
+        >
+          {hit ? (
+            <>Highlighted: what we read{doc.value ? ` (${doc.value})` : ""}</>
+          ) : (
+            <>
+              The value is on page {doc.page}.
+              <button type="button" className={cn("underline underline-offset-[3px]", focusRing)} onClick={() => setPage(doc.page)}>
+                Go to page {doc.page}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+      <div className="min-h-0 flex-1 overflow-auto p-4">
+        <div className="mx-auto flex aspect-[1/1.414] max-w-[520px] flex-col gap-2.5 overflow-hidden rounded border border-border-dark bg-white px-[9%] py-[8%] shadow-sm">
+          <p className="text-[13px] font-semibold text-text-title">{doc.file.replace(/\.[a-z]+$/i, "").replace(/_/g, " ")}</p>
+          <p className="-mt-1.5 mb-1.5 text-[10px] text-text-tertiary">
+            Page {page} / {pages}
+          </p>
+          {kind === "Roof plan" && (
+            <svg viewBox="0 0 300 170" className="mb-2 h-auto w-full text-black-5" aria-hidden>
+              <rect x="30" y="20" width="220" height="120" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              <rect x="50" y="38" width="180" height="84" fill="none" stroke="currentColor" strokeDasharray="4 3" />
+              <line x1="30" y1="155" x2="250" y2="155" stroke="currentColor" />
+              <text x="140" y="166" fontSize="9" textAnchor="middle" fill="currentColor">
+                {page === 1 ? "32,0 m" : "28,5 m"}
+              </text>
+              <text x="140" y="84" fontSize="9" textAnchor="middle" fill="currentColor">
+                Dachfläche
+              </text>
+            </svg>
+          )}
+          {bars.slice(0, 3).map((wd, i) => (
+            <div key={`a${i}`} className="h-1.5 rounded bg-black-2" style={{ width: `${wd}%` }} />
+          ))}
+          {hit ? (
+            <p className="my-1 rounded-sm bg-status-warning-bg px-1.5 py-1 text-[12px] text-text-primary outline outline-2 outline-status-warning-mark">
+              {doc.quote}
+            </p>
+          ) : (
+            <div className="h-1.5 w-[80%] rounded bg-black-2" />
+          )}
+          {bars.slice(3).map((wd, i) => (
+            <div key={`b${i}`} className="h-1.5 rounded bg-black-2" style={{ width: `${wd}%` }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -365,6 +471,17 @@ export function AssetWindow({
   const building = getBuilding(account, assetId);
   const defs = checksFor(w.service, w.solution);
   const patch = onPatch;
+  const [doc, setDoc] = useState<PreviewDoc | null>(null);
+  const [docsOpen, setDocsOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const showDoc = (d: PreviewDoc) => {
+    setDoc(d);
+    setDocsOpen(true);
+  };
+  useEffect(() => {
+    setDoc(null);
+    setDocsOpen(false);
+  }, [assetId]);
 
   const blocking = defs.filter((d) => d.required);
   const recommended = defs.filter((d) => !d.required);
@@ -452,44 +569,77 @@ export function AssetWindow({
       : "Edit asset data";
   const subtitle = w.name;
 
+  const editing = defs.some((d) => bundle.items[d.key]?.state === "edit");
   const tryClose = () => {
-    if (dirty && !onCloseAttempt()) return;
+    if (editing && !confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
     onClose();
   };
+  const closeRef = useRef(tryClose);
+  closeRef.current = tryClose;
+  // Esc closes (asking first when an edit is open); the page underneath doesn't scroll.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeRef.current();
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
-  const footer = dirty ? (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="p7 text-status-danger-text">
-        You have an unsaved change. Close without saving it?
-      </p>
-      <div className="flex gap-2">
-        <Button type="tertiary" size="default" onClick={() => onCloseAttempt()}>
-          Keep editing
-        </Button>
-        <Button type="secondary" size="default" onClick={onClose}>
-          Close without saving
-        </Button>
-      </div>
-    </div>
-  ) : (
-    <div className="flex justify-end">
-      <Button type="primary" size="large" onClick={onDone}>
-        Done
-      </Button>
-    </div>
-  );
+  if (!open) return null;
+
+  const listIds = mode === "fix" ? [...groups.todo, ...groups.done] : [assetId];
 
   return (
-    <OpsModal
-      open={open}
-      title={title}
-      subtitle={subtitle}
-      onClose={tryClose}
-      footer={footer}
-      width={1000}
+    <div
+      role="dialog"
+      aria-modal
+      aria-label={title}
+      className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] bg-white"
     >
-      <div className="flex max-h-[calc(100dvh-200px)] min-h-[480px]">
-        <aside className="flex w-[260px] shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-border-light bg-black-1 px-3 py-4">
+      {/* Top bar */}
+      <header className="flex min-h-16 items-center gap-3 border-b border-border-dark px-4 py-2">
+        <IconButton icon="cross" label="Close" onClick={tryClose} />
+        <div className="min-w-0 flex-1">
+          <h2 className="h6 text-text-primary">{title}</h2>
+          <p className="p7 text-text-secondary">{subtitle}</p>
+        </div>
+        {confirming ? (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <p className="ws-hide-xs mr-2 p6 text-text-primary">You have an unsaved change. Close without saving it?</p>
+            <Button type="secondary" size="default" onClick={() => setConfirming(false)}>
+              Keep editing
+            </Button>
+            <Button type="secondary" size="default" onClick={() => { setConfirming(false); onClose(); }}>
+              Close without saving
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="ws-only-narrow">
+              <Button type="secondary" size="default" icon="document" onClick={() => setDocsOpen(!docsOpen)}>
+                {`Documents · ${bundle.files.length}`}
+              </Button>
+            </span>
+            <Button type="primary" size="large" onClick={tryClose}>
+              Done
+            </Button>
+          </div>
+        )}
+      </header>
+
+      {/* Assets · checklist · documents */}
+      <div className={cn("ws-body grid min-h-0", mode === "edit" && "ws-body--single")}>
+        <aside className="ws-side flex min-h-0 flex-col gap-0.5 overflow-y-auto border-r border-border-light bg-black-1 px-3 py-4">
           {(mode === "fix"
             ? [
                 { label: "To fix", ids: groups.todo },
@@ -547,36 +697,44 @@ export function AssetWindow({
             </button>
           )}
         </aside>
-        <div className="min-w-0 flex-1 overflow-y-auto p-6">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="h5 text-text-primary">{building.name}</h3>
-              <p className="p6 text-text-secondary">
-                {mode === "edit" && bundle.estimateStartedOn
-                  ? `${building.city} · In Estimate since ${short(bundle.estimateStartedOn)}`
-                  : `${building.city} · ${stepLabel(bundle.projectStep)}${
-                      bundle.blockedSince
-                        ? ` · blocked since ${short(bundle.blockedSince)}`
-                        : ""
-                    }`}
-              </p>
+        <main className="min-h-0 min-w-0 overflow-y-auto">
+          <div className="mx-auto max-w-[880px] px-4 pb-12 pt-6 sm:px-8">
+            <div className="ws-picker mb-4">
+              <Dropdown
+                ariaLabel="Asset"
+                value={assetId}
+                onValueChange={onSelectAsset}
+                options={listIds.map((id) => ({ value: id, label: getBuilding(account, id)?.name ?? id }))}
+              />
             </div>
-            <Button
-              type="secondary"
-              size="default"
-              icon="chevron-right"
-              iconPosition="right"
-              href={
-                mode === "edit"
-                  ? hrefs.opsPackage(w.id)
-                  : hrefs.opsAsset(assetId, { package: w.id })
-              }
-            >
-              {mode === "edit" ? "Open package" : "Open asset page"}
-            </Button>
-          </div>
-          <UploadRow onUpload={() => upload()} />
-          <div className="mt-4 space-y-4">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="h5 text-text-primary">{building.name}</h3>
+                <p className="p6 text-text-secondary">
+                  {mode === "edit" && bundle.estimateStartedOn
+                    ? `${building.city} · In Estimate since ${short(bundle.estimateStartedOn)}`
+                    : `${building.city} · ${stepLabel(bundle.projectStep)}${
+                        bundle.blockedSince
+                          ? ` · blocked since ${short(bundle.blockedSince)}`
+                          : ""
+                      }`}
+                </p>
+              </div>
+              <Button
+                type="tertiary"
+                size="default"
+                icon="chevron-right"
+                iconPosition="right"
+                href={
+                  mode === "edit"
+                    ? hrefs.opsPackage(w.id)
+                    : hrefs.opsAsset(assetId, { package: w.id })
+                }
+              >
+                {mode === "edit" ? "Open package" : "Open asset page"}
+              </Button>
+            </div>
+            <div className="space-y-4">
             <RequirementGroup
               label={mode === "edit" ? "REQUIRED" : "BLOCKING THE NEXT STEP"}
               count={openBlocking.length}
@@ -592,6 +750,7 @@ export function AssetWindow({
                   buildingId={assetId}
                   patch={patch}
                   onUpload={upload}
+                  onView={showDoc}
                 />
               ))}
             </RequirementGroup>
@@ -609,19 +768,54 @@ export function AssetWindow({
                   buildingId={assetId}
                   patch={patch}
                   onUpload={upload}
+                  onView={showDoc}
                 />
               ))}
             </RequirementGroup>
-            <RequirementGroup
-              label="FILES"
-              count={bundle.files.length}
-              countLabel={`${bundle.files.length} ${bundle.files.length === 1 ? "file" : "files"}`}
-            >
-              <AssetFileList files={bundle.files} />
-            </RequirementGroup>
+            </div>
           </div>
-        </div>
+        </main>
+
+        <aside
+          aria-label="Documents"
+          className={cn("ws-docs min-h-0 min-w-0 border-l border-border-dark bg-black-1", docsOpen && "ws-docs--open")}
+        >
+          {doc ? (
+            <DocPreview key={`${doc.file}-${doc.page}`} doc={doc} onBack={() => setDoc(null)} onClose={() => setDocsOpen(false)} />
+          ) : (
+            <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-4">
+              <div className="flex items-center gap-2">
+                <p className="flex-1 h7 text-text-primary">Documents</p>
+                <span className="inline-flex h-6 items-center rounded-full border border-border-dark bg-white px-2 h9 text-text-title">
+                  {bundle.files.length} {bundle.files.length === 1 ? "file" : "files"}
+                </span>
+                <span className="ws-only-narrow">
+                  <IconButton icon="cross" label="Close documents" onClick={() => setDocsOpen(false)} />
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-1 rounded-md border-[1.5px] border-dashed border-black-3 bg-white px-4 py-5 text-center">
+                <span className="mb-1.5 flex size-9 items-center justify-center rounded-md border border-border-dark bg-white">
+                  <Icon name="upload" size={20} className="text-icon-dark" />
+                </span>
+                <p className="h8 text-text-primary">Drop documents here</p>
+                <p className="p7 text-text-secondary">We read them and fill what we can</p>
+                <span className="mt-2.5">
+                  <Button type="secondary" size="default" onClick={() => upload()}>
+                    Upload documents
+                  </Button>
+                </span>
+              </div>
+              {bundle.files.length ? (
+                <div className="rounded-md border border-border-light bg-white px-3">
+                  <AssetFileList files={bundle.files} onView={(name) => showDoc({ file: name, page: 1 })} />
+                </div>
+              ) : (
+                <p className="text-center p7 text-text-secondary">No documents for this asset yet.</p>
+              )}
+            </div>
+          )}
+        </aside>
       </div>
-    </OpsModal>
+    </div>
   );
 }

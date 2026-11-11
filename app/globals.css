@@ -366,3 +366,21 @@ input[type='search']::-webkit-search-decoration {
     text-decoration-color: var(--black-7);
   }
 }
+
+/* Ops: full-screen Fix assets / Edit asset data workspace */
+.ws-body { grid-template-columns: 280px minmax(0, 1fr) 340px; }
+.ws-body--single { grid-template-columns: 240px minmax(0, 1fr) 340px; }
+.ws-picker, .ws-only-narrow { display: none; }
+@media (max-width: 1180px) {
+  .ws-body, .ws-body--single { grid-template-columns: 260px minmax(0, 1fr); }
+  .ws-only-narrow { display: inline-flex; }
+  .ws-docs { position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100%); z-index: 2; transform: translateX(100%); visibility: hidden; transition: transform .2s ease; box-shadow: -8px 0 24px rgba(30, 40, 50, .12); }
+  .ws-docs--open { transform: none; visibility: visible; }
+}
+@media (max-width: 760px) {
+  .ws-body, .ws-body--single { grid-template-columns: minmax(0, 1fr); }
+  .ws-side { display: none !important; }
+  .ws-picker { display: block; }
+  .ws-hide-xs { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ws-docs { transition: none; } }

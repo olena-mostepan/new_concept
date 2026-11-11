@@ -103,12 +103,14 @@ export function FoundValue({
   file,
   page,
   quote,
+  onView,
   children,
 }: {
   value: string;
   file: string;
   page?: number | string;
   quote?: string;
+  onView?: () => void;
   children?: ReactNode;
 }) {
   return (
@@ -126,6 +128,7 @@ export function FoundValue({
             &ldquo;{quote}&rdquo; ·{" "}
             <button
               type="button"
+              onClick={onView}
               className={cn("text-text-primary underline underline-offset-[3px]", focusRing)}
             >
               View
@@ -547,9 +550,12 @@ export function RecCellContent({
 export function AssetFileList({
   files,
   empty = "No files yet",
+  onView,
 }: {
   files: { name: string; type?: string; what?: string; state?: "reading" | "unknown" }[];
   empty?: string;
+  /** Shows an eye button that opens the file in the preview. */
+  onView?: (name: string) => void;
 }) {
   if (!files.length) return <p className="py-3 p6 text-text-secondary">{empty}</p>;
   return (
@@ -575,7 +581,10 @@ export function AssetFileList({
             ) : f.state === "unknown" ? (
               <Button type="secondary" size="small">Choose a type</Button>
             ) : (
-              <IconButton icon="download" label={`Download ${f.name}`} />
+              <span className="flex shrink-0 items-center gap-1">
+                {onView && <IconButton icon="eye" label={`View ${f.name}`} onClick={() => onView(f.name)} />}
+                <IconButton icon="download" label={`Download ${f.name}`} />
+              </span>
             )}
           </li>
         );

@@ -31,6 +31,7 @@ import {
 } from "../ui";
 import { hrefs } from "../hrefs";
 import { useConcept } from "../store";
+import { useConceptI18n } from "../useConceptI18n";
 import { useOpsDetailBar } from "./OpsDetailBarActions";
 import { WorkstreamFrame, packagePrimaryTab } from "../WorkstreamChrome";
 import { EstimatesPanel } from "../IndicativeWorkstream";
@@ -61,8 +62,13 @@ function opsDisplayChips(w: Workstream): PackageCardChip[] {
 }
 
 export function OpsPackageView({ id }: { id: string }) {
-  const { account, patchOpsBundle, startEstimatesForAssets, markOpsUpdated } =
-    useConcept();
+  const {
+    account,
+    patchOpsBundle,
+    startEstimatesForAssets,
+    markOpsUpdated,
+  } = useConcept();
+  const { lang } = useConceptI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const bar = useOpsDetailBar();
@@ -333,7 +339,7 @@ export function OpsPackageView({ id }: { id: string }) {
                       count={selected.length}
                       actionLabel={
                         selectionHasBlocked
-                          ? fixAssetsAction(selected.length)
+                          ? fixAssetsAction(selected.length, lang)
                           : `Start estimates for ${selected.length}`
                       }
                       onAction={bulkAction}

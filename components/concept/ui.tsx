@@ -16,7 +16,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  OWNER_LABEL,
   SERVICES,
   service as serviceDef,
   type Account,
@@ -32,7 +31,8 @@ import {
   changedRecently,
   doneCount,
 } from "@/lib/concept/derive";
-import { nPackages, WORDS } from "@/lib/concept/words";
+import { nPackages, ownerLabel, WORDS } from "@/lib/concept/words";
+import { useConceptI18n } from "./useConceptI18n";
 import { Tag } from "@/components/ds/tag";
 
 /* ------------------------------------------------------------------ type */
@@ -1756,6 +1756,7 @@ export function ResponsibilityPill({
   label?: string;
   className?: string;
 }) {
+  const { lang } = useConceptI18n();
   return (
     <span
       className={cn(
@@ -1764,7 +1765,7 @@ export function ResponsibilityPill({
         className,
       )}
     >
-      {label ?? OWNER_LABEL[owner]}
+      {label ?? ownerLabel(lang, owner)}
     </span>
   );
 }

@@ -31,6 +31,8 @@ import { service as serviceDef } from "@/lib/concept/model";
 import { cn } from "@/lib/utils";
 import { Button, Dropdown, Icon, IconButton, focusRing } from "../ui";
 import { hrefs } from "../hrefs";
+import { useConcept } from "../store";
+import { useConceptI18n } from "../useConceptI18n";
 import {
   AssetFileList,
   FoundValue,
@@ -561,11 +563,13 @@ export function AssetWindow({
     }, 1400);
   };
 
+  const { lang } = useConceptI18n();
+
   if (!bundle || !building) return null;
 
   const title =
     mode === "fix"
-      ? fixAssetsAction(opened.length || groups.todo.length)
+      ? fixAssetsAction(opened.length || groups.todo.length, lang)
       : "Edit asset data";
   const subtitle = w.name;
 

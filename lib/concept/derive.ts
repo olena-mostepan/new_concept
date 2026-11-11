@@ -1,4 +1,6 @@
 import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Building, type DeliveryPhaseId, type Need, type Owner, type Phase, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
+import { t, type Lang } from './i18n'
+import { formatDate, formatMoneyOne, formatMoneyRange } from './i18n/format'
 import { nAssets, nPackages, WORDS } from './words'
 
 /** Customers only see batches once a plan has been shared with them */
@@ -301,8 +303,13 @@ export const parse = (d: string) => {
 /** Days from a past date to today */
 export const days = (d: string) => Math.round((parse(TODAY) - parse(d)) / 86400000)
 /** "14 Oct 2026" → "14 Oct"; includes year when not the same calendar year as TODAY. */
-export const short = (d?: string) => {
+export const short = (d?: string, lang: Lang = 'en') => {
   if (!d) return ''
+  if (lang === 'de') {
+    const parts = d.split(' ')
+    const hasYear = parts.length > 2
+    return formatDate(d, 'de', { year: hasYear })
+  }
   const parts = d.split(' ')
   const day = parts[0]
   const mon = parts[1]
@@ -357,59 +364,115 @@ export function phaseIsInheritedFrom(
 export const noun = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 /** Next line for a live workstream. Days and building counts come from the data. */
-export function nextLine(w: Workstream): string {
+export function nextLine(w: Workstream, lang: Lang = 'en'): string {
   if (w.owner === 'done') return ''
   if (w.service === 'delivery') {
-    const line = deliveryNextLine(w)
+    const line = deliveryNextLine(w, lang)
     if (line) return line
   }
   const n = w.next
   if (!n) return w.now
   if (n.kind === 'roof') {
-    return `Roof drawings for ${activeProjects(w).length} buildings — asked ${short(n.since)}`
+    return t(
+      lang,
+      'Roof drawings for {0} buildings — asked {1}',
+      activeProjects(w).length,
+      short(n.since, lang),
+    )
   }
   if (n.kind === 'decision') {
     const step = service(w.service).steps.indexOf('Presented')
     const count = w.projects.filter((p) => p.step === step && !rowIsInactive(p)).length
-    return `Go or no-go on ${count} estimates — presented ${short(n.since)}`
+    return t(lang, 'Go or no-go on {0} estimates — presented {1}', count, short(n.since, lang))
   }
   if (n.kind === 'offers') {
     const left = n.invited - n.in
-    return `${n.in} of ${n.invited} offers in — last ${left} chased ${short(n.chased)}`
+    return t(
+      lang,
+      '{0} of {1} offers in — last {2} chased {3}',
+      n.in,
+      n.invited,
+      left,
+      short(n.chased, lang),
+    )
   }
-  if (n.kind === 'price') return `Price from ${n.from} — requested ${short(n.since)}`
+  if (n.kind === 'price') {
+    return t(lang, 'Price from {0} — requested {1}', n.from, short(n.since, lang))
+  }
   if (n.kind === 'installing') {
-    const detail = n.detail ?? (w.activity?.length ? `started ${short([...w.activity].sort((a, b) => parse(b.date) - parse(a.date))[0].date)}` : '')
-    return detail ? `Installing at ${n.place} — ${detail}` : `Installing at ${n.place}`
+    const detail =
+      n.detail ??
+      (w.activity?.length
+        ? t(
+            lang,
+            'started {0}',
+            short([...w.activity].sort((a, b) => parse(b.date) - parse(a.date))[0].date, lang),
+          )
+        : '')
+    return detail
+      ? t(lang, 'Installing at {0} — {1}', n.place, detail)
+      : t(lang, 'Installing at {0}', n.place)
   }
   if (n.kind === 'gas') {
-    return `Gas bills for ${activeProjects(w).length} buildings — asked ${short(n.since)}`
+    return t(
+      lang,
+      'Gas bills for {0} buildings — asked {1}',
+      activeProjects(w).length,
+      short(n.since, lang),
+    )
   }
   if (n.kind === 'carpark') {
-    return `Car park ownership for ${activeProjects(w).length} buildings — asked ${short(n.since)}`
+    return t(
+      lang,
+      'Car park ownership for {0} buildings — asked {1}',
+      activeProjects(w).length,
+      short(n.since, lang),
+    )
   }
   if (n.kind === 'agree') {
     const count = w.projects.filter((p) => p.decision === 'waiting').length || activeProjects(w).length
-    return `Agree scope for ${count} projects — sent ${short(n.since)}`
+    return t(lang, 'Agree scope for {0} projects — sent {1}', count, short(n.since, lang))
   }
   if (n.kind === 'writing') {
     const visits = recordedVisits(w)
     const done = visits.filter((v) => v.state === 'done').length
     const latest = visits.filter((v) => v.state === 'done' && v.on).sort((a, b) => parse(b.on!) - parse(a.on!))[0]
-    return `Scope written after the last survey — ${done} of ${visits.length} surveys done${latest?.on ? `, ${short(latest.on)}` : ''}`
+    const suffix = latest?.on ? `, ${short(latest.on, lang)}` : ''
+    return t(
+      lang,
+      'Scope written after the last survey — {0} of {1} surveys done{2}',
+      done,
+      visits.length,
+      suffix,
+    )
   }
-  if (n.kind === 'choose') return `Choose a supplier — results sent ${short(n.since)}`
-  if (n.kind === 'brief') return `Agree the brief — sent ${short(n.since)}`
-  if (n.kind === 'shortlist') return `Shortlisting suppliers — brief agreed ${short(n.on)}`
-  if (n.kind === 'agreePrice') return `Agree the price — analysis sent ${short(n.since)}`
-  if (n.kind === 'sign') return `Sign the contract — sent ${short(n.since)}`
-  if (n.kind === 'overdue') return `${n.place} overdue — installation due ${short(n.due)}`
-  if (n.kind === 'design') return `Design for ${n.n} sites — site checks done ${short(n.on)}`
+  if (n.kind === 'choose') return t(lang, 'Choose a supplier — results sent {0}', short(n.since, lang))
+  if (n.kind === 'brief') return t(lang, 'Agree the brief — sent {0}', short(n.since, lang))
+  if (n.kind === 'shortlist') {
+    return t(lang, 'Shortlisting suppliers — brief agreed {0}', short(n.on, lang))
+  }
+  if (n.kind === 'agreePrice') {
+    return t(lang, 'Agree the price — analysis sent {0}', short(n.since, lang))
+  }
+  if (n.kind === 'sign') return t(lang, 'Sign the contract — sent {0}', short(n.since, lang))
+  if (n.kind === 'overdue') {
+    return t(lang, '{0} overdue — installation due {1}', n.place, short(n.due, lang))
+  }
+  if (n.kind === 'design') {
+    return t(lang, 'Design for {0} sites — site checks done {1}', n.n, short(n.on, lang))
+  }
   const ready = w.projects.filter((p) => p.ready).length
   const readyOn = w.needs.find((need) => need.since)?.since
   return readyOn
-    ? `Estimates as building data lands — ${ready} more ready ${short(readyOn)} · ${ready} of ${w.projects.length}`
-    : `Estimates as building data lands — ${ready} of ${w.projects.length} ready`
+    ? t(
+        lang,
+        'Estimates as building data lands — {0} more ready {1} · {2} of {3}',
+        ready,
+        short(readyOn, lang),
+        ready,
+        w.projects.length,
+      )
+    : t(lang, 'Estimates as building data lands — {0} of {1} ready', ready, w.projects.length)
 }
 
 /** Latest dated event on the workstream. Not stored; read from the record. */
@@ -458,9 +521,9 @@ export function byRecentChange(list: Workstream[]): Workstream[] {
 }
 
 /** Split a next line into the main clause and the detail after " — ". */
-export function nextParts(w: Workstream): { main: string; detail: string } {
+export function nextParts(w: Workstream, lang: Lang = 'en'): { main: string; detail: string } {
   if (w.owner === 'done') return { main: w.outcome || '—', detail: '' }
-  const line = nextLine(w)
+  const line = nextLine(w, lang)
   const split = line.indexOf(' — ')
   if (split === -1) return { main: line || '—', detail: '' }
   return { main: line.slice(0, split), detail: line.slice(split + 3) }
@@ -863,7 +926,8 @@ export function batchActivity(a: Account, b: Batch) {
   )
 }
 
-export function money(range: [number, number]): string {
+export function money(range: [number, number], lang: Lang = 'en'): string {
+  if (lang === 'de') return formatMoneyRange(range[0], range[1], lang)
   if (range[0] < 1000 && range[1] >= 1000) return `€${range[0]}k–${(range[1] / 1000).toFixed(1)}m`
   if (range[0] >= 1000 || range[1] >= 1000) {
     const fmt = (n: number) => (n / 1000).toFixed(1).replace(/\.0$/, '')
@@ -872,26 +936,32 @@ export function money(range: [number, number]): string {
   return `€${range[0]}–${range[1]}k`
 }
 
-export function paybackLabel(years: ProjectRow['paybackYears']): string {
-  if (years === 'over12') return 'Over 12 years'
-  if (typeof years === 'number') return years === 1 ? '1 year' : `${years} years`
+export function paybackLabel(years: ProjectRow['paybackYears'], lang: Lang = 'en'): string {
+  if (years === 'over12') return t(lang, 'Over 12 years')
+  if (typeof years === 'number') {
+    return years === 1
+      ? t(lang, '1 year')
+      : t(lang, '{0} years', years)
+  }
   return '—'
 }
 
-export function presentedTotal(w: Workstream): { text: string; count: number } {
+export function presentedTotal(w: Workstream, lang: Lang = 'en'): { text: string; count: number } {
   const rows = w.projects.filter((p) => p.estimate)
   if (!rows.length) return { text: '—', count: 0 }
   const lo = rows.reduce((s, p) => s + p.estimate![0], 0)
   const hi = rows.reduce((s, p) => s + p.estimate![1], 0)
-  return { text: money([lo, hi]), count: rows.length }
+  return { text: money([lo, hi], lang), count: rows.length }
 }
 
-export function decisionLabel(p: ProjectRow): string {
+export function decisionLabel(p: ProjectRow, lang: Lang = 'en'): string {
   if (!p.decision || p.decision === 'waiting') return '—'
-  if (p.decision === 'no' && p.paybackYears === 'over12') return 'Not proceeding — payback over 12 years'
-  if (p.decision === 'no') return `No · ${short(p.decidedOn)}`
-  if (p.decision === 'scope') return `Planning first · ${short(p.decidedOn)}`
-  return `Go ahead · ${short(p.decidedOn)}`
+  if (p.decision === 'no' && p.paybackYears === 'over12') {
+    return t(lang, 'Not proceeding — payback over 12 years')
+  }
+  if (p.decision === 'no') return t(lang, 'No · {0}', short(p.decidedOn, lang))
+  if (p.decision === 'scope') return t(lang, 'Planning first · {0}', short(p.decidedOn, lang))
+  return t(lang, 'Go ahead · {0}', short(p.decidedOn, lang))
 }
 
 export function waitingDays(w: Workstream): number {
@@ -900,13 +970,15 @@ export function waitingDays(w: Workstream): number {
   return 0
 }
 
-export function decidedLine(w: Workstream): string {
-  const when = short(w.completedOn)
+export function decidedLine(w: Workstream, lang: Lang = 'en'): string {
+  const when = short(w.completedOn, lang)
   const tender = w.projects.filter((p) => p.destination === 'tender').length
   const scopeN = w.projects.filter((p) => p.destination === 'scope').length
-  if (tender && scopeN) return `You decided ${when} — ${tender} to Tender, ${scopeN} to Planning`
-  if (tender) return `You decided ${when} — all ${tender} to Tender`
-  return w.outcome ? `${w.outcome} — ${when}` : `You decided ${when}`
+  if (tender && scopeN) {
+    return t(lang, 'You decided {0} — {1} to Tender, {2} to Planning', when, tender, scopeN)
+  }
+  if (tender) return t(lang, 'You decided {0} — all {1} to Tender', when, tender)
+  return w.outcome ? `${w.outcome} — ${when}` : t(lang, 'You decided {0}', when)
 }
 
 export function splitLine(line: string): { main: string; detail: string } {
@@ -1169,7 +1241,8 @@ export function sectionOutcome(w: Workstream): string {
   return w.outcome || short(w.completedOn) || '—'
 }
 
-export function moneyOne(n: number): string {
+export function moneyOne(n: number, lang: Lang = 'en'): string {
+  if (lang === 'de') return formatMoneyOne(n, lang)
   if (n >= 1000) return `€${(n / 1000).toFixed(1).replace(/\.0$/, '')}m`
   return `€${n}k`
 }
@@ -1255,7 +1328,7 @@ function pricingPanel(w: Workstream, i: number, state: 'passed' | 'now' | 'upcom
 
 const DELIVERY_PHASE_IDS = ['start', 'phase1', 'phase2', 'phase3', 'phase4', 'complete'] as const
 
-export function deliveryNextLine(w: Workstream): string {
+export function deliveryNextLine(w: Workstream, lang: Lang = 'en'): string {
   const confirming = w.projects.filter((project) => project.delivery?.confirmPhase)
   if (!confirming.length || !w.supplier) return ''
   const dates = confirming
@@ -1265,17 +1338,29 @@ export function deliveryNextLine(w: Workstream): string {
     })
     .filter((date): date is string => Boolean(date))
     .sort((a, b) => parse(a) - parse(b))
-    .map((date) => short(date))
+    .map((date) => short(date, lang))
   const n = confirming.length
-  const sameMonth = dates.length > 1 && dates.every((date) => date.split(' ')[1] === dates[0].split(' ')[1])
+  const sameMonth =
+    dates.length > 1 &&
+    dates.every((date) => date.split(/[\s.]/).filter(Boolean)[1] === dates[0].split(/[\s.]/).filter(Boolean)[1])
   const when = !dates.length
     ? ''
     : dates.length === 1
       ? dates[0]
       : sameMonth
-        ? `${dates.slice(0, -1).map((date) => date.split(' ')[0]).join(', ')} and ${dates[dates.length - 1]}`
+        ? `${dates
+            .slice(0, -1)
+            .map((date) => date.split(/[\s.]/)[0])
+            .join(', ')} and ${dates[dates.length - 1]}`
         : `${dates.slice(0, -1).join(', ')} and ${dates[dates.length - 1]}`
-  return `Confirm ${n} ${n === 1 ? 'date' : 'dates'} — from ${w.supplier}'s invoices, ${when}`
+  return t(
+    lang,
+    "Confirm {0} {1} — from {2}'s invoices, {3}",
+    n,
+    n === 1 ? 'date' : 'dates',
+    w.supplier,
+    when,
+  )
 }
 
 export function datesToConfirm(w: Workstream): number {

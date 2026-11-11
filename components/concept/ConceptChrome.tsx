@@ -21,21 +21,24 @@ import {
   OpsDetailBarProvider,
   useOpsDetailBar,
 } from "./ops-asset/OpsDetailBarActions";
+import { useT, type Lang } from "@/lib/concept/i18n";
+import { customerLang } from "./useConceptI18n";
 import { AssistantButton, Button, focusRing, Icon } from "./ui";
 
 function AccountToggle() {
   const router = useRouter();
   const pathname = usePathname() ?? "";
-  const { accounts, account, setAccountId } = useConcept();
+  const { accounts, account, setAccountId, lang: stored } = useConcept();
+  const { t } = useT(customerLang(stored, pathname));
   const ops = pathname.startsWith(OPS);
   return (
     <div className="border-b border-border-dark bg-bg-container-grey">
       <div className="mx-auto flex w-full max-w-screen-2xl items-center gap-3 px-6 py-2 sm:px-8 lg:px-10">
-        <span className="p7 text-text-tertiary">Dashboard</span>
+        <span className="p7 text-text-tertiary">{t("Dashboard")}</span>
         <div
           className="inline-flex rounded-md border border-border-dark bg-white p-0.5"
           role="tablist"
-          aria-label="Dashboard"
+          aria-label={t("Dashboard")}
         >
           {accounts.map((a) => {
             const on = a.id === account.id;
@@ -55,7 +58,7 @@ function AccountToggle() {
                     : "text-text-secondary hover:text-text-primary",
                 )}
               >
-                {a.kind === "pilot" ? "Pilot" : "Mature"}
+                {a.kind === "pilot" ? t("Pilot") : t("Mature")}
               </button>
             );
           })}
@@ -65,18 +68,64 @@ function AccountToggle() {
   );
 }
 
-function ViewToggle({ ops }: { ops: boolean }) {
+function LangToggle() {
+  const { lang: stored, setLang } = useConcept();
   const router = useRouter();
   const pathname = usePathname() ?? "";
+  const { t } = useT(customerLang(stored, pathname));
+  const search = useSearchParams();
+  const set = (next: Lang) => {
+    setLang(next);
+    const params = new URLSearchParams(search.toString());
+    if (next === "en") params.delete("lang");
+    else params.set("lang", next);
+    const qs = params.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
   return (
     <div
       className="inline-flex rounded-md border border-border-dark bg-white p-0.5"
       role="tablist"
-      aria-label="View"
+      aria-label={t("Language")}
+    >
+      {(
+        [
+          { id: "en" as const, label: "EN" },
+          { id: "de" as const, label: "DE" },
+        ] as const
+      ).map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          onClick={() => set(o.id)}
+          className={cn(
+            "rounded-md px-3 py-1 p6 transition-colors",
+            stored === o.id
+              ? "bg-black-7 text-white"
+              : "text-text-secondary hover:text-text-primary",
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ViewToggle({ ops }: { ops: boolean }) {
+  const router = useRouter();
+  const pathname = usePathname() ?? "";
+  const { lang: stored } = useConcept();
+  const { t } = useT(customerLang(stored, pathname));
+  return (
+    <div
+      className="inline-flex rounded-md border border-border-dark bg-white p-0.5"
+      role="tablist"
+      aria-label={t("View")}
     >
       {[
-        { id: false, label: "Customer" },
-        { id: true, label: "Ops" },
+        { id: false, label: t("Customer") },
+        { id: true, label: t("Ops") },
       ].map((o) => (
         <button
           key={o.label}
@@ -111,6 +160,9 @@ function customerNav(account: Account): NavItem[] {
 }
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+  const pathname = usePathname() ?? "";
+  const { lang: stored } = useConcept();
+  const { t } = useT(customerLang(stored, pathname));
   return (
     <Link
       href={item.href}
@@ -121,11 +173,11 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
           : "border-transparent p6 text-text-secondary hover:text-text-primary hover:shadow-[inset_0_-2px_0_var(--black-3)]",
       )}
     >
-      {item.label}
+      {t(item.label)}
       {item.changed && (
         <span
           role="img"
-          aria-label="Changed in the last 7 days"
+          aria-label={t("Changed in the last 7 days")}
           className="h-1.5 w-1.5 rounded-full bg-brand-6"
         />
       )}
@@ -150,10 +202,12 @@ function Nav({
   const services = grouped
     ? items.filter((item) => item.group === "services")
     : [];
+  const { lang: stored } = useConcept();
+  const { t } = useT(customerLang(stored, path));
   const on = (item: NavItem) =>
     activeId ? item.id === activeId : item.match(path);
   return (
-    <nav className="border-t border-border-dark bg-white" aria-label="Sections">
+    <nav className="border-t border-border-dark bg-white" aria-label={t("Sections")}>
       <div className="mx-auto flex max-w-screen-2xl items-center gap-8 overflow-x-auto px-6 sm:px-8 lg:px-10">
         {structure.map((item) => (
           <NavLink key={item.id} item={item} active={on(item)} />
@@ -161,7 +215,7 @@ function Nav({
         {grouped && (
           <span className="flex shrink-0 items-center gap-8">
             <span className="h-5 w-px bg-border-dark" aria-hidden />
-            <span className="s3 text-text-tertiary">Services</span>
+            <span className="s3 text-text-tertiary">{t("Services")}</span>
           </span>
         )}
         {services.map((item) => (
@@ -189,7 +243,8 @@ function AppHeader({
   path: string;
   activeId?: string;
 }) {
-  const { account } = useConcept();
+  const { account, lang: stored } = useConcept();
+  const { t } = useT(customerLang(stored, path));
   const nav = ops ? OPS_NAV : customerNav(account);
   return (
     <header className="border-b border-border-dark bg-white">
@@ -205,7 +260,7 @@ function AppHeader({
             {account.customer[0]}
           </span>
           <span className="shrink-0 rounded-full border border-border-dark bg-bg-container-grey px-2.5 py-1 p7 text-text-secondary">
-            Powered by CQuel
+            {t("Powered by CQuel")}
           </span>
           <span className="truncate text-text-primary h5">
             {account.customer}
@@ -216,7 +271,7 @@ function AppHeader({
             href="/clarifications"
             className="p6 text-text-primary hover:text-text-primary"
           >
-            Questions
+            {t("Questions")}
           </Link>
           {ops && (
             <Button
@@ -225,9 +280,10 @@ function AppHeader({
               size="small"
               icon="plus"
             >
-              Create batch
+              {t("Create batch")}
             </Button>
           )}
+          {!ops && <LangToggle />}
           <ViewToggle ops={ops} />
           <Avatar letter={account.user[0]} />
         </div>
@@ -246,7 +302,8 @@ function DetailBar() {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const search = useSearchParams();
-  const { account } = useConcept();
+  const { account, lang: stored } = useConcept();
+  const { t } = useT(customerLang(stored, pathname));
   const opsBar = useOpsDetailBar();
   const showAssistant =
     /^\/concept\/ops\/packages\//.test(pathname) ||
@@ -281,7 +338,7 @@ function DetailBar() {
         >
           <Icon name="arrow-left" size={16} />
           <span className="group-hover:underline group-hover:underline-offset-[3px]">
-            Back
+            {t("Back")}
           </span>
         </button>
         <div className="flex items-center gap-4 sm:gap-5">
@@ -295,8 +352,9 @@ function DetailBar() {
             href="/clarifications"
             className="p6 text-text-primary hover:text-text-primary"
           >
-            Questions
+            {t("Questions")}
           </Link>
+          {!ops && <LangToggle />}
           <ViewToggle ops={ops} />
           <Avatar letter={account.user[0]} />
         </div>
@@ -308,12 +366,16 @@ function DetailBar() {
 function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
   const search = useSearchParams();
-  const { account } = useConcept();
+  const { account, lang: stored } = useConcept();
   const ops = pathname.startsWith(OPS);
   const detail = isDetail(pathname);
   const activeId = ops
     ? undefined
     : activeCustomerTab(pathname, search, account);
+
+  useEffect(() => {
+    document.documentElement.lang = ops ? "en" : stored;
+  }, [ops, stored]);
 
   return (
     <div className="min-h-screen bg-bg-container-grey">

@@ -36,6 +36,7 @@ import {
 } from "./ui";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
+import { useConceptI18n } from "./useConceptI18n";
 import { workstreamCrumbs } from "./crumbs";
 import {
   assetsNeedFixingFirst,
@@ -78,11 +79,12 @@ export function PackageStatusCard({
   ops?: boolean;
 }) {
   const searchParams = useSearchParams();
+  const { lang } = useConceptI18n();
   const sid = packageStatusService(w);
-  const headline = packageStatusHeadline(w);
+  const headline = packageStatusHeadline(w, lang);
   const closed = isClosed(w);
   const complete = isCompleted(w);
-  const cta = packageStatusCta(w);
+  const cta = packageStatusCta(w, lang);
   const params = new URLSearchParams(searchParams.toString());
   params.set("tab", cta.tab);
   const qs = params.toString();
@@ -110,7 +112,7 @@ export function PackageStatusCard({
           )}
           {showFix && (
             <p className="mt-1 p7 text-text-secondary">
-              {assetsNeedFixingFirst(fix.count)}
+              {assetsNeedFixingFirst(fix.count, lang)}
             </p>
           )}
         </div>
@@ -123,7 +125,7 @@ export function PackageStatusCard({
             href={fix.href}
             onClick={fix.onClick}
           >
-            {fixAssetsAction(fix.count)}
+            {fixAssetsAction(fix.count, lang)}
           </Button>
         )}
         {!closed && !complete && !showFix && (

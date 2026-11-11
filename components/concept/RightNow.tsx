@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -6,12 +8,23 @@ import {
   byRecentChange,
   nextParts,
   rightNow,
+  short,
 } from "@/lib/concept/derive";
-import { nPackages, WORDS } from "@/lib/concept/words";
+import { nPackages } from "@/lib/concept/words";
 import type { Account, Workstream } from "@/lib/concept/model";
-import { Card, CardLink, Bar, ChangedMark, focusRing, groupTitle, td, ResponsibilityPill } from "./ui";
+import {
+  Card,
+  CardLink,
+  Bar,
+  ChangedMark,
+  focusRing,
+  groupTitle,
+  td,
+  ResponsibilityPill,
+} from "./ui";
 import { ServiceTag } from "./ServiceTag";
 import { hrefs } from "./hrefs";
+import { useConceptI18n } from "./useConceptI18n";
 
 function LiveRow({
   account,
@@ -22,9 +35,10 @@ function LiveRow({
   w: Workstream;
   waiting?: boolean;
 }) {
+  const { lang, t } = useConceptI18n();
   const batch = account.batches.find((b) => b.id === w.batchId);
   const { done, total } = buildingProgress(w);
-  const parts = nextParts(w);
+  const parts = nextParts(w, lang);
   return (
     <tr className="border-t border-border-light">
       <td className={td} style={{ paddingLeft: 36 }}>
@@ -53,7 +67,7 @@ function LiveRow({
       </td>
       <td className={`${td} w-36`}>
         <p className="tabular-nums text-text-secondary">
-          {done} of {total}
+          {t("{0} of {1}", done, total)}
         </p>
         <Bar done={done} total={total} className="mt-1.5 w-24" />
       </td>
@@ -65,6 +79,7 @@ function LiveRow({
 }
 
 function DoneRow({ account, w }: { account: Account; w: Workstream }) {
+  const { lang, t } = useConceptI18n();
   const batch = account.batches.find((b) => b.id === w.batchId);
   return (
     <tr className="border-t border-border-light">
@@ -82,7 +97,7 @@ function DoneRow({ account, w }: { account: Account; w: Workstream }) {
       </td>
       <td className={td} colSpan={2}>
         <span className="text-text-secondary">
-          Done {w.completedOn?.split(" ").slice(0, 2).join(" ")}
+          {t("Done {0}", short(w.completedOn, lang))}
         </span>
       </td>
       <td className={td}>
@@ -93,37 +108,44 @@ function DoneRow({ account, w }: { account: Account; w: Workstream }) {
 }
 
 export function RightNow({ account }: { account: Account }) {
+  const { lang, t, words } = useConceptI18n();
   const groups = rightNow(account);
   const foldDone = groups.done.length > 5;
   return (
     <Card
-      title="Right now"
-      right={<CardLink href={hrefs.batches}>All {WORDS.packages}</CardLink>}
+      title={t("Right now")}
+      right={
+        <CardLink href={hrefs.batches}>
+          {t("All {0}", words.packages)}
+        </CardLink>
+      }
       bodyClassName="p-0"
     >
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px]">
           <tbody>
-            <Group label="Your action ·" count={groups.you.length}>
+            <Group label={t("Your action ·")} count={groups.you.length}>
               {byRecentChange(groups.you).map((w) => (
                 <LiveRow key={w.id} account={account} w={w} waiting />
               ))}
             </Group>
-            <Group label="In progress" count={groups.progress.length}>
+            <Group label={t("In progress")} count={groups.progress.length}>
               {byRecentChange(groups.progress).map((w) => (
                 <LiveRow key={w.id} account={account} w={w} />
               ))}
             </Group>
             <Group
-              label={foldDone ? undefined : "Done"}
+              label={foldDone ? undefined : t("Done")}
               count={foldDone ? undefined : groups.done.length}
             >
               {foldDone ? (
                 <tr className="border-t border-border-light">
                   <td colSpan={4} className="py-3 pl-8 pr-5">
                     <div className="flex items-center justify-between gap-4 p6 text-text-secondary">
-                      <span>{nPackages(groups.done.length)} done</span>
-                      <CardLink href={hrefs.batches}>See all</CardLink>
+                      <span>
+                        {t("{0} done", nPackages(groups.done.length, lang))}
+                      </span>
+                      <CardLink href={hrefs.batches}>{t("See all")}</CardLink>
                     </div>
                   </td>
                 </tr>

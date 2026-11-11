@@ -31,6 +31,10 @@ import {
   type SolutionId,
   type Workstream,
 } from "@/lib/concept/model";
+import {
+  LANG_STORAGE_KEY,
+  type Lang,
+} from "@/lib/concept/i18n";
 import { nPackages, WORDS } from "@/lib/concept/words";
 import type { AssetCheckBundle } from "@/lib/concept/checks";
 import {
@@ -46,6 +50,8 @@ import {
 interface Store {
   accounts: Account[];
   account: Account;
+  lang: Lang;
+  setLang: (lang: Lang) => void;
   setAccountId: (id: string) => void;
   createBatch: (input: {
     name: string;
@@ -106,16 +112,34 @@ const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
 export function ConceptStoreProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>(() => clone(ACCOUNTS));
   const [accountId, setId] = useState(ACCOUNTS[0].id);
+  const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
     try {
-      const fromUrl = new URLSearchParams(window.location.search).get(
-        "account",
-      );
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get("account");
       const saved = fromUrl ?? window.localStorage.getItem(KEY);
       if (saved && ACCOUNTS.some((a) => a.id === saved)) setId(saved);
+      const langParam = params.get("lang");
+      const langSaved = window.localStorage.getItem(LANG_STORAGE_KEY);
+      const nextLang: Lang =
+        langParam === "de" || langParam === "en"
+          ? langParam
+          : langSaved === "de"
+            ? "de"
+            : "en";
+      setLangState(nextLang);
+      document.documentElement.lang = nextLang;
     } catch {}
   }, []);
+
+  const setLang = (next: Lang) => {
+    setLangState(next);
+    try {
+      window.localStorage.setItem(LANG_STORAGE_KEY, next);
+    } catch {}
+    document.documentElement.lang = next;
+  };
 
   useEffect(() => {
     const current =
@@ -146,6 +170,8 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
   const store: Store = {
     accounts,
     account,
+    lang,
+    setLang,
     setAccountId,
     createBatch: ({ name, goal, buildingIds, route, target }) => {
       const id = `batch-${Date.now().toString(36)}`;

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 46, 10 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 49, 11 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -19,7 +19,7 @@ CQuel helps property portfolios buy and deliver energy projects: solar, heat pum
   - the selected service filter card on a batch page (4px top bar);
   - the `now` display Chip: the step, phase or service where work is under way (light accent, darker border, orange dot);
   - the History dot of an event that still waits on the customer.
-- **On Ops data screens,** only the 6px dot on a blocked asset: its row in the Assets table and its row under "To fix" in the AssetWindow. Checkboxes, found values, the assistant mark and the UPDATED highlight are ink and grey.
+- **On Ops data screens:** the 6px dot on a blocked asset (its row in the Assets table and under "To fix" in the AssetWindow); the light accent on the Blocking group's pill while it has open items ("1 open") and on the SelectionBar ("2 selected" in `accent-hover`). StateMarks, the assistant mark and the UPDATED highlight are ink and grey. Found values are light yellow (`bg-warning`): waiting for Ops.
 - Everything else is ink and greys: done and later chips, the pipeline bar, checkboxes, progress, hover fills and the black focus ring. Orange never means "the pointer is here".
 - **The one black pill** is the selected filter Chip. Tag `strong` stays retired.
 - **Dark means go there; orange means do this.** The `strong` Button (`black-7` fill) is the one way on from a page; the `primary` Button is the one action that moves the work on.
@@ -164,20 +164,26 @@ An asset joins or leaves a package (split, moved to another package, continued, 
 The Ops package page, the Ops asset page, the AssetWindow (Fix assets, Edit asset data) and the assistant. They keep the customer pages' structure and add the pieces below. Example throughout: package Solar PV · Estimates, Flagship sites, 6 assets.
 
 - **Checks:** each service has a list of checks per solution. **Required** blocks the asset's next step; **Recommended** helps and never blocks. An asset is **blocked** while any required item isn't Done; **Blocked since** is the date the oldest required item became open. Item states: Done, to confirm, files disagree, no file, Not available (RequirementRow).
-- **Pieces:** StatusCard with `fix` ("3 assets need fixing first", "Fix 3 assets"); the Assets table with BlockingCell, RecommendedCell, FilterChips (Blocked · Ready · All) and selection with the SelectionBar; AssetWindow with UploadRow, RequirementGroup and RequirementRow (FoundValue inside); the asset page's Data card (a read-only Table); AssistantPanel, AssistantButton and UpdatedHighlight.
+- **Pieces:** StatusCard with `fix` ("3 assets need fixing first", "Fix 3 assets"); the **OpsAssetsTable** (status, Required and Recommended tallies, rows that open in place, FilterChips opening on All, selection with the SelectionBar); the **AssetWindow**, a full-screen workspace (side list · checklist · Documents column) with RequirementGroup and RequirementRow (FoundValue inside), the drop zone, DocumentList and **DocPreview**; the asset page's Data card (a read-only Table); AssistantPanel, AssistantButton and UpdatedHighlight.
+- **Workspace (11 Nov 2026):** the AssetWindow is full screen, not a modal: top bar with Close, title and Done; the side list, the checklist (at most 880, centred) and Documents scroll on their own. Below 1180 Documents slides in from the right ("Documents · n"); below 760 one column with an asset picker. Files and the drop zone live in the Documents column; View (`eye`) opens a file there, and a found value's View opens it at the value's page with the words highlighted.
 - **Saving:** every change is saved by its own button: "Use 420 m²", "Save 820 m²", "Not available", or an upload. Nothing autosaves; Done only closes. Closing a window with an unsaved edit asks first ("You have an unsaved change. Close without saving it?").
 - **A value read from a file is never used until Ops confirm it,** and values that disagree are never chosen for Ops, by the window or by the assistant.
-- **Look: a checklist** (Olena, 10 Nov, direction A, from the previous app). Each item is a row with a 20px square checkbox mark (ink with a white tick when Done, empty when not, grey dash when Not available), the name in `h8`, a `p7` line, and its actions under it as `soft` buttons. Groups are section titles in `h6` with a pill ("1 open", "3 missing") and a rule under them; no cards. A found value is a grey box with the `info` icon: "Found 420 m² in Dachplan_Halle_A.pdf, page 2", the file's words, then Use / Enter another.
-- **Alignment:** a row is a grid of 20 (mark) · text · one action on the right (Edit, Undo); everything under the name (lines, boxes, buttons, inputs) starts at the text column.
+- **Look: a checklist** (Olena, 10 Nov, direction A, from the previous app; UI review 10 Nov). Each item is a row with a 20px round StateMark (ink with a white tick when Done, a dashed empty ring when not, grey with a dash when Not available; round because it is a status, never a control), the name in `h8` and a `p7` line. Section labels are `s3` capitals in text-tertiary with the pill at the right end ("1 open", "3 missing", "3 files"). A found value is a light yellow box with the warning-coloured `info` icon: "Found 420 m² in Dachplan_Halle_A.pdf, page 2", the file's words, and Use / Enter another on the right.
+- **Alignment:** a row is a grid of 20 (mark) · text · actions. Actions sit at the right end, centred against the name and its line: Edit and Undo, the item's upload and Not available, the input with Save. A found value or the edit box opens under the name, starting at the text column. On narrow screens the actions drop under the name.
 - **Buttons,** one `primary` per screen or panel:
   - `primary` (orange): the one action that moves work on: "Start estimates for 2" in the SelectionBar, and "Save <value>" in an open edit.
-  - `primary` also for Done in the AssetWindow footer (Olena, 10 Nov): it closes the job Ops came to do.
+  - `primary` also for Done at the right end of the AssetWindow's top bar (Olena, 10 Nov): it closes the job Ops came to do. In an open row of the Assets table, "Fix this asset" is the primary; "Edit data" is `secondary`.
   - `strong` (dark): "Fix 3 assets" in the StatusCard.
-  - `soft` (grey fill, no border; new 10 Nov): per-item actions ("Use 420 m²", "Enter another", "Upload bills or meter data", "Not available", Save next to a missing value, Cancel) and "Upload documents" in the drop row.
-  - `tertiary`: Edit and Undo on the right of a row.
-  - "Use <value>" stays `soft`: several items can wait at once, and orange on each would make a column of orange buttons. The edit's "Save <value>" is the primary because only one edit is open at a time.
-- **History:** every saved change becomes a Timeline event with the old value ("Usable roof area changed · 860 → 820 m²", "Usable roof area added · 1,150 m² · from Roof_layout_HH.pdf"), whoever made it, the assistant included.
-- **Documents** on the asset page list the files, with no drop zone. Files come in through Upload documents, an item's own upload, the UploadRow, or the assistant.
+  - `soft` (grey fill, no border; new 10 Nov): per-item actions on white rows ("Upload bills or meter data", "Not available", Save next to a missing value, "Another value").
+  - **`soft` never sits on a grey or tinted surface** (FoundValue, the edit box, the upload row, grey panels). There the button is `secondary`: "Use 420 m²", "Enter another", "Upload documents", Cancel in the edit box, "Choose a type".
+  - `tertiary`: Edit (with the `edit` icon) and Undo on the right of a row.
+  - **Cancel always sits next to Save,** in the same button group.
+  - "Use <value>" stays `secondary`: several items can wait at once, and orange on each would make a column of orange buttons. The edit's "Save <value>" is the primary because only one edit is open at a time; its label follows what is typed.
+- **Editing:** while an item is open for editing it still counts as Done; the asset doesn't turn blocked, and the side list and table don't change until Save or Cancel. A value item (address, usable roof area, roof covering) opens the edit box; a file item (consumption data, plans, roof drawings) opens its upload with Cancel. After saving a change on an asset that had moved on, its Estimate step line reads "Roof area changed · check the estimate".
+- **History:** every saved change becomes a Timeline event with the old value ("Usable roof area changed · 820 m² · from Kervelstraat_roof_2026.pdf · was 860 m²", "Usable roof area added · 1,150 m² · from Roof_layout_HH.pdf"), whoever made it, the assistant included.
+- **Side list lines:** the first blocking item ("Roof area · to confirm"); "Nothing blocking" for an asset with nothing open; "Ready for Estimate" for a ready asset in Fix assets.
+- **Assistant button:** on Ops package and asset pages it sits in the DetailBar before Questions (inline, 36 high, no shadow). The assistant keeps the ink colours; no blue in the system.
+- **Documents** on the asset page list the files, with no drop zone. Files come in through Upload documents, an item's own upload, the drop zone in the AssetWindow's Documents column, or the assistant.
 
 ## Page furniture
 
@@ -194,7 +200,7 @@ The Ops package page, the Ops asset page, the AssetWindow (Fix assets, Edit asse
 - **EmptyState** for anything with nothing to show, and **Banner** for errors and page-level messages.
 - **Dropdowns** (Select, FilterSelect, FactSelect) all open the one CQuel menu: white, `border-dark`, `radius-md`, floating shadow. The chosen row is SemiBold with no fill; the row under the pointer or keyboard gets the light accent. Never the browser's menu (no blue). The field's arrow is the `chevron-down` icon, vertically centred, 12 from the right.
 - **Progress** and **PlanTrack** are unused for now.
-- **Modal** for one short task (confirm a date). The AssetWindow is the one wide exception. **Tooltip** on every icon-only button.
+- **Modal** for one short task (confirm a date). The AssetWindow is not a Modal: it is a full-screen workspace. **Tooltip** on every icon-only button.
 - **Theme:** light only, for now. There are no dark tokens; don't add half of one.
 
 ## Iconography

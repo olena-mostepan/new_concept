@@ -1,5 +1,6 @@
 import { service, type ServiceId, type Workstream } from "@/lib/concept/model";
 import { isClosed, isCompleted, short } from "@/lib/concept/derive";
+import { t, type Lang } from "@/lib/concept/i18n";
 import { offersIn } from "./TenderWorkstream";
 
 export type PackageTabId =
@@ -49,38 +50,41 @@ const CTA: Record<
   delivery: { label: "See delivery", tab: "delivery" },
 };
 
-export function packageStatusCta(w: Workstream) {
+export function packageStatusCta(w: Workstream, lang: Lang = "en") {
   const sid = packageStatusService(w);
   const base = CTA[sid];
-  if (sid === "tender") {
-    const tab = packagePrimaryTab(w);
-    return { label: base.label, tab };
-  }
-  return base;
+  const tab = sid === "tender" ? packagePrimaryTab(w) : base.tab;
+  return { label: t(lang, base.label), tab };
 }
 
-export function packageStatusHeadline(w: Workstream) {
+export function packageStatusHeadline(w: Workstream, lang: Lang = "en") {
   if (isClosed(w) && w.closedOn) {
     return {
-      lead: "This package is",
-      name: `Closed · ${short(w.closedOn)}`,
+      lead: t(lang, "This package is"),
+      name: t(lang, "Closed · {0}", short(w.closedOn, lang)),
     };
   }
   if (isCompleted(w)) {
-    return { lead: "This package is complete", name: null as string | null };
+    return {
+      lead: t(lang, "This package is complete"),
+      name: null as string | null,
+    };
   }
   return {
-    lead: "This package is in",
-    name: service(w.service).label,
+    lead: t(lang, "This package is in"),
+    name: t(lang, service(w.service).label),
   };
 }
 
-export function assetStatusHeadline(w: Workstream) {
+export function assetStatusHeadline(w: Workstream, lang: Lang = "en") {
   if (isCompleted(w)) {
-    return { lead: "This asset is complete", name: null as string | null };
+    return {
+      lead: t(lang, "This asset is complete"),
+      name: null as string | null,
+    };
   }
   return {
-    lead: "This asset is in",
-    name: service(w.service).label,
+    lead: t(lang, "This asset is in"),
+    name: t(lang, service(w.service).label),
   };
 }

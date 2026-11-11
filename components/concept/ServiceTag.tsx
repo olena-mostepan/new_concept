@@ -1,7 +1,11 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import { service as serviceDef, type ServiceId } from "@/lib/concept/model";
+import { useConceptI18n } from "./useConceptI18n";
 
 export function ServiceTag({ s, muted }: { s: ServiceId; muted?: boolean }) {
+  const { t } = useConceptI18n();
   return (
     <span
       className={cn(
@@ -9,7 +13,7 @@ export function ServiceTag({ s, muted }: { s: ServiceId; muted?: boolean }) {
         muted ? "text-text-tertiary" : "text-text-secondary",
       )}
     >
-      {serviceDef(s).label}
+      {t(serviceDef(s).label)}
     </span>
   );
 }

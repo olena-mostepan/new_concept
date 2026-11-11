@@ -24,7 +24,8 @@ import {
   tableRowNameCellClass,
 } from "./ui";
 import { useHrefs } from "./useHrefs";
-import { nAssets, nPackages, WORDS } from "@/lib/concept/words";
+import { nAssets, nPackages } from "@/lib/concept/words";
+import { useConceptI18n } from "./useConceptI18n";
 
 /** Light table of workstreams — scales to 30+ rows */
 export function WorkstreamTable({
@@ -39,16 +40,17 @@ export function WorkstreamTable({
   hrefFor?: (id: string) => string;
 }) {
   const hrefs = useHrefs();
+  const { lang, t, words } = useConceptI18n();
   const hrefFor = hrefForProp ?? ((id: string) => hrefs.workstream(id));
   return (
     <table className="w-full table-fixed">
       <thead className="border-b border-border-light">
         <tr>
-          <th className={cn(th, "w-[30%]")}>{WORDS.Package}</th>
-          {showBatch && <th className={cn(th, "w-[16%]")}>Batch</th>}
-          <th className={cn(th, "w-36")}>Progress</th>
-          <th className={th}>Next</th>
-          <th className={cn(th, "w-36")}>With</th>
+          <th className={cn(th, "w-[30%]")}>{words.Package}</th>
+          {showBatch && <th className={cn(th, "w-[16%]")}>{t("Batch")}</th>}
+          <th className={cn(th, "w-36")}>{t("Progress")}</th>
+          <th className={th}>{t("Next")}</th>
+          <th className={cn(th, "w-36")}>{t("With")}</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-border-light">
@@ -84,11 +86,11 @@ export function WorkstreamTable({
               )}
               <td className={td}>
                 {w.proposed ? (
-                  <span className="text-text-secondary">{nAssets(total)}</span>
+                  <span className="text-text-secondary">{nAssets(total, lang)}</span>
                 ) : (
                   <>
                     <span className="tabular-nums">
-                      {done} of {total} done
+                      {t("{0} of {1} done", done, total)}
                     </span>
                     <Bar done={done} total={total} className="mt-1.5" />
                   </>
@@ -96,10 +98,12 @@ export function WorkstreamTable({
               </td>
               <td className={cn(td, "text-text-secondary")}>
                 {w.owner === "done"
-                  ? `Done ${short(w.completedOn)}`
-                  : nextLine(w) || w.now}
+                  ? t("Done {0}", short(w.completedOn, lang))
+                  : nextLine(w, lang) || w.now}
                 {mine > 0 && !w.proposed && (
-                  <span className="ml-2 text-brand-7">{mine} from you</span>
+                  <span className="ml-2 text-brand-7">
+                    {t("{0} from you", mine)}
+                  </span>
                 )}
               </td>
               <td className={td}>
@@ -124,6 +128,7 @@ export function GroupedByBatch({
   batches: Batch[];
 }) {
   const hrefs = useHrefs();
+  const { lang, t, words } = useConceptI18n();
   const groups = batches
     .map((b) => ({
       b,
@@ -136,7 +141,9 @@ export function GroupedByBatch({
     );
   if (!groups.length)
     return (
-      <p className="p6 text-text-secondary">No {WORDS.packages} here yet.</p>
+      <p className="p6 text-text-secondary">
+        {t("No {0} here yet.", words.packages)}
+      </p>
     );
   return (
     <div className="space-y-6">
@@ -156,9 +163,9 @@ export function GroupedByBatch({
               <p className="mt-0.5 p6 text-text-secondary">{b.goal}</p>
             </div>
             <span className="p6 text-text-secondary">
-              {nAssets(b.buildingIds.length)} ·{" "}
-              {nPackages(wsIn(account, b.id).length)}
-              {b.target && ` · target ${b.target}`}
+              {nAssets(b.buildingIds.length, lang)} ·{" "}
+              {nPackages(wsIn(account, b.id).length, lang)}
+              {b.target && ` · ${t("target {0}", b.target)}`}
             </span>
           </header>
           <WorkstreamTable account={account} items={ws} />

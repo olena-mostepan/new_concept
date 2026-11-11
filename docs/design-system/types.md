@@ -56,7 +56,7 @@ export interface PackageStripProps { name: string; service?: ServiceId; complete
 export interface PagerProps { index: number; total: number; prev?: { label: string; href?: string; onClick?: () => void }; next?: { label: string; href?: string; onClick?: () => void }; /** default "in this package" */ context?: string; /** default "asset" */ noun?: string }
 export interface NeedsDecisionRow { id?: string; href?: string; changed?: boolean; package: { main: string; detail?: string }; next: { main: string; detail?: string } }
 export interface NeedsDecisionProps { rows: NeedsDecisionRow[]; total?: number; limit?: number; title?: string; /** right slot, e.g. "5 packages" */ countLabel?: string; nameLabel?: string; seeAllHref?: string; onSeeAll?: () => void }
-export type IconName = 'access-cap' | 'add-building' | 'alert' | 'arrow-left' | 'arrow-right' | 'battery-storage' | 'building' | 'calendar' | 'check' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'chevron-up' | 'cross' | 'document' | 'download' | 'edit' | 'ev-charging' | 'external-link' | 'filter' | 'heat-pump' | 'info' | 'led' | 'more' | 'plus' | 'search' | 'solar' | 'trash' | 'upload' | string;
+export type IconName = 'access-cap' | 'add-building' | 'alert' | 'arrow-left' | 'arrow-right' | 'battery-storage' | 'building' | 'calendar' | 'check' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'chevron-up' | 'cross' | 'document' | 'download' | 'edit' | 'ev-charging' | 'eye' | 'external-link' | 'filter' | 'heat-pump' | 'info' | 'led' | 'more' | 'plus' | 'search' | 'solar' | 'trash' | 'upload' | string;
 /** The CQuel icon set, recoloured with currentColor. Set CQuelDS.iconBase = '/icons/' to load '<name>.svg' from your own folder. */
 export interface IconProps { name: IconName; size?: 16 | 20 | 24; /** icon role token: 'strong' | 'default' | 'disabled' | 'white' | 'active' */ role?: string; /** give a label only when the icon carries meaning on its own */ label?: string; src?: string; className?: string }
 export interface Crumb { label: string; href?: string }
@@ -77,11 +77,11 @@ export interface EmptyStateProps { children?: ReactNode; text?: string; action?:
 export interface BannerProps { type?: 'neutral' | 'info' | 'success' | 'warning' | 'danger'; title?: string; children?: ReactNode; action?: ReactNode }
 export interface ActivityListProps { items: { title: string; text?: string; date: string; aside?: string }[]; empty?: string }
 /** type: the file type tag ("PDF", "3 PDF", "12 XLS"). action: Download (download icon) or View (chevron, for a set). */
-export interface DocumentListProps { items: { name: string; type?: string; meta?: string; action?: 'Download' | 'View'; href?: string; onClick?: () => void }[]; empty?: string }
+export interface DocumentListProps { items: { name: string; type?: string; meta?: string; action?: 'Download' | 'View'; href?: string; onClick?: () => void; /** View (eye) before Download */ onView?: () => void; viewHref?: string; /** Ops: a file still being read, or one we couldn't type */ state?: 'reading' | 'unknown'; onChooseType?: () => void }[]; empty?: string }
 /** Date first. you: the event still waits on the customer (orange dot). year: shown above the first event of each year. */
 export interface TimelineProps { items: { event: string; detail?: string; date: string; year?: string; you?: boolean }[]; empty?: string }
 export interface ServicesBarProps { services: { id: string; label: string; count: number; line?: string; href?: string }[]; completed?: { count: number; line?: string } }
-export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean; /** px; only AssetWindow goes wide (1000) */ width?: number; /** body without padding */ flush?: boolean; /** under the subtitle, e.g. a progress line */ headExtra?: ReactNode }
+export interface ModalProps { open: boolean; title: string; subtitle?: string; children: ReactNode; /** buttons, right-aligned: tertiary Cancel, then the primary */ footer?: ReactNode; onClose: () => void; inline?: boolean; /** px */ width?: number; /** body without padding */ flush?: boolean; /** under the subtitle, e.g. a progress line */ headExtra?: ReactNode }
 export interface TooltipProps { content: ReactNode; children: ReactNode; /** 'definition': sentences, up to 300 wide; only for TypeLabel */ variant?: 'label' | 'definition' }
 export interface YourActionOnlyProps { checked: boolean; onChange: (checked: boolean) => void; label?: string }
 /** Display chip (no onClick, never clickable): 24px (size 'big': 32px, for a package's services), lead done (white, border, tick) | now (accent, dot) | next (dashed); same look on white and grey. Filter chip (onClick): 32px, black when selected. */
@@ -95,26 +95,33 @@ export interface FactSelectProps { options: { id: string; name: string; line?: s
 export interface PackageCardProps { name?: string; service?: ServiceId; completed?: boolean; services?: { id: ServiceId; label: string; lead: 'done' | 'now' }[]; href?: string; onOpen?: () => void; title?: string; aside?: string; children?: ReactNode }
 
 /* ---------- Ops asset setup (v42) ---------- */
-export interface FoundValueProps { value: string; file: string; page?: number | string; /** the file's own words */ quote?: string; viewHref?: string; onView?: () => void; /** actions on the right: Use, Enter another */ children?: ReactNode }
-export type RequirementState = 'done' | 'confirm' | 'disagree' | 'nofile' | 'missing' | 'na' | 'edit';
+export interface FoundValueProps { value: string; file: string; page?: number | string; /** the file's own words */ quote?: string; /** View: eye IconButton, opens the DocPreview at the page */ viewHref?: string; onView?: () => void; /** actions on the right: Use, Enter another */ children?: ReactNode }
+/** edit: a value item's edit box; editfile: a file item's upload + Cancel. Both still count as done. */
+export type RequirementState = 'done' | 'confirm' | 'disagree' | 'nofile' | 'missing' | 'na' | 'edit' | 'editfile';
 export interface RequirementRowProps { hint?: string; name: string; state: RequirementState; required?: boolean; value?: string; source?: string; unit?: string; found?: FoundValueProps; options?: FoundValueProps[]; uploadLabel?: string; placeholder?: string;
   edit?: { value?: string; sources?: string[]; source?: string; /** "860 m² · from Kervelstraat_plans.pdf, page 1" */ was?: string; /** shown when the asset has moved on */ warning?: { title: string; text: ReactNode } };
-  onUse?: (found?: FoundValueProps) => void; onEnterAnother?: () => void; onUpload?: () => void; onNotAvailable?: () => void; onSave?: () => void; onUndo?: () => void; onEdit?: () => void; onCancel?: () => void }
+  onUse?: (found?: FoundValueProps) => void; onEnterAnother?: () => void; onUpload?: () => void; onNotAvailable?: () => void; onSave?: (value?: string) => void; onUndo?: () => void; onEdit?: () => void; onCancel?: () => void }
 /** s3 header with a count: "Blocking the next step · 1" */
-export interface RequirementGroupProps { label: string; count?: number; /** after the count in the pill: 'open', 'missing' */ countLabel?: string; /** pill text instead of the count */ pill?: string; children: ReactNode }
-export interface UploadedFile { name: string; type?: string; state?: 'typed' | 'reading' | 'unknown'; onChooseType?: () => void }
-export interface UploadRowProps { onUpload?: () => void; label?: string; files?: UploadedFile[]; /** false: only the file list */ drop?: boolean }
-/** Fix assets / Edit asset data: a ~1000 Modal with a 260 side list. Footer: Done only. dirty: asks before closing. */
-export interface AssetWindowProps { open?: boolean; inline?: boolean; title: string; subtitle?: string; groups: { label: string; count?: number; items: { id: string; name: string; line?: string; toFix?: boolean }[] }[]; value?: string; onSelect?: (id: string) => void; showAll?: { count: number; href?: string; onClick?: () => void }; asset: { name: string; meta?: string; link?: { label: string; href?: string; onClick?: () => void } }; dirty?: boolean; onDone?: () => void; onClose?: () => void; children: ReactNode }
-export interface SelectionBarProps { names?: string[]; count?: number; action?: { label: string; onClick?: () => void }; onClear?: () => void }
+export interface RequirementGroupProps { label: string; count?: number; /** after the count: 'open', 'missing', or ['file', 'files'] */ countLabel?: string | [string, string]; /** pill text instead of the count */ pill?: string; /** Blocking group: accent pill while count > 0 */ urgent?: boolean; children: ReactNode }
+/** The drop row only. List files with DocumentList. */
+export interface UploadRowProps { onUpload?: () => void; label?: string }
+/** Fix assets / Edit asset data: a full-screen workspace (side list 280/240 · checklist max 880 · Documents 340). Below 1180 Documents slides in; below 760 one column with an asset picker. dirty: asks before closing. */
+export interface AssetWindowProps { open?: boolean; /** preview: draw in place, not full screen */ inline?: boolean; height?: number; mode?: 'fix' | 'edit'; title: string; subtitle?: string; groups: { label: string; count?: number; items: { id: string; name: string; line?: string; toFix?: boolean }[] }[]; value?: string; onSelect?: (id: string) => void; showAll?: { count: number; href?: string; onClick?: () => void }; asset: { name: string; meta?: string; link?: { label: string; href?: string; onClick?: () => void } }; documents?: { items: DocumentListProps['items']; onUpload?: () => void; /** a file open in the Documents column */ preview?: DocPreviewProps }; dirty?: boolean; /** preview states */ confirming?: boolean; docsOpen?: boolean; onDone?: () => void; onClose?: () => void; children: ReactNode }
+/** A file open in the Documents column. highlight: only when opened from a FoundValue. */
+export interface DocPreviewProps { file: string; label?: string; page: number; pages: number; highlight?: { page: number; value: string; quote: string; before?: string; after?: string }; onBack?: () => void; onPrev?: () => void; onNext?: () => void; onGoTo?: (page: number) => void; /** the rendered page; a placeholder sheet without it */ children?: ReactNode }
+export type TallyState = 'no file' | 'to confirm' | 'files disagree' | 'not entered';
+export interface OpsAssetRow { id: string; name: string; city?: string; status: 'blocked' | 'ready' | 'started'; statusLabel?: string; blockedSince?: string; required: { total: number; missing: { name: string; state: TallyState }[] }; recommended: { total: number; missing: string[] }; items?: { required?: { name: string; line?: string; state: 'done' | 'open' | 'na' }[]; recommended?: { name: string; line?: string; state: 'done' | 'open' | 'na' }[] }; files?: string[]; href?: string }
+/** The Ops package page's Assets table: tallies, rows open in place, filter opens on All, blocked rows first. */
+export interface OpsAssetsTableProps { rows: OpsAssetRow[]; title?: string; selected?: string[]; onSelect?: (ids: string[]) => void; selectionAction?: (ids: string[]) => { label: string; type?: 'primary' | 'strong'; onClick?: () => void }; filter?: '' | 'blocked' | 'ready'; defaultFilter?: '' | 'blocked' | 'ready'; onFilter?: (v: string) => void; defaultOpen?: string[]; onFix?: (id: string) => void; onEdit?: (id: string) => void; onOpenAsset?: (id: string) => void; empty?: string }
+export interface SelectionBarProps { count: number; action?: { label: string; type?: 'primary' | 'strong'; onClick?: () => void }; onClear?: () => void }
 export interface AssistantMessage { from: 'me' | 'assistant'; text: string; file?: string; changes?: string[]; note?: string; onUndo?: () => void }
 /** Rough first release: a 400 side panel on the current package. */
 export interface AssistantPanelProps { messages: AssistantMessage[]; hint?: string; placeholder?: string; onClose?: () => void; onAttach?: () => void }
-export interface AssistantButtonProps { onClick?: () => void; label?: string; /** static instead of fixed bottom right */ inline?: boolean }
+export interface AssistantButtonProps { onClick?: () => void; label?: string; /** in the DetailBar: static, 36 high, no shadow */ inline?: boolean }
 /** 2px ink outline on a changed cell plus an UPDATED tag. */
 export interface UpdatedHighlightProps { children: ReactNode }
 /** The assistant's mark: ink circle with the idea icon. */
 export interface AiMarkProps { size?: 'default' | 'small'; inverse?: boolean }
-/** The checklist square: done ink with a tick; open empty; na grey dash. */
+/** Round status mark (never a control): done ink with a tick; open dashed ring; na grey dash. */
 export interface StateMarkProps { state: 'done' | 'open' | 'na'; size?: number }
 ```

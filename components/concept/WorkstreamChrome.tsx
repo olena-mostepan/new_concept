@@ -154,6 +154,7 @@ export function AssetStripStatus({
   ariaLabel: string;
 }) {
   const { account } = useConcept();
+  const { t } = useConceptI18n();
   return (
     <div className="flex w-full items-center justify-between gap-6">
       <p className="min-w-0 flex-1 p6 text-text-secondary">
@@ -168,7 +169,7 @@ export function AssetStripStatus({
         ariaLabel={ariaLabel}
         className="shrink-0"
       >
-        Open package
+        {t("Open package")}
       </Button>
     </div>
   );
@@ -190,6 +191,7 @@ export function WorkstreamHeader({
 }) {
   const { account } = useConcept();
   const searchParams = useSearchParams();
+  const { lang, t, words } = useConceptI18n();
   const batch = getBatch(account, w.batchId);
   const crumbs = ops
     ? [
@@ -201,7 +203,10 @@ export function WorkstreamHeader({
         { label: w.name },
       ]
     : workstreamCrumbs(account, w, searchParams).map(({ label, href }) => ({
-        label,
+        label:
+          label === "Overview" || label === "Batch"
+            ? t(label)
+            : label,
         href,
       }));
   const assetsLive = activeProjects(w).length;
@@ -209,7 +214,7 @@ export function WorkstreamHeader({
   const fromWs = w.from ? getWorkstream(account, w.from.workstreamId) : undefined;
   const facts: FactItem[] = [
     {
-      label: "Batch",
+      label: t("Batch"),
       value: batch?.name ?? "—",
       href: batch
         ? ops
@@ -220,33 +225,33 @@ export function WorkstreamHeader({
   ];
   if (fromWs) {
     facts.push({
-      label: "From",
+      label: t("From"),
       value: fromWs.name,
       href: hrefs.workstream(fromWs.id),
     });
   }
-  facts.push({ label: "Solution", value: SOLUTION_NAME[w.solution] });
+  facts.push({ label: t("Solution"), value: SOLUTION_NAME[w.solution] });
   if (isClosed(w)) {
     facts.push({
-      label: "Assets",
-      value: `${w.projects.length} at the start`,
+      label: words.Assets,
+      value: t("{0} at the start", w.projects.length),
     });
     if (w.closedOn) {
       facts.push({
-        label: "Closed",
-        value: short(w.closedOn),
+        label: t("Closed"),
+        value: short(w.closedOn, lang),
       });
     }
   } else {
     facts.push({
-      label: "Assets",
+      label: words.Assets,
       value:
         leftCount > 0
-          ? `${assetsLive} · ${leftCount} left`
+          ? t("{0} · {1} left", assetsLive, leftCount)
           : String(assetsLive),
     });
   }
-  if (w.supplier) facts.push({ label: "Supplier", value: w.supplier });
+  if (w.supplier) facts.push({ label: t("Supplier"), value: w.supplier });
 
   const aside =
     statusAside ??
@@ -410,6 +415,7 @@ export function WorkstreamFacts({
   activity: Array<{ date: string; title: string; text: string }>;
   documents?: Doc[];
 }) {
+  const { t } = useConceptI18n();
   const path = usePathname();
   const params = useSearchParams();
   const qs = params.toString();
@@ -424,8 +430,8 @@ export function WorkstreamFacts({
     >
       {activity.length > 0 && (
         <Card
-          title="Recent activity"
-          right={<CardLink href={seeAll}>See all</CardLink>}
+          title={t("Recent activity")}
+          right={<CardLink href={seeAll}>{t("See all")}</CardLink>}
           className="h-full"
         >
           <ul>
@@ -457,8 +463,8 @@ export function WorkstreamFacts({
       )}
       {docs.length > 0 && (
         <Card
-          title="Documents"
-          right={<CardLink href={seeAll}>See all</CardLink>}
+          title={t("Documents")}
+          right={<CardLink href={seeAll}>{t("See all")}</CardLink>}
           className="h-full"
         >
           <DocumentList docs={docs} />

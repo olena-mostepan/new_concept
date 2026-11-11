@@ -43,3 +43,6 @@ export const assetsNeedFixingFirst = (n: number, lang: Lang = "en") =>
 
 export const fixAssetsAction = (n: number, lang: Lang = "en") =>
   plural(n, "Fix 1 asset", "Fix {0} assets", lang, n);
+
+export const nProjects = (n: number, lang: Lang = "en") =>
+  plural(n, "1 project", "{0} projects", lang, n);

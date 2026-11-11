@@ -1,7 +1,7 @@
 import { OWNER_LABEL, SERVICES, SOLUTIONS, TODAY, service, type Account, type Batch, type Building, type DeliveryPhaseId, type Need, type Owner, type Phase, type ProjectRow, type ServiceId, type SolutionId, type Visit, type Workstream } from './model'
 import { t, type Lang } from './i18n'
 import { formatDate, formatMoneyOne, formatMoneyRange } from './i18n/format'
-import { nAssets, nPackages, WORDS } from './words'
+import { nAssets, nPackages, nProjects, WORDS } from './words'
 
 /** Customers only see batches once a plan has been shared with them */
 export const customerBatches = (a: Account) => a.batches.filter((b) => b.planState !== 'draft')
@@ -634,13 +634,13 @@ export function batchCells(a: Account, b: Batch): BatchCell[] {
   })
 }
 
-export function batchSummary(a: Account, b: Batch) {
+export function batchSummary(a: Account, b: Batch, lang: Lang = 'en') {
   const n = wsIn(a, b.id).filter((w) => !w.proposed).length
-  const bits = [nPackages(n)]
-  if (b.target) bits.push(`target ${b.target}`)
+  const bits = [nPackages(n, lang)]
+  if (b.target) bits.push(t(lang, 'target {0}', b.target))
   const projects = liveProjectCount(a, b)
-  const detail = [nAssets(b.buildingIds.length), noun(projects, 'project', 'projects')]
-  if (b.target) detail.push(`target ${b.target}`)
+  const detail = [nAssets(b.buildingIds.length, lang), nProjects(projects, lang)]
+  if (b.target) detail.push(t(lang, 'target {0}', b.target))
   const line = [b.goal, ...detail].join(' · ')
   return { goal: b.goal, meta: bits.join(' · '), line, detail: line }
 }
@@ -885,13 +885,16 @@ export function stepMarks(w: Workstream, notStarted: boolean) {
   })
 }
 
-export function stepNote(w: Workstream, notStarted = false) {
-  if (notStarted) return 'Not started'
+export function stepNote(w: Workstream, notStarted = false, lang: Lang = 'en') {
+  if (notStarted) return t(lang, 'Not started')
   const counts = service(w.service).steps
     .map((label, i) => ({ label, n: activeProjects(w).filter((p) => p.step === i).length }))
     .filter((step) => step.n > 0)
-  if (counts.length <= 1) return counts[0]?.label ?? 'Not started'
-  return counts.map((step) => `${step.n} ${step.label.toLowerCase()}`).join(' · ')
+  if (counts.length <= 1) {
+    const row = counts[0]
+    return row ? t(lang, row.label) : t(lang, 'Not started')
+  }
+  return counts.map((step) => `${step.n} ${t(lang, step.label).toLowerCase()}`).join(' · ')
 }
 
 export function byCompleted(list: Workstream[]) {
@@ -1631,10 +1634,10 @@ export function priorProject(a: Account, w: Workstream, buildingId: string) {
 }
 
 /** Customer-facing solution name. LED stays LED; "EV Charging" reads "EV charging". */
-export function solutionName(id: SolutionId): string {
+export function solutionName(id: SolutionId, lang: Lang = 'en'): string {
   if (id === 'led') return 'LED'
-  if (id === 'ev') return 'EV charging'
-  return SOLUTIONS[id]
+  if (id === 'ev') return lang === 'de' ? t(lang, 'EV charging') : 'EV charging'
+  return t(lang, SOLUTIONS[id])
 }
 
 /** "Pilot · 8 cinemas" → cinemas. Otherwise assets. */

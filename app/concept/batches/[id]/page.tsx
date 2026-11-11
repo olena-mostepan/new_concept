@@ -8,8 +8,13 @@ import { Page, PageHeader } from "@/components/concept/ui";
 import { BatchView } from "@/components/concept/BatchView";
 import { hrefs } from "@/components/concept/hrefs";
 import { useConcept } from "@/components/concept/store";
+import { useConceptI18n } from "@/components/concept/useConceptI18n";
 
-function batchSolutions(account: Parameters<typeof wsInAll>[0], batch: Batch) {
+function batchSolutions(
+  account: Parameters<typeof wsInAll>[0],
+  batch: Batch,
+  lang: import("@/lib/concept/i18n").Lang,
+) {
   const seen = new Set<string>();
   const solutions: string[] = [];
   for (const stream of wsInAll(account, batch.id).filter(
@@ -17,7 +22,7 @@ function batchSolutions(account: Parameters<typeof wsInAll>[0], batch: Batch) {
   )) {
     if (seen.has(stream.solution)) continue;
     seen.add(stream.solution);
-    solutions.push(solutionName(stream.solution));
+    solutions.push(solutionName(stream.solution, lang));
   }
   return solutions.join(", ");
 }
@@ -25,32 +30,38 @@ function batchSolutions(account: Parameters<typeof wsInAll>[0], batch: Batch) {
 function batchFacts(
   account: Parameters<typeof wsInAll>[0],
   batch: Batch,
+  lang: import("@/lib/concept/i18n").Lang,
+  t: (en: string, ...args: unknown[]) => string,
+  words: { Assets: string; Packages: string },
 ): Array<{ label: string; value: string }> {
   const packages = wsInAll(account, batch.id).filter((item) => !item.proposed)
     .length;
   const facts: Array<{ label: string; value: string }> = [
-    { label: "Goal", value: batch.goal },
-    { label: "Assets", value: String(batch.buildingIds.length) },
-    { label: "Packages", value: String(packages) },
+    { label: t("Goal"), value: batch.goal },
+    { label: words.Assets, value: String(batch.buildingIds.length) },
+    { label: words.Packages, value: String(packages) },
   ];
-  const solutions = batchSolutions(account, batch);
-  if (solutions) facts.splice(1, 0, { label: "Solution", value: solutions });
+  const solutions = batchSolutions(account, batch, lang);
+  if (solutions) facts.splice(1, 0, { label: t("Solution"), value: solutions });
   if (batch.target)
-    facts.push({ label: "Target", value: batch.target });
+    facts.push({ label: t("Target"), value: batch.target });
   return facts;
 }
 
 export default function BatchPage() {
   const { id } = useParams<{ id: string }>();
   const { account } = useConcept();
+  const { lang, t, words } = useConceptI18n();
   const b = getBatch(account, id);
   if (!b || b.planState === "draft") {
     return (
       <Page>
         <PageHeader
-          crumbs={[{ label: "Overview", href: hrefs.overview }]}
-          title={b?.name ?? "Batch"}
-          meta="This batch isn't shared with the customer yet. It appears here once ops propose the plan."
+          crumbs={[{ label: t("Overview"), href: hrefs.overview }]}
+          title={b?.name ?? t("Batch")}
+          meta={t(
+            "This batch isn't shared with the customer yet. It appears here once ops propose the plan.",
+          )}
         />
       </Page>
     );
@@ -59,12 +70,12 @@ export default function BatchPage() {
     <Page>
       <PageHeader
         crumbs={[
-          { label: "Overview", href: hrefs.overview },
+          { label: t("Overview"), href: hrefs.overview },
           { label: b.name },
         ]}
         kind="batch"
         title={b.name}
-        facts={batchFacts(account, b)}
+        facts={batchFacts(account, b, lang, t, words)}
         changedKey
       />
       <Suspense>

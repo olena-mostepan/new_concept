@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { Account } from "@/lib/concept/model";
@@ -18,6 +20,7 @@ import {
   tableRowLinkClass,
   tableRowNameCellClass,
 } from "./ui";
+import { useConceptI18n } from "./useConceptI18n";
 
 const PREVIEW = 3;
 const grid = {
@@ -25,24 +28,26 @@ const grid = {
 };
 
 export function Decisions({ account }: { account: Account }) {
+  const { lang, t, words } = useConceptI18n();
   const rows = yourActionWorkstreams(account);
   if (!rows.length) return null;
   const shown = rows.slice(0, PREVIEW);
   return (
     <Card
-      title="Needs your decision"
+      title={t("Needs your decision")}
       bodyClassName="p-0"
       footer={
         rows.length > PREVIEW ? (
           <footer className="flex items-center justify-between gap-3 border-t border-border-light px-6 py-3">
             <p className="p7 text-text-tertiary">
-              Showing {PREVIEW} of {rows.length} · newest first
+              {t("Showing {0} of {1}", PREVIEW, rows.length)}{" "}
+              {t("· newest first")}
             </p>
             <Link
               href={`${hrefs.workstreams()}?responsibility=you`}
               className="h8 text-text-primary underline underline-offset-[3px] decoration-border-dark"
             >
-              See all {rows.length}
+              {t("See all {0}", rows.length)}
             </Link>
           </footer>
         ) : undefined
@@ -54,13 +59,13 @@ export function Decisions({ account }: { account: Account }) {
             className="grid items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6 s3 text-text-tertiary"
             style={grid}
           >
-            <span>Package</span>
-            <span>Next step</span>
+            <span>{words.Package}</span>
+            <span>{t("Next step")}</span>
             <span />
             <span />
           </div>
           {shown.map((w) => {
-            const next = nextParts(w);
+            const next = nextParts(w, lang);
             const batch = getBatch(account, w.batchId);
             const assets = new Set(
               activeProjects(w).map((project) => project.buildingId),
@@ -87,7 +92,7 @@ export function Decisions({ account }: { account: Account }) {
                     </span>
                   </ChangedDot>
                   <span className="mt-0.5 block p7 text-text-tertiary">
-                    {batch?.name ?? "—"} · {nAssets(assets)}
+                    {batch?.name ?? "—"} · {nAssets(assets, lang)}
                   </span>
                 </span>
                 <span className="min-w-0">

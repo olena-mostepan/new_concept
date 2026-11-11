@@ -25,7 +25,9 @@ import {
   wsInAll,
 } from "@/lib/concept/derive";
 import { leftHowLabel } from "@/lib/concept/moves";
-import { WORDS } from "@/lib/concept/words";
+import { nAssets, nProjects } from "@/lib/concept/words";
+import { t, type Lang } from "@/lib/concept/i18n";
+import { useConceptI18n } from "./useConceptI18n";
 import {
   pricingNotNeeded,
   service as serviceDef,
@@ -177,21 +179,22 @@ function countMovedOnlyAssets(account: Account, batch: Batch): number {
 function howItCameFrom(
   account: Account,
   w: Workstream,
+  lang: Lang,
 ): { main: string; sub?: string } {
   if (isClosed(w)) {
     return {
-      main: `Closed · ${closedPackageFootprint(w)} at the start`,
+      main: t(lang, "Closed · {0} at the start", closedPackageFootprint(w)),
     };
   }
   if (w.from) {
     const src = getWorkstream(account, w.from.workstreamId);
     const pkg = src?.name ?? w.from.workstreamId;
     return {
-      main: `From ${pkg} · ${leftHowLabel(w.from.kind)}`,
+      main: t(lang, "From {0} · {1}", pkg, leftHowLabel(w.from.kind)),
     };
   }
-  if (w.startedOn) return { main: `Started ${short(w.startedOn)}` };
-  return { main: w.proposed ? "—" : "Started" };
+  if (w.startedOn) return { main: t(lang, "Started {0}", short(w.startedOn, lang)) };
+  return { main: w.proposed ? "—" : t(lang, "Started") };
 }
 
 function closedPackageFootprint(w: Workstream): number {
@@ -217,12 +220,16 @@ function closedPackageOutcomeLine(w: Workstream): string {
   return parts.join(" · ");
 }
 
-function batchNowLine(account: Account, w: Workstream): string {
-  if (isClosed(w)) return `Closed · ${short(w.closedOn)}`;
-  if (w.proposed) return "Proposed";
+function batchNowLine(account: Account, w: Workstream, lang: Lang): string {
+  if (isClosed(w)) return t(lang, "Closed · {0}", short(w.closedOn, lang));
+  if (w.proposed) return t(lang, "Proposed");
   if (isCompleted(w))
-    return `Complete · ${w.completedOn ? short(w.completedOn) : "—"}`;
-  return serviceDef(w.service).label;
+    return t(
+      lang,
+      "Complete · {0}",
+      w.completedOn ? short(w.completedOn, lang) : "—",
+    );
+  return t(serviceDef(w.service).label);
 }
 
 function movedToBatchName(account: Account, batchId: string): string {
@@ -237,6 +244,7 @@ function PilotDashboard({
   batch: Batch;
 }) {
   const { agreePlan } = useConcept();
+  const { lang, t: tr, words } = useConceptI18n();
   const all = wsIn(account, batch.id);
   const activity = batchActivity(account, batch);
   const docs = account.documents.filter((d) => d.batchId === batch.id);
@@ -265,9 +273,13 @@ function PilotDashboard({
     <div className="space-y-4">
       <Card
         title={batch.name}
-        right={aside(all.map((w) => SOLUTIONS[w.solution]).join(" · "))}
+        right={aside(
+          all.map((w) => solutionName(w.solution, lang)).join(" · "),
+        )}
       >
-        <p className="mb-5 p6 text-text-secondary">Goal: {batch.goal}</p>
+        <p className="mb-5 p6 text-text-secondary">
+          {tr("Goal:")} {batch.goal}
+        </p>
         <RouteWithNeeds
           pilot
           stages={stages}
@@ -282,8 +294,8 @@ function PilotDashboard({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card
           className="h-full"
-          title="What we have"
-          right={aside(`${batch.filesCount ?? 0} files`)}
+          title={tr("What we have")}
+          right={aside(tr("{0} files", batch.filesCount ?? 0))}
         >
           <ul>
             {(batch.received ?? []).map((file) => (
@@ -299,8 +311,8 @@ function PilotDashboard({
         </Card>
         <Card
           className="h-full"
-          title="What we still need"
-          right={aside("After you agree the plan")}
+          title={tr("What we still need")}
+          right={aside(tr("After you agree the plan"))}
         >
           <ul>
             {needs.map((need) => (
@@ -322,9 +334,13 @@ function PilotDashboard({
       </div>
 
       <Card
-        title="Solutions"
+        title={tr("Solutions")}
         right={aside(
-          `${projects} projects · ${batch.buildingIds.length} ${placeNoun(batch).many}`,
+          tr(
+            "{0} · {1}",
+            nProjects(projects, lang),
+            nAssets(batch.buildingIds.length, lang),
+          ),
         )}
       >
         <ul>
@@ -332,7 +348,6 @@ function PilotDashboard({
             const sites = w.projects
               .filter((p) => !rowIsInactive(p))
               .map((p) => getBuilding(account, p.buildingId));
-            const place = placeNoun(batch);
             return (
               <li
                 key={w.id}
@@ -343,10 +358,10 @@ function PilotDashboard({
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[180px_minmax(0,1fr)_260px]">
                   <div>
                     <p className="h8 text-text-title">
-                      {solutionName(w.solution)}
+                      {solutionName(w.solution, lang)}
                     </p>
                     <p className="p7 text-text-secondary">
-                      {noun(sites.length, place.one, place.many)}
+                      {nAssets(sites.length, lang)}
                     </p>
                   </div>
                   <div>
@@ -374,7 +389,7 @@ function PilotDashboard({
                     )}
                   </div>
                   <div>
-                    <p className="p7 text-text-tertiary">Result</p>
+                    <p className="p7 text-text-tertiary">{tr("Result")}</p>
                     <p className="p6 text-text-primary">
                       {sentence(w.gives ?? "")}
                     </p>
@@ -389,8 +404,8 @@ function PilotDashboard({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card
           className="h-full"
-          title="Recent activity"
-          right={<CardLink href={hrefs.batches}>See all</CardLink>}
+          title={tr("Recent activity")}
+          right={<CardLink href={hrefs.batches}>{tr("See all")}</CardLink>}
         >
           <ul>
             {activity.map((item) => (
@@ -411,8 +426,8 @@ function PilotDashboard({
         </Card>
         <Card
           className="h-full"
-          title="Documents"
-          right={<CardLink href={hrefs.batches}>See all</CardLink>}
+          title={tr("Documents")}
+          right={<CardLink href={hrefs.batches}>{tr("See all")}</CardLink>}
         >
           <DocumentList docs={docs} />
         </Card>
@@ -465,6 +480,7 @@ function BatchPage({
 }) {
   const router = useRouter();
   const params = useSearchParams();
+  const { lang, t: tr, words } = useConceptI18n();
   const [showActivity, setShowActivity] = useState(false);
   const activity = batchActivity(account, batch);
 
@@ -476,13 +492,13 @@ function BatchPage({
   const serviceCards = [
     {
       id: "",
-      label: "All",
+      label: tr("All"),
       count: countAssetsAnyLive(account, batch),
       done: 0,
     },
     ...SERVICES.map((item) => ({
       id: item.id,
-      label: item.label,
+      label: tr(item.label),
       count: countAssetsWithLiveInService(account, batch, item.id),
       done: passedProjects(account, batch, item.id),
     })).filter((card) => card.count > 0),
@@ -493,9 +509,13 @@ function BatchPage({
   const moveCards: Array<{ id: ExtraFilter; label: string; count: number }> =
     [];
   if (nDroppedOnly > 0)
-    moveCards.push({ id: "dropped", label: "Dropped", count: nDroppedOnly });
+    moveCards.push({ id: "dropped", label: tr("Dropped"), count: nDroppedOnly });
   if (nMovedOnly > 0)
-    moveCards.push({ id: "moved", label: "Moved out", count: nMovedOnly });
+    moveCards.push({
+      id: "moved",
+      label: tr("Moved out"),
+      count: nMovedOnly,
+    });
 
   const cards = [...serviceCards, ...moveCards];
 
@@ -611,10 +631,10 @@ function BatchPage({
       >
         <Tabs.List className={tabListClass} aria-label={batch.name}>
           <Tabs.Trigger value="assets" className={tabTriggerClass}>
-            {WORDS.Assets} ({batch.buildingIds.length})
+            {words.Assets} ({batch.buildingIds.length})
           </Tabs.Trigger>
           <Tabs.Trigger value="packages" className={tabTriggerClass}>
-            {WORDS.Packages} ({packageCount})
+            {words.Packages} ({packageCount})
           </Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
@@ -664,7 +684,9 @@ function BatchPage({
                     {card.count}
                   </p>
                   {!isMove && "done" in card && card.done > 0 && (
-                    <p className="p7 text-text-tertiary">+{card.done} done</p>
+                    <p className="p7 text-text-tertiary">
+                      {tr("+{0} done", card.done)}
+                    </p>
                   )}
                 </button>
               );
@@ -675,9 +697,9 @@ function BatchPage({
             <div className="overflow-x-auto">
               <div className="min-w-[720px]">
                 <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
-                  <span className="s3 text-text-tertiary">{WORDS.Asset}</span>
-                  <span className="s3 text-text-tertiary">{WORDS.Package}</span>
-                  <span className="s3 text-text-tertiary">Service</span>
+                  <span className="s3 text-text-tertiary">{words.Asset}</span>
+                  <span className="s3 text-text-tertiary">{words.Package}</span>
+                  <span className="s3 text-text-tertiary">{tr("Services")}</span>
                   <span />
                 </div>
                 {shownBuildings.map((row) => {
@@ -734,7 +756,7 @@ function BatchPage({
                             key={`${item.workstream.id}-svc`}
                             className="block p6 text-text-primary"
                           >
-                            {serviceDef(item.workstream.service).label}
+                            {tr(serviceDef(item.workstream.service).label)}
                           </span>
                         ))}
                         {row.muted.map((item) => {
@@ -746,7 +768,7 @@ function BatchPage({
                                 key={`${item.workstream.id}-drop`}
                                 className="block p6 text-text-tertiary"
                               >
-                                Dropped · {reason}
+                                {tr("Dropped ·")} {reason}
                               </span>
                             );
                           }
@@ -760,7 +782,8 @@ function BatchPage({
                                 key={`${item.workstream.id}-mv`}
                                 className="block p6 text-text-tertiary"
                               >
-                                Moved to {dest} · {short(item.row.left.on)}
+                                {tr("Moved to")} {dest} ·{" "}
+                                {short(item.row.left.on, lang)}
                               </span>
                             );
                           }
@@ -787,7 +810,7 @@ function BatchPage({
                       )}
                     >
                       <span className="p6 text-text-tertiary">
-                        {foldDropped.length} dropped
+                        {tr("{0} dropped", foldDropped.length)}
                       </span>
                       <span />
                       <span />
@@ -870,7 +893,7 @@ function BatchPage({
                       )}
                     >
                       <span className="p6 text-text-tertiary">
-                        {foldMoved.length} moved out
+                        {tr("{0} moved out", foldMoved.length)}
                       </span>
                       <span />
                       <span />
@@ -927,9 +950,9 @@ function BatchPage({
                                   key={`${m.workstream.id}-fmt`}
                                   className="block p6 text-text-tertiary"
                                 >
-                                  Moved to{" "}
+                                  {tr("Moved to")}{" "}
                                   {movedToBatchName(account, m.row.left!.to!)} ·{" "}
-                                  {short(m.row.left!.on)}
+                                  {short(m.row.left!.on, lang)}
                                 </span>
                               ))}
                             </span>
@@ -949,7 +972,7 @@ function BatchPage({
               total={mainRows.length}
               limit={8}
               open={list.open}
-              noun={WORDS.assets}
+              noun={words.assets}
               onOpen={() => setList({ sig: signature, open: true })}
             />
           </Card>
@@ -963,7 +986,7 @@ function BatchPage({
       )}
 
       <Card
-        title="Recent activity"
+        title={tr("Recent activity")}
         right={
           !showActivity && (
             <button
@@ -971,7 +994,7 @@ function BatchPage({
               className="p6 text-text-primary underline underline-offset-4 hover:text-text-primary"
               onClick={() => setShowActivity(true)}
             >
-              See all
+              {tr("See all")}
             </button>
           )
         }
@@ -983,6 +1006,7 @@ function BatchPage({
 }
 
 function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
+  const { lang, t: tr, words } = useConceptI18n();
   const inBatch = wsInAll(account, batch.id);
   const proposed = inBatch
     .filter((w) => w.proposed)
@@ -1012,14 +1036,14 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
       <div className="overflow-x-auto">
         <div className="min-w-[900px]">
           <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
-            <span className="s3 text-text-tertiary">{WORDS.Package}</span>
-            <span className="s3 text-text-tertiary">Now</span>
-            <span className="s3 text-text-tertiary">{WORDS.Assets}</span>
-            <span className="s3 text-text-tertiary">How it came</span>
+            <span className="s3 text-text-tertiary">{words.Package}</span>
+            <span className="s3 text-text-tertiary">{tr("Now")}</span>
+            <span className="s3 text-text-tertiary">{words.Assets}</span>
+            <span className="s3 text-text-tertiary">{tr("How it came")}</span>
           </div>
 
           {openPackages.map((w) => {
-            const fromLine = howItCameFrom(account, w);
+            const fromLine = howItCameFrom(account, w, lang);
             const assetsN = activeProjects(w).length;
             return (
               <Link
@@ -1037,7 +1061,9 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
                     {w.name}
                   </span>
                 </span>
-                <span className="p6 text-text-primary">{batchNowLine(account, w)}</span>
+                <span className="p6 text-text-primary">
+                  {batchNowLine(account, w, lang)}
+                </span>
                 <span className="p6 text-text-primary tabular-nums">{assetsN}</span>
                 <span className="min-w-0 p6 text-text-secondary">
                   <span className="block">{fromLine.main}</span>
@@ -1052,14 +1078,14 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
           })}
 
           {proposed.map((w) => {
-            const fromLine = howItCameFrom(account, w);
+            const fromLine = howItCameFrom(account, w, lang);
             const assetsN = activeProjects(w).length;
             return (
               <div key={w.id} className={gridClass}>
                 <span className="min-w-0">
                   <span className="block h8 text-text-title">{w.name}</span>
                 </span>
-                <span className="p6 text-text-primary">Proposed</span>
+                <span className="p6 text-text-primary">{tr("Proposed")}</span>
                 <span className="p6 text-text-primary tabular-nums">{assetsN}</span>
                 <span className="min-w-0 p6 text-text-secondary">
                   <span className="block">{fromLine.main}</span>
@@ -1079,7 +1105,7 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
                 )}
               >
                 <span className="p6 text-text-tertiary">
-                  {folded.length} closed
+                  {tr("{0} closed", folded.length)}
                 </span>
                 <span />
                 <span />
@@ -1095,11 +1121,11 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
                 folded.map((w) => {
                   const atStart = closedPackageFootprint(w);
                   const outcome = closedPackageOutcomeLine(w);
-                  const fromLine = howItCameFrom(account, w);
+                  const fromLine = howItCameFrom(account, w, lang);
                   const assetsCol = isClosed(w)
-                    ? `${atStart} at the start`
+                    ? tr("{0} at the start", atStart)
                     : String(activeProjects(w).length);
-                  const nowCol = batchNowLine(account, w);
+                  const nowCol = batchNowLine(account, w, lang);
                   const body = (
                     <>
                       <span

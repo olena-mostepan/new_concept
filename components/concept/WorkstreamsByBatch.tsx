@@ -18,8 +18,8 @@ import {
   customerBatches,
   getBuilding,
   isClosed,
-  noun,
   short,
+  solutionName,
   stepNote,
 } from "@/lib/concept/derive";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,8 @@ import {
 } from "./ui";
 import { ServiceTag } from "./ServiceTag";
 import { useHrefs } from "./useHrefs";
-import { WORDS } from "@/lib/concept/words";
+import { nProjects } from "@/lib/concept/words";
+import { useConceptI18n } from "./useConceptI18n";
 
 const rowStyle = {
   gridTemplateColumns: "minmax(0,1.3fr) 170px minmax(0,1.5fr) 110px 16px",
@@ -48,7 +49,8 @@ const rowStyle = {
 
 function WorkstreamLine({ w, done }: { w: Workstream; done?: boolean }) {
   const hrefs = useHrefs();
-  const projects = noun(activeProjects(w).length, "project", "projects");
+  const { lang, t } = useConceptI18n();
+  const projects = nProjects(activeProjects(w).length, lang);
   return (
     <Link
       href={hrefs.workstream(w.id, "batch")}
@@ -79,10 +81,10 @@ function WorkstreamLine({ w, done }: { w: Workstream; done?: boolean }) {
       {done ? (
         <p className="flex min-w-0 items-center gap-1.5 text-text-tertiary">
           <Icon name="check" size={14} className="shrink-0" />
-          <span className="p6">Done {short(w.completedOn)}</span>
+          <span className="p6">{t("Done {0}", short(w.completedOn, lang))}</span>
         </p>
       ) : (
-        <p className="min-w-0 p6 text-text-secondary">{stepNote(w)}</p>
+        <p className="min-w-0 p6 text-text-secondary">{stepNote(w, false, lang)}</p>
       )}
       {w.owner === "you" && !done ? (
         <p className="flex items-center gap-1.5 p6 text-text-primary">
@@ -90,7 +92,7 @@ function WorkstreamLine({ w, done }: { w: Workstream; done?: boolean }) {
             className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
             aria-hidden
           />
-          Your action
+          {t("Your action")}
         </p>
       ) : (
         <span />
@@ -117,6 +119,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
   const router = useRouter();
   const params = useSearchParams();
   const { account } = useConcept();
+  const { lang, t, words } = useConceptI18n();
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   const q = params.get("q") ?? "";
@@ -181,31 +184,31 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
 
   return (
     <div>
-      <PageHeader title={WORDS.Packages} />
+      <PageHeader title={words.Packages} />
       <SummaryCards
         total={filtered.length}
         batches={new Set(filtered.map((w) => w.batchId)).size}
         yourAction={filtered.filter((w) => w.owner === "you").length}
         live={filtered.filter((w) => w.owner !== "done").length}
-        serviceLabel="progress"
+        serviceLabel="In progress"
         thirdLabel="Done"
         thirdCount={filtered.filter((w) => w.owner === "done").length}
-        thirdLine="done"
+        thirdLine="Done"
         responsibility={responsibility}
         onResponsibility={(next) => write({ responsibility: next })}
       />
 
       <FilterBar selects={3}>
-        <FilterField label="Search">
+        <FilterField label={t("Search")}>
           <FilterSearch value={q} onChange={(value) => write({ q: value })} />
         </FilterField>
-        <FilterField label="Batch">
+        <FilterField label={t("Batch")}>
           <FilterSelect
-            label="Batch"
+            label={t("Batch")}
             value={batchId}
             onChange={(value) => write({ batch: value })}
           >
-            <option value="">All batches</option>
+            <option value="">{t("All batches")}</option>
             {batches.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -213,30 +216,30 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
             ))}
           </FilterSelect>
         </FilterField>
-        <FilterField label="Service">
+        <FilterField label={t("Services")}>
           <FilterSelect
-            label="Service"
+            label={t("Services")}
             value={service}
             onChange={(value) => write({ service: value })}
           >
-            <option value="">All services</option>
+            <option value="">{t("All services")}</option>
             {SERVICES.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label}
+                {t(s.label)}
               </option>
             ))}
           </FilterSelect>
         </FilterField>
-        <FilterField label="Solution">
+        <FilterField label={t("Solution")}>
           <FilterSelect
-            label="Solution"
+            label={t("Solution")}
             value={solution}
             onChange={(value) => write({ solution: value })}
           >
-            <option value="">All solutions</option>
+            <option value="">{t("All solutions")}</option>
             {solutions.map((id) => (
               <option key={id} value={id}>
-                {SOLUTIONS[id]}
+                {solutionName(id, lang)}
               </option>
             ))}
           </FilterSelect>
@@ -283,7 +286,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                 <div className="min-w-0">
                   <h2 className="h7 text-text-primary">{b.name}</h2>
                   <p className="mt-1 p7 text-text-secondary">
-                    {batchSummary(account, b).line}
+                    {batchSummary(account, b, lang).line}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-5">
@@ -293,14 +296,14 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                         className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
                         aria-hidden
                       />
-                      Your action: {yours}
+                      {t("Your action: {0}", yours)}
                     </p>
                   )}
                   <Link
                     href={hrefs.batch(b.id)}
                     className="h8 text-text-primary underline underline-offset-[3px] decoration-border-dark"
                   >
-                    View batch
+                    {t("View batch")}
                   </Link>
                 </div>
               </header>
@@ -309,9 +312,9 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                   className="grid items-center gap-x-6 border-b border-border-light px-6 py-2 s3 text-text-tertiary"
                   style={rowStyle}
                 >
-                  <span>{WORDS.Package}</span>
-                  <span>Service</span>
-                  <span>Current step</span>
+                  <span>{words.Package}</span>
+                  <span>{t("Services")}</span>
+                  <span>{t("Current step")}</span>
                   <span />
                   <span />
                 </div>
@@ -322,7 +325,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
               {done.length > 0 && responsibility !== "you" && (
                 <div className="flex items-center justify-between border-t border-border-light bg-black-1 px-6 py-3">
                   <span className="h7 text-text-primary">
-                    Done{" "}
+                    {t("Done")}{" "}
                     <span className="p6 text-text-tertiary">{done.length}</span>
                   </span>
                   <button
@@ -330,7 +333,7 @@ export function WorkstreamsByBatch({ serviceId }: { serviceId?: ServiceId }) {
                     className="btn-link shrink-0"
                     onClick={() => setOpen((v) => ({ ...v, [b.id]: !v[b.id] }))}
                   >
-                    {open[b.id] ? "Hide" : "Show"}
+                    {open[b.id] ? t("Hide") : t("Show")}
                   </button>
                 </div>
               )}

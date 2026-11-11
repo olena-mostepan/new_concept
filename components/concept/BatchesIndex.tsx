@@ -15,6 +15,7 @@ import {
   activeProjects,
   customerBatches,
   isLive,
+  solutionName,
   wsIn,
 } from "@/lib/concept/derive";
 import { useConcept } from "./store";
@@ -32,7 +33,8 @@ import {
   tableRowNameCellClass,
 } from "./ui";
 import { hrefs } from "./hrefs";
-import { nAssets, WORDS } from "@/lib/concept/words";
+import { nAssets } from "@/lib/concept/words";
+import { useConceptI18n } from "./useConceptI18n";
 
 const SHADES = [0.16, 0.3, 0.44, 0.58, 0.74, 1];
 function batchColumns(showTarget: boolean) {
@@ -43,10 +45,6 @@ function batchColumns(showTarget: boolean) {
 
 const fill = (shade: number) =>
   `color-mix(in srgb, var(--black-7) ${Math.round(SHADES[shade] * 100)}%, white)`;
-
-function solutionLabel(id: SolutionId) {
-  return id === "led" ? "LED" : SOLUTIONS[id];
-}
 
 function liveKeys(
   account: Parameters<typeof wsIn>[0],
@@ -81,6 +79,7 @@ export function BatchesIndex() {
   const router = useRouter();
   const params = useSearchParams();
   const { account } = useConcept();
+  const { lang, t, words, plural } = useConceptI18n();
   const q = params.get("q") ?? "";
   const service = (params.get("service") as ServiceId | null) || "";
   const solution = (params.get("solution") as SolutionId | null) || "";
@@ -131,49 +130,59 @@ export function BatchesIndex() {
   const showTarget = shown.some((batch) => Boolean(batch.target));
   const columns = batchColumns(showTarget);
 
+  const batchCountLabel = plural(
+    batches.length,
+    "Batch",
+    "Batches",
+  );
+
   return (
     <div>
       <PageHeader
-        title="Batches"
+        title={t("Batches")}
         actions={
           <p className="p7 text-text-secondary">
-            {batches.length} batches · {nAssets(buildings)} · {projects}{" "}
-            projects in progress
+            {t(
+              "{0} · {1} · {2} projects in progress",
+              batchCountLabel,
+              nAssets(buildings, lang),
+              projects,
+            )}
           </p>
         }
       />
       <FilterBar selects={2}>
-        <FilterField label="Search">
+        <FilterField label={t("Search")}>
           <FilterSearch
             value={q}
-            placeholder="Batch name"
+            placeholder={t("Batch name")}
             onChange={(value) => write({ q: value })}
           />
         </FilterField>
-        <FilterField label="Service">
+        <FilterField label={t("Services")}>
           <FilterSelect
-            label="Service"
+            label={t("Services")}
             value={service}
             onChange={(value) => write({ service: value })}
           >
-            <option value="">All services</option>
+            <option value="">{t("All services")}</option>
             {SERVICES.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label}
+                {t(s.label)}
               </option>
             ))}
           </FilterSelect>
         </FilterField>
-        <FilterField label="Solution">
+        <FilterField label={t("Solution")}>
           <FilterSelect
-            label="Solution"
+            label={t("Solution")}
             value={solution}
             onChange={(value) => write({ solution: value })}
           >
-            <option value="">All solutions</option>
+            <option value="">{t("All solutions")}</option>
             {solutions.map((id) => (
               <option key={id} value={id}>
-                {solutionLabel(id)}
+                {solutionName(id, lang)}
               </option>
             ))}
           </FilterSelect>
@@ -194,17 +203,17 @@ export function BatchesIndex() {
           className="grid items-center gap-x-6 border-b border-border-light px-6 py-2 s3 text-text-tertiary"
           style={{ gridTemplateColumns: columns }}
         >
-          <span>Batch</span>
-          <span>{WORDS.Assets}</span>
-          <span>Projects</span>
-          <span>Where projects are</span>
+          <span>{t("Batch")}</span>
+          <span>{words.Assets}</span>
+          <span>{t("Projects")}</span>
+          <span>{t("Where projects are")}</span>
           <span />
-          {showTarget && <span>Target</span>}
+          {showTarget && <span>{t("Target")}</span>}
           <span />
         </div>
         {shown.length === 0 ? (
           <p className="px-6 py-8 p6 text-text-secondary">
-            No batches match.{" "}
+            {t("No batches match.")}{" "}
             <button
               type="button"
               className="btn-link"
@@ -212,7 +221,7 @@ export function BatchesIndex() {
                 write({ q: "", service: "", solution: "", you: "" })
               }
             >
-              Clear filters
+              {t("Clear filters")}
             </button>
           </p>
         ) : (
@@ -233,17 +242,18 @@ function BatchRow({
   showTarget: boolean;
 }) {
   const { account } = useConcept();
+  const { lang, t } = useConceptI18n();
   const [open, setOpen] = useState(false);
   const segments = [
     ...SERVICES.map((s, i) => ({
       id: s.id,
-      label: serviceDef(s.id).label,
+      label: t(serviceDef(s.id).label),
       projects: liveKeys(account, batch, s.id).size,
       shade: i,
     })),
     {
       id: "completed",
-      label: "Completed",
+      label: t("Completed"),
       projects: completedKeys(account, batch).size,
       shade: 5,
     },

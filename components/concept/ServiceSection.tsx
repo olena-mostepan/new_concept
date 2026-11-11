@@ -45,8 +45,10 @@ import {
   tableRowShellClass,
 } from "./ui";
 import { useHrefs } from "./useHrefs";
-import { WORDS } from "@/lib/concept/words";
+import { nProjects } from "@/lib/concept/words";
 import { useConcept } from "./store";
+import { useConceptI18n } from "./useConceptI18n";
+import type { Lang } from "@/lib/concept/i18n";
 import { SurveysTab } from "./SurveysTab";
 
 const rowGrid = {
@@ -54,14 +56,14 @@ const rowGrid = {
     "minmax(0,1.2fr) minmax(0,1fr) minmax(0,0.8fr) minmax(0,1.2fr) 120px 16px",
 };
 
-function serviceColumn(serviceId: ServiceId, w: Workstream) {
+function serviceColumn(serviceId: ServiceId, w: Workstream, lang: Lang) {
   if (serviceId === "scope") return splitLine(surveyLine(w));
   if (serviceId === "tender") return splitLine(suppliersLine(w));
   if (serviceId === "pricing") return splitLine(priceLine(w));
-  const estimate = presentedTotal(w);
+  const estimate = presentedTotal(w, lang);
   return {
     main: estimate.count ? estimate.text : "—",
-    detail: noun(activeProjects(w).length, "project", "projects"),
+    detail: nProjects(activeProjects(w).length, lang),
   };
 }
 
@@ -84,6 +86,7 @@ function matches(
 export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   const hrefs = useHrefs();
   const { account } = useConcept();
+  const { lang, t, words } = useConceptI18n();
   const router = useRouter();
   const params = useSearchParams();
   const def = service(serviceId);
@@ -146,21 +149,24 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   }> = [
     {
       id: "decision",
-      title: serviceId === "scope" ? "Needs your input" : "Needs your decision",
+      title:
+        serviceId === "scope"
+          ? t("Needs your input")
+          : t("Needs your decision"),
       rows: byRecentChange(decision),
       past: [],
       outcome: false,
     },
     {
       id: "progress",
-      title: "In progress",
+      title: t("In progress"),
       rows: byRecentChange(progress),
       past: [],
       outcome: false,
     },
     {
       id: "passed",
-      title: "Passed through",
+      title: t("Passed through"),
       rows: [],
       past: pastShown,
       outcome: true,
@@ -188,7 +194,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
   return (
     <>
       <PageHeader
-        title={def.label}
+        title={t(def.label)}
         changedKey
       />
       {serviceId === "scope" && (
@@ -209,7 +215,7 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
             }
             className={`-mb-px border-b-2 pb-2 p6 ${surveys ? "border-transparent text-text-secondary" : "border-brand-6 text-text-primary"}`}
           >
-            {WORDS.Packages} ({listed})
+            {words.Packages} ({listed})
           </button>
           <button
             type="button"
@@ -227,20 +233,20 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
             }
             className={`-mb-px border-b-2 pb-2 p6 ${surveys ? "border-brand-6 text-text-primary" : "border-transparent text-text-secondary"}`}
           >
-            Surveys ({visitTotal})
+            {t("Surveys")} ({visitTotal})
           </button>
         </div>
       )}
       {serviceId === "tender" && (
         <div className="mt-4 flex gap-6 border-b border-border-light">
           <span className="-mb-px border-b-2 border-brand-6 pb-2 p6 text-text-primary">
-            {WORDS.Packages} ({listed})
+            {words.Packages} ({listed})
           </span>
           <span
             className="-mb-px cursor-default border-b-2 border-transparent pb-2 p6 text-text-secondary"
             aria-disabled="true"
           >
-            Briefs ({listed})
+            {t("Briefs")} ({listed})
           </span>
         </div>
       )}
@@ -251,20 +257,20 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
       ) : (
         <>
           <FilterBar selects={serviceId === "pricing" ? 3 : 2}>
-            <FilterField label="Search">
+            <FilterField label={t("Search")}>
               <FilterSearch
                 value={q}
                 onChange={(value) => write({ q: value })}
-                placeholder="Address or city"
+                placeholder={t("Address or city")}
               />
             </FilterField>
-            <FilterField label="Batch">
+            <FilterField label={t("Batch")}>
               <FilterSelect
-                label="Batch"
+                label={t("Batch")}
                 value={batch}
                 onChange={(value) => write({ batch: value })}
               >
-                <option value="">All batches</option>
+                <option value="">{t("All batches")}</option>
                 {batches
                   .filter((b) => optionSource.some((w) => w.batchId === b.id))
                   .map((b) => (
@@ -274,28 +280,28 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
                   ))}
               </FilterSelect>
             </FilterField>
-            <FilterField label="Solution">
+            <FilterField label={t("Solution")}>
               <FilterSelect
-                label="Solution"
+                label={t("Solution")}
                 value={solution}
                 onChange={(value) => write({ solution: value })}
               >
-                <option value="">All solutions</option>
+                <option value="">{t("All solutions")}</option>
                 {solutions.map((id) => (
                   <option key={id} value={id}>
-                    {SOLUTIONS[id as SolutionId]}
+                    {t(SOLUTIONS[id as SolutionId])}
                   </option>
                 ))}
               </FilterSelect>
             </FilterField>
             {serviceId === "pricing" && (
-              <FilterField label="Supplier">
+              <FilterField label={t("Supplier")}>
                 <FilterSelect
-                  label="Supplier"
+                  label={t("Supplier")}
                   value={supplier}
                   onChange={(value) => write({ supplier: value })}
                 >
-                  <option value="">All suppliers</option>
+                  <option value="">{t("All suppliers")}</option>
                   {suppliers.map((name) => (
                     <option key={name} value={name}>
                       {name}
@@ -351,20 +357,22 @@ export function ServiceSection({ serviceId }: { serviceId: ServiceId }) {
                         style={rowGrid}
                       >
                         <span className="s3 text-text-tertiary">
-                          {WORDS.Package}
+                          {words.Package}
                         </span>
-                        <span className="s3 text-text-tertiary">Batch</span>
+                        <span className="s3 text-text-tertiary">
+                          {t("Batch")}
+                        </span>
                         <span className="s3 text-text-tertiary">
                           {serviceId === "scope"
-                            ? "Surveys"
+                            ? t("Surveys")
                             : serviceId === "tender"
-                              ? "Suppliers"
+                              ? t("Suppliers")
                               : serviceId === "pricing"
-                                ? "Price"
-                                : "Estimate"}
+                                ? t("Price")
+                                : t("Estimate")}
                         </span>
                         <span className="s3 text-text-tertiary">
-                          {group.outcome ? "Outcome" : "Next step"}
+                          {group.outcome ? t("Outcome") : t("Next step")}
                         </span>
                         <span />
                         <span />
@@ -427,8 +435,9 @@ function ServiceRow({
 }) {
   const hrefs = useHrefs();
   const b = account.batches.find((item) => item.id === source.batchId);
-  const column = serviceColumn(serviceId, w);
-  const parts = outcome ?? nextParts(source);
+  const { lang } = useConceptI18n();
+  const column = serviceColumn(serviceId, w, lang);
+  const parts = outcome ?? nextParts(source, lang);
   const muted = past ? "text-text-tertiary" : "text-text-primary";
   const yours = !past && source.owner === "you";
   const workstreamHref = hrefs.workstream(source.id, "service");

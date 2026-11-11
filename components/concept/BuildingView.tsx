@@ -68,7 +68,7 @@ import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
 import { shortFact } from "./WorkstreamChrome";
 import { buildingCrumbs } from "./crumbs";
-import { WORDS } from "@/lib/concept/words";
+import { useConceptI18n } from "./useConceptI18n";
 import { phaseStarted } from "./serviceChips";
 import { packagePrimaryTab } from "./packageStatus";
 
@@ -76,16 +76,8 @@ const STAGES = DELIVERY_PHASES.filter((phase) => phase.id !== "complete");
 
 const BASE_ASSET = `${hrefs.buildings}`;
 
-const SERVICE_TITLE: Record<ServiceId, string> = {
-  indicative: "Estimates",
-  scope: "Planning",
-  tender: "Tender",
-  pricing: "Pricing",
-  delivery: "Delivery",
-};
-
-function assetAtTitle(sid: ServiceId): string {
-  return `${SERVICE_TITLE[sid]} at this asset`;
+function assetAtTitle(sid: ServiceId, t: (en: string, ...args: unknown[]) => string): string {
+  return t("{0} at this asset", t(service(sid).label));
 }
 
 /** Package page tab → workstream service id for current dot. */
@@ -105,6 +97,7 @@ function packagePrimaryService(w: Workstream): ServiceId {
 
 export function BuildingView({ buildingId }: { buildingId: string }) {
   const { account } = useConcept();
+  const { lang, t, words } = useConceptI18n();
   const router = useRouter();
   const search = useSearchParams();
   const building = getBuilding(account, buildingId);
@@ -112,7 +105,7 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
   if (!building) {
     return (
       <Page>
-        <PageHeader title={`${WORDS.Asset} not found`} />
+        <PageHeader title={t("{0} not found", words.Asset)} />
       </Page>
     );
   }
@@ -125,7 +118,13 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
   );
 
   const crumbs = buildingCrumbs(account, buildingId, search).map(
-    ({ label, href }) => ({ label, href }),
+    ({ label, href }) => ({
+      label:
+        label === "Overview" || label === "Batch" || label === words.Assets
+          ? t(label === words.Assets ? words.Assets : label)
+          : label,
+      href,
+    }),
   );
 
   const selectedId = resolvePackageId(live, earlier, search);
@@ -211,16 +210,16 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
             setTabQuery(router, search, buildingId, selected.workstream.id, v)
           }
         >
-          <Tabs.List className={tabListClass} aria-label="Asset">
+          <Tabs.List className={tabListClass} aria-label={words.Asset}>
             <Tabs.Trigger value="overview" className={tabTriggerClass}>
-              Overview
+              {t("Overview")}
             </Tabs.Trigger>
             {tabServices.map((sid) => (
               <Tabs.Trigger key={sid} value={sid} className={tabTriggerClass}>
                 <span className="inline-flex items-center gap-1.5">
-                  {SERVICE_TITLE[sid]}
+                  {t(service(sid).label)}
                   {dotSid === sid && (
-                    <TabDot label="Current service" />
+                    <TabDot label={t("Current service")} />
                   )}
                 </span>
               </Tabs.Trigger>
@@ -522,9 +521,10 @@ function OverviewPanel({
   building: Building;
   item: BuildingProject;
 }) {
+  const { t } = useConceptI18n();
   const w = item.workstream;
   const sid = lastServiceForAsset(item);
-  const panelTitle = assetAtTitle(sid);
+  const panelTitle = assetAtTitle(sid, t);
   const panelAside = panelAsideForService(item, sid);
   const chips = SERVICES.flatMap((entry) => {
     const phase = w.phases.find((c) => c.service === entry.id);
@@ -624,6 +624,7 @@ function ServiceTabPanel({
   item: BuildingProject;
   serviceId: ServiceId;
 }) {
+  const { lang, t } = useConceptI18n();
   const w = item.workstream;
   const row = rowForService(item, serviceId);
   const inherited = phaseIsInheritedFrom(w, account, serviceId);
@@ -631,9 +632,11 @@ function ServiceTabPanel({
   const phase = w.phases.find((p) => p.service === serviceId);
   const rightDate =
     inherited && fromWs
-      ? `From ${fromWs.name} · ${short(
-          phase?.completedOn ?? fromWs.completedOn ?? "",
-        )}`
+      ? t(
+          "From {0} · {1}",
+          fromWs.name,
+          short(phase?.completedOn ?? fromWs.completedOn ?? "", lang),
+        )
       : latestFactDate(row, serviceId, phase);
 
   const track =
@@ -647,7 +650,7 @@ function ServiceTabPanel({
 
   return (
     <Card
-      title={assetAtTitle(serviceId)}
+      title={assetAtTitle(serviceId, t)}
       right={<span className="p7 text-text-tertiary">{rightDate}</span>}
     >
       <div className="space-y-6">
@@ -1000,6 +1003,7 @@ function AssetPager({
   search: { get(key: string): string | null; toString(): string };
   projects: BuildingProject[];
 }) {
+  const { t, words } = useConceptI18n();
   const router = useRouter();
   const fromPackage = search.get("from") === "workstream";
   const wsId = search.get("ws") ?? "";
@@ -1065,10 +1069,15 @@ function AssetPager({
           ‹ {name(previous.buildingId)}
         </Link>
       ) : (
-        <span className="text-text-disabled">‹ Previous</span>
+        <span className="text-text-disabled">‹ {t("Previous")}</span>
       )}
       <span className="text-text-tertiary">
-        {index + 1} of {assets.length} in this {WORDS.package}
+        {t(
+          "{0} of {1} in this {2}",
+          index + 1,
+          assets.length,
+          words.package,
+        )}
       </span>
       {next ? (
         <Link

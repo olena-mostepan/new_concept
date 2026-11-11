@@ -32,7 +32,7 @@ import {
   type StepColumn,
 } from "@/lib/concept/derive";
 import { inPackageColumnLines } from "@/lib/concept/moves";
-import { WORDS } from "@/lib/concept/words";
+import { useConceptI18n } from "./useConceptI18n";
 import { cn } from "@/lib/utils";
 import {
   Icon,
@@ -322,6 +322,7 @@ function OverviewAssets({
   account: ReturnType<typeof useConcept>["account"];
   w: Workstream;
 }) {
+  const { lang, t, words } = useConceptI18n();
   const [open, setOpen] = useState(false);
   const labels = service(w.service).steps;
   const baseRows = w.projects.map((project, index) => ({
@@ -339,16 +340,16 @@ function OverviewAssets({
   // IN PACKAGE shows on every package, so the table reads the same everywhere.
   const showInPackageColumn = true;
   const titleRight = closed
-    ? `${w.projects.length} at the start`
+    ? t("{0} at the start", w.projects.length)
     : leftN > 0
-      ? `${liveN} · ${leftN} left`
+      ? t("{0} · {1} left", liveN, leftN)
       : String(liveN);
   const gridCols = showInPackageColumn
     ? "grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.15fr)_16px]"
     : "grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_16px]";
   return (
     <Card
-      title={WORDS.Assets}
+      title={words.Assets}
       right={<span className="p7 text-text-secondary">{titleRight}</span>}
       bodyClassName="p-0"
     >
@@ -360,10 +361,10 @@ function OverviewAssets({
               gridCols,
             )}
           >
-            <span className="s3 text-text-tertiary">{WORDS.Asset}</span>
-            <span className="s3 text-text-tertiary">Step</span>
+            <span className="s3 text-text-tertiary">{words.Asset}</span>
+            <span className="s3 text-text-tertiary">{t("Step")}</span>
             {showInPackageColumn && (
-              <span className="s3 text-text-tertiary">In package</span>
+              <span className="s3 text-text-tertiary">{t("In package")}</span>
             )}
             <span />
           </div>
@@ -436,7 +437,7 @@ function OverviewAssets({
         total={rows.length}
         limit={8}
         open={open}
-        noun={WORDS.assets}
+        noun={words.assets}
         onOpen={() => setOpen(true)}
       />
     </Card>
@@ -445,6 +446,7 @@ function OverviewAssets({
 
 export function PackageView({ w }: { w: Workstream }) {
   const { account } = useConcept();
+  const { lang, t, words } = useConceptI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabs = tabsFor(w, account);
@@ -486,7 +488,7 @@ export function PackageView({ w }: { w: Workstream }) {
     <Page>
       <WorkstreamFrame live={w}>
         <Tabs.Root value={tab} onValueChange={setTab}>
-          <Tabs.List className={tabListClass} aria-label={WORDS.Package}>
+          <Tabs.List className={tabListClass} aria-label={words.Package}>
             {tabs.map((item) => (
               <Tabs.Trigger
                 key={item.id}
@@ -494,10 +496,10 @@ export function PackageView({ w }: { w: Workstream }) {
                 className={tabTriggerClass}
               >
                 <span className="inline-flex items-center gap-2">
-                  {item.label}
+                  {t(item.label)}
                   {item.from && (
                     <Tag type="neutral" size="xsmall" dot={false}>
-                      from
+                      {t("from")}
                     </Tag>
                   )}
                 </span>
@@ -505,8 +507,8 @@ export function PackageView({ w }: { w: Workstream }) {
                   <TabDot
                     label={
                       item.id === packagePrimaryTab(w)
-                        ? "Current service"
-                        : "New"
+                        ? t("Current service")
+                        : t("New")
                     }
                   />
                 )}

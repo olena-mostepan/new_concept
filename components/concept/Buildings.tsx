@@ -33,8 +33,9 @@ import {
   tableRowShellClass,
 } from "./ui";
 import { hrefs, type BuildingFrom } from "./hrefs";
-import { WORDS } from "@/lib/concept/words";
+import { nProjects } from "@/lib/concept/words";
 import { useConcept } from "./store";
+import { useConceptI18n } from "./useConceptI18n";
 
 const PREVIEW = 10;
 const withBatch = {
@@ -47,6 +48,7 @@ const withoutBatch = {
 
 export function Buildings() {
   const { account } = useConcept();
+  const { lang, t, words } = useConceptI18n();
   const router = useRouter();
   const params = useSearchParams();
   const q = params.get("q") ?? "";
@@ -97,7 +99,7 @@ export function Buildings() {
   }
   const chips = [...counts.entries()]
     .filter(([id, count]) => count > 0 || id === solution)
-    .map(([id, count]) => ({ id, label: solutionName(id), count }))
+    .map(([id, count]) => ({ id, label: solutionName(id, lang), count }))
     .sort(
       (a, b) =>
         b.count - a.count ||
@@ -112,30 +114,27 @@ export function Buildings() {
 
   return (
     <>
-      <PageHeader
-        title={WORDS.Assets}
-        changedKey
-      />
+      <PageHeader title={words.Assets} changedKey />
       <FilterChips
-        options={[{ id: "", label: "All", count: base.length }, ...chips]}
+        options={[{ id: "", label: t("All"), count: base.length }, ...chips]}
         value={solution}
         onChange={(id) => write({ solution: id })}
       />
       <FilterBar selects={2} className="mt-3">
-        <FilterField label="Search">
+        <FilterField label={t("Search")}>
           <FilterSearch
             value={q}
             onChange={(value) => write({ q: value })}
-            placeholder="Address or city"
+            placeholder={t("Address or city")}
           />
         </FilterField>
-        <FilterField label="Batch">
+        <FilterField label={t("Batch")}>
           <FilterSelect
-            label="Batch"
+            label={t("Batch")}
             value={batchId}
             onChange={(value) => write({ batch: value })}
           >
-            <option value="">All batches</option>
+            <option value="">{t("All batches")}</option>
             {batches.map((batch) => (
               <option key={batch.id} value={batch.id}>
                 {batch.name}
@@ -143,16 +142,16 @@ export function Buildings() {
             ))}
           </FilterSelect>
         </FilterField>
-        <FilterField label="Service">
+        <FilterField label={t("Services")}>
           <FilterSelect
-            label="Service"
+            label={t("Services")}
             value={serviceId}
             onChange={(value) => write({ service: value })}
           >
-            <option value="">All services</option>
+            <option value="">{t("All services")}</option>
             {SERVICES.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.label}
+                {t(item.label)}
               </option>
             ))}
           </FilterSelect>
@@ -167,7 +166,9 @@ export function Buildings() {
       </FilterBar>
       <section className="overflow-hidden rounded-lg border border-border-dark bg-white">
         <header className="flex items-center justify-between gap-3 border-b border-border-light px-4 py-3">
-          <h2 className="h7 text-text-primary">All {WORDS.assets}</h2>
+          <h2 className="h7 text-text-primary">
+            {t("All {0}", words.assets)}
+          </h2>
         </header>
         <BuildingRows rows={rows} />
       </section>
@@ -186,6 +187,7 @@ export function BuildingRows({
   from?: BuildingFrom;
   limit?: number;
 }) {
+  const { lang, t, words } = useConceptI18n();
   const signature = rows
     .map((row) => `${row.batch.id}:${row.building.id}`)
     .join("|");
@@ -202,10 +204,10 @@ export function BuildingRows({
             className="grid items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6"
             style={grid}
           >
-            <span className="s3 text-text-tertiary">{WORDS.Asset}</span>
-            {showBatch && <span className="s3 text-text-tertiary">Batch</span>}
-            <span className="s3 text-text-tertiary">Solution</span>
-            <span className="s3 text-text-tertiary">Service</span>
+            <span className="s3 text-text-tertiary">{words.Asset}</span>
+            {showBatch && <span className="s3 text-text-tertiary">{t("Batch")}</span>}
+            <span className="s3 text-text-tertiary">{t("Solution")}</span>
+            <span className="s3 text-text-tertiary">{t("Services")}</span>
             <span />
           </div>
           {shown.map((row) => (
@@ -223,7 +225,7 @@ export function BuildingRows({
         total={rows.length}
         limit={limit}
         open={showAll}
-        noun={WORDS.assets}
+        noun={words.assets}
         onOpen={() => setState({ signature, showAll: true })}
       />
     </>
@@ -242,9 +244,10 @@ function BuildingRow({
   grid: { gridTemplateColumns: string };
 }) {
   const { account } = useConcept();
+  const { lang, t } = useConceptI18n();
   const { building, batch, projects } = row;
   const several = projects.length > 1;
-  const services = [...new Set(projects.map((item) => serviceLabel(item)))];
+  const services = [...new Set(projects.map((item) => serviceLabel(item, lang, t)))];
   const buildingHref = hrefs.building(
     building.id,
     from === "batch" ? { from, batch: batch.id } : { from },
@@ -283,12 +286,12 @@ function BuildingRow({
       <span className="pointer-events-none min-w-0">
         <span className="block p6 text-text-primary">
           {projects
-            .map((item) => solutionName(item.workstream.solution))
+            .map((item) => solutionName(item.workstream.solution, lang))
             .join(", ") || "—"}
         </span>
         {several && (
           <span className="mt-0.5 block p7 text-text-tertiary">
-            {projects.length} projects
+            {nProjects(projects.length, lang)}
           </span>
         )}
       </span>
@@ -298,7 +301,7 @@ function BuildingRow({
         </span>
         {!several && projects[0] && (
           <span className="mt-0.5 block p7 text-text-tertiary">
-            {serviceSince(projects[0])}
+            {serviceSince(projects[0], lang, t)}
           </span>
         )}
       </span>
@@ -307,16 +310,25 @@ function BuildingRow({
   );
 }
 
-function serviceLabel(item: BuildingProject) {
-  if (isCompleted(item.workstream)) return "Completed";
-  return service(currentPhase(item.workstream).service).label;
+function serviceLabel(
+  item: BuildingProject,
+  lang: import("@/lib/concept/i18n").Lang,
+  t: (en: string, ...args: unknown[]) => string,
+) {
+  if (isCompleted(item.workstream)) return t("Completed");
+  return t(service(currentPhase(item.workstream).service).label);
 }
 
-function serviceSince(item: BuildingProject) {
+function serviceSince(
+  item: BuildingProject,
+  lang: import("@/lib/concept/i18n").Lang,
+  t: (en: string, ...args: unknown[]) => string,
+) {
   if (isCompleted(item.workstream))
     return short(
       item.workstream.completedOn ?? currentPhase(item.workstream).completedOn,
+      lang,
     );
-  const when = short(currentPhase(item.workstream).startedOn);
-  return when ? `since ${when}` : "";
+  const when = short(currentPhase(item.workstream).startedOn, lang);
+  return when ? t("since {0}", when) : "";
 }

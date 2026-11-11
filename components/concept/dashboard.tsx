@@ -16,25 +16,30 @@ import {
 import {
   customerBatches,
   foldText,
-  noun,
   projectsAtBuilding,
   servicePipeline,
   solutionName,
   wsIn,
   type ServiceCount,
 } from "@/lib/concept/derive";
-import { nAssets, nPackages, WORDS } from "@/lib/concept/words";
 import {
-  OWNER_LABEL,
+  nAssets,
+  nPackages,
+  nProjects,
+  ownerLabel,
+} from "@/lib/concept/words";
+import {
   SERVICE_LABEL,
   type Account,
   type Batch,
   type Building,
+  type ServiceId,
 } from "@/lib/concept/model";
 import { cn } from "@/lib/utils";
 import { Icon, Card, CardLink, focusRing } from "./ui";
 import { useHrefs } from "./useHrefs";
 import { Decisions } from "./Decisions";
+import { useConceptI18n } from "./useConceptI18n";
 
 const SHADES = [0.16, 0.3, 0.44, 0.58, 0.74, 1];
 
@@ -50,6 +55,7 @@ function ServiceSegment({
   last: boolean;
 }) {
   const hrefs = useHrefs();
+  const { lang, t } = useConceptI18n();
   const [open, setOpen] = useState(false);
   const dark = shade >= 0.58;
   return (
@@ -65,7 +71,7 @@ function ServiceSegment({
     >
       <Link
         href={hrefs.service(segment.id)}
-        aria-label={`${segment.label}, ${segment.projects} projects`}
+        aria-label={t("{0}, {1} projects", t(segment.label), segment.projects)}
         className={`flex h-10 items-center justify-center h8 tabular-nums outline-none ${first ? "rounded-l-full" : ""} ${last ? "rounded-r-full" : ""}`}
         style={{
           backgroundColor: open
@@ -80,16 +86,16 @@ function ServiceSegment({
         <div className="absolute bottom-full left-1/2 z-10 w-[280px] -translate-x-1/2 pb-2">
           <div className="rounded-md border border-border-dark bg-white px-4 py-3 shadow-floating">
             <div className="flex items-center justify-between gap-3">
-              <p className="h8 min-w-0 text-text-primary">{segment.label}</p>
+              <p className="h8 min-w-0 text-text-primary">{t(segment.label)}</p>
               <Link
                 href={hrefs.service(segment.id)}
                 className="h8 shrink-0 text-text-primary underline underline-offset-[3px] decoration-border-dark"
               >
-                View
+                {t("View")}
               </Link>
             </div>
             <p className="mt-0.5 p7 text-text-secondary">
-              {SERVICE_LABEL[segment.id]}
+              {t(SERVICE_LABEL[segment.id as ServiceId | "start"])}
             </p>
             <div className="mt-2 border-t border-border-light pt-2">
               {segment.byBatch.map((batch) => (
@@ -101,7 +107,7 @@ function ServiceSegment({
                     {batch.name}
                   </span>
                   <span className="shrink-0 p6 tabular-nums text-text-primary">
-                    {batch.projects} projects
+                    {nProjects(batch.projects, lang)}
                   </span>
                 </p>
               ))}
@@ -112,7 +118,7 @@ function ServiceSegment({
                   className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
                   aria-hidden
                 />
-                {OWNER_LABEL.you}: {nPackages(segment.you)}
+                {ownerLabel(lang, "you")}: {nPackages(segment.you, lang)}
               </p>
             )}
           </div>
@@ -124,6 +130,7 @@ function ServiceSegment({
 
 function Services({ account }: { account: Account }) {
   const hrefs = useHrefs();
+  const { lang, t, words } = useConceptI18n();
   const pipe = servicePipeline(account);
   const services = pipe.services.filter((segment) => segment.projects > 0);
   const showCompleted = pipe.completed.projects > 0;
@@ -134,7 +141,7 @@ function Services({ account }: { account: Account }) {
   const last = services.length + (showCompleted ? 1 : 0) - 1;
   return (
     <Card
-      title="Services"
+      title={t("Services")}
       bodyClassName="p-0"
       className="relative z-10 overflow-visible"
     >
@@ -147,12 +154,12 @@ function Services({ account }: { account: Account }) {
             key={segment.id}
             className="whitespace-nowrap text-center h8 text-text-primary"
           >
-            {segment.label}
+            {t(segment.label)}
           </p>
         ))}
         {showCompleted && (
           <p className="whitespace-nowrap text-center h8 text-text-primary">
-            Completed
+            {t("Completed")}
           </p>
         )}
         {services.map((segment, i) => (
@@ -177,12 +184,12 @@ function Services({ account }: { account: Account }) {
             key={`${segment.id}-sub`}
             className="text-center p7 text-text-tertiary"
           >
-            {nPackages(segment.workstreams)}
+            {nPackages(segment.workstreams, lang)}
           </p>
         ))}
         {showCompleted && (
           <p className="text-center p7 text-text-tertiary">
-            {pipe.completed.solutions.join(" · ")}
+            {pipe.completed.solutions.map((name) => t(name)).join(" · ")}
           </p>
         )}
       </div>
@@ -193,9 +200,11 @@ function Services({ account }: { account: Account }) {
               className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
               aria-hidden
             />
-            {OWNER_LABEL.you}: {nPackages(pipe.you)}
+            {ownerLabel(lang, "you")}: {nPackages(pipe.you, lang)}
           </p>
-          <CardLink href={hrefs.buildings}>See {WORDS.assets}</CardLink>
+          <CardLink href={hrefs.buildings}>
+            {t("See {0}", words.assets)}
+          </CardLink>
         </div>
       )}
     </Card>
@@ -272,10 +281,14 @@ function MomentumTip({
   active,
   payload,
   label,
+  lang,
+  t,
 }: {
   active?: boolean;
   payload?: Array<{ dataKey?: string | number; value?: number }>;
   label?: string;
+  lang: import("@/lib/concept/i18n").Lang;
+  t: (en: string, ...args: unknown[]) => string;
 }) {
   if (!active || !payload?.length || !label) return null;
   const value = (key: string) =>
@@ -294,7 +307,7 @@ function MomentumTip({
           className="mt-1.5 flex items-center gap-2 p7 text-text-secondary"
         >
           <LegendKey series={key} />
-          {name}
+          {t(name)}
           <span className="ml-auto h8 text-text-primary tabular-nums">
             {value(key)}
           </span>
@@ -305,20 +318,21 @@ function MomentumTip({
 }
 
 function Momentum({ account }: { account: Account }) {
+  const { lang, t } = useConceptI18n();
   const [active, setActive] = useState<number | null>(null);
   if (!account.momentum) return null;
   const points = account.momentum;
   const { max, ticks } = yScale(points.flatMap((point) => [point.started, point.finished]));
   return (
-    <Card title="Momentum" className="h-full">
+    <Card title={t("Momentum")} className="h-full">
       <div className="mb-3 flex gap-5 p7 text-text-secondary">
         <span className="inline-flex items-center gap-1.5">
           <LegendKey series="started" />
-          Started
+          {t("Started")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <LegendKey series="finished" />
-          Finished
+          {t("Finished")}
         </span>
       </div>
       <div className="h-56">
@@ -401,7 +415,7 @@ function Momentum({ account }: { account: Account }) {
             />
             <Tooltip
               cursor={{ stroke: "var(--black-3)", strokeDasharray: "3 3" }}
-              content={<MomentumTip />}
+              content={<MomentumTip lang={lang} t={t} />}
               wrapperStyle={{ outline: "none" }}
               allowEscapeViewBox={{ x: false, y: true }}
             />
@@ -441,6 +455,7 @@ function Momentum({ account }: { account: Account }) {
 
 function FindBuilding({ account }: { account: Account }) {
   const hrefs = useHrefs();
+  const { lang, t, words } = useConceptI18n();
   const batches = customerBatches(account);
   const buildings = batches.flatMap((batch) =>
     batch.buildingIds
@@ -495,7 +510,7 @@ function FindBuilding({ account }: { account: Account }) {
   return (
     <section className="relative rounded-lg border border-border-dark bg-white px-6 py-5">
       <label htmlFor="find-building" className="mb-2 block h8 text-text-title">
-        Find an {WORDS.asset}
+        {t("Find an {0}", words.asset)}
       </label>
       <div className="relative">
         <Icon name="search" size={22} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-icon-default" />
@@ -504,7 +519,7 @@ function FindBuilding({ account }: { account: Account }) {
           ref={input}
           type="search"
           value={q}
-          placeholder="Address, city or batch"
+          placeholder={t("Address, city or batch")}
           onChange={(event) => {
             setQ(event.target.value);
             setOpen(true);
@@ -522,10 +537,10 @@ function FindBuilding({ account }: { account: Account }) {
           className="absolute left-6 right-6 top-[108px] z-20 rounded-lg border border-border-dark bg-white py-2 shadow-floating"
           onMouseDown={(event) => event.preventDefault()}
         >
-          <p className="px-4 pb-1 pt-2 s3 text-text-tertiary">{WORDS.Assets}</p>
+          <p className="px-4 pb-1 pt-2 s3 text-text-tertiary">{words.Assets}</p>
           {buildingHits.length === 0 ? (
             <p className="px-4 py-2 p6 text-text-secondary">
-              No {WORDS.assets} match “{query}”
+              {t('No {0} match "{1}"', words.assets, query)}
             </p>
           ) : (
             buildingHits.map(({ building, batch }) => (
@@ -537,10 +552,10 @@ function FindBuilding({ account }: { account: Account }) {
               />
             ))
           )}
-          <p className="px-4 pb-1 pt-3 s3 text-text-tertiary">Batches</p>
+          <p className="px-4 pb-1 pt-3 s3 text-text-tertiary">{t("Batches")}</p>
           {batchHits.length === 0 ? (
             <p className="px-4 py-2 p6 text-text-secondary">
-              No batches match “{query}”
+              {t('No batches match "{0}"', query)}
             </p>
           ) : (
             batchHits.map((batch) => (
@@ -572,14 +587,15 @@ function BuildingHit({
   account: Account;
 }) {
   const hrefs = useHrefs();
+  const { lang, t } = useConceptI18n();
   const projects = projectsAtBuilding(account, building.id).filter(
     (item) => item.workstream.batchId === batch.id,
   );
   const detail =
     projects.length > 1
-      ? noun(projects.length, "project", "projects")
+      ? nProjects(projects.length, lang)
       : projects[0]
-        ? solutionName(projects[0].workstream.solution)
+        ? solutionName(projects[0].workstream.solution, lang)
         : "—";
   return (
     <Link
@@ -597,7 +613,7 @@ function BuildingHit({
   );
 }
 
-function batchSolutions(account: Account, batch: Batch) {
+function batchSolutions(account: Account, batch: Batch, lang: import("@/lib/concept/i18n").Lang) {
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const stream of wsIn(account, batch.id).filter(
@@ -605,23 +621,24 @@ function batchSolutions(account: Account, batch: Batch) {
   )) {
     if (seen.has(stream.solution)) continue;
     seen.add(stream.solution);
-    labels.push(solutionName(stream.solution));
+    labels.push(solutionName(stream.solution, lang));
   }
   return labels.join(", ");
 }
 
 function Batches({ account }: { account: Account }) {
   const hrefs = useHrefs();
+  const { lang, t } = useConceptI18n();
   const batches = customerBatches(account);
   if (batches.length < 2) return null;
   return (
-    <Card title="Batches" bodyClassName="p-0" className="h-full">
+    <Card title={t("Batches")} bodyClassName="p-0" className="h-full">
       <ul>
         {batches.map((batch, index) => {
           const facts = [
-            nAssets(batch.buildingIds.length),
-            batchSolutions(account, batch),
-            batch.target ? `target ${batch.target}` : "",
+            nAssets(batch.buildingIds.length, lang),
+            batchSolutions(account, batch, lang),
+            batch.target ? t("target {0}", batch.target) : "",
           ].filter(Boolean);
           return (
             <li

@@ -258,15 +258,18 @@ export function ListMore({
   onOpen: () => void;
   noun: string;
 }) {
+  const { t } = useConceptI18n();
   if (total <= limit) return null;
   return (
     <footer className="flex items-center justify-between gap-3 border-t border-border-light px-6 py-3">
       <p className="p7 text-text-tertiary">
-        {open ? `${total} ${noun}` : `Showing ${limit} of ${total}`}
+        {open
+          ? `${total} ${noun}`
+          : t("Showing {0} of {1}", limit, total)}
       </p>
       {!open && (
         <Button type="secondary" size="small" onClick={onOpen}>
-          Show all {total}
+          {t("Show all {0}", total)}
         </Button>
       )}
     </footer>
@@ -327,26 +330,37 @@ export function SummaryCards({
   responsibility: string;
   onResponsibility: (next: string) => void;
 }) {
+  const { t, words, plural } = useConceptI18n();
   const yours = responsibility === "you";
-  const batchWord = batches === 1 ? "batch" : "batches";
+  const batchWord = plural(
+    batches,
+    "Batch",
+    "Batches",
+  );
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <SummaryCard
-        label={WORDS.Packages}
+        label={words.Packages}
         number={total}
-        line={total > 0 ? `across ${batches} ${batchWord}` : null}
+        line={
+          total > 0 ? t("across {0} {1}", batches, batchWord) : null
+        }
       />
       <SummaryCard
-        label="Your action"
+        label={t("Your action")}
         number={yourAction}
-        line={total > 0 ? `of ${live} in ${serviceLabel}` : null}
+        line={
+          total > 0
+            ? t("of {0} in {1}", live, t(serviceLabel))
+            : null
+        }
         pressed={yours}
         onClick={() => onResponsibility(yours ? "" : "you")}
       />
       <SummaryCard
-        label={thirdLabel}
+        label={t(thirdLabel)}
         number={thirdCount}
-        line={total > 0 ? thirdLine : null}
+        line={total > 0 ? t(thirdLine) : null}
       />
     </div>
   );
@@ -747,6 +761,7 @@ export function YourActionOnly({
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
+  const { t } = useConceptI18n();
   return (
     <label className="flex h-10 cursor-pointer items-center gap-2">
       <input
@@ -767,7 +782,7 @@ export function YourActionOnly({
         {checked && <Icon name="check" size={12} />}
       </span>
       <span className="whitespace-nowrap p6 text-text-primary">
-        Your action only
+        {t("Your action only")}
       </span>
     </label>
   );
@@ -808,13 +823,14 @@ export function FilterSelect({
 }
 
 export function ClearFilters({ onClick }: { onClick: () => void }) {
+  const { t } = useConceptI18n();
   return (
     <button
       type="button"
       onClick={onClick}
       className="h8 whitespace-nowrap text-text-primary underline underline-offset-[3px] decoration-border-dark"
     >
-      Clear filters
+      {t("Clear filters")}
     </button>
   );
 }
@@ -1616,14 +1632,17 @@ export function AssistantButton({
 export function FilterSearch({
   value,
   onChange,
-  placeholder = `${WORDS.Package} or project name`,
+  placeholder,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
 }) {
+  const { t, words } = useConceptI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const hasValue = value.length > 0;
+  const placeholderText =
+    placeholder ?? t("{0} or project name", words.Package);
   const clear = () => {
     onChange("");
     queueMicrotask(() => inputRef.current?.focus());
@@ -1636,7 +1655,7 @@ export function FilterSearch({
         ref={inputRef}
         type="search"
         value={value}
-        placeholder={placeholder}
+        placeholder={placeholderText}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
@@ -1649,7 +1668,7 @@ export function FilterSearch({
       {hasValue && (
         <button
           type="button"
-          aria-label="Clear search"
+          aria-label={t("Clear search")}
           onClick={clear}
           className="absolute right-3 top-1/2 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-black-4 outline-none hover:text-black-7 focus-visible:text-black-7 focus-visible:shadow-[0_0_0_2px_var(--black-7)]"
         >

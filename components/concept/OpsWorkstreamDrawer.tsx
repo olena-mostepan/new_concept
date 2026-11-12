@@ -15,7 +15,7 @@ import { getBuilding } from "@/lib/concept/derive";
 import { Tag } from "@/components/ds/tag";
 import { cn } from "@/lib/utils";
 import { useConcept } from "./store";
-import { Button, Dropdown, Icon, IconButton, ServiceIcon, UploadRow } from "./ui";
+import { Button, Dropdown, Icon, IconButton, ServiceIcon } from "./ui";
 import { SERVICE_LINES, SOLUTION_OPTIONS, fieldClass, fieldInputClass, labelClass, solutionLabel, workstreamName } from "./ops-shared";
 import { AssetPicker, Check, CountPill, CreateWorkspace, WsSection } from "./ops-workspace";
 
@@ -155,9 +155,75 @@ export function OpsAddPackage({
             </dd>
             <dt className="text-text-tertiary">Lead</dt>
             <dd className="text-text-primary">{lead || "—"}</dd>
-            <dt className="text-text-tertiary">Documents</dt>
-            <dd className="text-text-primary">{documents.length || "None"}</dd>
           </dl>
+
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <p className="flex-1 h7 text-text-primary">Documents</p>
+              <CountPill>
+                {documents.length} {documents.length === 1 ? "file" : "files"}
+              </CountPill>
+            </div>
+            <p className="mb-3 p7 text-text-secondary">Optional. With several services, each package gets a copy.</p>
+            <div className="space-y-3">
+            <div className="flex flex-col items-center gap-1 rounded-md border-[1.5px] border-dashed border-black-3 bg-white px-4 py-5 text-center">
+              <span className="mb-1.5 flex size-9 items-center justify-center rounded-md border border-border-dark bg-white">
+                <Icon name="upload" size={20} className="text-icon-dark" />
+              </span>
+              <p className="h8 text-text-primary">Drop documents here</p>
+              <p className="p7 text-text-secondary">Drawings, specs or an incumbent quote</p>
+              <span className="mt-2.5">
+                <Button type="secondary" icon="upload" onClick={() => addDocs([`Document_${documents.length + 1}.pdf`], "Added now")}>
+                  Upload documents
+                </Button>
+              </span>
+            </div>
+            {bundles.length > 0 && (
+              <div>
+                <p className={labelClass}>Or use what the customer sent</p>
+                <div className="flex flex-wrap gap-2">
+                  {bundles.map((b) => {
+                    const on = documents.some((d) => d.name === b.filesSummary);
+                    return (
+                      <Button
+                        key={b.id}
+                        type="secondary"
+                        size="small"
+                        icon={on ? "check" : "plus"}
+                        disabled={on}
+                        className="h-auto min-h-8 whitespace-normal py-1.5 text-left"
+                        onClick={() => addDocs([b.filesSummary!], b.filesCount ? `${b.filesCount} files from the customer` : "From the customer")}
+                      >
+                        {b.filesSummary}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {documents.length > 0 && (
+              <ul className="rounded-md border border-border-light bg-white px-3">
+                {documents.map((d, i) => (
+                  <li key={d.name} className={cn("flex items-center gap-3 py-2.5", i > 0 && "border-t border-border-light")}>
+                    <Icon name="document" size={16} className="shrink-0 text-icon-default" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate h8 text-text-title">{d.name}</p>
+                      <p className="flex items-center gap-1.5 p7 text-text-secondary">
+                        {/\.[a-z]+$/i.test(d.name) && (
+                          <Tag type="neutral" size="xsmall">
+                            {d.name.split(".").pop()!.toUpperCase()}
+                          </Tag>
+                        )}
+                        {d.meta}
+                      </p>
+                    </div>
+                    <IconButton icon="cross" size="small" label={`Remove ${d.name}`} onClick={() => setDocuments(documents.filter((x) => x.name !== d.name))} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          </div>
 
           <p className="p7 text-text-secondary">You can rename a package and change its assets later.</p>
         </>
@@ -263,59 +329,6 @@ export function OpsAddPackage({
         </div>
       </WsSection>
 
-      <WsSection title="Documents (optional)" hint="Drawings, specs or an incumbent quote. With several services, each package gets a copy.">
-        <div className="space-y-3">
-          <UploadRow
-            title="Drop documents here"
-            detail="PDF, images or spreadsheets"
-            buttonLabel="Upload documents"
-            onUpload={() => addDocs([`Document_${documents.length + 1}.pdf`], "Added now")}
-          />
-          {bundles.length > 0 && (
-            <div>
-              <p className={labelClass}>Or use what the customer sent</p>
-              <div className="flex flex-wrap gap-2">
-                {bundles.map((b) => {
-                  const on = documents.some((d) => d.name === b.filesSummary);
-                  return (
-                    <Button
-                      key={b.id}
-                      type="secondary"
-                      size="small"
-                      icon={on ? "check" : "plus"}
-                      disabled={on}
-                      onClick={() => addDocs([b.filesSummary!], b.filesCount ? `${b.filesCount} files from the customer` : "From the customer")}
-                    >
-                      {b.filesSummary}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {documents.length > 0 && (
-            <ul className="rounded-md border border-border-light bg-white px-3">
-              {documents.map((d, i) => (
-                <li key={d.name} className={cn("flex items-center gap-3 py-2.5", i > 0 && "border-t border-border-light")}>
-                  <Icon name="document" size={16} className="shrink-0 text-icon-default" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate h8 text-text-title">{d.name}</p>
-                    <p className="flex items-center gap-1.5 p7 text-text-secondary">
-                      {/\.[a-z]+$/i.test(d.name) && (
-                        <Tag type="neutral" size="xsmall">
-                          {d.name.split(".").pop()!.toUpperCase()}
-                        </Tag>
-                      )}
-                      {d.meta}
-                    </p>
-                  </div>
-                  <IconButton icon="cross" size="small" label={`Remove ${d.name}`} onClick={() => setDocuments(documents.filter((x) => x.name !== d.name))} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </WsSection>
     </CreateWorkspace>
   );
 }

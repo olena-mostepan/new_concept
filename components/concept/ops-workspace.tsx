@@ -90,7 +90,7 @@ export function CreateWorkspace({
 
       <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] content-start overflow-y-auto lg:grid-cols-[minmax(0,1fr)_380px] lg:content-stretch lg:overflow-hidden">
         <main className="min-w-0 px-4 py-6 sm:px-8 lg:min-h-0 lg:overflow-y-auto">
-          <div className="max-w-[880px]">{children}</div>
+          <div>{children}</div>
         </main>
         <aside
           aria-label={sideLabel}

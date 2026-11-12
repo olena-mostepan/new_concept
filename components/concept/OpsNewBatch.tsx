@@ -57,6 +57,16 @@ function matches(b: Building, query: string) {
 
 const placeOf = (b: Building) => [b.address, [b.postcode, b.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
 
+function Spinner() {
+  return (
+    <span
+      className="size-4 shrink-0 animate-spin rounded-full border-2 border-black-3 border-t-black-7"
+      role="status"
+      aria-label="Reading"
+    />
+  );
+}
+
 function Check({ on }: { on: boolean }) {
   return (
     <span
@@ -307,7 +317,7 @@ export function OpsNewBatch() {
       aria-label={title}
       className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] bg-white"
     >
-      <header className="flex flex-col gap-2 border-b border-border-dark px-4 py-2 sm:min-h-16 sm:flex-row sm:items-center sm:gap-3">
+      <header className="flex min-h-[64px] flex-col gap-2 border-b border-border-dark px-4 py-2 sm:flex-row sm:items-center sm:gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <IconButton icon="cross" label="Close" onClick={tryClose} />
           <div className="min-w-0">
@@ -316,8 +326,8 @@ export function OpsNewBatch() {
           </div>
         </div>
         {confirming ? (
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-            <p className="p6 text-text-primary max-sm:order-first">
+          <div className="flex w-full flex-col gap-2 max-sm:border-t max-sm:border-border-light max-sm:pt-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:border-0 sm:pt-0">
+            <p className="p6 text-text-primary">
               {existing ? "Close without saving the assets?" : "Close without creating the batch?"}
             </p>
             <Button type="secondary" onClick={() => setConfirming(false)}>
@@ -330,7 +340,7 @@ export function OpsNewBatch() {
         ) : (
           <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
             {missing && (
-              <p className="hidden items-center gap-1.5 p7 text-text-secondary md:flex">
+              <p className="hidden items-center gap-1.5 p7 text-text-secondary sm:flex">
                 <Icon name="info" size={16} className="text-icon-default" />
                 {missing}
               </p>
@@ -350,9 +360,9 @@ export function OpsNewBatch() {
         </div>
       )}
 
-      <div className="grid min-h-0 min-[1024px]:grid-cols-[minmax(0,1fr)_380px]">
-        <main className="min-h-0 overflow-y-auto px-4 py-6 sm:px-8">
-          <div className="max-w-[880px]">
+      <div className="min-h-0 overflow-y-auto min-[1024px]:grid min-[1024px]:grid-cols-[minmax(0,1fr)_380px] min-[1024px]:overflow-hidden">
+        <main className="px-6 py-6 min-[1024px]:min-h-0 min-[1024px]:overflow-y-auto sm:px-8">
+          <div className="w-full max-w-[880px]">
             <h3 className="h7 text-text-primary">Find assets</h3>
             <p className="mt-1 p6 text-text-secondary">
               Search the customer&apos;s assets, find them in the files they sent, or add one that isn&apos;t in CQuel yet.
@@ -419,7 +429,8 @@ export function OpsNewBatch() {
                               <span className="block p7 text-text-secondary">{meta}</span>
                             </span>
                             {f.state === "reading" ? (
-                              <span className="p7 text-text-tertiary" aria-live="polite">
+                              <span className="flex items-center gap-2 p7 text-text-tertiary" aria-live="polite">
+                                <Spinner />
                                 Reading…
                               </span>
                             ) : (
@@ -555,9 +566,9 @@ export function OpsNewBatch() {
 
         <aside
           aria-label="This batch"
-          className="flex min-h-0 flex-col border-t border-border-dark bg-black-1 min-[1024px]:border-l min-[1024px]:border-t-0"
+          className="flex flex-col border-t border-border-dark bg-black-1 min-[1024px]:min-h-0 min-[1024px]:w-[380px] min-[1024px]:shrink-0 min-[1024px]:overflow-y-auto min-[1024px]:border-l min-[1024px]:border-t-0"
         >
-          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5">
+          <div className="flex flex-col gap-5 p-5">
             {!existing && (
               <div className="space-y-4">
                 <p className="h7 text-text-primary">This batch</p>

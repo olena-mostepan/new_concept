@@ -42,6 +42,7 @@ export function OpsAddPackage({
   const [services, setServices] = useState<ServiceId[]>(editing ? [editing.service] : []);
   const [ids, setIds] = useState<string[]>(editing ? editing.projects.map((p) => p.buildingId) : batch.buildingIds);
   const [lead, setLead] = useState(editing?.lead ?? batch.lead ?? leads[0] ?? "");
+  const [customName, setCustomName] = useState(editing?.name ?? "");
   const [needs, setNeeds] = useState<string[]>(editing?.needs.length ? editing.needs.map((n) => n.label) : [""]);
   const [documents, setDocuments] = useState<Doc[]>(editing?.documents ?? []);
   const bundles = account.batches.filter((b) => b.filesSummary);
@@ -54,12 +55,18 @@ export function OpsAddPackage({
   const others = account.workstreams.filter((w) => w.batchId === batch.id && w.id !== editing?.id);
   // Keep the batch's order of services.
   const chosen = SERVICES.map((s) => s.id).filter((sid) => services.includes(sid));
+  const typed = customName.trim();
   const preview = chosen.map((sid) => ({
     id: sid,
-    name:
-      editing && editing.solution === solution && editing.service === sid ? editing.name : workstreamName(solution, sid, others),
+    // A typed name wins; with several services each gets "<name> · <service>".
+    name: typed
+      ? chosen.length > 1
+        ? `${typed} · ${serviceDef(sid).label}`
+        : typed
+      : workstreamName(solution, sid, others),
     step: serviceDef(sid).steps[0],
   }));
+  const autoName = chosen.length ? workstreamName(solution, chosen[0], others) : solutionLabel(solution);
   const missing = !services.length ? "Choose at least one service" : !ids.length ? "Choose at least one asset" : "";
   const dirty = editing ? true : services.length > 0 || documents.length > 0 || needs.some((n) => n.trim());
 
@@ -156,8 +163,9 @@ export function OpsAddPackage({
             <dt className="text-text-tertiary">Lead</dt>
             <dd className="text-text-primary">{lead || "—"}</dd>
           </dl>
+          <p className="p7 text-text-secondary">You can change its name and assets later.</p>
 
-          <div>
+          <div className="mt-3 border-t border-border-dark pt-6">
             <div className="mb-2 flex items-center gap-2">
               <p className="flex-1 h7 text-text-primary">Documents</p>
               <CountPill>
@@ -225,18 +233,43 @@ export function OpsAddPackage({
           </div>
           </div>
 
-          <p className="p7 text-text-secondary">You can rename a package and change its assets later.</p>
         </>
       }
     >
-      <WsSection title="Solution">
-        <div className="max-w-[420px]">
-          <Dropdown
-            ariaLabel="Solution"
-            value={solution}
-            onValueChange={(v) => setSolution(v as SolutionId)}
-            options={SOLUTION_OPTIONS.map((o) => ({ value: o.id, label: o.label }))}
-          />
+      <WsSection title="Package">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
+            <span className={labelClass}>Name (optional)</span>
+            <input
+              className={cn(fieldClass, fieldInputClass)}
+              value={customName}
+              placeholder={autoName}
+              onChange={(e) => setCustomName(e.target.value)}
+            />
+            <span className="mt-1 block p7 text-text-secondary">Leave it empty to name it after the solution.</span>
+          </label>
+          <div>
+            <span className={labelClass}>Solution</span>
+            <Dropdown
+              ariaLabel="Solution"
+              value={solution}
+              onValueChange={(v) => setSolution(v as SolutionId)}
+              options={SOLUTION_OPTIONS.map((o) => ({ value: o.id, label: o.label }))}
+            />
+          </div>
+          <div>
+            <span className={labelClass}>Lead</span>
+            {leads.length === 0 ? (
+              <p className="p6 text-text-secondary">Add a lead on the batch first.</p>
+            ) : (
+              <Dropdown
+                ariaLabel="Lead"
+                value={leads.includes(lead) ? lead : leads[0]}
+                onValueChange={setLead}
+                options={leads.map((l) => ({ value: l, label: l }))}
+              />
+            )}
+          </div>
         </div>
       </WsSection>
 
@@ -284,21 +317,6 @@ export function OpsAddPackage({
           empty="This batch has no assets yet."
           countLabel="selected"
         />
-      </WsSection>
-
-      <WsSection title="Lead">
-        <div className="max-w-[420px]">
-          {leads.length === 0 ? (
-            <p className="p6 text-text-secondary">Add a lead on the batch first.</p>
-          ) : (
-            <Dropdown
-              ariaLabel="Lead"
-              value={leads.includes(lead) ? lead : leads[0]}
-              onValueChange={setLead}
-              options={leads.map((l) => ({ value: l, label: l }))}
-            />
-          )}
-        </div>
       </WsSection>
 
       <WsSection

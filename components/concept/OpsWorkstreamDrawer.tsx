@@ -41,7 +41,8 @@ export function OpsAddPackage({
   const [solution, setSolution] = useState<SolutionId>(editing?.solution ?? "solar");
   const [services, setServices] = useState<ServiceId[]>(editing ? [editing.service] : []);
   const [ids, setIds] = useState<string[]>(editing ? editing.projects.map((p) => p.buildingId) : batch.buildingIds);
-  const [lead, setLead] = useState(editing?.lead ?? batch.lead ?? leads[0] ?? "");
+  // No lead field: keep the package's lead, or the batch's.
+  const lead = editing?.lead ?? batch.lead ?? leads[0] ?? "";
   const [customName, setCustomName] = useState(editing?.name ?? "");
   const [needs, setNeeds] = useState<string[]>(editing?.needs.length ? editing.needs.map((n) => n.label) : [""]);
   const [documents, setDocuments] = useState<Doc[]>(editing?.documents ?? []);
@@ -160,8 +161,6 @@ export function OpsAddPackage({
             <dd className="text-text-primary">
               {n} of {batch.buildingIds.length}
             </dd>
-            <dt className="text-text-tertiary">Lead</dt>
-            <dd className="text-text-primary">{lead || "—"}</dd>
           </dl>
           <p className="p7 text-text-secondary">You can change its name and assets later.</p>
 
@@ -238,16 +237,6 @@ export function OpsAddPackage({
     >
       <WsSection title="Package">
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block sm:col-span-2">
-            <span className={labelClass}>Name (optional)</span>
-            <input
-              className={cn(fieldClass, fieldInputClass)}
-              value={customName}
-              placeholder={autoName}
-              onChange={(e) => setCustomName(e.target.value)}
-            />
-            <span className="mt-1 block p7 text-text-secondary">Leave it empty to name it after the solution.</span>
-          </label>
           <div>
             <span className={labelClass}>Solution</span>
             <Dropdown
@@ -257,19 +246,15 @@ export function OpsAddPackage({
               options={SOLUTION_OPTIONS.map((o) => ({ value: o.id, label: o.label }))}
             />
           </div>
-          <div>
-            <span className={labelClass}>Lead</span>
-            {leads.length === 0 ? (
-              <p className="p6 text-text-secondary">Add a lead on the batch first.</p>
-            ) : (
-              <Dropdown
-                ariaLabel="Lead"
-                value={leads.includes(lead) ? lead : leads[0]}
-                onValueChange={setLead}
-                options={leads.map((l) => ({ value: l, label: l }))}
-              />
-            )}
-          </div>
+          <label className="block">
+            <span className={labelClass}>Name (optional)</span>
+            <input
+              className={cn(fieldClass, fieldInputClass)}
+              value={customName}
+              placeholder={autoName}
+              onChange={(e) => setCustomName(e.target.value)}
+            />
+          </label>
         </div>
       </WsSection>
 

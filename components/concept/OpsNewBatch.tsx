@@ -352,7 +352,7 @@ export function OpsNewBatch() {
 
       <div className="grid min-h-0 min-[1024px]:grid-cols-[minmax(0,1fr)_380px]">
         <main className="min-h-0 overflow-y-auto px-4 py-6 sm:px-8">
-          <div className="mx-auto max-w-[880px]">
+          <div className="max-w-[880px]">
             <h3 className="h7 text-text-primary">Find assets</h3>
             <p className="mt-1 p6 text-text-secondary">
               Search the customer&apos;s assets, find them in the files they sent, or add one that isn&apos;t in CQuel yet.

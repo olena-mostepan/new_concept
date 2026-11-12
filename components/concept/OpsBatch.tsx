@@ -72,8 +72,8 @@ export function OpsBatch({ id }: { id: string }) {
   const close = () => setQuery({ add: null, edit: null });
   const plan = planCopy(batch, streams.length);
   const meta = [
-    `${streams.length} ${streams.length === 1 ? "workstream" : "workstreams"}`,
-    `${batch.buildingIds.length} ${batch.buildingIds.length === 1 ? "property" : "properties"}`,
+    `${streams.length} ${streams.length === 1 ? "package" : "packages"}`,
+    `${batch.buildingIds.length} ${batch.buildingIds.length === 1 ? "asset" : "assets"}`,
     batch.filesReceived ? `files received ${short(batch.filesReceived)}` : "",
   ]
     .filter(Boolean)
@@ -137,21 +137,21 @@ export function OpsBatch({ id }: { id: string }) {
         </section>
         <section className="overflow-hidden rounded-lg border border-border-dark bg-white ">
           <header className="flex items-center justify-between gap-3 border-b border-border-light px-5 py-4">
-            <h2 className={groupTitle}>Workstreams ({streams.length})</h2>
+            <h2 className={groupTitle}>Packages ({streams.length})</h2>
             <Button
               type="secondary"
               size="small"
               icon="plus"
               onClick={() => setQuery({ add: "workstream", edit: null })}
             >
-              Add workstream
+              Add package
             </Button>
           </header>
           {streams.length === 0 ? (
             <div className="px-5 py-8">
               <p className="p6 text-text-secondary">
-                No workstreams yet. Add one to run a service for a solution on
-                some of the batch's properties.
+                No packages yet. Add one to run services for a solution on some
+                of the batch's assets.
               </p>
               <Button
                 type="secondary"
@@ -160,7 +160,7 @@ export function OpsBatch({ id }: { id: string }) {
                 className="mt-3"
                 onClick={() => setQuery({ add: "workstream", edit: null })}
               >
-                Add workstream
+                Add package
               </Button>
             </div>
           ) : (
@@ -193,8 +193,8 @@ export function OpsBatch({ id }: { id: string }) {
                           {solutionName(stream.solution)} ·{" "}
                           {stream.projects.length}{" "}
                           {stream.projects.length === 1
-                            ? "property"
-                            : "properties"}{" "}
+                            ? "asset"
+                            : "assets"}{" "}
                           · lead {stream.lead}
                         </p>
                       </div>
@@ -252,7 +252,7 @@ export function OpsBatch({ id }: { id: string }) {
                       <div className="bg-bg-container-grey px-5 py-4">
                         {" "}
                         <p className="h9 uppercase tracking-wide text-text-secondary">
-                          Properties
+                          Assets
                         </p>{" "}
                         <ul className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
                           {" "}
@@ -347,7 +347,7 @@ export function OpsBatch({ id }: { id: string }) {
                     ))}{" "}
                     {mine.length === 0 && !reason && (
                       <span className="p6 text-text-tertiary">
-                        No workstream yet
+                        No package yet
                       </span>
                     )}{" "}
                   </div>{" "}
@@ -410,7 +410,7 @@ function planCopy(
   if (batch.planState === "agreed")
     return {
       line: `Agreed ${short(batch.planAgreed)}`,
-      label: "Start workstreams",
+      label: "Start packages",
       action: "start",
     };
   return { line: `Live since ${short(batch.planLive || batch.planAgreed)}` };

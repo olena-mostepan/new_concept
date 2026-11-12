@@ -148,11 +148,11 @@ export function OpsWorkstreamDrawer({
         <div className="flex items-start justify-between gap-4 border-b border-border-light px-6 py-5">
           <div>
             <h2 className="h6 text-text-primary">
-              {editing ? "Edit workstream" : "Add workstream"}
+              {editing ? "Edit package" : "Add package"}
             </h2>
             <p className="mt-1 p6 text-text-secondary">
               Choose a solution, the services CQuel runs for it, and the
-              properties it covers.
+              assets it covers.
             </p>
           </div>
           <IconButton icon="cross" label="Close" onClick={onClose} />
@@ -176,7 +176,7 @@ export function OpsWorkstreamDrawer({
               Services
             </p>
             <p className="mt-1 p6 text-text-secondary">
-              Choose one or more. Each service becomes its own workstream.
+              Choose one or more. Each service becomes its own package.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3">
               {SERVICES.map((item) => {
@@ -195,7 +195,7 @@ export function OpsWorkstreamDrawer({
                     </p>
                     {!inRoute && (
                       <p className="mt-1 p7 text-text-tertiary">
-                        (not in the route yet — adding it adds it to the route)
+                        Not in the batch plan yet. Adding it adds it to the plan.
                       </p>
                     )}
                   </button>
@@ -207,7 +207,7 @@ export function OpsWorkstreamDrawer({
           <div>
             <div className="flex items-center justify-between gap-3">
               <p className="h9 uppercase tracking-wide text-text-secondary">
-                Properties · {ids.length} of {batch.buildingIds.length} selected
+                Assets · {ids.length} of {batch.buildingIds.length} selected
               </p>
               <button
                 type="button"
@@ -298,7 +298,7 @@ export function OpsWorkstreamDrawer({
             </p>
             <p className="mt-1 p6 text-text-secondary">
               Drawings, specs or an incumbent quote. With several services, each
-              workstream gets a copy.
+              package gets a copy.
             </p>
             <button
               type="button"
@@ -408,8 +408,8 @@ export function OpsWorkstreamDrawer({
             {editing
               ? "Save changes"
               : services.length > 1
-                ? `Add ${services.length} workstreams`
-                : "Add workstream"}
+                ? `Add ${services.length} packages`
+                : "Add package"}
           </button>
         </div>
       </aside>

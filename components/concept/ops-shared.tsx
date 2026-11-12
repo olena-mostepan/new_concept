@@ -48,8 +48,8 @@ export function Stepper({ step }: { step: 1 | 2 }) {
   const items = [
     {
       n: 1 as const,
-      title: "Properties",
-      text: "Choose the buildings in the batch",
+      title: "Assets",
+      text: "Choose the assets in the batch",
     },
     {
       n: 2 as const,

@@ -16,7 +16,7 @@ import {
   type NavItem,
 } from "./hrefs";
 import { activeCustomerTab } from "./crumbs";
-import { detailFallbackHref, isDetail } from "./detailNav";
+import { detailFallbackHref, isDetail, isFullscreenWorkspace } from "./detailNav";
 import {
   OpsDetailBarProvider,
   useOpsDetailBar,
@@ -368,6 +368,7 @@ function Shell({ children }: { children: ReactNode }) {
   const search = useSearchParams();
   const { account, lang: stored } = useConcept();
   const ops = pathname.startsWith(OPS);
+  const fullscreen = isFullscreenWorkspace(pathname);
   const detail = isDetail(pathname);
   const activeId = ops
     ? undefined
@@ -376,6 +377,10 @@ function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = ops ? "en" : stored;
   }, [ops, stored]);
+
+  if (fullscreen) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-bg-container-grey">

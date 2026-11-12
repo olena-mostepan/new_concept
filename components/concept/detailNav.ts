@@ -50,7 +50,14 @@ export function detailFallbackHref(
   return hrefs.overview;
 }
 
+/** Full-screen workspaces (new batch, fix assets) hide app chrome. */
+export function isFullscreenWorkspace(pathname: string) {
+  if (pathname === `${OPS}/batches/new`) return true;
+  return false;
+}
+
 export function isDetail(pathname: string) {
+  if (isFullscreenWorkspace(pathname)) return false;
   if (/^\/concept\/ops\/packages\/[^/]+/.test(pathname)) return true;
   if (/^\/concept\/ops\/assets\/[^/]+/.test(pathname)) return true;
   if (/^\/concept\/ops\/batches\/[^/]+/.test(pathname)) return true;

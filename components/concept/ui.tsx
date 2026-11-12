@@ -1629,6 +1629,95 @@ export function AssistantButton({
   );
 }
 
+const BANNER_MARK: Record<"info" | "success" | "warning" | "danger" | "neutral", string> = {
+  info: "bg-status-info-mark",
+  success: "bg-status-success-mark",
+  warning: "bg-status-warning-mark",
+  danger: "bg-status-danger-mark",
+  neutral: "bg-black-4",
+};
+
+const BANNER_SHELL: Record<keyof typeof BANNER_MARK, string> = {
+  info: "border-status-info-border bg-status-info-bg",
+  success: "border-status-success-border bg-status-success-bg",
+  warning: "border-status-warning-border bg-status-warning-bg",
+  danger: "border-status-danger-border bg-status-danger-bg",
+  neutral: "border-border-dark bg-black-1",
+};
+
+/** DS Banner — page-level info, warning or error. */
+export function Banner({
+  type,
+  title,
+  children,
+  action,
+}: {
+  type: keyof typeof BANNER_MARK;
+  title: string;
+  children?: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex gap-3 rounded-md border px-4 py-3",
+        BANNER_SHELL[type],
+      )}
+    >
+      <span
+        className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", BANNER_MARK[type])}
+        aria-hidden
+      />
+      <div className="min-w-0 flex-1">
+        <p className="h8 text-text-primary">{title}</p>
+        {children && <p className="mt-0.5 p6 text-text-secondary">{children}</p>}
+      </div>
+      {action && <div className="shrink-0 self-center">{action}</div>}
+    </div>
+  );
+}
+
+/** DS UploadRow — drop row with upload button (labels configurable). */
+export function UploadRow({
+  onUpload,
+  title = "Drop documents here",
+  detail = "We read them and fill what we can",
+  buttonLabel = "Upload documents",
+}: {
+  onUpload: () => void;
+  title?: string;
+  detail?: string;
+  buttonLabel?: string;
+}) {
+  return (
+    <div
+      className="flex flex-col gap-3 rounded-md border-[1.5px] border-dashed border-black-3 bg-black-2 px-4 py-3 hover:border-black-4"
+      onDragOver={(e) => {
+        e.preventDefault();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onUpload();
+      }}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border-dark bg-white">
+            <Icon name="upload" size={20} className="text-icon-dark" />
+          </span>
+          <div>
+            <p className="h8 text-text-primary">{title}</p>
+            <p className="p7 text-text-secondary">{detail}</p>
+          </div>
+        </div>
+        <Button type="secondary" size="default" icon="upload" onClick={onUpload}>
+          {buttonLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function FilterSearch({
   value,
   onChange,

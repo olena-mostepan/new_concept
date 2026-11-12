@@ -6,7 +6,16 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { cn } from "@/lib/utils";
 import { Tag } from "@/components/ds/tag";
 import type { Building } from "@/lib/concept/model";
-import { Button, FilterSearch, Icon, IconButton, tabListClass, tabTriggerClass } from "./ui";
+import {
+  Banner,
+  Button,
+  FilterSearch,
+  Icon,
+  IconButton,
+  UploadRow,
+  tabListClass,
+  tabTriggerClass,
+} from "./ui";
 import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
 import { fieldClass, fieldInputClass, labelClass } from "./ops-shared";
@@ -18,6 +27,24 @@ import { fieldClass, fieldInputClass, labelClass } from "./ops-shared";
  */
 
 type Source = "search" | "files" | "manual";
+
+type BatchFile = {
+  id: string;
+  label: string;
+  fromCustomer: boolean;
+  fileCount?: number;
+  state: "reading" | "ready";
+  buildingIds: string[];
+};
+
+const COUNTRIES = [
+  { code: "GB", label: "United Kingdom" },
+  { code: "DE", label: "Germany" },
+  { code: "FR", label: "France" },
+  { code: "NL", label: "Netherlands" },
+  { code: "BE", label: "Belgium" },
+  { code: "IE", label: "Ireland" },
+] as const;
 
 function matches(b: Building, query: string) {
   const hay = `${b.name} ${b.city} ${b.address ?? ""} ${b.postcode ?? ""} ${b.type ?? ""}`.toLowerCase();
@@ -121,13 +148,30 @@ export function OpsNewBatch() {
   );
   const [name, setName] = useState(existing?.name ?? "");
   const [goal, setGoal] = useState(existing?.goal ?? "");
-  const [manual, setManual] = useState({ name: "", address: "", city: "", postcode: "", type: "" });
+  const [manual, setManual] = useState({
+    name: "",
+    address: "",
+    city: "",
+    postcode: "",
+    country: "GB",
+    type: "",
+  });
   const [added, setAdded] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState<BatchFile[]>([]);
 
-  const files = account.batches
+  const customerFiles: BatchFile[] = account.batches
     .filter((b) => b.filesSummary)
-    .map((b) => ({ id: b.id, label: b.filesSummary!, count: b.filesCount, buildingIds: b.buildingIds }));
+    .map((b) => ({
+      id: b.id,
+      label: b.filesSummary!,
+      fromCustomer: true,
+      fileCount: b.filesCount,
+      state: "ready" as const,
+      buildingIds: b.buildingIds,
+    }));
+  const files = [...customerFiles, ...uploaded];
   const chosen = account.buildings.filter((b) => picked[b.id]);
   const searchHits = useMemo(() => {
     const q = query.trim();
@@ -182,14 +226,50 @@ export function OpsNewBatch() {
 
   const submit = () => {
     if (missing) return;
+    setError(null);
     const ids = chosen.map((b) => b.id);
-    if (existing) {
-      updateBatch(existing.id, { buildingIds: ids });
-      router.push(hrefs.opsBatch(existing.id));
-      return;
+    try {
+      if (existing) {
+        updateBatch(existing.id, { buildingIds: ids });
+        router.push(hrefs.opsBatch(existing.id));
+        return;
+      }
+      const id = createBatch({
+        name: name.trim(),
+        goal: goal.trim(),
+        buildingIds: ids,
+        route: [],
+      });
+      if (!id) throw new Error("Could not create the batch");
+      router.push(hrefs.opsBatch(id));
+    } catch {
+      setError("We couldn't save the batch. Try again.");
     }
-    const id = createBatch({ name: name.trim(), goal: goal.trim(), buildingIds: ids, route: [] });
-    router.push(hrefs.opsBatch(id));
+  };
+
+  const mockUpload = () => {
+    const id = `upload-${Date.now()}`;
+    const sample = account.buildings.slice(0, 6).map((b) => b.id);
+    setUploaded((cur) => [
+      ...cur,
+      {
+        id,
+        label: "Site_list.xlsx",
+        fromCustomer: false,
+        state: "reading",
+        buildingIds: [],
+      },
+    ]);
+    setFileId(id);
+    window.setTimeout(() => {
+      setUploaded((cur) =>
+        cur.map((f) =>
+          f.id === id
+            ? { ...f, state: "ready", buildingIds: sample }
+            : f,
+        ),
+      );
+    }, 1400);
   };
 
   const addManual = () => {
@@ -200,10 +280,18 @@ export function OpsNewBatch() {
       city: manual.city.trim(),
       address: manual.address.trim() || undefined,
       postcode: manual.postcode.trim() || undefined,
+      country: manual.country || undefined,
       type: manual.type.trim() || undefined,
     });
     setPicked((cur) => ({ ...cur, [id]: "manual" }));
-    setManual({ name: "", address: "", city: "", postcode: "", type: "" });
+    setManual({
+      name: "",
+      address: "",
+      city: "",
+      postcode: "",
+      country: "GB",
+      type: "",
+    });
     setAdded(n);
   };
 
@@ -213,17 +301,23 @@ export function OpsNewBatch() {
     : `${account.customer} · only Ops sees it until you share the plan`;
 
   return (
-    <div role="dialog" aria-modal aria-label={title} className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] bg-white">
-      {/* Top bar */}
-      <header className="flex min-h-16 items-center gap-3 border-b border-border-dark px-4 py-2">
-        <IconButton icon="cross" label="Close" onClick={tryClose} />
-        <div className="min-w-0 flex-1">
-          <h2 className="h6 text-text-primary">{title}</h2>
-          <p className="truncate p7 text-text-secondary">{subtitle}</p>
+    <div
+      role="dialog"
+      aria-modal
+      aria-label={title}
+      className="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] bg-white"
+    >
+      <header className="flex flex-col gap-2 border-b border-border-dark px-4 py-2 sm:min-h-16 sm:flex-row sm:items-center sm:gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <IconButton icon="cross" label="Close" onClick={tryClose} />
+          <div className="min-w-0">
+            <h2 className="h6 text-text-primary">{title}</h2>
+            <p className="truncate p7 text-text-secondary">{subtitle}</p>
+          </div>
         </div>
         {confirming ? (
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <p className="mr-2 hidden p6 text-text-primary sm:block">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <p className="p6 text-text-primary max-sm:order-first">
               {existing ? "Close without saving the assets?" : "Close without creating the batch?"}
             </p>
             <Button type="secondary" onClick={() => setConfirming(false)}>
@@ -234,9 +328,9 @@ export function OpsNewBatch() {
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
             {missing && (
-              <p className="hidden items-center gap-1.5 p7 text-text-secondary sm:flex">
+              <p className="hidden items-center gap-1.5 p7 text-text-secondary md:flex">
                 <Icon name="info" size={16} className="text-icon-default" />
                 {missing}
               </p>
@@ -248,8 +342,15 @@ export function OpsNewBatch() {
         )}
       </header>
 
-      {/* Find assets · this batch */}
-      <div className="grid min-h-0 lg:grid-cols-[minmax(0,1fr)_380px]">
+      {error && (
+        <div className="border-b border-border-light px-4 py-2">
+          <Banner type="danger" title={error}>
+            Check the name and assets, then try again.
+          </Banner>
+        </div>
+      )}
+
+      <div className="grid min-h-0 min-[1024px]:grid-cols-[minmax(0,1fr)_380px]">
         <main className="min-h-0 overflow-y-auto px-4 py-6 sm:px-8">
           <div className="mx-auto max-w-[880px]">
             <h3 className="h7 text-text-primary">Find assets</h3>
@@ -283,46 +384,68 @@ export function OpsNewBatch() {
               </Tabs.Content>
 
               <Tabs.Content value="files" className="space-y-3 outline-none">
+                <UploadRow
+                  title="Drop a site list or plans here"
+                  detail="We find the assets in them. You check before they're added."
+                  buttonLabel="Upload files"
+                  onUpload={mockUpload}
+                />
                 {files.length === 0 ? (
                   <p className="p6 text-text-secondary">No files from the customer yet.</p>
                 ) : (
                   <ul className="overflow-hidden rounded-md border border-border-dark bg-white">
                     {files.map((f) => {
                       const on = f.id === fileId;
+                      const meta = f.fromCustomer
+                        ? `${f.fileCount ?? 0} files from the customer · ${f.buildingIds.length} assets found`
+                        : f.state === "reading"
+                          ? "Reading…"
+                          : `Uploaded now · ${f.buildingIds.length} assets found`;
                       return (
                         <li key={f.id} className="border-b border-border-light last:border-b-0">
                           <button
                             type="button"
-                            aria-pressed={on}
+                            aria-expanded={on}
+                            disabled={f.state === "reading"}
                             onClick={() => setFileId(on ? "" : f.id)}
                             className={cn(
-                              "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left outline-none hover:bg-black-1 focus-visible:shadow-[inset_0_0_0_2px_var(--black-7)]",
+                              "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left outline-none hover:bg-black-1 focus-visible:shadow-[inset_0_0_0_2px_var(--black-7)] disabled:opacity-70",
                               on && "bg-black-1",
                             )}
                           >
                             <Icon name="document" size={20} className="shrink-0 text-icon-default" />
                             <span className="min-w-0 flex-1">
                               <span className="block h8 text-text-title">{f.label}</span>
-                              <span className="block p7 text-text-secondary">
-                                {f.count ? `${f.count} files` : "Received"} · {f.buildingIds.length} assets found
-                              </span>
+                              <span className="block p7 text-text-secondary">{meta}</span>
                             </span>
-                            <Icon name={on ? "chevron-up" : "chevron-down"} size={16} className="text-icon-dark" />
+                            {f.state === "reading" ? (
+                              <span className="p7 text-text-tertiary" aria-live="polite">
+                                Reading…
+                              </span>
+                            ) : (
+                              <Icon
+                                name={on ? "chevron-up" : "chevron-down"}
+                                size={16}
+                                className="text-icon-dark"
+                              />
+                            )}
                           </button>
                         </li>
                       );
                     })}
                   </ul>
                 )}
-                {file && (
+                {file && file.state === "ready" && (
                   <>
-                    <p className="p7 text-text-secondary">Found in these files. Check them before adding.</p>
+                    <p className="p7 text-text-secondary">
+                      Found in {file.label}. Check them before adding.
+                    </p>
                     <AssetPicker
                       hits={fileHits}
                       picked={picked}
                       onToggle={(id) => toggle(id, "files")}
                       onAll={(on) => setMany(fileHits.map((b) => b.id), "files", on)}
-                      empty="No assets found in these files."
+                      empty="No assets found in this file."
                     />
                   </>
                 )}
@@ -337,28 +460,79 @@ export function OpsNewBatch() {
                   }}
                 >
                   <p className="p6 text-text-secondary sm:col-span-2">For an asset that isn&apos;t in CQuel yet.</p>
-                  {(
-                    [
-                      ["name", "Name", "sm:col-span-2"],
-                      ["address", "Address", ""],
-                      ["postcode", "Postcode", ""],
-                      ["city", "City", ""],
-                      ["type", "Asset type (optional)", ""],
-                    ] as const
-                  ).map(([key, label, span]) => (
-                    <label key={key} className={cn("block", span)}>
-                      <span className={labelClass}>{label}</span>
-                      <input
-                        className={cn(fieldClass, fieldInputClass)}
-                        value={manual[key]}
-                        placeholder={key === "type" ? "E.g. Hotel, Office, Warehouse" : undefined}
-                        onChange={(e) => {
-                          setManual((cur) => ({ ...cur, [key]: e.target.value }));
-                          setAdded("");
-                        }}
-                      />
-                    </label>
-                  ))}
+                  <label className="block sm:col-span-2">
+                    <span className={labelClass}>Name</span>
+                    <input
+                      className={cn(fieldClass, fieldInputClass)}
+                      value={manual.name}
+                      onChange={(e) => {
+                        setManual((cur) => ({ ...cur, name: e.target.value }));
+                        setAdded("");
+                      }}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className={labelClass}>Address</span>
+                    <input
+                      className={cn(fieldClass, fieldInputClass)}
+                      value={manual.address}
+                      onChange={(e) => {
+                        setManual((cur) => ({ ...cur, address: e.target.value }));
+                        setAdded("");
+                      }}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className={labelClass}>Postcode</span>
+                    <input
+                      className={cn(fieldClass, fieldInputClass)}
+                      value={manual.postcode}
+                      onChange={(e) => {
+                        setManual((cur) => ({ ...cur, postcode: e.target.value }));
+                        setAdded("");
+                      }}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className={labelClass}>City</span>
+                    <input
+                      className={cn(fieldClass, fieldInputClass)}
+                      value={manual.city}
+                      onChange={(e) => {
+                        setManual((cur) => ({ ...cur, city: e.target.value }));
+                        setAdded("");
+                      }}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className={labelClass}>Country</span>
+                    <select
+                      className={cn(fieldClass, fieldInputClass)}
+                      value={manual.country}
+                      onChange={(e) => {
+                        setManual((cur) => ({ ...cur, country: e.target.value }));
+                        setAdded("");
+                      }}
+                    >
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block sm:col-span-2 sm:col-start-1">
+                    <span className={labelClass}>Asset type (optional)</span>
+                    <input
+                      className={cn(fieldClass, fieldInputClass)}
+                      value={manual.type}
+                      placeholder="E.g. Hotel, Office, Warehouse"
+                      onChange={(e) => {
+                        setManual((cur) => ({ ...cur, type: e.target.value }));
+                        setAdded("");
+                      }}
+                    />
+                  </label>
                   <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border-light pt-4 sm:col-span-2">
                     {added && (
                       <p className="mr-auto flex items-center gap-1.5 p7 text-text-secondary" role="status">
@@ -381,7 +555,7 @@ export function OpsNewBatch() {
 
         <aside
           aria-label="This batch"
-          className="flex min-h-0 flex-col border-t border-border-dark bg-black-1 lg:border-l lg:border-t-0"
+          className="flex min-h-0 flex-col border-t border-border-dark bg-black-1 min-[1024px]:border-l min-[1024px]:border-t-0"
         >
           <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5">
             {!existing && (

@@ -149,6 +149,8 @@ export interface Building {
   city: string
   address?: string
   postcode?: string
+  /** ISO country code when recorded (e.g. GB, DE). */
+  country?: string
   /** Property type, when ops or the portfolio recorded one. */
   type?: string
   /** Site photo from the customer's files or a visit. No date is stored. */

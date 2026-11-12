@@ -290,15 +290,14 @@ export function OpsBatch({ id }: { id: string }) {
           <header className="flex items-center justify-between gap-3 border-b border-border-light px-5 py-4">
             {" "}
             <h2 className={groupTitle}>
-              Properties ({batch.buildingIds.length})
+              Assets ({batch.buildingIds.length})
             </h2>{" "}
             <Button
               href={`${hrefs.opsNewBatch}?batch=${batch.id}`}
               type="secondary"
               size="small"
-              icon="plus"
             >
-              Add properties
+              Change assets
             </Button>{" "}
           </header>{" "}
           <ul>

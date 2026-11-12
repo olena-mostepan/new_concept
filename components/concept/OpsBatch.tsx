@@ -86,6 +86,7 @@ export function OpsBatch({ id }: { id: string }) {
           <PlanCard
             batch={batch}
             packages={streams.length}
+            service={streams[0]?.service}
             onAction={(action) =>
               action === "share"
                 ? setPlanState(batch.id, "proposed")
@@ -317,16 +318,32 @@ function PackageRow({
 function PlanCard({
   batch,
   packages,
+  service,
   onAction,
 }: {
   batch: Batch;
   packages: number;
+  /** First package's service: its illustration once the plan is shared. */
+  service?: Workstream["service"];
   onAction: (action: "share" | "agree" | "start") => void;
 }) {
   const p = planCopy(batch);
   const blocked = p.action === "share" && packages === 0;
   return (
-    <div className="shrink-0 rounded-2xl border border-border-dark bg-bg-container px-5 py-[18px]" style={{ minWidth: "min(100%, 400px)" }}>
+    <div
+      className="relative ml-[30px] shrink-0 rounded-2xl border border-border-dark bg-bg-container py-[18px] pl-[84px] pr-5"
+      style={{ minWidth: "min(100%, 420px)" }}
+    >
+      {/* Draft: the plan illustration in light grey (not started). Full grey stays for closed packages. */}
+      <ServiceIcon
+        service={batch.planState === "draft" || !service ? "indicative" : service}
+        size={116}
+        grayscale={batch.planState === "draft" || !service}
+        className={cn(
+          "pointer-events-none absolute left-[-30px] top-1/2 -translate-y-1/2",
+          (batch.planState === "draft" || !service) && "opacity-55",
+        )}
+      />
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="p7 text-text-tertiary">Plan</p>

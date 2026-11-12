@@ -18,7 +18,7 @@ export function plural(
   ...otherArgs: unknown[]
 ): string {
   const key = n === 1 ? one : other;
-  return translate(lang, key, n === 1 ? [] : [n, ...otherArgs]);
+  return translate(lang, key, ...(n === 1 ? [] : [n, ...otherArgs]));
 }
 
 function fillPlaceholders(text: string, args: unknown[]): string {

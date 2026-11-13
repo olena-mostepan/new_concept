@@ -3,12 +3,12 @@
 import { usePathname } from "next/navigation";
 import { useT, type Lang } from "@/lib/concept/i18n";
 import { wordAssets } from "@/lib/concept/words";
-import { OPS } from "./hrefs";
+import { isCustomerPath } from "./hrefs";
 import { useConcept } from "./store";
 
-/** German applies to Customer `/concept` only; Ops stays English. */
+/** German applies to the customer version (`/concept/customer`) only; Ops stays English. */
 export function customerLang(stored: Lang, pathname: string): Lang {
-  return pathname.startsWith(OPS) ? "en" : stored;
+  return isCustomerPath(pathname) ? stored : "en";
 }
 
 /** Stored preference plus `t` / `plural` using customer-only effective `lang`. */

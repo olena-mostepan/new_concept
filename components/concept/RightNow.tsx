@@ -23,7 +23,7 @@ import {
   ResponsibilityPill,
 } from "./ui";
 import { ServiceTag } from "./ServiceTag";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConceptI18n } from "./useConceptI18n";
 
 function LiveRow({
@@ -35,6 +35,7 @@ function LiveRow({
   w: Workstream;
   waiting?: boolean;
 }) {
+  const hrefs = useHrefs();
   const { lang, t } = useConceptI18n();
   const batch = account.batches.find((b) => b.id === w.batchId);
   const { done, total } = buildingProgress(w);
@@ -79,6 +80,7 @@ function LiveRow({
 }
 
 function DoneRow({ account, w }: { account: Account; w: Workstream }) {
+  const hrefs = useHrefs();
   const { lang, t } = useConceptI18n();
   const batch = account.batches.find((b) => b.id === w.batchId);
   return (
@@ -108,6 +110,7 @@ function DoneRow({ account, w }: { account: Account; w: Workstream }) {
 }
 
 export function RightNow({ account }: { account: Account }) {
+  const hrefs = useHrefs();
   const { lang, t, words } = useConceptI18n();
   const groups = rightNow(account);
   const foldDone = groups.done.length > 5;

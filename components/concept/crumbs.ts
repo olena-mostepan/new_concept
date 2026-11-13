@@ -6,7 +6,7 @@ import {
 } from "@/lib/concept/model";
 import { getBatch, getBuilding, getWorkstream } from "@/lib/concept/derive";
 import { WORDS } from "@/lib/concept/words";
-import { hrefs } from "./hrefs";
+import { hrefs as mainHrefs, mainPath } from "./hrefs";
 
 export type Crumb = { label: string; href?: string; tab: string };
 
@@ -21,6 +21,8 @@ export function workstreamCrumbs(
   account: Account,
   w: Workstream,
   query: Query,
+  /** Links for the version being viewed (useHrefs()). */
+  hrefs: typeof mainHrefs = mainHrefs,
 ): Crumb[] {
   const batch = getBatch(account, w.batchId);
   const from = query.get("from");
@@ -68,6 +70,8 @@ export function buildingCrumbs(
   account: Account,
   buildingId: string,
   query: Query,
+  /** Links for the version being viewed (useHrefs()). */
+  hrefs: typeof mainHrefs = mainHrefs,
 ): Crumb[] {
   const building = getBuilding(account, buildingId);
   const name = building?.name ?? WORDS.Asset;
@@ -164,10 +168,13 @@ export function buildingCrumbs(
 
 /** The active tab follows the first breadcrumb, not the URL, once you leave a section page. */
 export function activeCustomerTab(
-  pathname: string,
+  path: string,
   query: Query,
   account: Account,
 ): string {
+  // Same tabs in both versions: match on the path without /customer.
+  const pathname = mainPath(path);
+  const hrefs = mainHrefs;
   if (pathname === hrefs.overview || pathname === `${hrefs.overview}/`)
     return "overview";
   if (pathname === hrefs.buildings || pathname === `${hrefs.buildings}/`)

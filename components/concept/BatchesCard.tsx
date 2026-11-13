@@ -4,7 +4,7 @@ import { batchCells, batchSummary, type BatchCell } from "@/lib/concept/derive";
 import { nPackages } from "@/lib/concept/words";
 import type { Account } from "@/lib/concept/model";
 import { Card } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 
 function Cell({ cell }: { cell: BatchCell }) {
   const label = service(cell.service).label;
@@ -47,6 +47,7 @@ function Cell({ cell }: { cell: BatchCell }) {
 }
 
 export function BatchesCard({ account }: { account: Account }) {
+  const hrefs = useHrefs();
   const batches = account.batches.filter((b) => b.planState !== "draft");
   return (
     <Card

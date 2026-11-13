@@ -32,7 +32,7 @@ import {
   tableRowLinkClass,
   tableRowNameCellClass,
 } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { nAssets } from "@/lib/concept/words";
 import { useConceptI18n } from "./useConceptI18n";
 
@@ -76,6 +76,7 @@ function yourAction(account: Parameters<typeof wsIn>[0], batch: Batch) {
 }
 
 export function BatchesIndex() {
+  const hrefs = useHrefs();
   const router = useRouter();
   const params = useSearchParams();
   const { account } = useConcept();
@@ -241,6 +242,7 @@ function BatchRow({
   batch: Batch;
   showTarget: boolean;
 }) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const { lang, t } = useConceptI18n();
   const [open, setOpen] = useState(false);

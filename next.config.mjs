@@ -8,6 +8,9 @@ const nextConfig = {
       { source: '/concept/buildings/:buildingId', destination: '/concept/assets/:buildingId', permanent: true },
       { source: '/concept/workstreams', destination: '/concept/packages', permanent: true },
       { source: '/concept/workstreams/:id', destination: '/concept/packages/:id', permanent: true },
+      // Ops is the main prototype at /concept now; old /concept/ops links land on the same page.
+      { source: '/concept/ops', destination: '/concept', permanent: false },
+      { source: '/concept/ops/:path*', destination: '/concept/:path*', permanent: false },
     ]
   },
   typescript: {

@@ -20,7 +20,7 @@ import {
   type RoutePanel,
   type RouteStage,
 } from "@/lib/concept/derive";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { Button, Icon } from "./ui";
 
 function Bar({
@@ -100,6 +100,7 @@ function StagePanel({
   done: Workstream[];
   you: number;
 }) {
+  const hrefs = useHrefs();
   return (
     <div className="rounded-md border border-border-dark bg-white px-4 py-3 shadow-floating">
       <div className="flex items-center justify-between gap-3">

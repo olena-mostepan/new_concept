@@ -64,7 +64,7 @@ import {
   tabTriggerClass,
 } from "./ui";
 import { DetailsGrid } from "./DetailsGrid";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 import { shortFact } from "./WorkstreamChrome";
 import { buildingCrumbs } from "./crumbs";
@@ -73,8 +73,6 @@ import { phaseStarted } from "./serviceChips";
 import { packagePrimaryTab } from "./packageStatus";
 
 const STAGES = DELIVERY_PHASES.filter((phase) => phase.id !== "complete");
-
-const BASE_ASSET = `${hrefs.buildings}`;
 
 function assetAtTitle(sid: ServiceId, t: (en: string, ...args: unknown[]) => string): string {
   return t("{0} at this asset", t(service(sid).label));
@@ -96,6 +94,7 @@ function packagePrimaryService(w: Workstream): ServiceId {
 }
 
 export function BuildingView({ buildingId }: { buildingId: string }) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const { lang, t, words } = useConceptI18n();
   const router = useRouter();
@@ -117,7 +116,7 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
     (p) => rowIsInactive(p.row) || isClosed(p.workstream),
   );
 
-  const crumbs = buildingCrumbs(account, buildingId, search).map(
+  const crumbs = buildingCrumbs(account, buildingId, search, hrefs).map(
     ({ label, href }) => ({
       label:
         label === "Overview" || label === "Batch" || label === words.Assets
@@ -147,6 +146,7 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
   const headerFacts =
     selected &&
     assetHeaderFacts(
+      hrefs,
       account,
       building,
       selected,
@@ -274,7 +274,8 @@ function setTabQuery(
   if (value === "overview") params.delete("tab");
   else params.set("tab", value);
   const qs = params.toString();
-  router.replace(`${BASE_ASSET}/${buildingId}${qs ? `?${qs}` : ""}`, {
+  // Same page, new query (works in both versions).
+  router.replace(`${window.location.pathname}${qs ? `?${qs}` : ""}`, {
     scroll: false,
   });
 }
@@ -290,7 +291,8 @@ function setPackageQuery(
   params.delete("tab");
   params.set("package", packageId);
   const qs = params.toString();
-  router.replace(`${BASE_ASSET}/${buildingId}${qs ? `?${qs}` : ""}`, {
+  // Same page, new query (works in both versions).
+  router.replace(`${window.location.pathname}${qs ? `?${qs}` : ""}`, {
     scroll: false,
   });
 }
@@ -414,6 +416,7 @@ function assetLeftPackage(item: BuildingProject): boolean {
 }
 
 function assetHeaderFacts(
+  hrefs: ReturnType<typeof useHrefs>,
   account: Account,
   building: Building,
   selected: BuildingProject,
@@ -521,6 +524,7 @@ function OverviewPanel({
   building: Building;
   item: BuildingProject;
 }) {
+  const hrefs = useHrefs();
   const { t } = useConceptI18n();
   const w = item.workstream;
   const sid = lastServiceForAsset(item);
@@ -981,6 +985,7 @@ function Documents({
   docs: Doc[];
   buildingId: string;
 }) {
+  const hrefs = useHrefs();
   return (
     <Card
       title="Documents"
@@ -1003,6 +1008,7 @@ function AssetPager({
   search: { get(key: string): string | null; toString(): string };
   projects: BuildingProject[];
 }) {
+  const hrefs = useHrefs();
   const { t, words } = useConceptI18n();
   const router = useRouter();
   const fromPackage = search.get("from") === "workstream";

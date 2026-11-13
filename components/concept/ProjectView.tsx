@@ -28,7 +28,7 @@ import { Button, Card, Page, PageHeader, ResponsibilityPill, Timeline } from "./
 import { DetailsGrid } from "./DetailsGrid";
 import { ProjectRoute } from "./ProjectRoute";
 import { DeliveryProject } from "./DeliveryWorkstream";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 import { shortFact } from "./WorkstreamChrome";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,7 @@ export function ProjectView({
   workstreamId: string;
   buildingId: string;
 }) {
+  const hrefs = useHrefs();
   const { account, agreeScope, decide } = useConcept();
   const w = getWorkstream(account, workstreamId);
   const building = w && getBuilding(account, buildingId);

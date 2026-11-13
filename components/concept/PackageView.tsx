@@ -60,7 +60,7 @@ import { SurveysTab } from "./SurveysTab";
 import { TenderPanel } from "./TenderWorkstream";
 import { ContractPanel, PricingPanel } from "./PricingWorkstream";
 import { DeliveryPanel } from "./DeliveryWorkstream";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 import { tabsFor, type PackageTabId } from "./packageTabs";
 
@@ -297,6 +297,7 @@ function InheritedEstimatesIntro({
   fromWs: Workstream;
   assetCount: number;
 }) {
+  const hrefs = useHrefs();
   if (!fromWs.closedOn) return null;
   return (
     <div className="mb-6 rounded-md border border-border-light bg-bg-container-grey px-4 py-2.5">
@@ -322,6 +323,7 @@ function OverviewAssets({
   account: ReturnType<typeof useConcept>["account"];
   w: Workstream;
 }) {
+  const hrefs = useHrefs();
   const { lang, t, words } = useConceptI18n();
   const [open, setOpen] = useState(false);
   const labels = service(w.service).steps;
@@ -445,6 +447,7 @@ function OverviewAssets({
 }
 
 export function PackageView({ w }: { w: Workstream }) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const { lang, t, words } = useConceptI18n();
   const router = useRouter();

@@ -11,7 +11,7 @@ import {
   yourActionWorkstreams,
 } from "@/lib/concept/derive";
 import { nAssets } from "@/lib/concept/words";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import {
   Icon,
   Card,
@@ -28,6 +28,7 @@ const grid = {
 };
 
 export function Decisions({ account }: { account: Account }) {
+  const hrefs = useHrefs();
   const { lang, t, words } = useConceptI18n();
   const rows = yourActionWorkstreams(account);
   if (!rows.length) return null;

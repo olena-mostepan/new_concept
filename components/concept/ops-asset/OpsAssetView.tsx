@@ -43,11 +43,11 @@ import { opsTabsFor, type PackageTabId } from "../packageTabs";
 
 const OPS_DEFAULT_PACKAGE = "solar-est-live";
 
-export function OpsAssetView({ buildingId }: { buildingId: string }) {
+export function OpsAssetView({ buildingId, packageId: forced }: { buildingId: string; packageId?: string }) {
   const { account, patchOpsBundle } = useConcept();
   const router = useRouter();
   const search = useSearchParams();
-  const packageId = search.get("package") ?? OPS_DEFAULT_PACKAGE;
+  const packageId = forced ?? search.get("package") ?? OPS_DEFAULT_PACKAGE;
   const w = getWorkstream(account, packageId);
   const building = getBuilding(account, buildingId);
   const batch = w ? getBatch(account, w.batchId) : undefined;

@@ -32,7 +32,8 @@ import {
   tableRowNameCellClass,
   tableRowShellClass,
 } from "./ui";
-import { hrefs, type BuildingFrom } from "./hrefs";
+import { type BuildingFrom } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { nProjects } from "@/lib/concept/words";
 import { useConcept } from "./store";
 import { useConceptI18n } from "./useConceptI18n";
@@ -47,6 +48,7 @@ const withoutBatch = {
 };
 
 export function Buildings() {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const { lang, t, words } = useConceptI18n();
   const router = useRouter();
@@ -243,6 +245,7 @@ function BuildingRow({
   from: BuildingFrom;
   grid: { gridTemplateColumns: string };
 }) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const { lang, t } = useConceptI18n();
   const { building, batch, projects } = row;

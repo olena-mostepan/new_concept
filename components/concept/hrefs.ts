@@ -1,19 +1,38 @@
 import { SERVICES, type ServiceId } from "@/lib/concept/model";
 import { WORDS } from "@/lib/concept/words";
 
+/**
+ * Two versions of the concept, no toggle between them:
+ * - Ops (the main prototype) at /concept: the customer's pages plus what Ops does
+ *   (create batches, add packages, fix assets, start estimates).
+ * - Customer at /concept/customer: the same pages, read the way the customer sees them.
+ */
 export const BASE = "/concept";
-export const OPS = `${BASE}/ops`;
+export const CUSTOMER = `${BASE}/customer`;
+/** @deprecated Ops is the main version at /concept now. Kept for old imports. */
+export const OPS = BASE;
 
 export type BuildingFrom = "buildings" | "workstream" | "search" | "batch";
 export type BuildingVia = "batch" | "service";
 export type WorkstreamFrom = "batch" | "service" | "building";
+export type ConceptMode = "ops" | "customer";
 
-export const hrefs = {
-  overview: BASE,
-  /** Alias of overview, so older links keep working. */
-  portfolio: BASE,
-  buildings: `${BASE}/assets`,
-  building: (
+/** Is this path in the customer version? */
+export const isCustomerPath = (path: string) =>
+  path === CUSTOMER || path.startsWith(`${CUSTOMER}/`) || path.startsWith(`${CUSTOMER}?`);
+
+export const modeOf = (path: string): ConceptMode => (isCustomerPath(path) ? "customer" : "ops");
+
+/** The same path without the /customer prefix, for matching routes in either version. */
+export const mainPath = (path: string) =>
+  isCustomerPath(path) ? `${BASE}${path.slice(CUSTOMER.length)}` : path;
+
+/** The same page in the other version. */
+export const customerPathOf = (path: string) =>
+  isCustomerPath(path) ? path : `${CUSTOMER}${path.slice(BASE.length)}`;
+
+function makeHrefs(base: string) {
+  const building = (
     buildingId: string,
     opts?: {
       project?: string;
@@ -37,35 +56,46 @@ export const hrefs = {
     if (opts?.tab) sp.set("tab", opts.tab);
     if (opts?.service) sp.set("service", opts.service);
     const query = sp.toString();
-    return `${BASE}/assets/${buildingId}${query ? `?${query}` : ""}`;
-  },
-  batches: `${BASE}/batches`,
-  batch: (id: string) => `${BASE}/batches/${id}`,
-  workstreams: (s?: ServiceId) => `${BASE}/packages${s ? `?service=${s}` : ""}`,
-  service: (s: ServiceId) => `${BASE}/services/${s}`,
-  workstream: (id: string, from?: WorkstreamFrom, buildingId?: string) => {
+    return `${base}/assets/${buildingId}${query ? `?${query}` : ""}`;
+  };
+  const workstream = (id: string, from?: WorkstreamFrom, buildingId?: string) => {
     const sp = new URLSearchParams();
     if (from) sp.set("from", from);
     if (buildingId) sp.set("building", buildingId);
     const query = sp.toString();
-    return `${BASE}/packages/${id}${query ? `?${query}` : ""}`;
-  },
-  project: (workstreamId: string, buildingId: string) =>
-    `${BASE}/assets/${buildingId}?project=${workstreamId}`,
-  ops: OPS,
-  opsNewBatch: `${OPS}/batches/new`,
-  opsBatch: (id: string) => `${OPS}/batches/${id}`,
-  opsPackage: (id: string) => `${OPS}/packages/${id}`,
-  opsAsset: (
-    buildingId: string,
-    opts?: { package?: string },
-  ) => {
-    const sp = new URLSearchParams();
-    if (opts?.package) sp.set("package", opts.package);
-    const q = sp.toString();
-    return `${OPS}/assets/${buildingId}${q ? `?${q}` : ""}`;
-  },
-};
+    return `${base}/packages/${id}${query ? `?${query}` : ""}`;
+  };
+  const batch = (id: string) => `${base}/batches/${id}`;
+  return {
+    overview: base,
+    /** Alias of overview, so older links keep working. */
+    portfolio: base,
+    buildings: `${base}/assets`,
+    building,
+    batches: `${base}/batches`,
+    batch,
+    workstreams: (s?: ServiceId) => `${base}/packages${s ? `?service=${s}` : ""}`,
+    service: (s: ServiceId) => `${base}/services/${s}`,
+    workstream,
+    project: (workstreamId: string, buildingId: string) => `${base}/assets/${buildingId}?project=${workstreamId}`,
+    newBatch: `${base}/batches/new`,
+    /* Ops actions live on the main pages now; these names are kept for existing callers. */
+    ops: base,
+    opsNewBatch: `${base}/batches/new`,
+    opsBatch: batch,
+    opsPackage: (id: string) => workstream(id),
+    opsAsset: (buildingId: string, opts?: { package?: string }) =>
+      building(buildingId, opts?.package ? { package: opts.package } : undefined),
+  };
+}
+
+/** Links in the main (Ops) version. */
+export const hrefs = makeHrefs(BASE);
+/** Links in the customer version. */
+export const customerHrefs: typeof hrefs = makeHrefs(CUSTOMER);
+
+export const hrefsFor = (mode: ConceptMode) => (mode === "customer" ? customerHrefs : hrefs);
+export const hrefsForPath = (path: string) => hrefsFor(modeOf(path));
 
 export interface NavItem {
   id: string;
@@ -77,75 +107,33 @@ export interface NavItem {
   changed?: boolean;
 }
 
-export const CUSTOMER_NAV: NavItem[] = [
-  {
-    id: "overview",
-    group: "structure",
-    label: "Overview",
-    href: hrefs.overview,
-    match: (p) => p === BASE || p === `${BASE}/`,
-  },
-  {
-    id: "buildings",
-    group: "structure",
-    label: WORDS.Assets,
-    href: hrefs.buildings,
-    match: (p) => p.startsWith(`${BASE}/assets`),
-  },
-  ...SERVICES.map((s) => ({
-    id: s.id,
-    group: "services" as const,
-    label: s.label,
-    href: hrefs.service(s.id),
-    match: (p: string) => p.startsWith(hrefs.service(s.id)),
-  })),
-];
-
-/** The ops bar: Overview, Packages, then the services. Ops screens say package and asset. */
-export const OPS_NAV: NavItem[] = [
-  {
-    id: "ops-portfolio",
-    group: "structure",
-    label: "Overview",
-    href: hrefs.ops,
-    match: (p) => p === OPS || p === `${OPS}/`,
-  },
-  {
-    id: "workstreams",
-    group: "structure",
-    label: WORDS.Packages,
-    href: `${OPS}/packages`,
-    match: (p) => p === `${OPS}/packages` || p.startsWith(`${OPS}/packages?`),
-  },
-  ...SERVICES.map((s) => ({
-    id: s.id,
-    group: "services" as const,
-    label: s.label,
-    href: `${OPS}/services/${s.id}`,
-    match: (p: string) => p.startsWith(`${OPS}/services/${s.id}`),
-  })),
-];
-
-/** Same place on the other side, or its home */
-export function counterpart(path: string): string {
-  if (path.startsWith(OPS)) {
-    const svc = path.match(/\/ops\/services\/([^/?]+)/);
-    if (svc) return `${BASE}/services/${svc[1]}`;
-    if (/\/ops\/packages\/?$/.test(path)) return `${BASE}/packages`;
-    const pkg = path.match(/\/ops\/packages\/([^/?]+)/);
-    if (pkg) return hrefs.workstream(pkg[1]);
-    const asset = path.match(/\/ops\/assets\/([^/?]+)/);
-    if (asset) return hrefs.building(asset[1]);
-    const m = path.match(/\/ops\/batches\/([^/?]+)/);
-    return m && m[1] !== "new" ? hrefs.batch(m[1]) : BASE;
-  }
-  const svc = path.match(/\/concept\/services\/([^/?]+)/);
-  if (svc) return `${OPS}/services/${svc[1]}`;
-  if (/\/concept\/packages\/?$/.test(path)) return `${OPS}/packages`;
-  const pkg = path.match(/\/concept\/packages\/([^/?]+)/);
-  if (pkg) return hrefs.opsPackage(pkg[1]);
-  const asset = path.match(/\/concept\/assets\/([^/?]+)/);
-  if (asset) return hrefs.opsAsset(asset[1]);
-  const m = path.match(/\/concept\/batches\/([^/?]+)/);
-  return m ? hrefs.opsBatch(m[1]) : OPS;
+/** One nav for both versions: Overview, Assets, then the services. Matching ignores the /customer prefix. */
+export function navFor(mode: ConceptMode): NavItem[] {
+  const h = hrefsFor(mode);
+  return [
+    {
+      id: "overview",
+      group: "structure",
+      label: "Overview",
+      href: h.overview,
+      match: (p) => mainPath(p) === BASE || mainPath(p) === `${BASE}/`,
+    },
+    {
+      id: "buildings",
+      group: "structure",
+      label: WORDS.Assets,
+      href: h.buildings,
+      match: (p) => mainPath(p).startsWith(`${BASE}/assets`),
+    },
+    ...SERVICES.map((s) => ({
+      id: s.id,
+      group: "services" as const,
+      label: s.label,
+      href: h.service(s.id),
+      match: (p: string) => mainPath(p).startsWith(`${BASE}/services/${s.id}`),
+    })),
+  ];
 }
+
+/** @deprecated Use navFor(mode). */
+export const CUSTOMER_NAV: NavItem[] = navFor("ops");

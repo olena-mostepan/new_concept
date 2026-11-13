@@ -34,7 +34,7 @@ import {
   DocumentList,
   type FactItem,
 } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 import { useConceptI18n } from "./useConceptI18n";
 import { workstreamCrumbs } from "./crumbs";
@@ -78,6 +78,7 @@ export function PackageStatusCard({
   fix?: { count: number; href?: string; onClick?: () => void };
   ops?: boolean;
 }) {
+  const hrefs = useHrefs();
   const searchParams = useSearchParams();
   const { lang } = useConceptI18n();
   const sid = packageStatusService(w);
@@ -189,6 +190,7 @@ export function WorkstreamHeader({
   fix?: { count: number; onClick?: () => void };
   statusAside?: ReactNode;
 }) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const searchParams = useSearchParams();
   const { lang, t, words } = useConceptI18n();
@@ -202,7 +204,7 @@ export function WorkstreamHeader({
         },
         { label: w.name },
       ]
-    : workstreamCrumbs(account, w, searchParams).map(({ label, href }) => ({
+    : workstreamCrumbs(account, w, searchParams, hrefs).map(({ label, href }) => ({
         label:
           label === "Overview" || label === "Batch"
             ? t(label)
@@ -352,6 +354,7 @@ function InfoDrawer({
   open: boolean;
   onClose: () => void;
 }) {
+  const hrefs = useHrefs();
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {

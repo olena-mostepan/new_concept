@@ -27,7 +27,7 @@ import {
   td,
   th,
 } from "./ui";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 
 const BUCKETS = [
@@ -50,6 +50,7 @@ export function SurveysTab({
   packageId,
   readOnly,
 }: { packageId?: string; readOnly?: boolean } = {}) {
+  const hrefs = useHrefs();
   const { account } = useConcept();
   const router = useRouter();
   const params = useSearchParams();

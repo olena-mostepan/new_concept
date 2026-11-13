@@ -1,40 +1,29 @@
 import type { Account } from "@/lib/concept/model";
 import { getWorkstream } from "@/lib/concept/derive";
-import { hrefs, OPS } from "./hrefs";
+import { BASE, hrefsForPath, mainPath } from "./hrefs";
 
 type Query = { get(key: string): string | null };
 
-/** When there is no in-app history, Back goes up one level. */
+/** When there is no in-app history, Back goes up one level (in the version being viewed). */
 export function detailFallbackHref(
   account: Account,
   pathname: string,
   query: Query,
 ): string {
-  const batch = pathname.match(/^\/concept\/batches\/([^/]+)/);
-  if (batch) return hrefs.overview;
+  const hrefs = hrefsForPath(pathname);
+  const path = mainPath(pathname);
 
-  const pkg = pathname.match(/^\/concept\/packages\/([^/]+)/);
+  if (/^\/concept\/batches\/[^/]+/.test(path)) return hrefs.overview;
+
+  const pkg = path.match(/^\/concept\/packages\/([^/]+)/);
   if (pkg) {
     const w = getWorkstream(account, pkg[1]);
     return w ? hrefs.batch(w.batchId) : hrefs.overview;
   }
 
-  const opsPkg = pathname.match(/^\/concept\/ops\/packages\/([^/]+)/);
-  if (opsPkg) {
-    const w = getWorkstream(account, opsPkg[1]);
-    return w ? hrefs.opsBatch(w.batchId) : hrefs.ops;
-  }
-
-  const opsAsset = pathname.match(/^\/concept\/ops\/assets\/([^/]+)/);
-  if (opsAsset) {
-    const pkg = query.get("package");
-    if (pkg) return hrefs.opsPackage(pkg);
-    return hrefs.ops;
-  }
-
-  const asset = pathname.match(/^\/concept\/assets\/([^/]+)/);
+  const asset = path.match(/^\/concept\/assets\/([^/]+)/);
   if (asset) {
-    const project = query.get("project") || query.get("ws");
+    const project = query.get("package") || query.get("project") || query.get("ws");
     if (project) {
       const w = getWorkstream(account, project);
       if (w) return hrefs.workstream(w.id);
@@ -42,28 +31,23 @@ export function detailFallbackHref(
     return hrefs.buildings;
   }
 
-  const project = pathname.match(/^\/concept\/projects\/([^/]+)/);
+  const project = path.match(/^\/concept\/projects\/([^/]+)/);
   if (project) return hrefs.workstream(project[1]);
-
-  if (pathname.startsWith(`${OPS}/batches/`)) return hrefs.ops;
 
   return hrefs.overview;
 }
 
-/** Full-screen workspaces (new batch, fix assets) hide app chrome. */
+/** Full-screen workspaces (new batch) hide app chrome. */
 export function isFullscreenWorkspace(pathname: string) {
-  if (pathname === `${OPS}/batches/new`) return true;
-  return false;
+  return mainPath(pathname) === `${BASE}/batches/new`;
 }
 
 export function isDetail(pathname: string) {
   if (isFullscreenWorkspace(pathname)) return false;
-  if (/^\/concept\/ops\/packages\/[^/]+/.test(pathname)) return true;
-  if (/^\/concept\/ops\/assets\/[^/]+/.test(pathname)) return true;
-  if (/^\/concept\/ops\/batches\/[^/]+/.test(pathname)) return true;
-  if (/^\/concept\/batches\/[^/]+/.test(pathname)) return true;
-  if (/^\/concept\/packages\/[^/]+/.test(pathname)) return true;
-  if (/^\/concept\/assets\/[^/]+/.test(pathname)) return true;
-  if (/^\/concept\/projects\/.+/.test(pathname)) return true;
+  const path = mainPath(pathname);
+  if (/^\/concept\/batches\/[^/]+/.test(path)) return true;
+  if (/^\/concept\/packages\/[^/]+/.test(path)) return true;
+  if (/^\/concept\/assets\/[^/]+/.test(path)) return true;
+  if (/^\/concept\/projects\/.+/.test(path)) return true;
   return false;
 }

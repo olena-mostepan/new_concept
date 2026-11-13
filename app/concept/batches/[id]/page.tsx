@@ -6,7 +6,8 @@ import { getBatch, solutionName, wsInAll } from "@/lib/concept/derive";
 import type { Batch } from "@/lib/concept/model";
 import { Page, PageHeader } from "@/components/concept/ui";
 import { BatchView } from "@/components/concept/BatchView";
-import { hrefs } from "@/components/concept/hrefs";
+import { useConceptMode, useHrefs } from "@/components/concept/useHrefs";
+import { OpsBatch } from "@/components/concept/OpsBatch";
 import { useConcept } from "@/components/concept/store";
 import { useConceptI18n } from "@/components/concept/useConceptI18n";
 
@@ -48,7 +49,8 @@ function batchFacts(
   return facts;
 }
 
-export default function BatchPage() {
+function CustomerBatchPage() {
+  const hrefs = useHrefs();
   const { id } = useParams<{ id: string }>();
   const { account } = useConcept();
   const { lang, t, words } = useConceptI18n();
@@ -83,4 +85,18 @@ export default function BatchPage() {
       </Suspense>
     </Page>
   );
+}
+
+/** Ops (main prototype): the batch with its plan and packages. Customer version: the customer's batch page. */
+export default function BatchPage() {
+  const mode = useConceptMode();
+  const { id } = useParams<{ id: string }>();
+  if (mode === "ops") {
+    return (
+      <Suspense>
+        <OpsBatch id={id} />
+      </Suspense>
+    );
+  }
+  return <CustomerBatchPage />;
 }

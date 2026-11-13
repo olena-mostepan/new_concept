@@ -90,10 +90,21 @@ export default function HomePage() {
         >
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-accent)]">New concept</p>
-            <p className="mt-1 text-lg font-semibold text-[#1E2832]">Workstreams in batches — customer side</p>
-            <p className="text-sm text-[#4D5761]">Portfolio, batches, workstreams and both navigation options, on one example portfolio.</p>
+            <p className="mt-1 text-lg font-semibold text-[#1E2832]">Batches, packages and assets — Ops</p>
+            <p className="text-sm text-[#4D5761]">The customer&apos;s pages plus what Ops does: create batches, add packages, fix assets, start estimates.</p>
           </div>
           <span className="btn-primary">Open concept</span>
+        </Link>
+        <Link
+          href="/concept/customer"
+          className="-mt-8 flex items-center justify-between gap-6 rounded-lg border border-[var(--border-dark)] bg-white p-6 hover:bg-[var(--black-1)]"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#4D5761]">New concept</p>
+            <p className="mt-1 text-lg font-semibold text-[#1E2832]">Customer version</p>
+            <p className="text-sm text-[#4D5761]">The same pages the way the customer sees them, in English or German.</p>
+          </div>
+          <span className="btn-secondary">Open customer version</span>
         </Link>
         <section>
           <h2 className="mb-1 text-lg font-semibold text-[#1E2832]">Portals</h2>

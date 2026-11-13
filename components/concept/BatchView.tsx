@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -54,7 +56,7 @@ import {
   tabTriggerClass,
 } from "./ui";
 import { RouteWithNeeds } from "./RouteWithNeeds";
-import { hrefs } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 import { cn } from "@/lib/utils";
 
@@ -243,6 +245,7 @@ function PilotDashboard({
   account: Account;
   batch: Batch;
 }) {
+  const hrefs = useHrefs();
   const { agreePlan } = useConcept();
   const { lang, t: tr, words } = useConceptI18n();
   const all = wsIn(account, batch.id);
@@ -474,10 +477,14 @@ type AssetTableRow =
 function BatchPage({
   account,
   batch,
+  actions,
 }: {
   account: Account;
   batch: Batch;
+  /** Ops: an action at the right end of the tabs (Change assets, Add package). */
+  actions?: { assets?: ReactNode; packages?: ReactNode };
 }) {
+  const hrefs = useHrefs();
   const router = useRouter();
   const params = useSearchParams();
   const { lang, t: tr, words } = useConceptI18n();
@@ -625,6 +632,10 @@ function BatchPage({
 
   return (
     <div className="space-y-4">
+      <div className="relative">
+      {actions?.[view] && (
+        <div className="absolute right-0 top-[-6px] z-10">{actions[view]}</div>
+      )}
       <Tabs.Root
         value={view}
         onValueChange={(v) => setView(v === "packages" ? "packages" : "assets")}
@@ -638,6 +649,7 @@ function BatchPage({
           </Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
+      </div>
 
       {view === "assets" && (
         <div className="mt-4 space-y-4">
@@ -1006,6 +1018,7 @@ function BatchPage({
 }
 
 function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
+  const hrefs = useHrefs();
   const { lang, t: tr, words } = useConceptI18n();
   const inBatch = wsInAll(account, batch.id);
   const proposed = inBatch
@@ -1176,12 +1189,14 @@ export function BatchView({
   account,
   batch,
   variant,
+  actions,
 }: {
   account: Account;
   batch: Batch;
   variant: "dashboard" | "page";
+  actions?: { assets?: ReactNode; packages?: ReactNode };
 }) {
   if (variant === "dashboard")
     return <PilotDashboard account={account} batch={batch} />;
-  return <BatchPage account={account} batch={batch} />;
+  return <BatchPage account={account} batch={batch} actions={actions} />;
 }

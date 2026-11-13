@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Area,
   CartesianGrid,
@@ -676,11 +675,10 @@ function Batches({ account }: { account: Account }) {
 }
 
 export function MatureDashboard({ account }: { account: Account }) {
-  const ops = (usePathname() ?? "").startsWith("/concept/ops");
   return (
     <div className="space-y-4">
       <FindBuilding account={account} />
-      {!ops && <Decisions account={account} />}
+      <Decisions account={account} />
       <Services account={account} />
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <Momentum account={account} />

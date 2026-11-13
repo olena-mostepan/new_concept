@@ -39,12 +39,14 @@ import {
 } from "./ui";
 import { DetailsGrid } from "./DetailsGrid";
 import { ProjectRoute } from "./ProjectRoute";
-import { hrefs, type BuildingVia } from "./hrefs";
+import { type BuildingVia } from "./hrefs";
+import { useHrefs } from "./useHrefs";
 import { WORDS } from "@/lib/concept/words";
 import { useConcept } from "./store";
 import { shortFact } from "./WorkstreamChrome";
 
 function buildingHref(
+  hrefs: ReturnType<typeof useHrefs>,
   workstreamId: string,
   projectId: string,
   from: string | null,
@@ -77,6 +79,7 @@ function Soon({ label }: { label: string }) {
 }
 
 export function DeliveryPanel({ w }: { w: Workstream }) {
+  const hrefs = useHrefs();
   const { account, saveDelivery } = useConcept();
   const searchParams = useSearchParams();
   const payload = toDeliveryPayload(account, [w]);
@@ -89,7 +92,7 @@ export function DeliveryPanel({ w }: { w: Workstream }) {
       rowLinks
       previewLimit={10}
       projectHref={(project) =>
-        buildingHref(w.id, project.id, searchParams.get("from"))
+        buildingHref(hrefs, w.id, project.id, searchParams.get("from"))
       }
     />
   );
@@ -168,6 +171,7 @@ export function DeliveryProject({
   building: Building;
   row: ProjectRow;
 }) {
+  const hrefs = useHrefs();
   const { account, saveDelivery } = useConcept();
   const router = useRouter();
   const searchParams = useSearchParams();

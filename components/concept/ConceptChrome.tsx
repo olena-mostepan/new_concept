@@ -8,11 +8,10 @@ import { changedRecently, isClosed, isLive } from "@/lib/concept/derive";
 import type { Account } from "@/lib/concept/model";
 import { ConceptStoreProvider, useConcept } from "./store";
 import {
-  CUSTOMER_NAV,
-  OPS,
-  OPS_NAV,
-  counterpart,
-  hrefs,
+  hrefsForPath,
+  isCustomerPath,
+  navFor,
+  type ConceptMode,
   type NavItem,
 } from "./hrefs";
 import { activeCustomerTab } from "./crumbs";
@@ -30,7 +29,6 @@ function AccountToggle() {
   const pathname = usePathname() ?? "";
   const { accounts, account, setAccountId, lang: stored } = useConcept();
   const { t } = useT(customerLang(stored, pathname));
-  const ops = pathname.startsWith(OPS);
   return (
     <div className="border-b border-border-dark bg-bg-container-grey">
       <div className="mx-auto flex w-full max-w-screen-2xl items-center gap-3 px-6 py-2 sm:px-8 lg:px-10">
@@ -49,7 +47,7 @@ function AccountToggle() {
                 onClick={() => {
                   if (on) return;
                   setAccountId(a.id);
-                  router.push(ops ? hrefs.ops : hrefs.portfolio);
+                  router.push(hrefsForPath(pathname).overview);
                 }}
                 className={cn(
                   "rounded-md px-3 py-1 p6 transition-colors",
@@ -112,46 +110,14 @@ function LangToggle() {
   );
 }
 
-function ViewToggle({ ops }: { ops: boolean }) {
-  const router = useRouter();
-  const pathname = usePathname() ?? "";
-  const { lang: stored } = useConcept();
-  const { t } = useT(customerLang(stored, pathname));
-  return (
-    <div
-      className="inline-flex rounded-md border border-border-dark bg-white p-0.5"
-      role="tablist"
-      aria-label={t("View")}
-    >
-      {[
-        { id: false, label: t("Customer") },
-        { id: true, label: t("Ops") },
-      ].map((o) => (
-        <button
-          key={o.label}
-          type="button"
-          onClick={() => o.id !== ops && router.push(counterpart(pathname))}
-          className={cn(
-            "rounded-md px-3 py-1 p6 transition-colors",
-            ops === o.id
-              ? "bg-black-7 text-white"
-              : "text-text-secondary hover:text-text-primary",
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function customerNav(account: Account): NavItem[] {
+/** The nav is the same in both versions; services that changed this week get the dot. */
+function navWithChanges(mode: ConceptMode, account: Account): NavItem[] {
   const changed = new Set(
     account.workstreams
       .filter((w) => !isClosed(w) && isLive(w) && changedRecently(w))
       .map((w) => w.service),
   );
-  return CUSTOMER_NAV.map((item) => ({
+  return navFor(mode).map((item) => ({
     ...item,
     changed:
       item.group === "services" &&
@@ -245,12 +211,13 @@ function AppHeader({
 }) {
   const { account, lang: stored } = useConcept();
   const { t } = useT(customerLang(stored, path));
-  const nav = ops ? OPS_NAV : customerNav(account);
+  const nav = navWithChanges(ops ? "ops" : "customer", account);
+  const h = hrefsForPath(path);
   return (
     <header className="border-b border-border-dark bg-white">
       <div className="mx-auto flex w-full max-w-screen-2xl flex-wrap items-center justify-between gap-3 px-6 py-3.5 sm:px-8 lg:px-10">
         <Link
-          href={ops ? hrefs.ops : hrefs.overview}
+          href={h.overview}
           className="flex min-w-0 items-center gap-3 hover:opacity-80"
         >
           <span
@@ -275,7 +242,7 @@ function AppHeader({
           </Link>
           {ops && (
             <Button
-              href={hrefs.opsNewBatch}
+              href={h.newBatch}
               type="primary"
               size="small"
               icon="plus"
@@ -284,16 +251,10 @@ function AppHeader({
             </Button>
           )}
           {!ops && <LangToggle />}
-          <ViewToggle ops={ops} />
           <Avatar letter={account.user[0]} />
         </div>
       </div>
-      <Nav
-        items={nav}
-        path={path}
-        grouped
-        activeId={ops ? undefined : activeId}
-      />
+      <Nav items={nav} path={path} grouped activeId={activeId} />
     </header>
   );
 }
@@ -305,10 +266,9 @@ function DetailBar() {
   const { account, lang: stored } = useConcept();
   const { t } = useT(customerLang(stored, pathname));
   const opsBar = useOpsDetailBar();
-  const showAssistant =
-    /^\/concept\/ops\/packages\//.test(pathname) ||
-    /^\/concept\/ops\/assets\//.test(pathname);
-  const ops = pathname.startsWith(OPS);
+  const ops = !isCustomerPath(pathname);
+  // The assistant works where the Ops checklist is (packages and assets with Ops data).
+  const showAssistant = ops && Boolean(opsBar?.hasAssistant);
   const hasHistory = useRef(false);
   const booted = useRef(false);
 
@@ -355,7 +315,6 @@ function DetailBar() {
             {t("Questions")}
           </Link>
           {!ops && <LangToggle />}
-          <ViewToggle ops={ops} />
           <Avatar letter={account.user[0]} />
         </div>
       </div>
@@ -367,12 +326,10 @@ function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
   const search = useSearchParams();
   const { account, lang: stored } = useConcept();
-  const ops = pathname.startsWith(OPS);
+  const ops = !isCustomerPath(pathname);
   const fullscreen = isFullscreenWorkspace(pathname);
   const detail = isDetail(pathname);
-  const activeId = ops
-    ? undefined
-    : activeCustomerTab(pathname, search, account);
+  const activeId = activeCustomerTab(pathname, search, account);
 
   useEffect(() => {
     document.documentElement.lang = ops ? "en" : stored;

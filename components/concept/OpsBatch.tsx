@@ -16,7 +16,8 @@ import { Button, Icon, Page, PageHeader, ServiceIcon } from "./ui";
 import { solutionLabel } from "./ops-shared";
 import { CountPill, placeOf } from "./ops-workspace";
 import { exclusionLine, OpsAddPackage } from "./OpsWorkstreamDrawer";
-import { hrefs } from "./hrefs";
+import { BatchView } from "./BatchView";
+import { customerHrefs, hrefs } from "./hrefs";
 import { useConcept } from "./store";
 
 const WITH: Record<Exclude<Owner, "done">, string> = {
@@ -78,7 +79,7 @@ export function OpsBatch({ id }: { id: string }) {
         title={batch.name}
         facts={facts}
         actions={
-          <Button type="secondary" size="small" href={hrefs.batch(batch.id)}>
+          <Button type="secondary" size="small" href={customerHrefs.batch(batch.id)}>
             Customer view
           </Button>
         }
@@ -98,6 +99,27 @@ export function OpsBatch({ id }: { id: string }) {
         }
       />
 
+      {batch.planState === "live" ? (
+        // Live: the customer's batch page, with Ops actions on its tabs.
+        <BatchView
+          account={account}
+          batch={batch}
+          variant="page"
+          actions={{
+            assets: (
+              <Button type="secondary" size="small" icon="edit" href={`${hrefs.newBatch}?batch=${batch.id}`}>
+                Change assets
+              </Button>
+            ),
+            packages: (
+              <Button type="secondary" size="small" icon="plus" onClick={addPackage}>
+                Add package
+              </Button>
+            ),
+          }}
+        />
+      ) : (
+      // Before the plan is live: build it. Packages added now are proposed, so the customer page doesn't list them yet.
       <div className="space-y-6">
         {/* Packages */}
         <section className="overflow-hidden rounded-lg border border-border-dark bg-white" aria-label="Packages">
@@ -197,6 +219,7 @@ export function OpsBatch({ id }: { id: string }) {
           </ul>
         </section>
       </div>
+      )}
 
       {(adding || editing) && (
         <OpsAddPackage

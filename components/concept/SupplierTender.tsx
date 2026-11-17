@@ -76,8 +76,8 @@ function Spec({ rows, labelWidth = "200px" }: { rows: SpecRow[]; labelWidth?: st
 
 function Rail({ t, onTab }: { t: Tender; onTab: (id: TabId) => void }) {
   return (
-    <aside className="flex w-[420px] shrink-0 flex-col gap-4 py-6 pl-8 pr-5">
-      <div className="flex flex-col gap-3 p-5">
+    <aside className="flex w-[420px] shrink-0 flex-col gap-4 pb-14 pl-8 pr-5 pt-6">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <span className="s3 text-text-tertiary">Tender · {t.service}</span>
           <h1 className="h6 text-text-primary">{t.title}</h1>

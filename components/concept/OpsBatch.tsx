@@ -17,7 +17,7 @@ import { solutionLabel } from "./ops-shared";
 import { CountPill, placeOf } from "./ops-workspace";
 import { exclusionLine, OpsAddPackage } from "./OpsWorkstreamDrawer";
 import { BatchView } from "./BatchView";
-import { customerHrefs, hrefs } from "./hrefs";
+import { hrefs } from "./hrefs";
 import { useConcept } from "./store";
 
 const WITH: Record<Exclude<Owner, "done">, string> = {
@@ -78,11 +78,7 @@ export function OpsBatch({ id }: { id: string }) {
         kind="batch"
         title={batch.name}
         facts={facts}
-        actions={
-          <Button type="secondary" size="small" href={customerHrefs.batch(batch.id)}>
-            Customer view
-          </Button>
-        }
+        changedKey
         aside={
           <PlanCard
             batch={batch}

@@ -33,10 +33,10 @@ import { hrefs } from "../hrefs";
 import { useConcept } from "../store";
 import { useConceptI18n } from "../useConceptI18n";
 import { useOpsDetailBar } from "./OpsDetailBarActions";
-import { WorkstreamFrame, packagePrimaryTab } from "../WorkstreamChrome";
+import { WorkstreamFacts, WorkstreamFrame, packagePrimaryTab } from "../WorkstreamChrome";
 import { EstimatesPanel } from "../IndicativeWorkstream";
 import { PackageOverviewSteps, packageCardChips } from "../PackageView";
-import { opsTabsFor, type PackageTabId } from "../packageTabs";
+import { opsTabsFor, tabsFor, type PackageTabId } from "../packageTabs";
 import { service, type Workstream } from "@/lib/concept/model";
 import type { PackageCardChip } from "../ui";
 import { AssetWindow } from "./AssetWindow";
@@ -96,13 +96,16 @@ export function OpsPackageView({ id }: { id: string }) {
     return () => bar?.registerAskAssistant(null);
   }, [bar?.registerAskAssistant]);
 
-  const tabs = w ? opsTabsFor(w) : [];
+  // Same tabs as the customer's package page; Ops always has the current service tab.
+  const customerTabs = w ? tabsFor(w, account) : [];
+  const tabs = w
+    ? customerTabs.some((item) => item.id === packagePrimaryTab(w))
+      ? customerTabs
+      : [customerTabs[0], ...opsTabsFor(w).filter((item) => item.id !== "overview"), ...customerTabs.slice(1)].filter(Boolean)
+    : [];
   const requested = searchParams.get("tab");
-  const primary = w ? (packagePrimaryTab(w) as PackageTabId) : "overview";
-  let tab: PackageTabId =
-    !requested && w && tabs.some((item) => item.id === primary)
-      ? primary
-      : "overview";
+  // Opens on Overview, like the customer's package page.
+  let tab: PackageTabId = "overview";
   if (requested && tabs.some((item) => item.id === requested)) {
     tab = requested as PackageTabId;
   }
@@ -379,6 +382,9 @@ export function OpsPackageView({ id }: { id: string }) {
                 }))}
               />
             </>
+          )}
+          {tab === "overview" && (
+            <WorkstreamFacts activity={w.activity ?? []} documents={w.documents} />
           )}
           {tab === "estimates" && tab !== currentTab && <EstimatesPanel w={w} readOnly />}
         </WorkstreamFrame>

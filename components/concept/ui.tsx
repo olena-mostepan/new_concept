@@ -31,7 +31,7 @@ import {
   changedRecently,
   doneCount,
 } from "@/lib/concept/derive";
-import { nPackages, ownerLabel, WORDS } from "@/lib/concept/words";
+import { nPackages, WORDS } from "@/lib/concept/words";
 import { useConceptI18n } from "./useConceptI18n";
 import { Tag } from "@/components/ds/tag";
 
@@ -1864,7 +1864,7 @@ export function ResponsibilityPill({
   label?: string;
   className?: string;
 }) {
-  const { lang } = useConceptI18n();
+  const { owner: ownerName } = useConceptI18n();
   return (
     <span
       className={cn(
@@ -1873,7 +1873,7 @@ export function ResponsibilityPill({
         className,
       )}
     >
-      {label ?? ownerLabel(lang, owner)}
+      {label ?? ownerName(owner)}
     </span>
   );
 }

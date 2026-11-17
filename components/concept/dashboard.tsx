@@ -25,7 +25,6 @@ import {
   nAssets,
   nPackages,
   nProjects,
-  ownerLabel,
 } from "@/lib/concept/words";
 import {
   SERVICE_LABEL,
@@ -54,7 +53,7 @@ function ServiceSegment({
   last: boolean;
 }) {
   const hrefs = useHrefs();
-  const { lang, t } = useConceptI18n();
+  const { lang, t, owner } = useConceptI18n();
   const [open, setOpen] = useState(false);
   const dark = shade >= 0.58;
   return (
@@ -117,7 +116,7 @@ function ServiceSegment({
                   className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
                   aria-hidden
                 />
-                {ownerLabel(lang, "you")}: {nPackages(segment.you, lang)}
+                {owner("you")}: {nPackages(segment.you, lang)}
               </p>
             )}
           </div>
@@ -129,7 +128,7 @@ function ServiceSegment({
 
 function Services({ account }: { account: Account }) {
   const hrefs = useHrefs();
-  const { lang, t, words } = useConceptI18n();
+  const { lang, t, words, owner } = useConceptI18n();
   const pipe = servicePipeline(account);
   const services = pipe.services.filter((segment) => segment.projects > 0);
   const showCompleted = pipe.completed.projects > 0;
@@ -199,7 +198,7 @@ function Services({ account }: { account: Account }) {
               className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
               aria-hidden
             />
-            {ownerLabel(lang, "you")}: {nPackages(pipe.you, lang)}
+            {owner("you")}: {nPackages(pipe.you, lang)}
           </p>
           <CardLink href={hrefs.buildings}>
             {t("See {0}", words.assets)}

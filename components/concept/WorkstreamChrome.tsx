@@ -50,7 +50,7 @@ import {
   packageStatusHeadline,
   packageStatusService,
 } from "./packageStatus";
-import { assetPackageScopeLine } from "./packageTabs";
+import { assetPackageScopeLine, tabsFor } from "./packageTabs";
 import { serviceChips } from "./serviceChips";
 
 const SOLUTION_NAME: Record<SolutionId, string> = {
@@ -79,6 +79,7 @@ export function PackageStatusCard({
   ops?: boolean;
 }) {
   const hrefs = useHrefs();
+  const { account } = useConcept();
   const searchParams = useSearchParams();
   const { lang } = useConceptI18n();
   const sid = packageStatusService(w);
@@ -93,6 +94,8 @@ export function PackageStatusCard({
     ? `${hrefs.opsPackage(w.id)}?tab=estimates`
     : `${hrefs.workstream(w.id)}?${qs}`;
   const showFix = fix && fix.count > 0;
+  // Only offer "See …" when the package page has that tab (customer: Estimates shows once there are estimates).
+  const ctaTabExists = ops || tabsFor(w, account).some((item) => item.id === cta.tab);
 
   return (
     <div
@@ -129,7 +132,7 @@ export function PackageStatusCard({
             {fixAssetsAction(fix.count, lang)}
           </Button>
         )}
-        {!closed && !complete && !showFix && (
+        {!closed && !complete && !showFix && ctaTabExists && (
           <Button
             type="strong"
             size="large"
@@ -179,12 +182,12 @@ export function AssetStripStatus({
 export function WorkstreamHeader({
   w,
   ops,
-  changedKey = !ops,
+  changedKey = true,
   fix,
   statusAside,
 }: {
   w: Workstream;
-  /** Ops routes and no changed key. */
+  /** Ops version: the status card can carry Fix assets. Crumbs, facts and the key are the same as the customer's. */
   ops?: boolean;
   changedKey?: boolean;
   fix?: { count: number; onClick?: () => void };
@@ -195,16 +198,7 @@ export function WorkstreamHeader({
   const searchParams = useSearchParams();
   const { lang, t, words } = useConceptI18n();
   const batch = getBatch(account, w.batchId);
-  const crumbs = ops
-    ? [
-        { label: "Overview", href: hrefs.ops },
-        {
-          label: batch?.name ?? "Batch",
-          href: batch ? hrefs.opsBatch(batch.id) : hrefs.ops,
-        },
-        { label: w.name },
-      ]
-    : workstreamCrumbs(account, w, searchParams, hrefs).map(({ label, href }) => ({
+  const crumbs = workstreamCrumbs(account, w, searchParams, hrefs).map(({ label, href }) => ({
         label:
           label === "Overview" || label === "Batch"
             ? t(label)
@@ -218,11 +212,7 @@ export function WorkstreamHeader({
     {
       label: t("Batch"),
       value: batch?.name ?? "—",
-      href: batch
-        ? ops
-          ? hrefs.opsBatch(w.batchId)
-          : hrefs.batch(w.batchId)
-        : undefined,
+      href: batch ? hrefs.batch(w.batchId) : undefined,
     },
   ];
   if (fromWs) {
@@ -272,7 +262,7 @@ export function WorkstreamHeader({
       aside={aside}
       changedKey={changedKey}
       actions={
-        !ops && w.owner === "you" ? (
+        w.owner === "you" ? (
           <ResponsibilityPill owner="you" />
         ) : undefined
       }

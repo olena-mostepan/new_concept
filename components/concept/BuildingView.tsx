@@ -64,7 +64,8 @@ import {
   tabTriggerClass,
 } from "./ui";
 import { DetailsGrid } from "./DetailsGrid";
-import { useHrefs } from "./useHrefs";
+import { useConceptMode, useHrefs } from "./useHrefs";
+import { OpsAssetData } from "./ops-asset/OpsAssetData";
 import { useConcept } from "./store";
 import { shortFact } from "./WorkstreamChrome";
 import { buildingCrumbs } from "./crumbs";
@@ -95,6 +96,7 @@ function packagePrimaryService(w: Workstream): ServiceId {
 
 export function BuildingView({ buildingId }: { buildingId: string }) {
   const hrefs = useHrefs();
+  const mode = useConceptMode();
   const { account } = useConcept();
   const { lang, t, words } = useConceptI18n();
   const router = useRouter();
@@ -171,6 +173,9 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
   }
 
   const tabServices = selected ? servicesForAssetTabs(selected) : [];
+  // Ops version: the asset's checklist for this package, where Ops has data for it.
+  const opsData =
+    mode === "ops" && selected && Boolean(account.opsAssetData?.[selected.workstream.id]?.[buildingId]);
 
   const dotSid =
     selected && !assetLeftPackage(selected)
@@ -226,11 +231,17 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
             ))}
           </Tabs.List>
           <div className="mt-6 space-y-6">
-            <Tabs.Content value="overview" className="outline-none">
+            <Tabs.Content value="overview" className="space-y-6 outline-none">
               <OverviewPanel account={account} building={building} item={selected} />
+              {opsData && (
+                <OpsAssetData w={selected.workstream} buildingId={building.id} buildingName={building.name} />
+              )}
             </Tabs.Content>
             {tabServices.map((sid) => (
-              <Tabs.Content key={sid} value={sid} className="outline-none">
+              <Tabs.Content key={sid} value={sid} className="space-y-6 outline-none">
+                {opsData && sid === selected.workstream.service && (
+                  <OpsAssetData w={selected.workstream} buildingId={building.id} buildingName={building.name} />
+                )}
                 <ServiceTabPanel
                   account={account}
                   item={selected}

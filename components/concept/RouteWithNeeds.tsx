@@ -4,7 +4,6 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
-  OWNER_LABEL,
   SERVICE_LABEL,
   type ServiceId,
   type Workstream,
@@ -21,6 +20,7 @@ import {
   type RouteStage,
 } from "@/lib/concept/derive";
 import { useHrefs } from "./useHrefs";
+import { useConceptI18n } from "./useConceptI18n";
 import { Button, Icon } from "./ui";
 
 function Bar({
@@ -101,6 +101,7 @@ function StagePanel({
   you: number;
 }) {
   const hrefs = useHrefs();
+  const { owner } = useConceptI18n();
   return (
     <div className="rounded-md border border-border-dark bg-white px-4 py-3 shadow-floating">
       <div className="flex items-center justify-between gap-3">
@@ -154,7 +155,7 @@ function StagePanel({
             className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
             aria-hidden
           />
-          {OWNER_LABEL.you}: {nPackages(you)}
+          {owner("you")}: {nPackages(you)}
         </p>
       )}
     </div>

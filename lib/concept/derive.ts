@@ -375,7 +375,7 @@ export function nextLine(w: Workstream, lang: Lang = 'en'): string {
   if (n.kind === 'roof') {
     return t(
       lang,
-      'Roof drawings for {0} buildings — asked {1}',
+      'Roof drawings for {0} assets — asked {1}',
       activeProjects(w).length,
       short(n.since, lang),
     )
@@ -416,7 +416,7 @@ export function nextLine(w: Workstream, lang: Lang = 'en'): string {
   if (n.kind === 'gas') {
     return t(
       lang,
-      'Gas bills for {0} buildings — asked {1}',
+      'Gas bills for {0} assets — asked {1}',
       activeProjects(w).length,
       short(n.since, lang),
     )
@@ -424,7 +424,7 @@ export function nextLine(w: Workstream, lang: Lang = 'en'): string {
   if (n.kind === 'carpark') {
     return t(
       lang,
-      'Car park ownership for {0} buildings — asked {1}',
+      'Car park ownership for {0} assets — asked {1}',
       activeProjects(w).length,
       short(n.since, lang),
     )
@@ -466,13 +466,13 @@ export function nextLine(w: Workstream, lang: Lang = 'en'): string {
   return readyOn
     ? t(
         lang,
-        'Estimates as building data lands — {0} more ready {1} · {2} of {3}',
+        'Estimates as asset data lands — {0} more ready {1} · {2} of {3}',
         ready,
         short(readyOn, lang),
         ready,
         w.projects.length,
       )
-    : t(lang, 'Estimates as building data lands — {0} of {1} ready', ready, w.projects.length)
+    : t(lang, 'Estimates as asset data lands — {0} of {1} ready', ready, w.projects.length)
 }
 
 /** Latest dated event on the workstream. Not stored; read from the record. */
@@ -1060,7 +1060,7 @@ function stepPanel(a: Account, w: Workstream, i: number): StepColumn['panel'] {
       return {
         heading: 'Needs',
         tone: 'solid',
-        items: [{ mark: 'you', text: `Gas bills for ${w.projects.length} buildings — asked ${short(w.next.since)} · waiting ${days(w.next.since)} days` }],
+        items: [{ mark: 'you', text: `Gas bills for ${w.projects.length} assets — asked ${short(w.next.since)} · waiting ${days(w.next.since)} days` }],
       }
     }
     if (w.projects.some((p) => p.step > 0)) {

@@ -320,7 +320,7 @@ const halvering: Account = {
       ],
       activity: [
         { date: '4 Nov', title: 'Marktplatz 2 moved', text: 'To Solar PV DE.' },
-        { date: '2 Oct', title: 'Roof drawings requested', text: 'For 3 buildings, by email to you.' },
+        { date: '2 Oct', title: 'Roof drawings requested', text: 'For 3 assets, by email to you.' },
         { date: '1 Sep', title: 'Package started', text: '3 projects moved from Estimates — no roof drawings; survey needed before tender.' },
       ],
       documents: [
@@ -433,8 +433,8 @@ const halvering: Account = {
       owner: 'cquel', now: '', startedOn: '4 Aug 2026',
       next: { kind: 'landing' },
       needs: [
-        { label: 'Heat demand model — 8 buildings', why: 'From the gas bills you sent', owner: 'cquel', since: '15 Oct 2026' },
-        { label: 'Gas bills, 12 months — 11 buildings', why: 'Heating load per building', owner: 'you', received: '3 Oct 2026' },
+        { label: 'Heat demand model — 8 assets', why: 'From the gas bills you sent', owner: 'cquel', since: '15 Oct 2026' },
+        { label: 'Gas bills, 12 months — 11 assets', why: 'Heating load per asset', owner: 'you', received: '3 Oct 2026' },
       ],
       projects: [
         ...o(2, 3, 4).map((id) => p(id, 1, { ready: true })),
@@ -543,7 +543,7 @@ const halvering: Account = {
     { date: '15 Oct', title: 'Heat pumps', text: 'Estimates ready for 3 more assets', batchId: 'offices' },
     { date: '8 Oct', title: 'Solar PV DE', text: 'Halverkamp 19 · roof can take panels', batchId: 'flagship' },
     { date: '3 Oct', title: 'Offices DE, FR and BE', text: '6 assets joined', batchId: 'offices' },
-    { date: '2 Oct', title: 'Solar PV · Missing roof data', text: 'Roof drawings requested for 3 buildings', batchId: 'flagship' },
+    { date: '2 Oct', title: 'Solar PV · Missing roof data', text: 'Roof drawings requested for 3 assets', batchId: 'flagship' },
     {
       date: '28 Aug',
       title: 'Solar PV · Estimates split in two',

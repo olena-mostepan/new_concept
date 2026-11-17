@@ -414,6 +414,8 @@ export interface Doc {
   batchId?: string
   /** Shown grey, with no action. */
   muted?: boolean
+  /** Has a preview: the View (eye) button sits before Download. */
+  view?: boolean
 }
 
 export interface OfferSplit {

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 49, 11 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 52, 12 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -10,6 +10,7 @@ One section per component: its rules and what the consumer provides. The prototy
 
 - [ActivityList](#activitylist)
 - [AssetHeader](#assetheader)
+- [AssetPicker](#assetpicker)
 - [AssetWindow](#assetwindow)
 - [AssistantPanel](#assistantpanel)
 - [Banner](#banner)
@@ -20,6 +21,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [CheckCard](#checkcard)
 - [Checkbox](#checkbox)
 - [Chip](#chip)
+- [ChosenList](#chosenlist)
 - [DetailBar](#detailbar)
 - [DetailsGrid](#detailsgrid)
 - [DocPreview](#docpreview)
@@ -34,6 +36,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [Icon](#icon)
 - [IconButton](#iconbutton)
 - [InfoDrawer](#infodrawer)
+- [InlineForm](#inlineform)
 - [Input](#input)
 - [KeyFigure](#keyfigure)
 - [ListFooter](#listfooter)
@@ -69,6 +72,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [TrendChart](#trendchart)
 - [TypeLabel](#typelabel)
 - [UploadRow](#uploadrow)
+- [Workspace](#workspace)
 - [YourActionOnly](#youractiononly)
 
 ## ActivityList
@@ -92,7 +96,34 @@ Retired on 5 Nov 2026. The asset page uses **PageHeader** with `kind: 'asset'`: 
 
 ---
 
+## AssetPicker
+
+A list for choosing assets from many, in the create workspace (New batch: Search and From files).
+
+### Anatomy
+- **Box:** white, `border-dark`, `radius-md`. The list scrolls inside it, at most about 56vh (520).
+- **Header row:** the count in `s3` text-tertiary ("36 assets · 2 in the batch"), and the link Button at the right end: "Add all 36", or "Remove all" when every row is in. A `border-light` rule under it.
+- **Row:** at least 56 high, a `border-light` rule between rows. Columns `16px | 1fr | auto`, gap 12, padding 10/16:
+  - the square checkbox: 16, `border-dark`, `radius-sm`; checked `black-7` with a white 12px `check`;
+  - the name in `h8` text-title, with the place under it in `p7` text-secondary (address, postcode and city);
+  - the type in `p7` text-tertiary ("Hotel", "Office").
+
+### Interaction
+- The whole row toggles (`role="checkbox"`, `aria-checked`).
+- Hover and checked rows are `black-1`. Keyboard focus is the inset 2px `black-7` ring.
+- What's checked also shows in the ChosenList in the side column; removing it there unchecks the row.
+
+### Empty
+A `p6` text-secondary line in the box that says what to do next: "No assets match “Leeds”. Add it manually if it isn't in CQuel yet."
+
+### The consumer provides
+`items: [{id, name, place, type}]`, `selected` (ids), `onToggle(id)`, `onAll(on)`, `empty`; optional `noun` (['asset', 'assets']) and `inLabel` ("in the batch").
+
+---
+
 ## AssetWindow
+
+The fix / edit layout of the full-screen Workspace (see Workspace for the frame rules both layouts share: the top bar, the missing hint, the close check).
 
 The Fix assets and Edit asset data workspace on Ops screens: a full-screen view where Ops fix an asset's data item by item, with the asset's documents beside the checklist.
 
@@ -125,7 +156,8 @@ The Fix assets and Edit asset data workspace on Ops screens: a full-screen view 
 ### Narrower screens
 The layout follows the workspace's own width.
 - **Below 1180:** two columns, side list 260 + checklist. Documents becomes a panel that slides in from the right (at most 400 wide, shadow `-8px 0 24px rgba(30,40,50,.12)`), opened by "Documents · n" (`secondary`, `document` icon) before Done. The panel has its own Close.
-- **Below 760:** one column. The side list hides and an asset picker (Select, label "Asset") sits at the top of the checklist. In the unsaved-change bar the message hides; its two buttons stay.
+- **Below 760:** one column. The side list hides and an asset picker (Select, label "Asset") sits at the top of the checklist.
+- **Below 640:** the unsaved-change question wraps to its own row under the title, with its two buttons (Workspace rule, 12 Nov).
 
 ### Saving
 - Nothing saves by itself. Each item saves with its own button (Use, Save, Not available, an upload); Done only closes.
@@ -317,6 +349,24 @@ A small pill that marks where something is (display) or chooses what a list show
 
 ### The consumer provides
 `children`, `lead`, `size`, `count`; for a filter `selected` and `onClick`.
+
+---
+
+## ChosenList
+
+What's in the thing being made, in the create workspace's side column ("Assets" in New batch).
+
+### Anatomy
+- **Title row:** the title in `h7` with the white count pill at the right end: the same pill as RequirementGroup (`border-dark`, `h9`, 24 high), "3 assets", "1 asset".
+- **Empty:** a 1.5px dashed `black-3` box on white, `radius-md`, padding 20/16, centred `p7` text-secondary text ("No assets yet. Pick them on the left.").
+- **Items:** a white box (`border-light`, `radius-md`, padding 0 12), a `border-light` rule between rows. Each row:
+  - the 16px `building` icon in `icon-default`, top-aligned;
+  - the name in `h8`, the place in `p7` text-secondary under it;
+  - an IconButton `cross`, small, labelled "Remove <name>", at the right end.
+- **New items:** an item created here (Add manually) carries a `neutral` xsmall Tag "New" after its name.
+
+### The consumer provides
+`title`, `items: [{id, name, place, isNew}]`, `onRemove(id)`, `empty`; optional `countLabel` (['asset', 'assets']) and `icon`.
 
 ---
 
@@ -608,6 +658,24 @@ A right-side panel with an item's details, for facts that don't belong on the pa
 - `open`
 - `onClose`
 - `inline` (for previews)
+
+---
+
+## InlineForm
+
+A small form that adds an item to a list, inside a page or workspace (New batch: Add manually).
+
+### Anatomy
+- The form sits in a white box: `border-dark`, `radius-md`, padding 16, 16 between parts.
+- An optional `p6` text-secondary line first ("For an asset that isn't in CQuel yet.").
+- Fields in two columns (one on narrow screens); wrap a field in `cq-iform__wide` to span both (Name).
+- **Footer:** a `border-light` rule above it, the action at the right end (`secondary`, `plus` icon: "Add asset"). Left of the action:
+  - while the action is disabled, what's needed: "Name and city are needed" (`p7` text-tertiary);
+  - after adding, the confirmation with a 16px `check` icon: "Hotel Bull Ring is in the batch" (`p7` text-secondary, `role="status"`). It clears as soon as Ops type again.
+- Enter in a field submits.
+
+### The consumer provides
+`intro`, `action: {label, icon, onClick, disabled}`, `needed`, `done`, and the fields as children.
 
 ---
 
@@ -1385,10 +1453,54 @@ The drop row: where documents come in.
 - Dropping anywhere on the row uploads. Files can also come in through an item's own upload, Upload documents on the asset page, or the assistant.
 - **The file list** isn't part of UploadRow any more: list files with DocumentList (it takes `state: 'reading' | 'unknown'`). UploadRow's `files` is retired.
 
+### Wording variant: New batch (12 Nov 2026)
+- In the New batch workspace (From files) the row reads "Drop a site list or plans here" / "We find the assets in them. You check before they're added." The button is "Upload files" (`secondary`, `upload` icon).
+- The layout doesn't change: grey `black-2` surface, dashed `black-3` border, the 36px white icon box.
+
 ### The consumer provides
-`onUpload`, `label`.
+`onUpload`, `label`, and for a wording variant `title`, `hint`, `icon` (the button's icon).
 
 - **In the AssetWindow** (11 Nov 2026) the drop zone is the stacked version at the top of the Documents column (white, 1.5px dashed `black-3`, centred icon box, two lines, the button under them), built into the workspace. UploadRow stays for other places that need a drop row inline.
+
+---
+
+## Workspace
+
+The full-screen workspace: one pattern, two layouts. Use it for a job that needs the whole screen and ends in one action (fix assets, create a batch), never for a short task (that's a Modal).
+
+### Frame (both layouts)
+- `role=dialog`, `aria-modal`, `inset: 0`, white. No scrim, no radius. It locks the page's scroll while open; Esc closes, with the close check below.
+- **Top bar:** at least 64 high, padding 8/16, a `border-dark` rule under it. In this order:
+  - Close (IconButton `cross`);
+  - the title in `h6`, the subtitle in `p7` text-secondary under it;
+  - the main action at the right end, `primary`, size large ("Done", "Create batch", "Save assets").
+- **Missing hint:** while the action is disabled, a hint sits just before it: the 16px `info` icon and a `p7` text-secondary line saying what's missing, one thing at a time ("Add at least one asset", then "Give the batch a name").
+- **Close check:** closing with unsaved input turns the right side into a question (`p6`) with two `secondary` buttons: "Keep editing", then the close action ("Close without saving", "Close without creating").
+- **Below 640:** the close check wraps to its own row under the title (question, then the buttons at the right end), and the missing hint hides.
+
+### Layout 1: fix / edit
+Side list | content | Documents. This is the AssetWindow; see its README.
+
+### Layout 2: create
+For creating something from a set of items: New batch now, later a package.
+- **Content:** fluid, at most 880 wide, aligned to the left edge of the column (not centred), padding 24/32. It holds the ways to find items (Tabs: Search, From files, Add manually) with the AssetPicker, the UploadRow and the InlineForm.
+- **Side column:** 380 wide, `black-1`, a `border-dark` rule on its left, padding 20, 20 between blocks. It holds the thing being made: first its fields (Name, Goal), then what's in it (ChosenList), then a `p7` line on what comes next.
+- Content and side column scroll on their own.
+- **Below 1024:** one column. The side column moves under the content (a `border-dark` rule above it) and the body scrolls as one.
+
+### New batch
+- Title "New batch", subtitle "<customer> · only Ops sees it until you share the plan". Action "Create batch"; hint "Add at least one asset", then "Give the batch a name".
+- Content: "Find assets" (`h7`) and a `p6` line, then Tabs Search · From files · Add manually.
+- Side column: "This batch" (`h7`), Name, Goal (optional, "In the customer's words. It shows at the top of the batch."), the ChosenList "Assets", then "Next, on the batch page: add packages. Each runs services for one solution on some of these assets."
+- Close check: "Close without creating the batch?" / "Keep editing" / "Close without creating".
+- Editing a batch's assets uses the same workspace without the fields: title "Assets in <batch>", action "Save assets", close "Close without saving".
+
+### Retired
+- The two-step Stepper for creating a batch (Assets → Goal). Creating happens on one screen. Use a stepper only where the order matters and earlier choices change later steps.
+- The page footer bar with Continue / Back on creation flows. The action lives in the top bar.
+
+### The consumer provides
+`title`, `subtitle`, `action: {label, onClick, disabled}`, `hint` (what's missing), `dirty`, `question`, `closeLabel`, `onClose`, `side` (the side column's content), `sideLabel`, the content as children. For previews: `inline`, `height`, `confirming`.
 
 ---
 

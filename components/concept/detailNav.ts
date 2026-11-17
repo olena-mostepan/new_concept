@@ -39,7 +39,9 @@ export function detailFallbackHref(
 
 /** Full-screen workspaces (new batch) hide app chrome. */
 export function isFullscreenWorkspace(pathname: string) {
-  return mainPath(pathname) === `${BASE}/batches/new`;
+  const path = mainPath(pathname);
+  // The supplier concept has its own portal header.
+  return path === `${BASE}/batches/new` || path.startsWith(`${BASE}/supplier`);
 }
 
 export function isDetail(pathname: string) {

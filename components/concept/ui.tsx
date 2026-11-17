@@ -1637,6 +1637,14 @@ const BANNER_MARK: Record<"info" | "success" | "warning" | "danger" | "neutral",
   neutral: "bg-black-4",
 };
 
+const BANNER_ICON: Record<keyof typeof BANNER_MARK, string> = {
+  info: "text-status-info-text",
+  success: "text-status-success-text",
+  warning: "text-status-warning-text",
+  danger: "text-status-danger-text",
+  neutral: "text-icon-default",
+};
+
 const BANNER_SHELL: Record<keyof typeof BANNER_MARK, string> = {
   info: "border-status-info-border bg-status-info-bg",
   success: "border-status-success-border bg-status-success-bg",
@@ -1651,11 +1659,14 @@ export function Banner({
   title,
   children,
   action,
+  icon,
 }: {
   type: keyof typeof BANNER_MARK;
   title: string;
   children?: ReactNode;
   action?: ReactNode;
+  /** Optional 16px icon in the status mark colour, in place of the 6px dot. Proposed to the DS (supplier "Why you were invited"). */
+  icon?: string;
 }) {
   return (
     <div
@@ -1664,10 +1675,14 @@ export function Banner({
         BANNER_SHELL[type],
       )}
     >
-      <span
-        className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", BANNER_MARK[type])}
-        aria-hidden
-      />
+      {icon ? (
+        <Icon name={icon} size={16} className={cn("mt-0.5", BANNER_ICON[type])} />
+      ) : (
+        <span
+          className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", BANNER_MARK[type])}
+          aria-hidden
+        />
+      )}
       <div className="min-w-0 flex-1">
         <p className="h8 text-text-primary">{title}</p>
         {children && <p className="mt-0.5 p6 text-text-secondary">{children}</p>}
@@ -1814,7 +1829,12 @@ export function DocumentList({
             </div>
           </div>
           {!hideActions && !doc.muted && doc.action === "Download" && (
-            <IconButton icon="download" label={`Download ${doc.name}`} />
+            <span className="flex shrink-0 items-center gap-1">
+              {doc.view && (
+                <IconButton icon="eye" label={`View ${doc.name}`} />
+              )}
+              <IconButton icon="download" label={`Download ${doc.name}`} />
+            </span>
           )}
           {!hideActions && !doc.muted && doc.action === "View" && (
             <IconButton icon="chevron-right" label={`View ${doc.name}`} />

@@ -104,7 +104,7 @@ export interface RequirementRowProps { hint?: string; name: string; state: Requi
 /** s3 header with a count: "Blocking the next step · 1" */
 export interface RequirementGroupProps { label: string; count?: number; /** after the count: 'open', 'missing', or ['file', 'files'] */ countLabel?: string | [string, string]; /** pill text instead of the count */ pill?: string; /** Blocking group: accent pill while count > 0 */ urgent?: boolean; children: ReactNode }
 /** The drop row only. List files with DocumentList. */
-export interface UploadRowProps { onUpload?: () => void; label?: string }
+export interface UploadRowProps { onUpload?: () => void; label?: string; /** wording variant, e.g. New batch: 'Drop a site list or plans here' */ title?: string; hint?: string; /** the button's icon, e.g. 'upload' */ icon?: IconName }
 /** Fix assets / Edit asset data: a full-screen workspace (side list 280/240 · checklist max 880 · Documents 340). Below 1180 Documents slides in; below 760 one column with an asset picker. dirty: asks before closing. */
 export interface AssetWindowProps { open?: boolean; /** preview: draw in place, not full screen */ inline?: boolean; height?: number; mode?: 'fix' | 'edit'; title: string; subtitle?: string; groups: { label: string; count?: number; items: { id: string; name: string; line?: string; toFix?: boolean }[] }[]; value?: string; onSelect?: (id: string) => void; showAll?: { count: number; href?: string; onClick?: () => void }; asset: { name: string; meta?: string; link?: { label: string; href?: string; onClick?: () => void } }; documents?: { items: DocumentListProps['items']; onUpload?: () => void; /** a file open in the Documents column */ preview?: DocPreviewProps }; dirty?: boolean; /** preview states */ confirming?: boolean; docsOpen?: boolean; onDone?: () => void; onClose?: () => void; children: ReactNode }
 /** A file open in the Documents column. highlight: only when opened from a FoundValue. */
@@ -124,4 +124,12 @@ export interface UpdatedHighlightProps { children: ReactNode }
 export interface AiMarkProps { size?: 'default' | 'small'; inverse?: boolean }
 /** Round status mark (never a control): done ink with a tick; open dashed ring; na grey dash. */
 export interface StateMarkProps { state: 'done' | 'open' | 'na'; size?: number }
+/** The full-screen workspace, create layout: content (max 880, aligned left) | side column 380. Below 1024 one column. AssetWindow is the fix/edit layout. */
+export interface WorkspaceProps { open?: boolean; inline?: boolean; height?: number; title: string; subtitle?: string; action: { label: string; onClick?: () => void; disabled?: boolean }; /** what's missing while the action is disabled, one thing at a time */ hint?: string; dirty?: boolean; question?: string; closeLabel?: string; confirming?: boolean; onClose?: () => void; side: ReactNode; sideLabel?: string; children: ReactNode }
+/** Choose assets from many. The whole row toggles. */
+export interface AssetPickerProps { items: { id: string; name: string; place?: string; type?: string }[]; selected: string[]; onToggle: (id: string) => void; onAll?: (on: boolean) => void; empty?: string; noun?: [string, string]; inLabel?: string }
+/** What's in the thing being made, in the side column. */
+export interface ChosenListProps { title: string; items: { id: string; name: string; place?: string; isNew?: boolean }[]; onRemove?: (id: string) => void; empty?: string; countLabel?: [string, string]; icon?: IconName }
+/** A small form that adds an item to a list. */
+export interface InlineFormProps { intro?: string; action: { label: string; icon?: IconName; onClick?: () => void; disabled?: boolean }; /** shown while the action is disabled */ needed?: string; /** confirmation after adding (role=status) */ done?: string; children: ReactNode }
 ```

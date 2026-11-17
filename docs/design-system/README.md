@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 49, 11 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 52, 12 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -182,6 +182,7 @@ The Ops package page, the Ops asset page, the AssetWindow (Fix assets, Edit asse
 - **Editing:** while an item is open for editing it still counts as Done; the asset doesn't turn blocked, and the side list and table don't change until Save or Cancel. A value item (address, usable roof area, roof covering) opens the edit box; a file item (consumption data, plans, roof drawings) opens its upload with Cancel. After saving a change on an asset that had moved on, its Estimate step line reads "Roof area changed · check the estimate".
 - **History:** every saved change becomes a Timeline event with the old value ("Usable roof area changed · 820 m² · from Kervelstraat_roof_2026.pdf · was 860 m²", "Usable roof area added · 1,150 m² · from Roof_layout_HH.pdf"), whoever made it, the assistant included.
 - **Side list lines:** the first blocking item ("Roof area · to confirm"); "Nothing blocking" for an asset with nothing open; "Ready for Estimate" for a ready asset in Fix assets.
+- **Workspace, create layout (12 Nov 2026):** New batch uses the same full-screen frame as Fix assets: content (at most 880, aligned left) | side column 380 on `black-1` with the batch's fields and its ChosenList. The action ("Create batch") is in the top bar; while it's disabled a hint before it says what's missing, one thing at a time. Finding assets: AssetPicker (Search, From files), UploadRow with the site-list wording, InlineForm (Add manually). Below 1024 one column; below 640 the close check wraps under the title and the hint hides. No Stepper and no Continue / Back footer on creation flows.
 - **Assistant button:** on Ops package and asset pages it sits in the DetailBar before Questions (inline, 36 high, no shadow). The assistant keeps the ink colours; no blue in the system.
 - **Documents** on the asset page list the files, with no drop zone. Files come in through Upload documents, an item's own upload, the drop zone in the AssetWindow's Documents column, or the assistant.
 

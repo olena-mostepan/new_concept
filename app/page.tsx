@@ -84,28 +84,41 @@ export default function HomePage() {
       </header>
 
       <main className="w-full max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-10 space-y-12">
-        <Link
-          href="/concept"
-          className="flex items-center justify-between gap-6 rounded-lg border-2 border-[var(--cq-accent)] bg-white p-6  hover:bg-[var(--cq-accent-muted)]"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-accent)]">New concept</p>
-            <p className="mt-1 text-lg font-semibold text-[#1E2832]">Batches, packages and assets — Ops</p>
-            <p className="text-sm text-[#4D5761]">The customer&apos;s pages plus what Ops does: create batches, add packages, fix assets, start estimates.</p>
-          </div>
-          <span className="btn-primary">Open concept</span>
-        </Link>
-        <Link
-          href="/concept/customer"
-          className="-mt-8 flex items-center justify-between gap-6 rounded-lg border border-[var(--border-dark)] bg-white p-6 hover:bg-[var(--black-1)]"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#4D5761]">New concept</p>
-            <p className="mt-1 text-lg font-semibold text-[#1E2832]">Customer version</p>
-            <p className="text-sm text-[#4D5761]">The same pages the way the customer sees them, in English or German.</p>
-          </div>
-          <span className="btn-secondary">Open customer version</span>
-        </Link>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Link
+            href="/concept"
+            className="flex flex-col justify-between gap-6 rounded-lg border-2 border-[var(--cq-accent)] bg-white p-6  hover:bg-[var(--cq-accent-muted)]"
+          >
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cq-accent)]">New concept</p>
+              <p className="mt-1 text-lg font-semibold text-[#1E2832]">Batches, packages and assets — Ops</p>
+              <p className="text-sm text-[#4D5761]">The customer&apos;s pages plus what Ops does: create batches, add packages, fix assets, start estimates.</p>
+            </div>
+            <span className="btn-primary self-start">Open concept</span>
+          </Link>
+          <Link
+            href="/concept/customer"
+            className="flex flex-col justify-between gap-6 rounded-lg border border-[var(--border-dark)] bg-white p-6 hover:bg-[var(--black-1)]"
+          >
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#4D5761]">New concept</p>
+              <p className="mt-1 text-lg font-semibold text-[#1E2832]">Customer version</p>
+              <p className="text-sm text-[#4D5761]">The same pages the way the customer sees them, in English or German.</p>
+            </div>
+            <span className="btn-secondary self-start">Open customer version</span>
+          </Link>
+          <Link
+            href="/concept/supplier"
+            className="flex flex-col justify-between gap-6 rounded-lg border border-[var(--border-dark)] bg-white p-6 hover:bg-[var(--black-1)]"
+          >
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#4D5761]">New concept</p>
+              <p className="mt-1 text-lg font-semibold text-[#1E2832]">Supplier version</p>
+              <p className="text-sm text-[#4D5761]">A tender the way an invited supplier sees it: overview, sites and documents, questions.</p>
+            </div>
+            <span className="btn-secondary self-start">Open supplier version</span>
+          </Link>
+        </div>
         <section>
           <h2 className="mb-1 text-lg font-semibold text-[#1E2832]">Portals</h2>
           <p className="mb-4 max-w-2xl text-sm text-[#4D5761]">

@@ -79,16 +79,21 @@ function Rail({ t }: { t: Tender }) {
         <Banner type="info" icon="info" title="Why you were invited" className="border-border-dark bg-bg-container-grey">
           {t.whyInvited}
         </Banner>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
-          {t.facts.map((f) => (
-            <div key={f.label} className="min-w-0">
-              <dt className="p7 text-text-tertiary">{f.label}</dt>
-              <dd className="mt-0.5 h8 text-text-primary">{f.value}</dd>
-              {f.note && <dd className="mt-0.5 p7 text-text-secondary">{f.note}</dd>}
-            </div>
-          ))}
-        </dl>
-        <div className="flex flex-col gap-3 border-t border-border-light pt-4">
+        <div className="flex flex-col">
+          <h2 className="s3 text-text-tertiary">Key facts</h2>
+          <dl className="mt-2 border-t border-border-light">
+            {t.facts.map((f) => (
+              <div key={f.label} className="flex items-baseline justify-between gap-4 border-b border-border-light py-2">
+                <dt className="p6 text-text-secondary">{f.label}</dt>
+                <dd className="text-right h8 text-text-primary">
+                  {f.estimate && <Est />}
+                  {f.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="flex flex-col gap-3 pt-2">
           <h2 className="s3 text-text-tertiary">How this tender runs</h2>
           <ol>
             {t.process.map((step, i) => (
@@ -356,13 +361,28 @@ function Find({
 
 /* ---------------------------------------------------------------- the job */
 
+/** "~" before an estimate. Hover shows "Estimate"; screen readers hear it. */
+function Est() {
+  return (
+    <>
+      <span aria-hidden title="Estimate" className="text-text-tertiary">~</span>
+      <span className="sr-only">Estimate: </span>
+    </>
+  );
+}
+
 function Cells({ rows, cols }: { rows: SpecRow[]; cols: number }) {
   return (
     <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
       {rows.map((r) => (
         <div key={r.label} className="flex flex-col gap-1 rounded-md border border-border-dark bg-bg-container-grey px-3.5 py-3">
           <span className="p7 text-text-tertiary">{r.label}</span>
-          <span className={r.note ? "h8 text-text-primary" : "p6 text-text-primary"}>{r.value}</span>
+          <span className={r.note || r.estimate || r.value.length < 24 ? "flex items-center gap-2 h8 text-text-primary" : "p6 text-text-primary"}>
+            <span>
+              {r.estimate && <Est />}
+              {r.value}
+            </span>
+          </span>
           {r.note && <span className="p7 text-text-secondary">{r.note}</span>}
         </div>
       ))}
@@ -373,8 +393,10 @@ function Cells({ rows, cols }: { rows: SpecRow[]; cols: number }) {
 function Chapter({ n, id, title, children }: { n: number; id: string; title: string; children: React.ReactNode }) {
   return (
     <section aria-labelledby={id} className="overflow-hidden rounded-lg border border-border-dark bg-bg-container">
-      <h2 id={id} className="flex items-baseline gap-2 px-5 pt-4 h7 text-text-primary">
-        <span className="text-text-tertiary">{n}</span>
+      <h2 id={id} className="flex items-center gap-2.5 px-5 pt-4 h7 text-text-primary">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border-dark bg-bg-container-grey h9 text-text-secondary">
+          {n}
+        </span>
         {title}
       </h2>
       <div className="flex flex-col gap-3 px-5 pb-5 pt-3">{children}</div>
@@ -453,7 +475,7 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
       <OfferCard t={t} cardRef={offerRef} />
       <Find t={t} onTab={onTab} onAsk={onAsk} />
 
-      <Chapter n={1} id="c-job" title={`The job: ${t.sites.length === 3 ? "three" : t.sites.length} seafront roofs`}>
+      <Chapter n={1} id="c-job" title="The job">
         <p className="p6 text-text-primary">{t.jobLead}</p>
         <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-start gap-3">
           <SiteMap t={t} onTab={onTab} />

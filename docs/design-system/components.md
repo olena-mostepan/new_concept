@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 52, 12 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 54, 17 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -22,6 +22,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [Checkbox](#checkbox)
 - [Chip](#chip)
 - [ChosenList](#chosenlist)
+- [CriteriaTile](#criteriatile)
 - [DetailBar](#detailbar)
 - [DetailsGrid](#detailsgrid)
 - [DocPreview](#docpreview)
@@ -39,6 +40,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [InlineForm](#inlineform)
 - [Input](#input)
 - [KeyFigure](#keyfigure)
+- [LinkRow](#linkrow)
 - [ListFooter](#listfooter)
 - [Modal](#modal)
 - [NeedsDecision](#needsdecision)
@@ -60,12 +62,16 @@ One section per component: its rules and what the consumer provides. The prototy
 - [ServiceCards](#servicecards)
 - [ServiceIcon](#serviceicon)
 - [ServicesBar](#servicesbar)
+- [SiteMap](#sitemap)
+- [SpecList](#speclist)
+- [StageList](#stagelist)
 - [StatusCard](#statuscard)
 - [Steps](#steps)
 - [SummaryCard](#summarycard)
 - [Table](#table)
 - [Tabs](#tabs)
 - [Tag](#tag)
+- [TenderRail](#tenderrail)
 - [Textarea](#textarea)
 - [Timeline](#timeline)
 - [Tooltip](#tooltip)
@@ -206,8 +212,15 @@ A message about the whole page or card: something failed, something is out of da
 - Errors say what went wrong and what to do: "We couldn't load the offers. Reload the page; if it keeps happening, tell your CQuel contact."
 - Not for "Your action": that's the pill and NeedsDecision.
 
+### Icon (v53)
+- `icon` (an icon name): a 16px icon replaces the 6px dot, top-aligned with the title (2 from the top).
+- The icon takes the status text tone (`status-info-text`, …; `icon-default` for `neutral`), so it reads at 4.5:1.
+- Use: "Why you were invited" on the supplier page (`info`, `info` icon). The dot stays the default.
+- A Banner's line may end in a link button ("Read the form") when the card is too narrow for an action on the right.
+- Plain information goes on `neutral` ("How CQuel is paid"), never on `info` or `warning` grounds.
+
 ### The consumer provides
-`type`, `title`, `children`, `action`.
+`type`, `title`, `children`, `action`, `icon`.
 
 ---
 
@@ -282,6 +295,12 @@ The one container: white, border-dark, radius-lg, no shadow, with an optional he
 
 ### Don't
 - No shadow, no coloured left border, no nested cards.
+
+### Additions (v53)
+- `count`: a number after the title in text-tertiary, regular weight ("Sites 3").
+- `subtitle`: a `p7` text-secondary line under the title ("Price on what you know. Say what you assumed.").
+- **The one card that needs you** (`accent`): a 4px `brand-6` top bar, together with the Your action pill and the page's `primary` Button. At most one per page. Supplier Overview: "Send an indicative offer". (The selected service filter card keeps its own 4px bar; both uses stand.)
+- Plain information goes in a plain Card or a `neutral` Banner, never on a status ground.
 
 ---
 
@@ -370,6 +389,23 @@ What's in the thing being made, in the create workspace's side column ("Assets" 
 
 ---
 
+## CriteriaTile
+
+How the supplier is chosen, as three tiles in a row.
+
+### Anatomy
+- Three in a row, 12 apart (pass `items` for the row). Each: white, `border-dark`, `radius-md`, padding 14/16.
+- A 24px icon in `icon-default` (`money`, `time`, `best`), 6 below it the title in `h8`, then a `p7` text-secondary line.
+- On narrow screens the tiles stack.
+
+### Rules
+- No weightings or scores unless the platform holds them.
+
+### The consumer provides
+`icon`, `title`, `text`; or `items: [{icon, title, text}]` for the row.
+
+---
+
 ## DetailBar
 
 The slim top bar on detail pages: Back on the left, the account tools on the right. It replaces the app header and section nav there.
@@ -390,6 +426,10 @@ The slim top bar on detail pages: Back on the left, the account tools on the rig
 ### The consumer provides
 `backHref` or `onBack`, `backLabel` ("Back" by default), and the tools as `children`.
 
+### Supplier variant (v53)
+- Back reads "Tenders" (`arrow-left`, `h8`) and goes to the supplier's tender list.
+- Right: the avatar only, initials on `black-7` (`avatar`). No account or company name, no Questions link: questions live in the tender's own tab.
+
 ---
 
 ## DetailsGrid
@@ -406,6 +446,11 @@ Label-over-value facts inside a card: contract details, this asset's figures on 
 
 ### The consumer provides
 `items`: `[{label, value, detail?, href?}]`.
+
+### In the grey panel (v53)
+- `panel` with `label`: the DetailsGrid sits in the grey panel (`bg-container-grey`, `radius-md`, padding 12/16/16) under an `s3` label.
+- Supplier "The contract": Customer decides · Contract with · Payment terms · CQuel commission, each with a `p7` detail.
+- For values that are sentences, use SpecList instead.
 
 ---
 
@@ -452,6 +497,8 @@ A document opened inside the AssetWindow's Documents column, so Ops can read the
 
 ### The consumer provides
 `items`: `[{name, type, meta, action: 'Download'|'View', href, onView?, viewHref?, state?: 'reading' | 'unknown', onChooseType}]`, `empty`.
+
+- **Build check (17 Nov):** the prototype renders View (`eye`) before Download when an item has a preview (`view: true` there; `onView` / `viewHref` here). No change.
 
 ---
 
@@ -616,6 +663,8 @@ An icon from the CQuel set, drawn in the current text colour.
 - `name`, `size`, `role`, `label`
 - Outside this design system, copy the SVGs into one folder and set `CQuelDS.iconBase = '/icons/'`.
 
+- **The full set ships with the prototype** (`public/icons`, all 93, 17 Nov). The supplier page uses `money`, `time`, `best` and `message`.
+
 ---
 
 ## IconButton
@@ -703,6 +752,23 @@ A number that is the point of its block (an estimate, a total).
 
 ### The consumer provides
 `value`, `label`, `size`.
+
+---
+
+## LinkRow
+
+A "go to another tab" row: a plain white card row that sends the person to another tab of the same page.
+
+### Anatomy
+- `border-dark`, `radius-lg`, padding 12/16, white. The title in `h8`, one `p7` text-secondary line, `chevron-right` (16, `icon-default`) on the right.
+- Hover `black-1`; keyboard focus is the black focus ring.
+
+### Rules
+- Never a tinted ground.
+- Supplier Overview: "Sites & documents", "3 sites on a map, their sizes and files, plus the design document, price template and commission form".
+
+### The consumer provides
+`title`, `text`, `onClick` or `href`.
 
 ---
 
@@ -1149,6 +1215,57 @@ The Overview's "Services" card: how many projects sit in each service, as one se
 
 ---
 
+## SiteMap
+
+The tender's sites on a simple map (supplier Sites & documents tab).
+
+### Anatomy
+- A `radius-lg` box with `border-dark`, at least 260 high, sharing a row with the "Documents for all sites" card (400 wide).
+- **Pins:** 20px `black-7` circles, the number in white `h9`, a 2px white border. Pins match the site numbers in the Sites table.
+- **Distance tag** top right: a white pill, `border-dark`, `p7` text-secondary ("41 miles from you").
+- Optional water band on one side with its `p7` text-tertiary name ("Irish Sea").
+
+### The consumer provides
+`sites: [{n, left, top}]` (positions in %), `distance`, `water: {width, label}`, `label` (the map's accessible name), `height`.
+
+---
+
+## SpecList
+
+Label | value rows for values that are sentences: "The job", "What to price and send", "Checked at the site visit", "Not known yet".
+
+### Anatomy
+- Two columns: the label in `h8` text-title (200 wide; 140 in a half-width card with `narrow`), the value in `p6`, an optional `p7` text-secondary note under the value ("CQuel is asking the customer").
+- Rows 12 top and bottom, a `border-light` rule between rows, 16 side padding. Flush in a Card (`flush`).
+
+### Rules
+- DetailsGrid stays for short facts (label over value). Use SpecList when a value is a sentence.
+- Two half-width SpecList cards in a row sit 16 apart and keep the same height.
+
+### The consumer provides
+`rows: [{label, value, note}]`, `narrow` or `labelWidth`.
+
+---
+
+## StageList
+
+The stages still to come, as a vertical list. On the supplier page: Indicative offer · Shortlist · Site visit · Final offer · Customer chooses.
+
+### Anatomy
+- Each row: a 12px dot, then the stage in `p6` (the current one in `h8`) with a `p7` text-secondary line under it. 16 between rows; a 2px `border-dark` line joins the dots.
+- **Current:** `brand-6` dot with a 3px `bg-accent` ring (orange: this needs you).
+- **Later:** white dot with a 2px `black-4` border.
+- **Done:** the done chip's look, black with a white tick.
+
+### Rules
+- Timeline stays for dated history. StageList is for what's coming and has no dates unless we hold them ("Now · due 9 May").
+- One current stage at most.
+
+### The consumer provides
+`stages: [{title, detail, state: 'done' | 'now' | 'next'}]`, `label` (defaults to "What happens next").
+
+---
+
 ## StatusCard
 
 On the package page, in PageHeader's aside: which service the package is in, and the one way into it.
@@ -1291,6 +1408,13 @@ Package, asset and project lists: a group header, column labels and light rows.
   - `blocking` cells are `{item, state, detail}` or empty; `recommended` cells `{count, names}`; `check` cells `true`/`false`.
 - Ops: `aside` (right of the title, the FilterChips), `toolbar` (the SelectionBar), `selectable`, `selected` (ids), `onSelect(ids)`; rows take `selectable: true` and `label` (the checkbox's name).
 
+### Supplier: the Sites table (v53)
+- Columns SITE · SYSTEM · DOCUMENTS · action. SITE is "<n> · <name>" with the address under it (`title` with detail); the number matches the SiteMap pin.
+- DOCUMENTS (`type: 'files'`): "2 files" in `p6`, the names under it in `p7` text-tertiary, and a download IconButton ("Download files for <site>").
+- Last column (`type: 'button'`): tertiary "View site" with `chevron-right` on the right.
+- The card header carries "Price all three. If you can't do one, say which in your quote." in `p7`.
+- **Row actions:** supplier tables may carry actions in rows (download, "View site"): suppliers come to take files away, and the per-site download is the job. Customer tables keep "no action buttons in rows".
+
 ---
 
 ## Tabs
@@ -1351,6 +1475,24 @@ Pills for categories and status. Types are named by meaning, never by colour.
 
 ### The consumer provides
 `children` (sentence case), `type`, `size`, `dot`.
+
+---
+
+## TenderRail
+
+The left column of the supplier tender page: what the tender is, why this supplier was invited, the supplier's status and what happens next.
+
+### Anatomy
+- 420 wide, on the page grey (`bg-container-grey`), padding 24/20/56/32, 16 between blocks. No card around the top block.
+- **Top:** `s3` "Tender · <service>" in text-tertiary, the title in `h6`, "For <customer>" in `p7` text-secondary.
+- **Why you were invited:** Banner `info` with the `info` icon. The one `info` Banner on the supplier page.
+- **Facts:** a 2-column grid of label-over-value facts (the DetailsGrid look, value in `h8`, optional `p7` note), 24 × 16 gaps, a `border-light` line above. At most four; leave out anything said elsewhere on the page.
+- **Status card** (Card): `s3` "Your status", the state in `h7`, the deadline in `p7`. A large `secondary` button with the main action, full width; under it, centred, "Not bidding? Decline this tender" in `p7` with the link in `h9`. Never a lone tertiary "Not for us".
+- **What happens next:** StageList inside the status card, under a `border-light` line, padding 16/20/16.
+- **How CQuel is paid:** Banner `neutral` (grey ground, grey dot), the line ending in the link "Read the form". Never a status colour for plain information.
+
+### The consumer provides
+`service`, `title`, `customer`, `why`, `facts: [{label, value, note}]` (max 4), `status: {label, detail}`, `action: {label, onClick | href}`, `onDecline` or `declineHref`, `stages` (StageList), `paid`, `formLink: {label, href | onClick}`.
 
 ---
 

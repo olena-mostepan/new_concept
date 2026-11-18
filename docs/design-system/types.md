@@ -11,11 +11,11 @@ export interface ButtonProps { /** strong: dark fill, the one way on from an ori
 export interface IconButtonProps { icon: IconName; label: string; type?: 'secondary' | 'tertiary'; size?: 'large' | 'default' | 'small'; href?: string; onClick?: () => void; disabled?: boolean }
 export interface TagProps { /** 'strong' is retired: don't use it in new screens */ type?: 'neutral' | 'accent' | 'strong' | 'info' | 'success' | 'warning' | 'danger'; size?: 'xsmall' | 'small' | 'big'; dot?: boolean; children: ReactNode }
 export interface ResponsibilityPillProps { owner: 'you' | 'cquel' | 'suppliers' | 'done'; /** 'customer' (default) renders only owner 'you' */ audience?: 'customer' | 'ops'; children?: ReactNode }
-export interface CardProps { title?: ReactNode; action?: ReactNode; flush?: boolean; /** grey strip under the body: a footer line and at most one link or button */ footer?: ReactNode; children: ReactNode; className?: string }
+export interface CardProps { /** the one card that needs you: 4px brand-6 top bar */ accent?: boolean; /** after the title, text-tertiary */ count?: number | string; /** p7 line under the title */ subtitle?: ReactNode; title?: ReactNode; action?: ReactNode; flush?: boolean; /** grey strip under the body: a footer line and at most one link or button */ footer?: ReactNode; children: ReactNode; className?: string }
 /** Same rule as PageHeader facts: label p7 tertiary, 2, value p6; min 160 wide, 40 apart, 16 between rows. detail: optional p7 third line, cards only. */
-export interface DetailsGridProps { items: { label: string; value: ReactNode; detail?: ReactNode; href?: string }[] }
+export interface DetailsGridProps { /** in the grey panel under an s3 label */ panel?: boolean; label?: string; items: { label: string; value: ReactNode; detail?: ReactNode; href?: string }[] }
 export interface KeyFigureProps { value: ReactNode; label: string; size?: 'big' | 'default' }
-export interface TableColumn { key: string; label?: string; width?: string; /** Ops: blocking {item, state, detail} | recommended {count, names} | check boolean */ type?: 'title' | 'text' | 'twoLines' | 'owner' | 'chevron' | 'action' | 'number' | 'blocking' | 'recommended' | 'check'; actionLabel?: string; /** twoLines: main line in h8 */ emphasis?: boolean }
+export interface TableColumn { key: string; label?: string; width?: string; /** Ops: blocking {item, state, detail} | recommended {count, names} | check boolean */ type?: 'title' | 'text' | 'twoLines' | 'owner' | 'chevron' | 'action' | 'number' | 'blocking' | 'recommended' | 'check' | 'files' | 'button'; actionLabel?: string; /** twoLines: main line in h8 */ emphasis?: boolean }
 /** A 'title' cell may be a string or {main, detail}: detail is a p7 text-tertiary meta line ("Flagship sites · 6 assets"). */
 export interface TableProps { title?: string; count?: number; /** accessible name when there's no title */ label?: string; /** text when there are no rows */ empty?: string; columns: TableColumn[]; rows: (Record<string, any> & { id?: string; changed?: boolean; href?: string; muted?: boolean; /** Ops: only ready rows */ selectable?: boolean; label?: string })[]; /** right of the title: FilterChips */ aside?: ReactNode; /** above the column labels: the SelectionBar */ toolbar?: ReactNode; selectable?: boolean; selected?: string[]; onSelect?: (ids: string[]) => void }
 export interface ChangedDotProps {}
@@ -70,11 +70,11 @@ export interface ServiceIconProps { service: ServiceId; size?: 116 | 72 }
 /** Package page aside: 'This package is in <service>' and the strong 'See …' button. */
 export interface StatusCardProps { service?: ServiceId; href?: string; onClick?: () => void; completed?: boolean; /** 'This package is Closed · <closedOn>', grey icon, no button */ closed?: boolean; closedOn?: string; /** Ops: '<n> assets need fixing first' and the strong 'Fix <n> assets' button instead of the service button */ fix?: { count: number; href?: string; onClick?: () => void } }
 /** Detail pages' top bar: Back on the left, account tools (children) on the right. Replaces the app header and section nav. */
-export interface DetailBarProps { backHref?: string; onBack?: () => void; backLabel?: string; children?: ReactNode }
+export interface DetailBarProps { /** supplier variant: initials on black-7, the only thing on the right */ avatar?: string; backHref?: string; onBack?: () => void; backLabel?: string; children?: ReactNode }
 export interface SummaryCardProps { label: string; value: ReactNode; line?: string; /** makes it a filter toggle */ onClick?: () => void; pressed?: boolean }
 export interface ListFooterProps { total: number; limit?: number; open: boolean; onOpen: () => void; /** shown after the total when open: "assets" */ noun?: string }
 export interface EmptyStateProps { children?: ReactNode; text?: string; action?: ReactNode; /** adds card padding */ inCard?: boolean }
-export interface BannerProps { type?: 'neutral' | 'info' | 'success' | 'warning' | 'danger'; title?: string; children?: ReactNode; action?: ReactNode }
+export interface BannerProps { /** 16px icon instead of the dot, in the status text tone */ icon?: IconName; type?: 'neutral' | 'info' | 'success' | 'warning' | 'danger'; title?: string; children?: ReactNode; action?: ReactNode }
 export interface ActivityListProps { items: { title: string; text?: string; date: string; aside?: string }[]; empty?: string }
 /** type: the file type tag ("PDF", "3 PDF", "12 XLS"). action: Download (download icon) or View (chevron, for a set). */
 export interface DocumentListProps { items: { name: string; type?: string; meta?: string; action?: 'Download' | 'View'; href?: string; onClick?: () => void; /** View (eye) before Download */ onView?: () => void; viewHref?: string; /** Ops: a file still being read, or one we couldn't type */ state?: 'reading' | 'unknown'; onChooseType?: () => void }[]; empty?: string }
@@ -132,4 +132,16 @@ export interface AssetPickerProps { items: { id: string; name: string; place?: s
 export interface ChosenListProps { title: string; items: { id: string; name: string; place?: string; isNew?: boolean }[]; onRemove?: (id: string) => void; empty?: string; countLabel?: [string, string]; icon?: IconName }
 /** A small form that adds an item to a list. */
 export interface InlineFormProps { intro?: string; action: { label: string; icon?: IconName; onClick?: () => void; disabled?: boolean }; /** shown while the action is disabled */ needed?: string; /** confirmation after adding (role=status) */ done?: string; children: ReactNode }
+/** Supplier tender page: the left column. */
+export interface TenderRailProps { service: string; title: string; customer?: string; why?: ReactNode; facts?: { label: string; value: ReactNode; note?: string }[]; status: { label: string; detail?: string }; action?: { label: string; onClick?: () => void; href?: string }; onDecline?: () => void; declineHref?: string; stages?: StageListProps['stages']; paid?: ReactNode; formLink?: { label?: string; href?: string; onClick?: () => void } }
+/** The stages still to come. One 'now' at most. */
+export interface StageListProps { stages: { title: string; detail?: string; state?: 'done' | 'now' | 'next' }[]; label?: string }
+/** Label | value rows for values that are sentences. */
+export interface SpecListProps { rows: { label: string; value: ReactNode; note?: string }[]; /** 140 label column in a half-width card */ narrow?: boolean; labelWidth?: number | string }
+/** How the supplier is chosen. Pass items for the row of three. */
+export interface CriteriaTileProps { icon?: IconName; title?: string; text?: string; items?: { icon: IconName; title: string; text?: string }[] }
+/** "Go to another tab": a plain white card row. */
+export interface LinkRowProps { title: string; text?: string; onClick?: () => void; href?: string }
+/** Numbered site pins; numbers match the Sites table. */
+export interface SiteMapProps { sites: { n: number; left: number; top: number }[]; distance?: string; water?: { width?: string; label?: string }; label?: string; height?: number }
 ```

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 52, 12 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 54, 17 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -185,6 +185,29 @@ The Ops package page, the Ops asset page, the AssetWindow (Fix assets, Edit asse
 - **Workspace, create layout (12 Nov 2026):** New batch uses the same full-screen frame as Fix assets: content (at most 880, aligned left) | side column 380 on `black-1` with the batch's fields and its ChosenList. The action ("Create batch") is in the top bar; while it's disabled a hint before it says what's missing, one thing at a time. Finding assets: AssetPicker (Search, From files), UploadRow with the site-list wording, InlineForm (Add manually). Below 1024 one column; below 640 the close check wraps under the title and the hint hides. No Stepper and no Continue / Back footer on creation flows.
 - **Assistant button:** on Ops package and asset pages it sits in the DetailBar before Questions (inline, 36 high, no shadow). The assistant keeps the ink colours; no blue in the system.
 - **Documents** on the asset page list the files, with no drop zone. Files come in through Upload documents, an item's own upload, the drop zone in the AssetWindow's Documents column, or the assistant.
+
+## Supplier screens
+
+What an invited supplier sees: one tender at a time (Overview, Sites & documents, Questions). Example: Solar PV on 3 roofs in Blackpool, for Blackpool Pleasure Beach.
+
+- **Same system.** The same tokens, type and orange rule: orange means "this needs you": the supplier's offer card, the Your action pill, the `now` chip, the current stage dot.
+- **Words:** tender, site (a supplier never sees "asset", "package" or "batch"), indicative offer, final offer, site visit, commission. British English, £.
+- **Responsibility** is only "Your action", as on customer screens.
+- **Layout:** DetailBar (supplier variant: "Tenders", avatar only) over a two-column page: the TenderRail (420, on the page grey) and the tabs on the right, a `border-dark` rule between them.
+- **Overview, in this order:**
+  1. The offer card, the one card that needs you (Card `accent`): Your action pill, "Round 1 of 2 · due 9 May", the title in `h6`, one line, "Ask a question" (`secondary`) and "Upload your quote" (`primary`, `upload` icon); Steps (Upload your quote · Check what we read · Send it) with `p7` notes; a `p7` footer line with "See the terms".
+  2. The job (SpecList).
+  3. What to price and send (SpecList, "Round 1" in the header).
+  4. Checked at the site visit | Not known yet: two half-width SpecList cards, 16 apart, same height. "Not known yet" carries "Price on what you know. Say what you assumed." under its title.
+  5. Sites & documents (LinkRow).
+  6. How the customer chooses, and the contract: CriteriaTiles, then the contract facts (DetailsGrid in the grey panel).
+- **Sites & documents:** SiteMap beside "Documents for all sites" (DocumentList in a 400-wide Card, "Download everything" as a link in the header); then the Sites table with per-site download and "View site".
+- **Questions:** "Ask a question": FormField + Select ("About": the whole tender, each site, commission and contract), FormField + Textarea ("Your question"), a `p7` line "We reply here and by email." and a `secondary` "Send question" (disabled until there is text). Then "Questions and answers (0)" with EmptyState "No questions yet".
+- **Decided rules (Olena, 17 Nov):**
+  - **The one card that needs you:** a page may mark the one card where the person acts with a 4px `brand-6` top bar, together with the Your action pill and the page's `primary` Button. At most one per page. The selected service filter card keeps its own 4px bar; both uses stand.
+  - **Status colours stay for state.** Plain information goes on Banner `neutral` or a plain Card, never on `status-warning` or `status-info` grounds. "Why you were invited" is the one `info` Banner on the supplier page.
+  - **"Go to another tab" rows** are a plain white LinkRow, never a tinted ground.
+  - **Row actions on supplier screens:** supplier tables may carry actions in rows (download, "View site ›"). Suppliers come to take files away; the per-site download is the job. Customer tables keep "no action buttons in rows".
 
 ## Page furniture
 

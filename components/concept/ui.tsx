@@ -1660,11 +1660,14 @@ export function Banner({
   children,
   action,
   icon,
+  className,
 }: {
   type: keyof typeof BANNER_MARK;
   title: string;
   children?: ReactNode;
   action?: ReactNode;
+  /** Ground override, e.g. a quiet grey ground on a tinted header (supplier "Why you were invited"). */
+  className?: string;
   /** Optional 16px icon in the status mark colour, in place of the 6px dot. Proposed to the DS (supplier "Why you were invited"). */
   icon?: string;
 }) {
@@ -1673,6 +1676,7 @@ export function Banner({
       className={cn(
         "flex gap-3 rounded-md border px-4 py-3",
         BANNER_SHELL[type],
+        className,
       )}
     >
       {icon ? (

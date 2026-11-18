@@ -28,8 +28,26 @@ export interface SupplierSite {
   pin: { left: number; top: number };
 }
 
+export interface FindEntry {
+  text: string;
+  source: string;
+  action: "open" | "download";
+  tab?: "overview" | "sites" | "questions";
+}
+
 export interface SupplierTender {
   id: string;
+  icon3d?: string;
+  process: Array<{ title: string; detail: string; now?: boolean }>;
+  jobLead: string;
+  jobCells: SpecRow[];
+  seafront: string;
+  map: { image: string; credit: string; width: number; height: number };
+  findSuggestions: string[];
+  priceCells: SpecRow[];
+  openCells: SpecRow[];
+  contractLine: string;
+  findIndex: FindEntry[];
   service: string;
   title: string;
   customer: string;
@@ -51,6 +69,8 @@ export interface SupplierTender {
   sitesHint: string;
   distance: string;
   sites: SupplierSite[];
+  /** Total files across sites and shared documents. */
+  fileCount: number;
   sharedDocs: Doc[];
   questionTopics: string[];
 }
@@ -58,6 +78,48 @@ export interface SupplierTender {
 export const SUPPLIER_TENDERS: SupplierTender[] = [
   {
     id: "blackpool-pv",
+    icon3d: "/concept/supplier/solar-3d.png",
+    process: [
+      { title: "Indicative offer", detail: "All invited suppliers · now", now: true },
+      { title: "Shortlist", detail: "CQuel tells everyone either way" },
+      { title: "Site visit", detail: "Shortlisted suppliers see the roofs" },
+      { title: "Final offer", detail: "Updated after the visit" },
+      { title: "Customer chooses", detail: "After the final offers" },
+    ],
+    jobLead: "Roof-mounted PV on two seafront hotels and a restaurant, fitted while the park is quiet.",
+    jobCells: [
+      { label: "The two hotels", value: "About 125 and 115 kWp", note: "Burger King sized on site" },
+      { label: "Expected generation", value: "About 380,000 kWh a year", note: "Estimate" },
+      { label: "Roof space", value: "2,475 m²", note: "Across the three sites" },
+      { label: "Safety rules", value: "Building Safety Act 2022", note: "CDM 2015" },
+    ],
+    seafront: "Seafront: say how you protect panels, frames and fixings from salt air.",
+    map: { image: "/concept/supplier/map-blackpool.jpg", credit: "© OpenStreetMap contributors", width: 800, height: 347 },
+    priceCells: [
+      { label: "Included", value: "Design to handover, grid connection, maintenance" },
+      { label: "Not included", value: "PPA financing, arranged separately" },
+      { label: "Send us", value: "Your quote with a total. We read start, duration and warranties from it." },
+    ],
+    openCells: [
+      { label: "CQuel is asking the customer", value: "Export limit and DNO position · roof type, age, asbestos, ownership" },
+      { label: "Checked at the site visit", value: "Roof strength · Burger King size · access hours · finish date" },
+    ],
+    contractLine: "Contract with the customer, or the PPA provider if it finances the work. Payment terms are agreed after the site visit.",
+    findSuggestions: ["Export limit", "Not in my price", "Roof space", "Warranties"],
+    findIndex: [
+      { text: "Roof space: 2,475 m² across the three sites", source: "The job · Overview", action: "open", tab: "overview" },
+      { text: "Drawings and roof layouts", source: "ZIP · Boulevard Hotel, Big Blue Hotel, Burger King", action: "download", tab: "sites" },
+      { text: "Roof type, age, asbestos and ownership: not known yet, CQuel is asking the customer", source: "What nobody knows yet · Overview", action: "open", tab: "overview" },
+      { text: "Roof strength is checked at the site visit", source: "What nobody knows yet · Overview", action: "open", tab: "overview" },
+      { text: "Export limit and DNO position: not known yet, CQuel is asking the customer", source: "What nobody knows yet · Overview", action: "open", tab: "overview" },
+      { text: "Not in your price: PPA financing, arranged separately", source: "What you price · Overview", action: "open", tab: "overview" },
+      { text: "Included: design to handover, grid connection, maintenance", source: "What you price · Overview", action: "open", tab: "overview" },
+      { text: "Warranties: we read them from your quote", source: "What you price · Overview", action: "open", tab: "overview" },
+      { text: "Expected generation: about 380,000 kWh a year (estimate)", source: "The job · Overview", action: "open", tab: "overview" },
+      { text: "Half-hourly data (electricity use)", source: "XLSX · Boulevard Hotel", action: "download", tab: "sites" },
+      { text: "Project Commission Form: CQuel's commission on work you win", source: "PDF · Documents for all sites", action: "download", tab: "sites" },
+      { text: "Safety rules: Building Safety Act 2022, CDM 2015", source: "The job · Overview", action: "open", tab: "overview" },
+    ],
     service: "Solar PV",
     title: "Solar PV on 3 roofs in Blackpool",
     customer: "Blackpool Pleasure Beach",
@@ -73,13 +135,13 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     round: { label: "Round 1 of 2", due: "due 9 May" },
     offer: {
       title: "Send an indicative offer",
-      text: "A first price from the information here. It isn't binding: you update it after the site visit.",
+      text: "Upload your quote with one total for every site. It isn't binding: you update it after the site visit.",
       footer: "About 10 minutes to upload · Commission only on work you win",
     },
     offerSteps: [
-      { key: "upload", label: "Upload your quote", text: "PDF or Excel. One total price for the three sites is enough." },
-      { key: "check", label: "Check what we read", text: "Price, start date, how long the work takes, warranties." },
-      { key: "send", label: "Send it", text: "Edit it until 9 May. Update it after the site visit." },
+      { key: "upload", label: "Upload your quote", text: "PDF or Excel, about 10 minutes" },
+      { key: "check", label: "Check what we read", text: "Price, start, duration, warranties" },
+      { key: "send", label: "Send it", text: "You can edit it until the deadline" },
     ],
     next: [
       { title: "Indicative offer", detail: "Now · due 9 May", now: true },
@@ -88,7 +150,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { title: "Final offer", detail: "Your quote, updated" },
       { title: "Customer chooses" },
     ],
-    paid: "You pay CQuel a commission only on work you win. It's set out in the Project Commission Form, which you sign before the site visit.",
+    paid: "A commission only on work you win, set out in the Project Commission Form. You sign it before the site visit.",
     priceAndSend: [
       { label: "Your price covers", value: "Surveys, design, permits and grid connection, supply and installation, access and making good, testing and handover, maintenance" },
       { label: "Not in your price", value: "PPA financing. The customer buys the power through a PPA, arranged separately." },
@@ -116,9 +178,9 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { label: "Roofs", value: "Type, age, asbestos and building ownership", note: "CQuel is asking the customer" },
     ],
     criteria: [
-      { icon: "money", title: "Price", text: "Your total for the three sites" },
-      { icon: "time", title: "Timing", text: "When you can start and how long it takes" },
-      { icon: "best", title: "Quality of your offer", text: "Warranties, kit, seafront protection, case studies" },
+      { icon: "money", title: "Price", text: "Your total for every site" },
+      { icon: "time", title: "Timing", text: "Start and how long it takes" },
+      { icon: "best", title: "Quality", text: "Warranties, kit, seafront protection" },
     ],
     contract: [
       { label: "Customer decides", value: "After the final offers" },
@@ -126,6 +188,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { label: "Payment terms", value: "Agreed in the contract", note: "After the site visit" },
       { label: "CQuel commission", value: "Only on work you win", note: "A percentage of contract value" },
     ],
+    fileCount: 7,
     sitesHint: "Price all three. If you can't do one, say which in your quote.",
     distance: "41 miles from you",
     sites: [
@@ -139,7 +202,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
           { name: "Half-hourly data", type: "XLSX", meta: "electricity use", action: "Download" },
           { name: "Drawings", type: "ZIP", meta: "roof layouts and photos", action: "Download" },
         ],
-        pin: { left: 46, top: 26 },
+        pin: { left: 51, top: 12 },
       },
       {
         n: 2,
@@ -148,7 +211,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
         system: "About 115 kWp",
         systemNote: "Estimate",
         files: [{ name: "Drawings", type: "ZIP", meta: "roof layouts and photos", action: "Download" }],
-        pin: { left: 52, top: 48 },
+        pin: { left: 52, top: 86 },
       },
       {
         n: 3,
@@ -156,7 +219,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
         address: "525 Promenade, Blackpool FY4 1EZ",
         system: "Sized at the site visit",
         files: [{ name: "Drawings", type: "ZIP", meta: "roof layouts and photos", action: "Download" }],
-        pin: { left: 44, top: 68 },
+        pin: { left: 40, top: 16 },
       },
     ],
     sharedDocs: [

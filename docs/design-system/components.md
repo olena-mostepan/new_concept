@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 57, 18 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 58, 18 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -222,7 +222,7 @@ A message about the whole page or card: something failed, something is out of da
 ### Icon (v53)
 - `icon` (an icon name): a 16px icon replaces the 6px dot, top-aligned with the title (2 from the top).
 - The icon takes the status text tone (`status-info-text`, …; `icon-default` for `neutral`), so it reads at 4.5:1.
-- Use: "Why you were invited" on the supplier page (`info`, `info` icon). The dot stays the default.
+- `neutral` with an icon is allowed: a grey ground (`bg-container-grey`, 1px `border-dark`) with the icon in `icon-default`, for something that explains rather than flags a state. Use: "Why you were invited" on the supplier page (`neutral`, `info` icon, C3 18 Nov). The dot stays the default.
 - A Banner's line may end in a link button ("Read the form") when the card is too narrow for an action on the right.
 - Plain information goes on `neutral` ("How CQuel is paid"), never on `info` or `warning` grounds.
 
@@ -338,7 +338,7 @@ A story card on the supplier Overview. (C3, 18 Nov 2026.)
 - Each chapter is a lead line and 2–4 InfoCells, nothing longer. Details live in the Sites & documents tab or behind a link.
 
 ### Supplier Overview chapters, in order
-1. **The job** ("The job: seafront roofs"): a lead line (16/24), four InfoCells (the two hotels · expected generation · roof space · safety rules), the SiteMap, then the seafront note (`p7`) and "Sites & documents · 3 sites, 7 files ›" (`tertiary`).
+1. **The job** ("The job: seafront roofs"): a lead line (16/24); the SiteMap and four InfoCells side by side, 3fr map to 2fr cells, the cells in a 2 × 2 grid (the two hotels · expected generation · roof space · safety rules; wrap them in `cq-jobgrid`); then the seafront note (`p7`) and "Sites & documents · 3 sites, 7 files ›" (`tertiary`).
 2. **What you price:** three InfoCells (Included · Not included · Send us).
 3. **What nobody knows yet:** "Price on what you know and say what you assumed. These are settled later:" and two InfoCells (CQuel is asking the customer · Checked at the site visit).
 4. **How the customer chooses:** three InfoCells with icons (Price · Timing · Quality), then a `p7` line on the contract with a link to the Commission Form.
@@ -765,7 +765,7 @@ A small grey box inside a Chapter. (C3, 18 Nov 2026.)
 
 ### Layout
 Equal columns, 12 apart (pass `items` and `cols`); one column on narrow screens.
-- Four for job facts: the two hotels · expected generation · roof space · safety rules.
+- The job: beside the map (3fr map, 2fr cells), the cells in a 2 × 2 grid: the two hotels · expected generation · roof space · safety rules.
 - Three for price (Included · Not included · Send us) and criteria (Price · Timing · Quality, with icons).
 - Two for open items (CQuel is asking the customer · Checked at the site visit).
 
@@ -940,7 +940,7 @@ The one card that needs you on the supplier Overview: what the supplier has to d
 ### Anatomy
 - White, `border-dark`, `radius-lg`, the 4px `brand-6` top bar (the one card that needs you, agreed 17 Nov), padding 20/24, 16 between parts.
 - Left: the ResponsibilityPill "Your action" and `s3` "Due 9 May"; the title in `h6` ("Send an indicative offer"); one `p6` text-secondary line ("Upload your quote with one total for every site. It isn't binding: you update it after the site visit.").
-- Right: `primary` large "Upload your quote" (`upload` icon); under it "Not bidding? Decline this tender" in `p7`, the link at 14px (`p6`).
+- Right: `primary` large "Upload your quote" (`upload` icon); under it the `p6` sentence "Not bidding? Decline this tender", the link in `h8` inside the sentence (14px, never 12).
 - **Steps** (Chip track): Upload your quote (`now`) · Check what we read · Send it, each with a `p7` note. These are the supplier's own steps only; the tender's stages are the StageList in the rail.
 
 ### Rules
@@ -1333,9 +1333,9 @@ The Overview's "Services" card: how many projects sit in each service, as one se
 The tender's sites on a real, interactive map. (C3, 18 Nov 2026; replaces the 17 Nov drawn map.)
 
 ### Anatomy
-- A real map image (OpenStreetMap) keeping its aspect ratio, `radius-md`, `border-light`. "© OpenStreetMap contributors" bottom left on 85% white. In the build it should become a live map with real coordinates.
+- A real map image (OpenStreetMap) keeping its aspect ratio, `radius-md`, `border-light`. It sits beside the job's InfoCells (3fr map, 2fr cells), not full width, so it isn't too tall. "© OpenStreetMap contributors" bottom left on 85% white. In the build it should become a live map with real coordinates.
 - **Pins** are buttons named "Site <n>, <name>": 24px `black-7` circles with a white `h9` number and a 2px white border. The selected pin is 28px with a 3px ink ring. Never orange: a selected pin is "selected", not "needs you".
-- **SitePopover** (a pin's click): white, `border-dark`, `radius-md`, `elevation-floating`, 240 wide: "<n> · <name>" (`h8`) with a small Close IconButton, the address (`p7`), the size (`p6`), and "<n> files ›" which opens Sites & documents. It opens beside the pin and never covers another pin (it tries right, left, then above or below).
+- **SitePopover** (a pin's click; nothing is open by default): white, `border-dark`, `radius-md`, `elevation-floating`, 240 wide: "<n> · <name>" (`h8`) with a small Close IconButton, the address (`p7`), the size (`p6`), and "<n> files ›" which opens Sites & documents. It opens beside the pin and never covers another pin: it tries right, left, below and above inside the map, and when none fits it reaches up to 64 past the map's edge instead.
 - **Distance tag** top right: white pill, `border-dark`, `p7` text-secondary ("41 miles from you").
 
 ### Rules
@@ -1353,11 +1353,11 @@ One 3D illustration per solution (solar PV, heat pump, EV charging, LED, …), t
 
 ### Rules
 - Used only in the TenderRail header: 112px inside a 150px white circle at 55% opacity. Never in tabs, tables, chips or nav.
-- Files: asset group "Solutions" here; `public/icons/services/` in the prototype (solar, heat pump, EV charging and LED delivered 18 Nov).
+- Files: asset group "Solutions" here; `public/icons/services/` in the prototype: `solar-pv.png`, `heat-pump.png`, `ev-charging.png`, `led.png` (delivered 18 Nov).
 - Decorative: empty alt, hidden from screen readers. The solution's name is in the text next to it.
 
 ### The consumer provides
-`solution`: `'solar' | 'heat-pump' | 'ev-charging' | 'led'` (or `src`), `size` (112 by default). Outside this design system, set `CQuelDS.solutionIconBase` to the folder with `<solution>.png`.
+`solution`: `'solar-pv' | 'heat-pump' | 'ev-charging' | 'led'` (`'solar'` still works; or `src`), `size` (112 by default). Outside this design system, set `CQuelDS.solutionIconBase` to the folder with `<solution>.png`.
 
 ---
 
@@ -1469,18 +1469,22 @@ The product uses one list per service (from `lib/concept/model.ts`):
 
 ## StickyActionBar
 
-The offer's action when the OfferCard has scrolled out of view. (C3, 18 Nov 2026.)
+The offer's action while the OfferCard is out of view: a full-width bar fixed to the bottom of the window. (C3, 18 Nov 2026; replaces the floating card version, which Olena found too small and odd.)
 
 ### Anatomy
-- Sticky 16 from the bottom of the content column. White, `border-dark`, `radius-lg`, `elevation-floating`, padding 10/12/10/20.
-- Left: the `now` chip ("Indicative offer") and "Due 9 May" in `p6` text-secondary. Right: `primary` "Upload your quote".
+- Fixed to the bottom of the window, full width: white, a 1px `border-dark` line on top, a soft upward shadow (`0 -8px 24px rgba(30,40,50,.08)`), 72 high.
+- Its content sits in the same 1536 page column as the top bar, with 32 padding:
+  - Left: ResponsibilityPill "Your action", then the stage title in `h8` ("Send an indicative offer") over a `p7` text-secondary line ("Due 9 May · not binding, you update it after the site visit").
+  - Right: the `link` "Decline this tender", then the `primary` large "Upload your quote" (`upload` icon).
 
-### Rules
-- Shows when the OfferCard is out of view (IntersectionObserver), hides when it's back. It never shows at the same time as the OfferCard, so there is still one primary in view.
-- While hidden it is `aria-hidden` and its button is disabled.
+### Behaviour
+- Slides up (200ms) when the OfferCard scrolls out of view (IntersectionObserver, the top bar's 64 as the margin) and slides back down when the card returns. No slide with reduced motion.
+- It never shows at the same time as the OfferCard, so there is still one primary in view.
+- While hidden it's `aria-hidden`, can't be clicked and its buttons are disabled.
+- The main column keeps 112 bottom padding so the bar never covers the last card.
 
 ### The consumer provides
-`targetId` (the OfferCard's id; the bar watches it) or `show`, `stage`, `due`, `action: {label, onClick | href}`. `inline` draws it in place for previews.
+`targetId` (the OfferCard's id; the bar watches it) or `show`, `title`, `line`, `onDecline` or `declineHref`, `action: {label, onClick | href}`. `inline` draws it in place for previews.
 
 ---
 
@@ -1637,17 +1641,17 @@ The left column of the supplier tender page. The tender is the parent: the rail 
 ### Anatomy
 - 400 wide, white (`bg-container`), a `border-dark` line on the right.
 - **Header band:** `status-info-bg` with a `status-info-border` line under it, padding 24/32/20.
-  - Top right, a SolutionIcon3D (112) in a 150px white circle at 55% opacity, bleeding off the top-right corner.
+  - Top right, a SolutionIcon3D (112) in a 150px white circle at 55% opacity, bleeding off the top-right corner and clipped by the band. The band stops at the rail's edge; it never runs into the page margin.
   - Under it, 56 from the top: `s3` "Tender · <solution>" in text-tertiary, the title in `h6`, "For <customer>" in `p7` text-secondary.
 - **Body,** padding 20/32/56, 16 between blocks:
-  1. Banner `info` with the `info` icon: "Why you were invited".
+  1. "Why you were invited": Banner `neutral` with the `info` icon (`bg-container-grey`, 1px `border-dark`; not the blue info ground). It explains, it doesn't flag a state.
   2. Facts: a 2-column grid, label `p7` text-tertiary over value `h8`, optional `p7` note; 24 × 16 gaps. At most four. A fact said elsewhere on the page is left out.
   3. "How this tender runs": StageList under an `s3` label and a `border-light` line.
   4. "How CQuel is paid": InfoCard `warm` with "Read the Commission Form".
 - **No status block and no action** in the rail. Status and actions live on the right (OfferCard, StickyActionBar).
 
 ### The consumer provides
-`solution` (SolutionIcon3D key) or `iconSrc`, `service` (the solution's name), `title`, `customer`, `why`, `facts: [{label, value, note}]` (max 4), `stages` (StageList), `paid`, `formLink: {label?, href | onClick}`.
+`solution` (SolutionIcon3D key, e.g. 'solar-pv') or `iconSrc`, `service` (the solution's name), `title`, `customer`, `why`, `facts: [{label, value, note}]` (max 4), `stages` (StageList), `paid`, `formLink: {label?, href | onClick}`.
 
 ---
 

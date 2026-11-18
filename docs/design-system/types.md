@@ -97,9 +97,9 @@ export interface PackageCardProps { name?: string; service?: ServiceId; complete
 /* ---------- Ops asset setup (v42) ---------- */
 export interface FoundValueProps { value: string; file: string; page?: number | string; /** the file's own words */ quote?: string; /** View: eye IconButton, opens the DocPreview at the page */ viewHref?: string; onView?: () => void; /** actions on the right: Use, Enter another */ children?: ReactNode }
 /** edit: a value item's edit box; editfile: a file item's upload + Cancel. Both still count as done. */
-export type RequirementState = 'done' | 'confirm' | 'disagree' | 'nofile' | 'missing' | 'na' | 'edit' | 'editfile';
-export interface RequirementRowProps { hint?: string; name: string; state: RequirementState; required?: boolean; value?: string; source?: string; unit?: string; found?: FoundValueProps; options?: FoundValueProps[]; uploadLabel?: string; placeholder?: string;
-  edit?: { value?: string; sources?: string[]; source?: string; /** "860 m² · from Kervelstraat_plans.pdf, page 1" */ was?: string; /** shown when the asset has moved on */ warning?: { title: string; text: ReactNode } };
+export type RequirementState = 'open' | 'done' | 'confirm' | 'disagree' | 'nofile' | 'missing' | 'na' | 'edit' | 'editfile';
+export interface RequirementRowProps { /** C4: overrides the line under the name */ line?: string; /** missing: the input (420) under the name */ inputBelow?: boolean; /** done/open without Edit; open shows action */ readonly?: boolean; action?: ReactNode; hint?: string; name: string; state: RequirementState; required?: boolean; value?: string; source?: string; unit?: string; found?: FoundValueProps; options?: FoundValueProps[]; uploadLabel?: string; placeholder?: string;
+  edit?: { /** C4: 'value' = value, Save, Cancel; 'list' = sites checklist */ kind?: 'value' | 'list'; placeholder?: string; items?: { id: string | number; label: string }[]; selected?: (string | number)[]; noun?: [string, string]; title?: string; value?: string; sources?: string[]; source?: string; /** "860 m² · from Kervelstraat_plans.pdf, page 1" */ was?: string; /** shown when the asset has moved on */ warning?: { title: string; text: ReactNode } };
   onUse?: (found?: FoundValueProps) => void; onEnterAnother?: () => void; onUpload?: () => void; onNotAvailable?: () => void; onSave?: (value?: string) => void; onUndo?: () => void; onEdit?: () => void; onCancel?: () => void }
 /** s3 header with a count: "Blocking the next step · 1" */
 export interface RequirementGroupProps { label: string; count?: number; /** after the count: 'open', 'missing', or ['file', 'files'] */ countLabel?: string | [string, string]; /** pill text instead of the count */ pill?: string; /** Blocking group: accent pill while count > 0 */ urgent?: boolean; children: ReactNode }
@@ -133,7 +133,7 @@ export interface ChosenListProps { title: string; items: { id: string; name: str
 /** A small form that adds an item to a list. */
 export interface InlineFormProps { intro?: string; action: { label: string; icon?: IconName; onClick?: () => void; disabled?: boolean }; /** shown while the action is disabled */ needed?: string; /** confirmation after adding (role=status) */ done?: string; children: ReactNode }
 /** Supplier tender page (C3): the left column, the tender as parent. No status or action. */
-export interface TenderRailProps { solution?: 'solar' | 'heat-pump' | 'ev-charging' | 'led' | string; iconSrc?: string; service: string; title: string; customer?: string; why?: ReactNode; facts?: { label: string; value: ReactNode; note?: string }[]; stages?: StageListProps['stages']; paid?: ReactNode; formLink?: { label?: string; href?: string; onClick?: () => void } }
+export interface TenderRailProps { solution?: 'solar-pv' | 'heat-pump' | 'ev-charging' | 'led' | string; iconSrc?: string; service: string; title: string; customer?: string; why?: ReactNode; facts?: { label: string; value: ReactNode; note?: string }[]; stages?: StageListProps['stages']; paid?: ReactNode; formLink?: { label?: string; href?: string; onClick?: () => void } }
 /** How the tender runs, for everyone. Only in the TenderRail. One 'now' at most. */
 export interface StageListProps { stages: { title: string; detail?: string; state?: 'done' | 'now' | 'next' }[]; label?: string }
 /** Label | value rows for values that are sentences. */
@@ -145,17 +145,17 @@ export interface LinkRowProps { title: string; text?: string; onClick?: () => vo
 /** A real map with numbered pin buttons and a SitePopover; pins match the Sites table. */
 export interface SiteMapProps { image?: string; width?: number; height?: number; credit?: string; sites: { n: number; name?: string; address?: string; size?: string; files?: number; left: number; top: number }[]; distance?: string; onFiles?: (n: number) => void; defaultOpen?: number; water?: { width?: string; label?: string }; label?: string }
 /** 3D illustration per solution. Only in the TenderRail header. */
-export interface SolutionIcon3DProps { solution: 'solar' | 'heat-pump' | 'ev-charging' | 'led' | string; src?: string; size?: number }
+export interface SolutionIcon3DProps { solution: 'solar-pv' | 'heat-pump' | 'ev-charging' | 'led' | string; src?: string; size?: number }
 /** Plain information with one secondary action. */
 export interface InfoCardProps { tone?: 'warm'; title: string; children?: ReactNode; action?: { label: string; href?: string; onClick?: () => void } }
-/** The one card that needs you on the supplier Overview. */
-export interface OfferCardProps { id?: string; due?: string; title: string; text?: string; action?: { label: string; icon?: IconName; onClick?: () => void; href?: string }; onDecline?: () => void; declineHref?: string; steps?: { label: string; note?: string; state?: 'done' | 'now' | 'next' }[]; cardRef?: any }
-/** The offer's action while the OfferCard is out of view. */
-export interface StickyActionBarProps { targetId?: string; show?: boolean; stage: string; due?: string; action: { label: string; icon?: IconName; onClick?: () => void; href?: string }; inline?: boolean }
+/** The supplier's indicative offer, upload to sent, in one card. Only start/reading/check need you. */
+export interface OfferCardProps { state?: 'start' | 'reading' | 'check' | 'sent'; editing?: boolean; id?: string; cardRef?: any; due?: string; title: string; text?: string; action?: { label: string; icon?: IconName; onClick?: () => void; href?: string }; onDecline?: () => void; declineHref?: string; file?: { name: string; meta?: string }; progress?: number; onCancel?: () => void; onReplace?: () => void; children?: ReactNode; openCount?: number; onSend?: () => void; onCancelEdit?: () => void; summary?: InfoCellProps[]; reads?: { ok: boolean; title: string; text?: string; action?: { label: string; onClick?: () => void; href?: string } }[]; onView?: () => void; viewHref?: string; onEdit?: () => void; sentText?: string; steps?: { label: string; note?: string }[] }
+/** Full-width bar fixed to the window's bottom while the OfferCard is out of view. */
+export interface StickyActionBarProps { targetId?: string; show?: boolean; title: string; line?: string; onDecline?: () => void; declineHref?: string; action: { label: string; icon?: IconName; onClick?: () => void; href?: string }; rootMargin?: string; inline?: boolean }
 /** Find it in this tender; nothing found becomes a question. */
 export interface FindFieldProps { index: { text: string; source: string; action?: 'open' | 'download'; onClick?: () => void }[]; suggestions?: string[]; onAsk?: (text: string) => void; onOpenQuestions?: () => void; title?: string; placeholder?: string; defaultQuery?: string; defaultAsking?: boolean; defaultSent?: string }
 /** A story card: "<n> <title>". */
 export interface ChapterProps { n?: number; title: string; children: ReactNode }
 /** A small grey box inside a Chapter. Pass items and cols for the row. */
-export interface InfoCellProps { label?: string; value?: ReactNode; note?: string; sentence?: boolean; icon?: IconName; items?: InfoCellProps[]; cols?: number }
+export interface InfoCellProps { /** what the supplier said: blue, cite icon, label 'You said' by default */ own?: boolean; label?: string; value?: ReactNode; note?: string; sentence?: boolean; icon?: IconName; items?: InfoCellProps[]; cols?: number }
 ```

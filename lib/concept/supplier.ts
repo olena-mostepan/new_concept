@@ -39,18 +39,48 @@ export interface FindEntry {
 }
 
 
-/** The example quote the prototype "reads" when a file is picked (C4 board). */
+/**
+ * The example quote the prototype "reads" when files are picked (C4 + C5 boards).
+ * Values are Des Renewables' real tender on this project, as read in David's v7 mock-up.
+ */
+export interface QuoteFile {
+  kind: string;
+  meta: string;
+}
+export interface QuoteQuestion {
+  key: string;
+  title: string;
+  /** What the brief asks, one line. */
+  asks: string;
+  /** What we read in their files. */
+  read: string;
+  quote: string;
+  source: string;
+  question: string;
+  kind: "text" | "yesno";
+  /** yesno: what the Yes answer needs. */
+  followUp?: string;
+}
 export interface QuoteExample {
-  fileMeta: string;
-  /** Two totals on different pages: the supplier chooses (FoundValue). */
-  priceOptions: Array<{ value: string; page: number; quote: string }>;
-  sitesPage: number;
-  start: { value: string; page: number };
-  duration: { value: string; page: number };
+  /** What each picked file is read as, in order. */
+  files: QuoteFile[];
+  price: { value: string; source: string };
+  sitesSource: string;
+  start: { value: string; source: string };
+  lead: string;
+  installation: number;
+  commissioning: number;
+  durationSource: string;
+  warranties: { panels: number; inverters: number; workmanship: number; source: string };
+  /** Expected minimums the customer compares against (who sets them: to confirm). */
+  expected: { panels: number; workmanship: number };
+  kwp: number;
+  piInsurance: string;
+  alsoInOffer: string[];
+  /** Red items only (amber and green stay with Ops). */
+  questions: QuoteQuestion[];
   /** Read from the quote; shown as "You assumed" after sending. */
   assumed: string;
-  /** Brief items the quote doesn't answer; shown in "How your offer reads". */
-  gaps: Array<{ title: string; text: string }>;
 }
 
 export interface SupplierTender {
@@ -128,21 +158,51 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     ],
     contractLine: "Contract with the customer, or the PPA provider if it finances the work. Payment terms are agreed after the site visit.",
     quote: {
-      fileMeta: "PDF · 2.1 MB",
-      priceOptions: [
-        { value: "£318,400", page: 2, quote: "Total project cost (excl. VAT): £318,400" },
-        { value: "£322,900", page: 5, quote: "Total incl. optional bird mesh: £322,900" },
+      files: [
+        { kind: "Quote", meta: "1 page · one total for the sites, net and gross, no breakdown" },
+        { kind: "Drawing", meta: "32 pages · design report: 279.84 kWp, 14 roof areas, 5 inverters" },
+        { kind: "Policy", meta: "4 pages · health and safety policy, signed Jan 2025" },
       ],
-      sitesPage: 1,
-      start: { value: "6 weeks after the contract", page: 3 },
-      duration: { value: "10 weeks on site", page: 3 },
-      assumed: "Export limit 200 kW · no asbestos · roofs take the load",
-      gaps: [
+      price: { value: "£293,478", source: "Quote, page 1" },
+      sitesSource: "Quote, page 1",
+      start: { value: "1 Sep", source: "Tender form" },
+      lead: "6 weeks",
+      installation: 28,
+      commissioning: 4,
+      durationSource: "Tender form",
+      warranties: { panels: 15, inverters: 10, workmanship: 2, source: "Tender form" },
+      expected: { panels: 25, workmanship: 5 },
+      kwp: 279.84,
+      piInsurance: "£10,000,000",
+      alsoInOffer: [
+        "Own scaffolding company (Three County Scaffolding Ltd)",
+        "Robotic panel cleaning",
+        "Big Blue Restaurant, which the brief doesn't name",
+      ],
+      questions: [
         {
-          title: "Seafront protection isn't in your quote",
-          text: "The brief asks how you protect panels, frames and fixings from salt air. Add it to your final offer.",
+          key: "seafront",
+          title: "Seafront protection",
+          asks: "The brief asks how panels, frames and fixings are protected from salt air and seagulls",
+          read: "LONGi modules and Solis inverters are named. Nothing about salt air, corrosion or seagulls.",
+          quote: "5 x Solis Inverters which will be sourced from our UK Wholesaler",
+          source: "Tender form",
+          question: "Which salt-air and seagull protection is in your price?",
+          kind: "text",
+        },
+        {
+          key: "offpeak",
+          title: "Off-peak installation",
+          asks: "The brief asks for installation in the park's off-peak season (typically winter)",
+          read: "Preferred start 1 Sep. Off-peak isn't mentioned.",
+          quote: "preferred_start_date: 2025-09-01",
+          source: "Tender form",
+          question: "Can you install in the off-peak (winter) season?",
+          kind: "yesno",
+          followUp: "Which months?",
         },
       ],
+      assumed: "Export limit 200 kW · no asbestos · roofs take the load",
     },
     findSuggestions: ["Export limit", "Not in my price", "Roof space", "Warranties"],
     findIndex: [

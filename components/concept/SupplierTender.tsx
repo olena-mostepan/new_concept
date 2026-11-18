@@ -150,7 +150,11 @@ function StickyOffer({ t, show, offer }: { t: Tender; show: boolean; offer: Offe
               <>
                 <p className="h8 text-text-primary">{offer.resend ? "Edit your offer" : "Check what we read"}</p>
                 <p className="p7 text-text-secondary">
-                  {offer.openCount > 0 ? `${offer.openCount} to fill in before you send` : "Ready to send"}
+                  {offer.openCount > 0
+                    ? `${offer.openCount} to fill in before you send`
+                    : offer.unanswered > 0
+                      ? `${offer.unanswered} ${offer.unanswered === 1 ? "question" : "questions"} not answered: we use what we read`
+                      : "Ready to send"}
                 </p>
               </>
             ) : (

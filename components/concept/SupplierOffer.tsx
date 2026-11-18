@@ -1,98 +1,105 @@
 "use client";
 
 /*
- * Supplier concept · the indicative offer, C4 board (18 Nov):
- * upload your quote → we read it → check what we read → send → sent (with continuity).
+ * Supplier concept · the indicative offer, C4 + C5 boards (18 Nov), checked against David's v7:
+ * upload your files → we read them → check what we read (with flags) → questions on your quote
+ * (red items only) → send → what the customer compares, your answers, continuity.
  * Everything happens inside the offer card on the Overview.
- * Decided 18 Nov: an edit after sending notifies CQuel; "How your offer reads" is shown
- * to the supplier and written automatically.
+ * Decided 18 Nov: an edit after sending notifies CQuel; a supplier can send with a red question
+ * unanswered (we use what we read; to check with Ops). Who sets the expected ranges: to confirm.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import type { SupplierTender as Tender } from "@/lib/concept/supplier";
+import type { QuoteQuestion, SupplierTender as Tender } from "@/lib/concept/supplier";
 import { Button, ChipTrack, Icon, ResponsibilityPill, focusRing } from "./ui";
-import { FoundValue, StateMark } from "./ops-asset/opsUi";
+import { RequirementGroup, StateMark } from "./ops-asset/opsUi";
 
 export type OfferPhase = "start" | "reading" | "check" | "sent";
-type RowKey = "price" | "sites" | "start" | "duration" | "warranties";
-type RowState = "done" | "open" | "disagree";
+type Unit = "days" | "weeks";
 
-interface Row {
-  key: RowKey;
-  name: string;
-  state: RowState;
-  value: string;
-  source: string;
+interface Answer {
+  /** text questions: the answer; yesno: the months for Yes. */
+  text: string;
+  choice?: "Yes" | "No" | "Not sure yet";
+  /** "Something in our reading is wrong?" */
+  wrong?: string;
 }
 
 export interface Offer {
   phase: OfferPhase;
-  fileName: string;
-  rows: Row[];
-  /** Site numbers in the price. */
+  files: string[];
+  price: string;
+  start: string;
+  unit: Unit | null;
+  warranties: { panels: number; inverters: number; workmanship: number };
   sites: number[];
-  /** Editing after sending. */
+  answers: Record<string, Answer | undefined>;
   resend: boolean;
+  /** Check rows still open (block sending). */
   openCount: number;
+  /** Red questions not answered (don't block sending). */
+  unanswered: number;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   pick: () => void;
+  onFiles: (names: string[]) => void;
+  removeFile: (name: string) => void;
+  cancelReading: () => void;
   send: () => void;
   edit: () => void;
   cancelEdit: () => void;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-  onFile: (name: string) => void;
-  cancelReading: () => void;
-  setRow: (key: RowKey, value: string, source: string) => void;
+  setPrice: (v: string) => void;
+  setStart: (v: string) => void;
+  setUnit: (u: Unit) => void;
+  setWarranties: (w: { panels: number; inverters: number; workmanship: number }) => void;
   setSites: (ns: number[]) => void;
+  answer: (key: string, a: Answer | undefined) => void;
 }
 
 const inputClass =
   "h-10 rounded-md border border-border-dark bg-white px-3 p6 font-sans text-text-primary outline-none placeholder:text-text-tertiary focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)]";
 
-function firstRows(t: Tender): Row[] {
-  const q = t.quote;
-  return [
-    { key: "price", name: "Total price", state: "disagree", value: "", source: "" },
-    { key: "sites", name: "Sites covered", state: "done", value: "", source: `page ${q.sitesPage}` },
-    { key: "start", name: "Start", state: "done", value: q.start.value, source: `page ${q.start.page}` },
-    { key: "duration", name: "Duration", state: "done", value: q.duration.value, source: `page ${q.duration.page}` },
-    { key: "warranties", name: "Warranties", state: "open", value: "", source: "" },
-  ];
-}
-
 export function useOffer(t: Tender): Offer {
+  const q = t.quote;
   const [phase, setPhase] = useState<OfferPhase>("start");
-  const [fileName, setFileName] = useState("");
-  const [rows, setRows] = useState<Row[]>(() => firstRows(t));
-  const [sites, setSitesState] = useState<number[]>(() => t.sites.map((s) => s.n));
+  const [files, setFiles] = useState<string[]>([]);
+  const [price, setPrice] = useState(q.price.value);
+  const [start, setStart] = useState(q.start.value);
+  const [unit, setUnit] = useState<Unit | null>(null);
+  const [warranties, setWarranties] = useState({ panels: q.warranties.panels, inverters: q.warranties.inverters, workmanship: q.warranties.workmanship });
+  const [sites, setSites] = useState<number[]>(() => t.sites.map((s) => s.n));
+  const [answers, setAnswers] = useState<Record<string, Answer | undefined>>({});
   const [resend, setResend] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const timer = useRef<number | undefined>(undefined);
-
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  const onFile = (name: string) => {
-    setFileName(name);
-    setRows(firstRows(t));
-    setSitesState(t.sites.map((s) => s.n));
-    setPhase("reading");
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setPhase("check"), 1800);
-  };
+  const unanswered = q.questions.filter((x) => !answers[x.key]).length;
 
   return {
     phase,
-    fileName,
-    rows,
+    files,
+    price,
+    start,
+    unit,
+    warranties,
     sites,
+    answers,
     resend,
-    openCount: rows.filter((r) => r.state !== "done").length,
+    openCount: unit ? 0 : 1,
+    unanswered,
     inputRef,
     pick: () => inputRef.current?.click(),
-    onFile,
+    onFiles: (names) => {
+      setFiles((cur) => [...cur, ...names.filter((n) => !cur.includes(n))]);
+      setPhase("reading");
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setPhase("check"), 1800);
+    },
+    removeFile: (name) => setFiles((cur) => cur.filter((n) => n !== name)),
     cancelReading: () => {
       window.clearTimeout(timer.current);
-      setPhase(resend ? "sent" : "start");
+      setPhase(resend ? "sent" : files.length > 1 ? "check" : "start");
     },
     send: () => {
       setPhase("sent");
@@ -106,9 +113,12 @@ export function useOffer(t: Tender): Offer {
       setResend(false);
       setPhase("sent");
     },
-    setRow: (key, value, source) =>
-      setRows((cur) => cur.map((r) => (r.key === key ? { ...r, value, source, state: "done" } : r))),
-    setSites: setSitesState,
+    setPrice,
+    setStart,
+    setUnit,
+    setWarranties,
+    setSites,
+    answer: (key, a) => setAnswers((cur) => ({ ...cur, [key]: a })),
   };
 }
 
@@ -119,27 +129,86 @@ export function sitesLine(t: Tender, ns: number[]) {
   const base = `${ns.length} of ${t.sites.length}`;
   return left.length ? `${base} · not covered: ${left.map((s) => s.name).join(", ")}` : base;
 }
-
-function rowValue(t: Tender, offer: Offer, r: Row) {
-  return r.key === "sites" ? sitesLine(t, offer.sites) : r.value;
-}
+const sitesCount = (t: Tender, ns: number[]) => `${ns.length} of ${t.sites.length}`;
 
 function money(v: string) {
   const n = Number(v.replace(/[^0-9.]/g, ""));
   return Number.isFinite(n) ? n : 0;
 }
+const gbp = (n: number) => `£${Math.round(n).toLocaleString("en-GB")}`;
+
+function durationLine(t: Tender, unit: Unit | null) {
+  const q = t.quote;
+  return unit
+    ? `Lead ${q.lead} · installation ${q.installation} ${unit} · commissioning ${q.commissioning} ${unit}`
+    : `Lead ${q.lead} · installation ${q.installation} · commissioning ${q.commissioning}`;
+}
+function warrantyLine(w: Offer["warranties"]) {
+  return `Panels ${w.panels} years · inverters ${w.inverters} years · workmanship ${w.workmanship} years`;
+}
+function warrantyFlags(t: Tender, w: Offer["warranties"]) {
+  const e = t.quote.expected;
+  const f: string[] = [];
+  if (w.panels < e.panels) f.push(`Panels: expected at least ${e.panels} years`);
+  if (w.workmanship < e.workmanship) f.push(`Workmanship: expected at least ${e.workmanship} years`);
+  return f;
+}
+/** Start after answers: the off-peak months replace the preferred start. */
+function startAfter(offer: Offer) {
+  const a = offer.answers.offpeak;
+  if (a?.choice === "Yes" && a.text) return a.text.split(/\s+to\s+|[-–]/)[0].trim();
+  return offer.start;
+}
 
 /** What the customer sees, one line each. Used for "You said". */
 export function saidJob(t: Tender, offer: Offer) {
-  const get = (k: RowKey) => offer.rows.find((r) => r.key === k)?.value ?? "";
-  return `${sitesLine(t, offer.sites).split(" · ")[0]} sites · start ${get("start")} · ${get("duration")}`;
+  return `${sitesCount(t, offer.sites)} sites · start ${startAfter(offer)} · installation ${t.quote.installation} ${offer.unit ?? ""}`.trim();
 }
 export function saidPrice(offer: Offer) {
-  const get = (k: RowKey) => offer.rows.find((r) => r.key === k)?.value ?? "";
-  return `${get("price")} excl. VAT · ${get("warranties")}`;
+  const w = offer.warranties;
+  return `${offer.price} excl. VAT · panels ${w.panels} years, workmanship ${w.workmanship} years`;
 }
 
-/* ---------------------------------------------------------------- card */
+function answerLine(q: QuoteQuestion, a: Answer | undefined) {
+  if (!a) return "";
+  if (q.kind === "yesno") return [a.choice, a.choice === "Yes" ? a.text : ""].filter(Boolean).join(", ");
+  return a.text;
+}
+
+/* --------------------------------------------------------------- pieces */
+
+export function Flag({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mt-1 flex items-center gap-1.5 p7 text-status-warning-text">
+      <Icon name="alert" size={14} className="shrink-0" />
+      {children}
+    </p>
+  );
+}
+
+function Seg<T extends string>({ options, value, onChange, label }: { options: T[]; value: T | null | undefined; onChange: (v: T) => void; label: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="inline-flex self-start overflow-hidden rounded-md border border-border-dark">
+      {options.map((o, i) => (
+        <button
+          key={o}
+          type="button"
+          role="radio"
+          aria-checked={value === o}
+          onClick={() => onChange(o)}
+          className={cn(
+            "h-9 px-3.5 p6 first-letter:uppercase",
+            i > 0 && "border-l border-border-dark",
+            value === o ? "bg-black-7 h8 text-white" : "bg-white text-text-primary hover:bg-black-2",
+            focusRing,
+          )}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function steps(t: Tender, phase: OfferPhase) {
   return t.offerSteps.map((s, i) => {
@@ -153,64 +222,145 @@ function steps(t: Tender, phase: OfferPhase) {
   });
 }
 
-function FileRow({ name, meta, reading, action }: { name: string; meta: string; reading?: boolean; action: React.ReactNode }) {
+function Files({ t, offer, reading }: { t: Tender; offer: Offer; reading?: boolean }) {
   return (
-    <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-y border-border-light py-3">
-      <span className="flex size-9 items-center justify-center rounded-md border border-border-dark bg-white">
-        <Icon name="document" size={18} className="text-icon-default" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate h8 text-text-primary">{name}</p>
-        <p className="p7 text-text-secondary">
-          {meta}
-          {reading && " · Reading: total price, sites, start, duration, warranties"}
-        </p>
-        {reading && (
-          <div className="mt-1.5 h-1 w-60 overflow-hidden rounded-full bg-black-2" role="progressbar" aria-label="Reading your quote">
-            <div className="h-full w-full origin-left animate-[offerread_1.8s_ease-out_forwards] rounded-full bg-black-7" />
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between gap-3 rounded-md border-[1.5px] border-dashed border-black-3 bg-black-2 py-3 pl-4 pr-3">
+        <div className="flex items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border-dark bg-white">
+            <Icon name="upload" size={20} className="text-icon-dark" />
+          </span>
+          <div>
+            <p className="h8 text-text-primary">Drop your quote and anything that goes with it</p>
+            <p className="p7 text-text-secondary">Quote, price breakdown, drawings, datasheets. PDF, Word or Excel.</p>
           </div>
-        )}
+        </div>
+        <Button type="secondary" icon="upload" onClick={offer.pick}>
+          Upload files
+        </Button>
       </div>
-      {action}
+      {offer.files.map((name, i) => {
+        const f = t.quote.files[i];
+        return (
+          <div key={name} className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border-light py-2.5">
+            <span className="flex size-9 items-center justify-center rounded-md border border-border-dark bg-white">
+              <Icon name="document" size={16} className="text-icon-default" />
+            </span>
+            <div className="min-w-0">
+              <p className="flex min-w-0 items-center gap-2 h8 text-text-primary">
+                <span className="truncate">{name}</span>
+                {!reading && f && (
+                  <span className="inline-flex h-5 shrink-0 items-center rounded-full border border-border-dark bg-black-1 px-1.5 h9 text-text-secondary">{f.kind}</span>
+                )}
+              </p>
+              <p className="p7 text-text-secondary">{reading ? "Reading…" : f ? f.meta : "Read · nothing for this tender found in it"}</p>
+              {reading && (
+                <div className="mt-1.5 h-1 w-60 overflow-hidden rounded-full bg-black-2" role="progressbar" aria-label={`Reading ${name}`}>
+                  <div className="h-full w-full origin-left animate-[offerread_1.8s_ease-out_forwards] rounded-full bg-black-7" />
+                </div>
+              )}
+            </div>
+            {reading ? (
+              <span />
+            ) : (
+              <Button type="tertiary" onClick={() => offer.removeFile(name)} ariaLabel={`Remove ${name}`}>
+                Remove
+              </Button>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function ValueEdit({
-  initial,
-  placeholder,
-  label,
-  onSave,
-  onCancel,
-  saveType = "primary",
+/* ----------------------------------------------------------- check rows */
+
+function Row({
+  name,
+  done,
+  line,
+  flags,
+  action,
+  children,
 }: {
-  initial: string;
-  placeholder?: string;
-  label: string;
-  onSave: (v: string) => void;
-  onCancel?: () => void;
-  saveType?: "primary" | "secondary";
+  name: string;
+  done: boolean;
+  line: string;
+  flags?: string[];
+  action?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
+  return (
+    <div className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 border-b border-border-light py-3.5">
+      <span className="mt-0.5">
+        <StateMark state={done ? "done" : "open"} size={20} />
+      </span>
+      <div className="min-w-0">
+        <p className="h8 text-text-primary">{name}</p>
+        <p className="p7 text-text-secondary">{line}</p>
+        {flags && flags.length > 0 && <Flag>{flags.join(" · ")}</Flag>}
+      </div>
+      {action ?? <span />}
+      {children && <div className="col-start-2 col-end-4 mt-3">{children}</div>}
+    </div>
+  );
+}
+
+function EditBox({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-dark bg-black-1 px-4 py-3">{children}</div>;
+}
+
+function TextEdit({ initial, label, onSave, onCancel }: { initial: string; label: string; onSave: (v: string) => void; onCancel: () => void }) {
   const [v, setV] = useState(initial);
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <input
-        className={cn(inputClass, "w-[420px] max-w-full")}
-        value={v}
-        placeholder={placeholder}
-        aria-label={label}
-        onChange={(e) => setV(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && v.trim() && onSave(v.trim())}
-      />
-      <Button type={saveType} disabled={!v.trim()} onClick={() => onSave(v.trim())}>
+    <EditBox>
+      <input className={cn(inputClass, "w-[320px]")} value={v} aria-label={label} onChange={(e) => setV(e.target.value)} />
+      <Button type="primary" disabled={!v.trim()} onClick={() => onSave(v.trim())}>
         Save
       </Button>
-      {onCancel && (
-        <Button type="secondary" onClick={onCancel}>
-          Cancel
-        </Button>
-      )}
-    </div>
+      <Button type="secondary" onClick={onCancel}>
+        Cancel
+      </Button>
+    </EditBox>
+  );
+}
+
+function WarrantyEdit({ offer, onDone }: { offer: Offer; onDone: () => void }) {
+  const [w, setW] = useState(offer.warranties);
+  const field = (k: keyof Offer["warranties"], label: string) => (
+    <label className="flex items-center gap-2 p6 text-text-secondary">
+      {label}
+      <span className="relative inline-block w-[110px]">
+        <input
+          className={cn(inputClass, "w-full pr-14")}
+          inputMode="numeric"
+          value={w[k]}
+          aria-label={`${label} warranty in years`}
+          onChange={(e) => setW({ ...w, [k]: Number(e.target.value.replace(/\D/g, "")) || 0 })}
+        />
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 p6 text-text-tertiary">years</span>
+      </span>
+    </label>
+  );
+  return (
+    <EditBox>
+      {field("panels", "Panels")}
+      {field("inverters", "Inverters")}
+      {field("workmanship", "Workmanship")}
+      <Button
+        type="primary"
+        onClick={() => {
+          offer.setWarranties(w);
+          onDone();
+        }}
+      >
+        Save
+      </Button>
+      <Button type="secondary" onClick={onDone}>
+        Cancel
+      </Button>
+    </EditBox>
   );
 }
 
@@ -229,9 +379,7 @@ function SitesEdit({ t, offer, onDone }: { t: Tender; offer: Offer; onDone: () =
           Select all
         </Button>
       </div>
-      {all > 10 && (
-        <input className={cn(inputClass, "w-full")} placeholder="Search sites" aria-label="Search sites" value={q} onChange={(e) => setQ(e.target.value)} />
-      )}
+      {all > 10 && <input className={cn(inputClass, "w-full")} placeholder="Search sites" aria-label="Search sites" value={q} onChange={(e) => setQ(e.target.value)} />}
       <div className="max-h-[232px] overflow-y-auto rounded-md border border-border-dark bg-white">
         {shown.map((s) => (
           <label key={s.n} className="flex cursor-pointer items-center gap-2.5 border-b border-border-light px-3 py-2 last:border-b-0 p6 text-text-primary">
@@ -264,95 +412,193 @@ function SitesEdit({ t, offer, onDone }: { t: Tender; offer: Offer; onDone: () =
   );
 }
 
-function CheckRow({ t, offer, r }: { t: Tender; offer: Offer; r: Row }) {
-  const [editing, setEditing] = useState(false);
-  const [another, setAnother] = useState(false);
-  const line =
-    r.state === "done"
-      ? `${rowValue(t, offer, r)} · ${r.source}`
-      : r.state === "disagree"
-        ? `Your quote has ${t.quote.priceOptions.length} totals. Choose one, or enter another.`
-        : "Not in your quote";
+function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [unit, setUnit] = useState<Unit | null>(offer.unit);
+  const q = t.quote;
+  const edit = (key: string) => (
+    <Button type="tertiary" icon="edit" onClick={() => setEditing(key)} ariaLabel={`Edit ${key}`}>
+      Edit
+    </Button>
+  );
+  const close = () => setEditing(null);
   return (
-    <div className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-3.5">
-      <StateMark state={r.state === "done" ? "done" : "open"} size={20} />
-      <div className="min-w-0">
-        <p className="h8 text-text-primary">{r.name}</p>
-        <p className="p7 text-text-secondary">{line}</p>
-      </div>
-      {r.state === "done" && !editing ? (
-        <Button type="tertiary" icon="edit" onClick={() => setEditing(true)}>
-          Edit
-        </Button>
+    <div>
+      <Row name="Total price" done line={`${offer.price} excl. VAT · ${q.price.source}`} action={editing !== "price" && edit("price")}>
+        {editing === "price" && <TextEdit initial={offer.price} label="Total price" onSave={(v) => { offer.setPrice(v); close(); }} onCancel={close} />}
+      </Row>
+      <Row name="Sites covered" done line={`${sitesLine(t, offer.sites)} · ${q.sitesSource}`} action={editing !== "sites" && edit("sites")}>
+        {editing === "sites" && <SitesEdit t={t} offer={offer} onDone={close} />}
+      </Row>
+      <Row name="Start" done line={`${offer.start} (your preferred start) · ${q.start.source}`} action={editing !== "start" && edit("start")}>
+        {editing === "start" && <TextEdit initial={offer.start} label="Start" onSave={(v) => { offer.setStart(v); close(); }} onCancel={close} />}
+      </Row>
+      {offer.unit && editing !== "duration" ? (
+        <Row name="Duration" done line={`${durationLine(t, offer.unit)} · ${q.durationSource}`} action={edit("duration")} />
       ) : (
-        <span />
-      )}
-
-      {r.state === "done" && editing && (
-        <div className="col-start-2 col-end-4 mt-3">
-          {r.key === "sites" ? (
-            <SitesEdit t={t} offer={offer} onDone={() => setEditing(false)} />
-          ) : (
-            <div className="rounded-md border border-border-dark bg-black-1 px-4 py-3">
-              <ValueEdit
-                initial={r.value}
-                label={r.name}
-                onSave={(v) => {
-                  offer.setRow(r.key, v, "Typed");
-                  setEditing(false);
-                }}
-                onCancel={() => setEditing(false)}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {r.state === "open" && (
-        <div className="col-start-2 col-end-4 mt-3">
-          <ValueEdit
-            initial=""
-            label={r.name}
-            placeholder="For example: panels 25 years, workmanship 10 years"
-            saveType="secondary"
-            onSave={(v) => offer.setRow(r.key, v, "Typed")}
-          />
-        </div>
-      )}
-
-      {r.state === "disagree" && (
-        <div className="col-start-2 col-end-4 mt-3 flex flex-col gap-2">
-          {t.quote.priceOptions.map((o) => (
-            <FoundValue key={o.page} value={o.value} file={offer.fileName} page={o.page} quote={o.quote}>
-              <Button type="secondary" onClick={() => offer.setRow("price", o.value, `page ${o.page}`)}>
-                {`Use ${o.value}`}
+        <Row name="Duration" done={false} line={`${durationLine(t, null)} · ${q.durationSource}`} flags={offer.unit ? undefined : ["No unit given for installation and commissioning: days or weeks?"]}>
+          <div className="flex items-center gap-2">
+            <Seg label="Unit for installation and commissioning" options={["days", "weeks"] as Unit[]} value={unit} onChange={setUnit} />
+            <Button
+              type="secondary"
+              disabled={!unit}
+              onClick={() => {
+                if (unit) offer.setUnit(unit);
+                close();
+              }}
+            >
+              Save
+            </Button>
+            {offer.unit && (
+              <Button type="secondary" onClick={close}>
+                Cancel
               </Button>
-            </FoundValue>
-          ))}
-          {another ? (
-            <ValueEdit initial="" label="Total price" placeholder="£" saveType="secondary" onSave={(v) => offer.setRow("price", v, "Typed")} onCancel={() => setAnother(false)} />
-          ) : (
-            <div>
-              <Button type="secondary" onClick={() => setAnother(true)}>
-                Another value
-              </Button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </Row>
       )}
+      <Row
+        name="Warranties"
+        done
+        line={`${warrantyLine(offer.warranties)} · ${q.warranties.source}`}
+        flags={warrantyFlags(t, offer.warranties)}
+        action={editing !== "warranties" && edit("warranties")}
+      >
+        {editing === "warranties" && <WarrantyEdit offer={offer} onDone={close} />}
+      </Row>
     </div>
   );
 }
 
-function Header({ t, title, text, pill = true }: { t: Tender; title: string; text?: string; pill?: boolean }) {
+/* ------------------------------------------------------------ questions */
+
+function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
+  const saved = offer.answers[q.key];
+  const [open, setOpen] = useState(!saved);
+  const [text, setText] = useState(saved?.text ?? "");
+  const [choice, setChoice] = useState<Answer["choice"]>(saved?.choice);
+  const [wrongOpen, setWrongOpen] = useState(false);
+  const [wrong, setWrong] = useState(saved?.wrong ?? "");
+  const ready = q.kind === "text" ? text.trim().length > 0 : !!choice && (choice !== "Yes" || text.trim().length > 0);
+
+  if (saved && !open) {
+    return (
+      <div className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-3.5">
+        <StateMark state="done" size={20} />
+        <div className="min-w-0">
+          <p className="h8 text-text-primary">{q.title}</p>
+          <p className="p7 text-text-secondary">
+            Answered: {answerLine(q, saved)}
+            {saved.wrong ? " · you told us our reading was wrong" : ""}
+          </p>
+        </div>
+        <Button type="tertiary" icon="edit" onClick={() => setOpen(true)}>
+          Edit
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-4 border-b border-border-light py-4">
+      <span className="mt-0.5">
+        <StateMark state="open" size={20} />
+      </span>
+      <div className="flex min-w-0 flex-col gap-2.5">
+        <div>
+          <p className="h8 text-text-primary">{q.title}</p>
+          <p className="p7 text-text-secondary">{q.asks}</p>
+        </div>
+        <div className="flex flex-col gap-1 rounded-md border border-border-dark bg-bg-container-grey px-3.5 py-2.5">
+          <span className="p7 text-text-tertiary">What we read</span>
+          <span className="p6 text-text-primary">{q.read}</span>
+          <span className="p7 text-text-secondary">
+            &ldquo;{q.quote}&rdquo; · <Button type="link" className="p7">{`${q.source} ↗`}</Button>
+          </span>
+        </div>
+        <p className="h8 text-text-primary">{q.question}</p>
+        {q.kind === "text" ? (
+          <textarea
+            className="min-h-[72px] w-full resize-y rounded-md border border-border-dark px-3 py-2 p6 font-sans text-text-primary outline-none placeholder:text-text-tertiary focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)]"
+            placeholder="Your answer"
+            aria-label={q.question}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        ) : (
+          <>
+            <Seg label={q.question} options={["Yes", "No", "Not sure yet"] as NonNullable<Answer["choice"]>[]} value={choice} onChange={setChoice} />
+            {choice === "Yes" && q.followUp && (
+              <label className="flex items-center gap-3 p6 text-text-secondary">
+                {q.followUp}
+                <input className={cn(inputClass, "w-[220px]")} placeholder="For example: Nov to Feb" value={text} onChange={(e) => setText(e.target.value)} />
+              </label>
+            )}
+            {choice === "Not sure yet" && <p className="p7 text-text-secondary">The customer sees that this is settled at the site visit.</p>}
+          </>
+        )}
+        {wrongOpen && (
+          <textarea
+            className="min-h-[56px] w-full resize-y rounded-md border border-border-dark px-3 py-2 p6 font-sans text-text-primary outline-none placeholder:text-text-tertiary focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)]"
+            placeholder="What did we get wrong?"
+            aria-label="What did we get wrong?"
+            value={wrong}
+            onChange={(e) => setWrong(e.target.value)}
+          />
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="secondary"
+            disabled={!ready && !wrong.trim()}
+            onClick={() => {
+              offer.answer(q.key, { text: text.trim(), choice, wrong: wrong.trim() || undefined });
+              setOpen(false);
+            }}
+          >
+            Save answer
+          </Button>
+          {q.kind === "text" && (
+            <Button type="tertiary" icon="upload" onClick={offer.pick}>
+              Attach a file
+            </Button>
+          )}
+          {saved && (
+            <Button type="tertiary" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+          )}
+          <span className="flex-1" />
+          {!wrongOpen && (
+            <Button type="link" className="p7" onClick={() => setWrongOpen(true)}>
+              Something in our reading is wrong?
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Questions({ t, offer }: { t: Tender; offer: Offer }) {
+  const n = offer.unanswered;
+  return (
+    <RequirementGroup label="Questions on your quote" count={n} countLabel={n ? `${n} to answer` : "All answered"} accentPill={n > 0}>
+      {t.quote.questions.map((q) => (
+        <QuestionRow key={q.key} q={q} offer={offer} />
+      ))}
+    </RequirementGroup>
+  );
+}
+
+/* ----------------------------------------------------------------- card */
+
+function Header({ t, title, text }: { t: Tender; title: string; text?: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      {pill && (
-        <div className="flex items-center gap-2">
-          <ResponsibilityPill owner="you" label="Your action" />
-          <span className="s3 text-text-tertiary">Due {t.round.due.replace("due ", "")}</span>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <ResponsibilityPill owner="you" label="Your action" />
+        <span className="s3 text-text-tertiary">Due {t.round.due.replace("due ", "")}</span>
+      </div>
       <h2 id="offer-h" className="h6 text-text-primary">
         {title}
       </h2>
@@ -361,35 +607,29 @@ function Header({ t, title, text, pill = true }: { t: Tender; title: string; tex
   );
 }
 
+function Cell({ label, value, note, was, flag }: { label: string; value: string; note?: string; was?: string; flag?: string }) {
+  return (
+    <div className={cn("flex flex-col gap-1 rounded-md border px-3.5 py-3", flag ? "border-status-warning-border bg-status-warning-bg" : "border-border-dark bg-bg-container-grey")}>
+      <span className="p7 text-text-tertiary">{label}</span>
+      <span className="h8 text-text-primary">{value}</span>
+      {note && <span className="p7 text-text-secondary">{note}</span>}
+      {was && <span className="p7 text-text-tertiary line-through">{was}</span>}
+      {flag && (
+        <span className="flex items-center gap-1.5 p7 text-status-warning-text">
+          <Icon name="alert" size={14} className="shrink-0" />
+          {flag}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function Sent({ t, offer }: { t: Tender; offer: Offer }) {
-  const get = (k: RowKey) => offer.rows.find((r) => r.key === k)?.value ?? "";
+  const q = t.quote;
   const due = t.round.due.replace("due ", "");
-  const budgetFact = t.facts.find((f) => f.label === "Budget");
-  const price = money(get("price"));
-  const budget = budgetFact ? money(budgetFact.value) : 0;
-  const allSites = offer.sites.length === t.sites.length;
-  const reads: Array<{ ok: boolean; title: string; text: string }> = [];
-  if (budget)
-    reads.push({
-      ok: price <= budget,
-      title: price <= budget ? "Price is within the budget" : "Price is over the budget",
-      text: `Your total ${get("price")} · their budget ~${budgetFact?.value}`,
-    });
-  reads.push({
-    ok: allSites,
-    title: allSites ? `All ${t.sites.length} sites covered` : `${offer.sites.length} of ${t.sites.length} sites covered`,
-    text: allSites ? "The customer asked for every site in one price" : `Not covered: ${t.sites.filter((s) => !offer.sites.includes(s.n)).map((s) => s.name).join(", ")}`,
-  });
-  t.quote.gaps.forEach((g) => reads.push({ ok: false, title: g.title, text: g.text }));
-
-  const cells = [
-    { label: "Total price", value: get("price"), note: "excl. VAT" },
-    { label: "Sites covered", value: sitesLine(t, offer.sites).split(" · ")[0] },
-    { label: "Start", value: get("start") },
-    { label: "Duration", value: get("duration") },
-    { label: "Warranties", value: get("warranties") },
-  ];
-
+  const w = offer.warranties;
+  const startNow = startAfter(offer);
+  const u = offer.unit ?? "days";
   return (
     <>
       <div className="flex items-start justify-between gap-6">
@@ -401,44 +641,63 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button type="tertiary">View your quote</Button>
+          <Button type="tertiary">View your files</Button>
           <Button type="secondary" onClick={offer.edit}>
             Edit your offer
           </Button>
         </div>
       </div>
       <ChipTrack steps={steps(t, "sent")} />
-      <div className="grid grid-cols-5 gap-3">
-        {cells.map((c) => (
-          <div key={c.label} className="flex flex-col gap-1 rounded-md border border-border-dark bg-bg-container-grey px-3.5 py-3">
-            <span className="p7 text-text-tertiary">{c.label}</span>
-            <span className="h8 text-text-primary">{c.value}</span>
-            {c.note && <span className="p7 text-text-secondary">{c.note}</span>}
-          </div>
-        ))}
+
+      <div className="flex flex-col gap-1">
+        <h3 className="h7 text-text-primary">What the customer compares</h3>
+        <p className="p7 text-text-secondary">Your figures after your answers. Flags show what&apos;s outside the range the customer expects.</p>
       </div>
-      <div className="flex flex-col gap-1 pt-1">
-        <h3 className="h7 text-text-primary">How your offer reads to the customer</h3>
-        <p className="p7 text-text-secondary">Against what they asked for, not against other suppliers</p>
+      <div className="flex flex-col gap-2">
+        <span className="s3 text-text-tertiary">Price</span>
+        <div className="grid grid-cols-4 gap-3">
+          <Cell label="Total price" value={offer.price} note="excl. VAT" />
+          <Cell label="Price per kWp" value={gbp(money(offer.price) / q.kwp)} note={`worked out from ${q.kwp} kWp`} />
+        </div>
       </div>
-      <div>
-        {reads.map((r) => (
-          <div key={r.title} className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-3">
-            <StateMark state={r.ok ? "done" : "open"} size={20} />
-            <div className="min-w-0">
-              <p className="h8 text-text-primary">{r.title}</p>
-              <p className="p7 text-text-secondary">{r.text}</p>
+      <div className="flex flex-col gap-2">
+        <span className="s3 text-text-tertiary">Speed</span>
+        <div className="grid grid-cols-4 gap-3">
+          <Cell label="Start" value={startNow} was={startNow !== offer.start ? offer.start : undefined} />
+          <Cell label="Lead time" value={q.lead} />
+          <Cell label="Installation" value={`${q.installation} ${u}`} />
+          <Cell label="Commissioning" value={`${q.commissioning} ${u}`} />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="s3 text-text-tertiary">Quality</span>
+        <div className="grid grid-cols-4 gap-3">
+          <Cell label="Panel warranty" value={`${w.panels} years`} flag={w.panels < q.expected.panels ? `Expected at least ${q.expected.panels}` : undefined} />
+          <Cell label="Workmanship warranty" value={`${w.workmanship} years`} flag={w.workmanship < q.expected.workmanship ? `Expected at least ${q.expected.workmanship}` : undefined} />
+          <Cell label="Inverter warranty" value={`${w.inverters} years`} />
+          <Cell label="PI insurance" value={q.piInsurance} />
+        </div>
+      </div>
+
+      <RequirementGroup
+        label="Your answers"
+        count={q.questions.length}
+        countLabel={`${q.questions.length - offer.unanswered} of ${q.questions.length}`}
+      >
+        {q.questions.map((qq) => {
+          const a = offer.answers[qq.key];
+          return (
+            <div key={qq.key} className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 py-3">
+              <StateMark state={a ? "done" : "open"} size={20} />
+              <div className="min-w-0">
+                <p className="h8 text-text-primary">{qq.title}</p>
+                <p className="p7 text-text-secondary">{a ? answerLine(qq, a) : "Not answered: the customer sees what we read"}</p>
+              </div>
+              {a ? <span /> : <Button type="tertiary" onClick={offer.edit}>Answer now</Button>}
             </div>
-            {!r.ok && t.quote.gaps.some((g) => g.title === r.title) ? (
-              <Button type="tertiary" onClick={() => document.getElementById("c-job")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                See in the brief
-              </Button>
-            ) : (
-              <span />
-            )}
-          </div>
-        ))}
-      </div>
+          );
+        })}
+      </RequirementGroup>
     </>
   );
 }
@@ -449,21 +708,19 @@ export function OfferPanel({ t, offer, cardRef }: { t: Tender; offer: Offer; car
     <section
       ref={cardRef}
       aria-labelledby="offer-h"
-      className={cn(
-        "flex flex-col gap-4 rounded-lg border border-border-dark bg-bg-container px-6 py-5",
-        phase !== "sent" && "border-t-4 border-t-brand-6",
-      )}
+      className={cn("flex flex-col gap-4 rounded-lg border border-border-dark bg-bg-container px-6 py-5", phase !== "sent" && "border-t-4 border-t-brand-6")}
     >
       <input
         ref={offer.inputRef}
         type="file"
-        accept=".pdf,.xls,.xlsx,.csv"
+        multiple
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
         className="sr-only"
         tabIndex={-1}
         aria-hidden
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) offer.onFile(f.name);
+          const names = Array.from(e.target.files ?? []).map((f) => f.name);
+          if (names.length) offer.onFiles(names);
           e.target.value = "";
         }}
       />
@@ -489,48 +746,41 @@ export function OfferPanel({ t, offer, cardRef }: { t: Tender; offer: Offer; car
         <>
           <Header t={t} title={offer.resend ? "Edit your offer" : t.offer.title} />
           <ChipTrack steps={steps(t, "reading")} />
-          <FileRow
-            name={offer.fileName}
-            meta={t.quote.fileMeta}
-            reading
-            action={
-              <Button type="tertiary" onClick={offer.cancelReading}>
-                Cancel
-              </Button>
-            }
-          />
+          <Files t={t} offer={offer} reading />
+          <div className="flex justify-end">
+            <Button type="tertiary" onClick={offer.cancelReading}>
+              Cancel
+            </Button>
+          </div>
         </>
       )}
 
       {phase === "check" && (
         <>
-          <Header
-            t={t}
-            title={offer.resend ? "Edit your offer" : "Check what we read"}
-            text="This is what the customer sees. Edit anything we got wrong."
-          />
+          <Header t={t} title={offer.resend ? "Edit your offer" : "Check what we read"} text="This is what the customer sees. Edit anything we got wrong." />
           <ChipTrack steps={steps(t, "check")} />
-          <FileRow
-            name={offer.fileName}
-            meta={t.quote.fileMeta}
-            action={
-              <Button type="tertiary" onClick={offer.pick}>
-                Replace
-              </Button>
-            }
-          />
-          <div>
-            {offer.rows.map((r) => (
-              <CheckRow key={`${offer.fileName}-${r.key}`} t={t} offer={offer} r={r} />
-            ))}
+          <Files t={t} offer={offer} />
+          <CheckRows t={t} offer={offer} />
+          <div className="flex flex-col gap-1.5">
+            <p className="h8 text-text-primary">
+              Also in your offer <span className="p7 font-normal text-text-tertiary">· not asked for in the brief</span>
+            </p>
+            <ul className="list-disc pl-5 p6 text-text-secondary">
+              {t.quote.alsoInOffer.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
           </div>
+          <Questions t={t} offer={offer} />
           <div className="flex items-center justify-end gap-3">
             <p className="p7 text-text-secondary" role="status">
               {offer.openCount > 0
                 ? `${offer.openCount} to fill in before you send`
-                : offer.resend
-                  ? "CQuel is told when you send changes"
-                  : "Ready to send"}
+                : offer.unanswered > 0
+                  ? `${offer.unanswered} ${offer.unanswered === 1 ? "question" : "questions"} not answered: we use what we read`
+                  : offer.resend
+                    ? "CQuel is told when you send changes"
+                    : "Ready to send"}
             </p>
             {offer.resend && (
               <Button type="secondary" onClick={offer.cancelEdit}>

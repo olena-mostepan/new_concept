@@ -549,14 +549,20 @@ export function OfferPanel({ t, offer, cardRef }: { t: Tender; offer: Offer; car
   );
 }
 
-/** An InfoCell with an ink border: what the supplier said, in the chapters after sending. */
+/**
+ * An InfoCell on the info blue: what the supplier said, in the chapters after sending.
+ * One icon for both labels: cite (16), in line with the label.
+ */
 export function YouSaid({ label = "You said", value, note, children }: { label?: string; value: string; note?: string; children?: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1 rounded-md border border-black-7 bg-white px-3.5 py-3">
-      <span className="p7 text-text-tertiary">{label}</span>
-      <span className="h8 text-text-primary">{value}</span>
-      {note && <span className="p7 text-text-secondary">{note}</span>}
-      {children}
+    <div className="flex items-start gap-2 rounded-md border border-status-info-border bg-status-info-bg px-3.5 py-3">
+      <Icon name="cite" size={16} className="shrink-0 text-status-info-text" />
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="p7 text-text-tertiary">{label}</span>
+        <span className="h8 text-text-primary">{value}</span>
+        {note && <span className="p7 text-text-secondary">{note}</span>}
+        {children}
+      </div>
     </div>
   );
 }

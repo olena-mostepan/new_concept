@@ -543,7 +543,7 @@ function SitesAndDocs({ t }: { t: Tender }) {
               Documents for all sites <span className="font-normal text-text-tertiary">{t.sharedDocs.length}</span>
             </>
           }
-          right={<Button type="link" ariaLabel={`Download all ${t.fileCount} files`}>Download everything</Button>}
+          right={<Button type="link" ariaLabel={`Download all ${t.fileCount} files`}>Download all</Button>}
           bodyClassName="px-4 py-0"
         >
           <DocumentList docs={t.sharedDocs} />

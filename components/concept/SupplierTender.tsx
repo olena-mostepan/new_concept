@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { OfferPanel, YouSaid, saidJob, saidPrice, useOffer, type Offer } from "./SupplierOffer";
 import * as Tabs from "@radix-ui/react-tabs";
 import { cn } from "@/lib/utils";
 import type { FindEntry, SpecRow, SupplierTender as Tender } from "@/lib/concept/supplier";
@@ -130,61 +131,55 @@ function Rail({ t }: { t: Tender }) {
 
 /* ----------------------------------------------------------------- offer */
 
-function OfferCard({ t, cardRef }: { t: Tender; cardRef: React.Ref<HTMLElement> }) {
-  return (
-    <section
-      ref={cardRef}
-      aria-labelledby="offer-h"
-      className="flex flex-col gap-4 rounded-lg border border-border-dark border-t-4 border-t-brand-6 bg-bg-container px-6 py-5"
-    >
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <ResponsibilityPill owner="you" label="Your action" />
-            <span className="s3 text-text-tertiary">Due {t.round.due.replace("due ", "")}</span>
-          </div>
-          <h2 id="offer-h" className="h6 text-text-primary">{t.offer.title}</h2>
-          <p className="p6 text-text-secondary">{t.offer.text}</p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <Button type="primary" size="large" icon="upload">Upload your quote</Button>
-          <p className="p6 text-text-secondary">
-            Not bidding? <Button type="link">Decline this tender</Button>
-          </p>
-        </div>
-      </div>
-      <ChipTrack
-        steps={t.offerSteps.map((s, i) => ({
-          key: s.key,
-          lead: i === 0 ? "now" : "next",
-          label: s.label,
-          notes: [{ text: s.text, className: "mt-1 p7 text-text-secondary" }],
-        }))}
-      />
-    </section>
-  );
-}
-
-function StickyOffer({ t, show }: { t: Tender; show: boolean }) {
+function StickyOffer({ t, show, offer }: { t: Tender; show: boolean; offer: Offer }) {
+  const visible = show && (offer.phase === "start" || offer.phase === "check");
+  const scrollToCard = () => document.getElementById("offer-h")?.scrollIntoView({ behavior: "smooth", block: "center" });
   return (
     <div
-      aria-hidden={!show}
+      aria-hidden={!visible}
       className={cn(
         "fixed bottom-0 left-0 right-0 z-30 border-t border-border-dark bg-white shadow-[0_-8px_24px_rgba(30,40,50,0.08)] transition-transform duration-200",
-        show ? "translate-y-0" : "pointer-events-none translate-y-full",
+        visible ? "translate-y-0" : "pointer-events-none translate-y-full",
       )}
     >
       <div className="mx-auto flex h-[72px] w-full max-w-screen-2xl items-center justify-between gap-6 px-8">
         <div className="flex min-w-0 items-center gap-3">
           <ResponsibilityPill owner="you" label="Your action" />
           <div className="min-w-0">
-            <p className="h8 text-text-primary">{t.offer.title}</p>
-            <p className="p7 text-text-secondary">Due {t.round.due.replace("due ", "")} · not binding, you update it after the site visit</p>
+            {offer.phase === "check" ? (
+              <>
+                <p className="h8 text-text-primary">{offer.resend ? "Edit your offer" : "Check what we read"}</p>
+                <p className="p7 text-text-secondary">
+                  {offer.openCount > 0 ? `${offer.openCount} to fill in before you send` : "Ready to send"}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="h8 text-text-primary">{t.offer.title}</p>
+                <p className="p7 text-text-secondary">Due {t.round.due.replace("due ", "")} · not binding, you update it after the site visit</p>
+              </>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-4">
-          <Button type="link">Decline this tender</Button>
-          <Button type="primary" size="large" icon="upload">Upload your quote</Button>
+          {offer.phase === "check" ? (
+            offer.openCount > 0 ? (
+              <Button type="primary" size="large" onClick={scrollToCard}>
+                Fill in
+              </Button>
+            ) : (
+              <Button type="primary" size="large" onClick={offer.send}>
+                {offer.resend ? "Send changes" : "Send your offer"}
+              </Button>
+            )
+          ) : (
+            <>
+              <Button type="link">Decline this tender</Button>
+              <Button type="primary" size="large" icon="upload" onClick={offer.pick}>
+                Upload your quote
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -461,6 +456,8 @@ function SiteMap({ t, onTab }: { t: Tender; onTab: (id: TabId) => void }) {
 
 function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; onAsk: (q: Question) => void }) {
   const offerRef = useRef<HTMLElement>(null);
+  const offer = useOffer(t);
+  const sent = offer.phase === "sent";
   const [showSticky, setShowSticky] = useState(false);
   useEffect(() => {
     const el = offerRef.current;
@@ -472,7 +469,7 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
 
   return (
     <div className="flex flex-col gap-4">
-      <OfferCard t={t} cardRef={offerRef} />
+      <OfferPanel t={t} offer={offer} cardRef={offerRef} />
       <Find t={t} onTab={onTab} onAsk={onAsk} />
 
       <Chapter n={1} id="c-job" title="The job">
@@ -481,6 +478,7 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
           <SiteMap t={t} onTab={onTab} />
           <Cells rows={t.jobFacts} cols={2} />
         </div>
+        {sent && <YouSaid value={saidJob(t, offer)} />}
         <div className="flex items-center justify-between gap-3">
           <p className="p7 text-text-secondary">{t.seafront}</p>
           <Button type="tertiary" icon="chevron-right" iconPosition="right" onClick={() => onTab("sites")}>
@@ -491,11 +489,19 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
 
       <Chapter n={2} id="c-price" title="What you price">
         <Cells rows={t.priceCells} cols={3} />
+        {sent && <YouSaid value={saidPrice(offer)} />}
       </Chapter>
 
       <Chapter n={3} id="c-open" title="What nobody knows yet">
         <p className="p6 text-text-primary">Price on what you know and say what you assumed. These are settled later:</p>
         <Cells rows={t.openCells} cols={2} />
+        {sent && (
+          <YouSaid
+            label="You assumed"
+            value={t.quote.assumed}
+            note="Read from your quote. When CQuel gets the answers, this says whether your assumption holds."
+          />
+        )}
       </Chapter>
 
       <Chapter n={4} id="c-choose" title="How the customer chooses">
@@ -516,7 +522,7 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
         </p>
       </Chapter>
 
-      <StickyOffer t={t} show={showSticky} />
+      <StickyOffer t={t} show={showSticky} offer={offer} />
     </div>
   );
 }

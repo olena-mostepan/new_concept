@@ -132,9 +132,9 @@ export interface AssetPickerProps { items: { id: string; name: string; place?: s
 export interface ChosenListProps { title: string; items: { id: string; name: string; place?: string; isNew?: boolean }[]; onRemove?: (id: string) => void; empty?: string; countLabel?: [string, string]; icon?: IconName }
 /** A small form that adds an item to a list. */
 export interface InlineFormProps { intro?: string; action: { label: string; icon?: IconName; onClick?: () => void; disabled?: boolean }; /** shown while the action is disabled */ needed?: string; /** confirmation after adding (role=status) */ done?: string; children: ReactNode }
-/** Supplier tender page: the left column. */
-export interface TenderRailProps { service: string; title: string; customer?: string; why?: ReactNode; facts?: { label: string; value: ReactNode; note?: string }[]; status: { label: string; detail?: string }; action?: { label: string; onClick?: () => void; href?: string }; onDecline?: () => void; declineHref?: string; stages?: StageListProps['stages']; paid?: ReactNode; formLink?: { label?: string; href?: string; onClick?: () => void } }
-/** The stages still to come. One 'now' at most. */
+/** Supplier tender page (C3): the left column, the tender as parent. No status or action. */
+export interface TenderRailProps { solution?: 'solar' | 'heat-pump' | 'ev-charging' | 'led' | string; iconSrc?: string; service: string; title: string; customer?: string; why?: ReactNode; facts?: { label: string; value: ReactNode; note?: string }[]; stages?: StageListProps['stages']; paid?: ReactNode; formLink?: { label?: string; href?: string; onClick?: () => void } }
+/** How the tender runs, for everyone. Only in the TenderRail. One 'now' at most. */
 export interface StageListProps { stages: { title: string; detail?: string; state?: 'done' | 'now' | 'next' }[]; label?: string }
 /** Label | value rows for values that are sentences. */
 export interface SpecListProps { rows: { label: string; value: ReactNode; note?: string }[]; /** 140 label column in a half-width card */ narrow?: boolean; labelWidth?: number | string }
@@ -142,6 +142,20 @@ export interface SpecListProps { rows: { label: string; value: ReactNode; note?:
 export interface CriteriaTileProps { icon?: IconName; title?: string; text?: string; items?: { icon: IconName; title: string; text?: string }[] }
 /** "Go to another tab": a plain white card row. */
 export interface LinkRowProps { title: string; text?: string; onClick?: () => void; href?: string }
-/** Numbered site pins; numbers match the Sites table. */
-export interface SiteMapProps { sites: { n: number; left: number; top: number }[]; distance?: string; water?: { width?: string; label?: string }; label?: string; height?: number }
+/** A real map with numbered pin buttons and a SitePopover; pins match the Sites table. */
+export interface SiteMapProps { image?: string; width?: number; height?: number; credit?: string; sites: { n: number; name?: string; address?: string; size?: string; files?: number; left: number; top: number }[]; distance?: string; onFiles?: (n: number) => void; defaultOpen?: number; water?: { width?: string; label?: string }; label?: string }
+/** 3D illustration per solution. Only in the TenderRail header. */
+export interface SolutionIcon3DProps { solution: 'solar' | 'heat-pump' | 'ev-charging' | 'led' | string; src?: string; size?: number }
+/** Plain information with one secondary action. */
+export interface InfoCardProps { tone?: 'warm'; title: string; children?: ReactNode; action?: { label: string; href?: string; onClick?: () => void } }
+/** The one card that needs you on the supplier Overview. */
+export interface OfferCardProps { id?: string; due?: string; title: string; text?: string; action?: { label: string; icon?: IconName; onClick?: () => void; href?: string }; onDecline?: () => void; declineHref?: string; steps?: { label: string; note?: string; state?: 'done' | 'now' | 'next' }[]; cardRef?: any }
+/** The offer's action while the OfferCard is out of view. */
+export interface StickyActionBarProps { targetId?: string; show?: boolean; stage: string; due?: string; action: { label: string; icon?: IconName; onClick?: () => void; href?: string }; inline?: boolean }
+/** Find it in this tender; nothing found becomes a question. */
+export interface FindFieldProps { index: { text: string; source: string; action?: 'open' | 'download'; onClick?: () => void }[]; suggestions?: string[]; onAsk?: (text: string) => void; onOpenQuestions?: () => void; title?: string; placeholder?: string; defaultQuery?: string; defaultAsking?: boolean; defaultSent?: string }
+/** A story card: "<n> <title>". */
+export interface ChapterProps { n?: number; title: string; children: ReactNode }
+/** A small grey box inside a Chapter. Pass items and cols for the row. */
+export interface InfoCellProps { label?: string; value?: ReactNode; note?: string; sentence?: boolean; icon?: IconName; items?: InfoCellProps[]; cols?: number }
 ```

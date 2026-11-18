@@ -38,6 +38,21 @@ export interface FindEntry {
   tab?: "overview" | "sites" | "questions";
 }
 
+
+/** The example quote the prototype "reads" when a file is picked (C4 board). */
+export interface QuoteExample {
+  fileMeta: string;
+  /** Two totals on different pages: the supplier chooses (FoundValue). */
+  priceOptions: Array<{ value: string; page: number; quote: string }>;
+  sitesPage: number;
+  start: { value: string; page: number };
+  duration: { value: string; page: number };
+  /** Read from the quote; shown as "You assumed" after sending. */
+  assumed: string;
+  /** Brief items the quote doesn't answer; shown in "How your offer reads". */
+  gaps: Array<{ title: string; text: string }>;
+}
+
 export interface SupplierTender {
   id: string;
   icon3d?: string;
@@ -51,6 +66,7 @@ export interface SupplierTender {
   priceCells: SpecRow[];
   openCells: SpecRow[];
   contractLine: string;
+  quote: QuoteExample;
   findIndex: FindEntry[];
   service: string;
   title: string;
@@ -111,6 +127,23 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { label: "Checked at the site visit", value: "Roof strength · Burger King size · access hours · finish date" },
     ],
     contractLine: "Contract with the customer, or the PPA provider if it finances the work. Payment terms are agreed after the site visit.",
+    quote: {
+      fileMeta: "PDF · 2.1 MB",
+      priceOptions: [
+        { value: "£318,400", page: 2, quote: "Total project cost (excl. VAT): £318,400" },
+        { value: "£322,900", page: 5, quote: "Total incl. optional bird mesh: £322,900" },
+      ],
+      sitesPage: 1,
+      start: { value: "6 weeks after the contract", page: 3 },
+      duration: { value: "10 weeks on site", page: 3 },
+      assumed: "Export limit 200 kW · no asbestos · roofs take the load",
+      gaps: [
+        {
+          title: "Seafront protection isn't in your quote",
+          text: "The brief asks how you protect panels, frames and fixings from salt air. Add it to your final offer.",
+        },
+      ],
+    },
     findSuggestions: ["Export limit", "Not in my price", "Roof space", "Warranties"],
     findIndex: [
       { text: "Roof space: 2,475 m² in total, 3 sites", source: "The job · Overview", action: "open", tab: "overview" },

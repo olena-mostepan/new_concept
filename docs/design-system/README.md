@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 54, 17 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 57, 18 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -188,26 +188,45 @@ The Ops package page, the Ops asset page, the AssetWindow (Fix assets, Edit asse
 
 ## Supplier screens
 
-What an invited supplier sees: one tender at a time (Overview, Sites & documents, Questions). Example: Solar PV on 3 roofs in Blackpool, for Blackpool Pleasure Beach.
+What an invited supplier sees: one tender at a time (Overview, Sites & documents, Questions). Example: Solar PV on 3 roofs in Blackpool, for Blackpool Pleasure Beach. Updated for C3 (18 Nov 2026): the tender is the parent, the process and the supplier's own steps are told apart, finding and asking are one field, the job has a real map, and the page reads as a short story.
 
-- **Same system.** The same tokens, type and orange rule: orange means "this needs you": the supplier's offer card, the Your action pill, the `now` chip, the current stage dot.
-- **Words:** tender, site (a supplier never sees "asset", "package" or "batch"), indicative offer, final offer, site visit, commission. British English, £.
+- **Same system.** The same tokens, type and orange rule: orange means "this needs you": the OfferCard's top bar, the Your action pill, the `now` chip, the current stage dot.
 - **Responsibility** is only "Your action", as on customer screens.
-- **Layout:** DetailBar (supplier variant: "Tenders", avatar only) over a two-column page: the TenderRail (420, on the page grey) and the tabs on the right, a `border-dark` rule between them.
+- **Layout:** DetailBar (supplier variant: "Tenders", avatar only) over two columns: the TenderRail (400, white, the parent) and the story on the page grey, a `border-dark` line between them.
+- **Rail:** what the tender is, why you were invited, up to four facts, how the tender runs (StageList), how CQuel is paid (InfoCard `warm`). No status and no action in the rail.
 - **Overview, in this order:**
-  1. The offer card, the one card that needs you (Card `accent`): Your action pill, "Round 1 of 2 · due 9 May", the title in `h6`, one line, "Ask a question" (`secondary`) and "Upload your quote" (`primary`, `upload` icon); Steps (Upload your quote · Check what we read · Send it) with `p7` notes; a `p7` footer line with "See the terms".
-  2. The job (SpecList).
-  3. What to price and send (SpecList, "Round 1" in the header).
-  4. Checked at the site visit | Not known yet: two half-width SpecList cards, 16 apart, same height. "Not known yet" carries "Price on what you know. Say what you assumed." under its title.
-  5. Sites & documents (LinkRow).
-  6. How the customer chooses, and the contract: CriteriaTiles, then the contract facts (DetailsGrid in the grey panel).
-- **Sites & documents:** SiteMap beside "Documents for all sites" (DocumentList in a 400-wide Card, "Download everything" as a link in the header); then the Sites table with per-site download and "View site".
-- **Questions:** "Ask a question": FormField + Select ("About": the whole tender, each site, commission and contract), FormField + Textarea ("Your question"), a `p7` line "We reply here and by email." and a `secondary` "Send question" (disabled until there is text). Then "Questions and answers (0)" with EmptyState "No questions yet".
-- **Decided rules (Olena, 17 Nov):**
-  - **The one card that needs you:** a page may mark the one card where the person acts with a 4px `brand-6` top bar, together with the Your action pill and the page's `primary` Button. At most one per page. The selected service filter card keeps its own 4px bar; both uses stand.
-  - **Status colours stay for state.** Plain information goes on Banner `neutral` or a plain Card, never on `status-warning` or `status-info` grounds. "Why you were invited" is the one `info` Banner on the supplier page.
-  - **"Go to another tab" rows** are a plain white LinkRow, never a tinted ground.
-  - **Row actions on supplier screens:** supplier tables may carry actions in rows (download, "View site ›"). Suppliers come to take files away; the per-site download is the job. Customer tables keep "no action buttons in rows".
+  1. OfferCard: "Send an indicative offer", due date, "Upload your quote" (`primary`), Decline under it, and the supplier's own steps (Upload your quote · Check what we read · Send it).
+  2. FindField: "Find it in this tender"; nothing found becomes a question to CQuel.
+  3. Chapter 1 The job: lead line, four InfoCells, the SiteMap, the seafront note and "Sites & documents · 3 sites, 7 files ›".
+  4. Chapter 2 What you price: Included · Not included · Send us.
+  5. Chapter 3 What nobody knows yet: CQuel is asking the customer · Checked at the site visit.
+  6. Chapter 4 How the customer chooses: Price · Timing · Quality (InfoCells with icons), then the contract line with a link to the Commission Form.
+  - StickyActionBar shows the offer's action while the OfferCard is out of view.
+- **Two kinds of progress, never alike:** the tender's stages (StageList, dots on a vertical line, in the rail, the same for everyone) and the supplier's own steps (Steps chips on a horizontal track, in the OfferCard).
+- **Sites & documents:** "Documents for all sites" (DocumentList in a Card, "Download everything" in the header) and the Sites table with per-site download and "View site". The list of sites lives here, not under the map.
+- **Questions:** questions sent from the FindField or the Questions form ("About" Select, "Your question" Textarea, "We reply here and by email.", `secondary` "Send question", disabled until there is text). The tab shows a count once there are any: "Questions (1)". Empty: "No questions yet".
+
+### Words (C3)
+- One name per thing: **indicative offer** (the stage), **your quote** (the file), **Commission Form** (the document: "Read the Commission Form", never "See the terms"). Never "first price".
+- Tender, site (a supplier never sees "asset", "package" or "batch"), final offer, site visit, commission. British English, £.
+- **Each fact once on a page:** the rail holds the headline facts, the job chapter holds what is special about this job, the OfferCard holds the deadline.
+- Write for any number of sites: "every site", not "the three sites".
+
+### Decided rules
+- **The one card that needs you** (17 Nov): a 4px `brand-6` top bar, with the Your action pill and the page's `primary` Button. At most one per page (the OfferCard). The selected service filter card keeps its own 4px bar.
+- **Status colours stay for state** (17 Nov). Plain information goes on Banner `neutral` or a plain Card. C3 sets two exceptions on the supplier page: the TenderRail header band (`status-info-bg`, the tender as parent) and InfoCard `warm` ("How CQuel is paid"). "Why you were invited" stays the one `info` Banner.
+- **Grey boxes need borders** (18 Nov): InfoCells and grey panels take a 1px `border-dark`.
+- **Row actions on supplier screens:** supplier tables may carry actions in rows (download, "View site ›"). Customer tables keep "no action buttons in rows".
+- **Pins are never orange:** a selected map pin is "selected", not "needs you".
+
+### Accessibility (for the build)
+- Map pins are real buttons with names; the SitePopover's Close is reachable by keyboard; "Sites & documents" is the text alternative to the map.
+- FindField's title is its label; results are buttons; the Sent row is a `status` region.
+- The Decline link is 14px, not 12.
+
+### Not decided yet
+- Continuity after the offer ("You said", "How your offer reads to the customer") is parked.
+- Reply time for questions, and whether answers that change the brief go to every supplier, are still to confirm with Ops.
 
 ## Page furniture
 

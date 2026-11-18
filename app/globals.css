@@ -384,3 +384,9 @@ input[type='search']::-webkit-search-decoration {
   .ws-hide-xs { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ws-docs { transition: none; } }
+
+/* Supplier concept: the "reading your quote" bar. */
+@keyframes offerread {
+  from { transform: scaleX(0.05); }
+  to { transform: scaleX(1); }
+}

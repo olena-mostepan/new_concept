@@ -79,9 +79,9 @@ function Rail({ t }: { t: Tender }) {
         <Banner type="info" icon="info" title="Why you were invited" className="border-border-dark bg-bg-container-grey">
           {t.whyInvited}
         </Banner>
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           <h2 className="s3 text-text-tertiary">Key facts</h2>
-          <dl className="mt-2 border-t border-border-light">
+          <dl className="border-t border-border-light">
             {t.facts.map((f) => (
               <div key={f.label} className="flex items-baseline justify-between gap-4 border-b border-border-light py-2">
                 <dt className="p6 text-text-secondary">{f.label}</dt>
@@ -477,9 +477,9 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
 
       <Chapter n={1} id="c-job" title="The job">
         <p className="p6 text-text-primary">{t.jobLead}</p>
-        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-start gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-3">
           <SiteMap t={t} onTab={onTab} />
-          <Cells rows={t.jobCells} cols={2} />
+          <Cells rows={t.jobFacts} cols={2} />
         </div>
         <div className="flex items-center justify-between gap-3">
           <p className="p7 text-text-secondary">{t.seafront}</p>

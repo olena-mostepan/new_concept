@@ -43,10 +43,11 @@ export interface SupplierTender {
   icon3d?: string;
   process: Array<{ title: string; detail: string; now?: boolean }>;
   jobLead: string;
-  jobCells: SpecRow[];
   seafront: string;
   map: { image: string; credit: string; width: number; height: number };
   findSuggestions: string[];
+  /** Every fact list on the page uses the same SpecRow shape. */
+  jobFacts: SpecRow[];
   priceCells: SpecRow[];
   openCells: SpecRow[];
   contractLine: string;
@@ -56,7 +57,7 @@ export interface SupplierTender {
   customer: string;
   supplier: { name: string; initials: string };
   whyInvited: string;
-  facts: SupplierFact[];
+  facts: SpecRow[];
   status: { label: string; detail: string };
   round: { label: string; due: string };
   offer: { title: string; text: string; footer: string };
@@ -90,11 +91,13 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { title: "Customer chooses", detail: "After the final offers" },
     ],
     jobLead: "Roof-mounted PV on 3 seafront sites: 2 hotels and 1 restaurant.",
-    jobCells: [
-      { label: "1 · Boulevard Hotel", value: "125 kWp", estimate: true },
-      { label: "2 · Big Blue Hotel", value: "115 kWp", estimate: true },
-      { label: "3 · Burger King", value: "Sized at the site visit" },
+    jobFacts: [
+      { label: "Sites", value: "3" },
+      { label: "Size", value: "240 kWp", estimate: true },
       { label: "Expected generation", value: "380,000 kWh/yr", estimate: true },
+      { label: "Roof space", value: "2,475 m²" },
+      { label: "Installation", value: "Off-peak season" },
+      { label: "Safety rules", value: "Building Safety Act 2022 · CDM 2015" },
     ],
     seafront: "Seafront: say how you protect panels, frames and fixings from salt air.",
     map: { image: "/concept/supplier/map-blackpool.jpg", credit: "© OpenStreetMap contributors", width: 800, height: 347 },
@@ -129,9 +132,8 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     supplier: { name: "Des Renewables Ltd", initials: "DR" },
     whyInvited: "You install commercial solar PV, and you're 41 miles from the sites.",
     facts: [
-      { label: "Sites", value: "3" },
-      { label: "Size", value: "240 kWp", estimate: true },
       { label: "Budget", value: "£350,000", estimate: true },
+      { label: "Budget approved", value: "No" },
       { label: "Contract start", value: "Sep", estimate: true },
     ],
     status: { label: "Not started", detail: "Indicative offer due 9 May" },

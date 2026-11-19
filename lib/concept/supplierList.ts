@@ -1,7 +1,8 @@
 /**
  * Supplier portal: the Tenders list (C11, option B without the preview).
  * Rows mirror the old portal's tenders (comparison-pricing `/supplier/tenders`)
- * plus the Blackpool concept tender. Only Blackpool has a tender page.
+ * plus the Blackpool concept tender. Every row opens a tender page in its state;
+ * only Blackpool has its own brief, sites and documents (the others reuse them).
  */
 
 export type ListGroup = "you" | "progress" | "closed";
@@ -9,6 +10,29 @@ export type ListSolution = "solar" | "led" | "heat-pump" | "ev" | "battery" | "c
 
 /** The tender's own stages, the same as the StageList on the tender page. */
 export type ListStage = "Indicative offer" | "Shortlist" | "Site visit" | "Final offer";
+
+/** Where the tender is for this supplier: drives the list row and the tender page. */
+export type TenderState =
+  | "new"
+  | "notStarted"
+  | "started"
+  | "sent"
+  | "shortlisted"
+  | "visitDates"
+  | "visitBooked"
+  | "notShortlisted"
+  | "declined"
+  | "missed";
+
+/** States after the indicative-offer deadline: the offer card is replaced by the outcome card. */
+export const AFTER_DEADLINE: TenderState[] = [
+  "shortlisted",
+  "visitDates",
+  "visitBooked",
+  "notShortlisted",
+  "declined",
+  "missed",
+];
 
 export type TenderRow = {
   id: string;
@@ -22,6 +46,7 @@ export type TenderRow = {
   /** "main · detail" pair, the same words as the offer card. */
   next: { main: string; detail?: string };
   group: ListGroup;
+  state: TenderState;
   /** Invited and not opened yet. */
   unopened?: boolean;
   href?: string;
@@ -48,6 +73,7 @@ export const SUPPLIER_INITIALS = "DR";
 export const TENDER_ROWS: TenderRow[] = [
   {
     id: "blackpool-pv",
+    state: "new",
     solution: "solar",
     title: "Solar PV on 3 roofs in Blackpool",
     customer: "Blackpool Pleasure Beach",
@@ -56,10 +82,11 @@ export const TENDER_ROWS: TenderRow[] = [
     next: { main: "Indicative offer due 9 May", detail: "New invitation" },
     group: "you",
     unopened: true,
-    href: "/concept/supplier/tenders/blackpool-pv",
   },
   {
     id: "sirius-norderstedt",
+    state: "notStarted",
+    href: "/concept/supplier/tenders/sirius-norderstedt",
     solution: "led",
     title: "Lighting for Sirius Norderstedt (Innenbereich)",
     customer: "Sirius Renewable Energy",
@@ -70,6 +97,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "hines-hainichen",
+    state: "started",
+    href: "/concept/supplier/tenders/hines-hainichen",
     solution: "solar",
     title: "Solar PV for Hines Hainichen",
     customer: "Hines (HECF)",
@@ -80,6 +109,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "yugo-gsa",
+    state: "shortlisted",
+    href: "/concept/supplier/tenders/yugo-gsa",
     solution: "solar",
     title: "Yugo/GSA – Student Housing Portfolio",
     sites: 1,
@@ -89,6 +120,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "stayery-frankfurt",
+    state: "visitDates",
+    href: "/concept/supplier/tenders/stayery-frankfurt",
     solution: "cooling",
     title: "Design and specification for STAYERY Frankfurt serviced apartments",
     customer: "Stayery",
@@ -99,6 +132,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "solar-q2",
+    state: "sent",
+    href: "/concept/supplier/tenders/solar-q2",
     solution: "solar",
     title: "Solar Q2 – Apartments",
     sites: 1,
@@ -108,6 +143,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "led-waldemarstrasse",
+    state: "visitBooked",
+    href: "/concept/supplier/tenders/led-waldemarstrasse",
     solution: "led",
     title: "LED – Waldemarstraße",
     sites: 1,
@@ -117,6 +154,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "ev-midsummer",
+    state: "notShortlisted",
+    href: "/concept/supplier/tenders/ev-midsummer",
     solution: "ev",
     title: "EV Charging – Midsummer Place",
     sites: 1,
@@ -126,6 +165,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "battery-industrial",
+    state: "declined",
+    href: "/concept/supplier/tenders/battery-industrial",
     solution: "battery",
     title: "Battery Storage – Industrial",
     sites: 3,
@@ -135,6 +176,8 @@ export const TENDER_ROWS: TenderRow[] = [
   },
   {
     id: "ashp-bremerhaven",
+    state: "missed",
+    href: "/concept/supplier/tenders/ashp-bremerhaven",
     solution: "heat-pump",
     title: "Replace Boiler with ASHP – 25-210kW – Bremerhaven 27570",
     sites: 1,
@@ -149,3 +192,11 @@ export const GROUPS: Array<{ id: ListGroup; label: string }> = [
   { id: "progress", label: "In progress" },
   { id: "closed", label: "Closed" },
 ];
+
+export const tenderRow = (id: string) => TENDER_ROWS.find((r) => r.id === id);
+
+/** "9 May" from "Indicative offer due 9 May" / "due 14 Nov". */
+export function rowDue(row: TenderRow) {
+  const m = `${row.next.main} ${row.next.detail ?? ""}`.match(/due (\d{1,2} [A-Z][a-z]{2})/);
+  return m?.[1];
+}

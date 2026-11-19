@@ -13,7 +13,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { QuoteQuestion, SupplierTender as Tender } from "@/lib/concept/supplier";
 import { Button, ChipTrack, Icon, IconButton, ResponsibilityPill, focusRing } from "./ui";
-import { RequirementGroup, StateMark } from "./ops-asset/opsUi";
+import { StateMark } from "./ops-asset/opsUi";
 
 export type OfferPhase = "start" | "reading" | "check" | "sent";
 type Unit = "days" | "weeks";
@@ -171,10 +171,10 @@ function warrantyLine(w: Offer["warranties"]) {
 }
 function warrantyFlags(t: Tender, w: Offer["warranties"]) {
   const e = t.quote.expected;
-  const f: string[] = [];
-  if (w.panels < e.panels) f.push(`Panels: expected at least ${e.panels} years`);
-  if (w.workmanship < e.workmanship) f.push(`Workmanship: expected at least ${e.workmanship} years`);
-  return f;
+  const short: string[] = [];
+  if (w.panels < e.panels) short.push(`panels ${e.panels}+ years`);
+  if (w.workmanship < e.workmanship) short.push(`workmanship ${e.workmanship}+ years`);
+  return short.length ? [`The customer expects ${short.join(", ")}`] : [];
 }
 /** Start after answers: the off-peak months replace the preferred start. */
 function startAfter(offer: Offer) {
@@ -245,59 +245,75 @@ function steps(t: Tender, phase: OfferPhase) {
   });
 }
 
-function Files({ t, offer, reading }: { t: Tender; offer: Offer; reading?: boolean }) {
+function UploadRow({ offer }: { offer: Offer }) {
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between gap-3 rounded-md border-[1.5px] border-dashed border-black-3 bg-black-2 py-3 pl-4 pr-3">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border-dark bg-white">
-            <Icon name="upload" size={20} className="text-icon-dark" />
-          </span>
-          <div>
-            <p className="h8 text-text-primary">Drop your quote and anything that goes with it</p>
-            <p className="p7 text-text-secondary">Quote, price breakdown, drawings, datasheets. PDF, Word or Excel.</p>
-          </div>
+    <div className="flex items-center justify-between gap-3 rounded-md border-[1.5px] border-dashed border-black-3 bg-black-2 py-3 pl-4 pr-3 hover:border-black-4">
+      <div className="flex items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border-dark bg-white">
+          <Icon name="upload" size={20} className="text-icon-dark" />
+        </span>
+        <div>
+          <p className="h8 text-text-primary">Drop your quote here</p>
+          <p className="p7 text-text-secondary">Add drawings and datasheets too. We read them and fill what we can.</p>
         </div>
-        <Button type="secondary" icon="upload" onClick={offer.pick}>
-          Upload files
-        </Button>
       </div>
-      {offer.files.map((name, i) => {
-        const f = t.quote.files[i];
-        return (
-          <div key={name} className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border-light py-2.5">
-            <span className="flex size-9 items-center justify-center rounded-md border border-border-dark bg-white">
-              <Icon name="document" size={16} className="text-icon-default" />
-            </span>
-            <div className="min-w-0">
-              <p className="flex min-w-0 items-center gap-2 h8 text-text-primary">
-                <span className="truncate">{name}</span>
-                {!reading && f && (
-                  <span className="inline-flex h-5 shrink-0 items-center rounded-full border border-border-dark bg-black-1 px-1.5 h9 text-text-secondary">{f.kind}</span>
-                )}
-              </p>
-              <p className="p7 text-text-secondary">{reading ? "Reading…" : f ? f.meta : "Read · nothing for this tender found in it"}</p>
-              {reading && (
-                <div className="mt-1.5 h-1 w-60 overflow-hidden rounded-full bg-black-2" role="progressbar" aria-label={`Reading ${name}`}>
-                  <div className="h-full w-full origin-left animate-[offerread_1.8s_ease-out_forwards] rounded-full bg-black-7" />
-                </div>
-              )}
-            </div>
-            {reading ? (
-              <span />
-            ) : (
-              <Button type="tertiary" onClick={() => offer.removeFile(name)} ariaLabel={`Remove ${name}`}>
-                Remove
-              </Button>
-            )}
-          </div>
-        );
-      })}
+      <Button type="secondary" icon="upload" onClick={offer.pick}>
+        Upload files
+      </Button>
     </div>
   );
 }
 
+/** DS: UploadRow, then a DocumentList in a white box (border-light, radius-md, padding 0 12). */
+function Files({ t, offer, reading }: { t: Tender; offer: Offer; reading?: boolean }) {
+  const n = offer.files.length;
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3 border-b border-border-light pb-2">
+        <h3 className="s3 text-text-tertiary">Your files</h3>
+        {n > 0 && (
+          <span className="inline-flex h-6 items-center rounded-full border border-border-dark bg-white px-2 h9 text-text-title">
+            {n} {n === 1 ? "file" : "files"}
+          </span>
+        )}
+      </div>
+      <UploadRow offer={offer} />
+      {n > 0 && (
+        <ul className="rounded-md border border-border-light bg-white px-3">
+          {offer.files.map((name, i) => {
+            const f = t.quote.files[i];
+            return (
+              <li key={name} className="flex items-center gap-3 border-b border-border-light py-2.5 last:border-b-0">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate h8 text-text-title">{name}</p>
+                  {reading ? (
+                    <p className="p7 text-text-secondary">Reading…</p>
+                  ) : (
+                    <p className="mt-0.5 flex items-center gap-2 p7 text-text-secondary">
+                      {f && <span className="inline-flex h-5 items-center rounded-full border border-border-dark bg-black-1 px-1.5 h9 text-text-secondary">{f.kind}</span>}
+                      <span className="truncate">{f ? f.meta : "Nothing for this tender in it"}</span>
+                    </p>
+                  )}
+                </div>
+                {reading ? (
+                  <Icon name="spinner" size={16} className="shrink-0 animate-spin text-icon-default" />
+                ) : (
+                  <IconButton icon="trash" size="small" label={`Remove ${name}`} onClick={() => offer.removeFile(name)} />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /* ----------------------------------------------------------- check rows */
+
+/** One bordered list for files, check rows and questions: rows split by light lines, 16 side padding. */
+/** Selected check row or question (DS RequirementRow rows have no box: the grey bleeds 12 px each side, text and rules stay put). */
+const selectedRow = "rounded-sm bg-black-1 shadow-[-12px_0_0_var(--black-1),12px_0_0_var(--black-1)]";
 
 function Row({
   k,
@@ -324,8 +340,8 @@ function Row({
       onClick={() => offer.setFocus(k)}
       onFocusCapture={() => offer.setFocus(k)}
       className={cn(
-        "-mx-3 grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 rounded-md border-b border-border-light px-3 py-3.5",
-        on && "bg-black-1",
+        "grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 border-b border-border-light py-4",
+        on && selectedRow,
       )}
     >
       <span className="mt-0.5">
@@ -337,7 +353,7 @@ function Row({
         {flags && flags.length > 0 && <Flag>{flags.join(" · ")}</Flag>}
       </div>
       {action ?? <span />}
-      {children && <div className="col-start-2 col-end-4 mt-3">{children}</div>}
+      {children && <div className="col-start-2 col-end-4 mt-2.5">{children}</div>}
     </div>
   );
 }
@@ -449,7 +465,6 @@ function SitesEdit({ t, offer, onDone }: { t: Tender; offer: Offer; onDone: () =
 
 function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
   const [editing, setEditing] = useState<string | null>(null);
-  const [unit, setUnit] = useState<Unit | null>(offer.unit);
   const q = t.quote;
   const edit = (key: string) => (
     <Button type="tertiary" icon="edit" onClick={() => setEditing(key)} ariaLabel={`Edit ${key}`}>
@@ -465,31 +480,29 @@ function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
       <Row k="sites" offer={offer} name="Sites covered" done line={`${sitesLine(t, offer.sites)} · ${q.sitesSource}`} action={editing !== "sites" && edit("sites")}>
         {editing === "sites" && <SitesEdit t={t} offer={offer} onDone={close} />}
       </Row>
-      <Row k="start" offer={offer} name="Start" done line={`${offer.start} (your preferred start) · ${q.start.source}`} action={editing !== "start" && edit("start")}>
+      <Row k="start" offer={offer} name="Start" done line={`${offer.start} · your preferred start · ${q.start.source}`} action={editing !== "start" && edit("start")}>
         {editing === "start" && <TextEdit initial={offer.start} label="Start" onSave={(v) => { offer.setStart(v); close(); }} onCancel={close} />}
       </Row>
       {offer.unit && editing !== "duration" ? (
         <Row k="duration" offer={offer} name="Duration" done line={`${durationLine(t, offer.unit)} · ${q.durationSource}`} action={edit("duration")} />
       ) : (
-        <Row k="duration" offer={offer} name="Duration" done={false} line={`${durationLine(t, null)} · ${q.durationSource}`} flags={offer.unit ? undefined : ["No unit given for installation and commissioning: days or weeks?"]}>
-          <div className="flex items-center gap-2">
-            <Seg label="Unit for installation and commissioning" options={["days", "weeks"] as Unit[]} value={unit} onChange={setUnit} />
-            <Button
-              type="secondary"
-              disabled={!unit}
-              onClick={() => {
-                if (unit) offer.setUnit(unit);
-                close();
-              }}
-            >
-              Save
-            </Button>
-            {offer.unit && (
-              <Button type="secondary" onClick={close}>
-                Cancel
-              </Button>
-            )}
-          </div>
+        <Row
+          k="duration"
+          offer={offer}
+          name="Duration"
+          done={false}
+          line={`${durationLine(t, null)} · ${q.durationSource}`}
+          flags={[`Installation ${q.installation}, commissioning ${q.commissioning}: days or weeks?`]}
+        >
+          <Seg
+            label="Unit for installation and commissioning"
+            options={["days", "weeks"] as Unit[]}
+            value={offer.unit}
+            onChange={(u) => {
+              offer.setUnit(u);
+              close();
+            }}
+          />
         </Row>
       )}
       <Row
@@ -522,7 +535,7 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
   const focusProps = { onClick: () => offer.setFocus(q.key), onFocusCapture: () => offer.setFocus(q.key) };
   if (saved && !open) {
     return (
-      <div {...focusProps} className={cn("-mx-3 grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 rounded-md border-b border-border-light px-3 py-3.5", on && "bg-black-1")}>
+      <div {...focusProps} className={cn("grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-4", on && selectedRow)}>
         <StateMark state="done" size={20} />
         <div className="min-w-0">
           <p className="h8 text-text-primary">{q.title}</p>
@@ -539,7 +552,7 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
   }
 
   return (
-    <div {...focusProps} className={cn("-mx-3 grid grid-cols-[20px_minmax(0,1fr)] gap-x-4 rounded-md border-b border-border-light px-3 py-4", on && "bg-black-1")}>
+    <div {...focusProps} className={cn("grid grid-cols-[20px_minmax(0,1fr)] gap-x-4 border-b border-border-light py-4", on && selectedRow)}>
       <span className="mt-0.5">
         <StateMark state="open" size={20} />
       </span>
@@ -618,14 +631,35 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
   );
 }
 
+/** DS RequirementGroup header: s3 label, the pill at the right end, a border-light rule under it. A section, not a card. */
+function GroupHead({ label, pill, urgent }: { label: string; pill?: string; urgent?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-border-light pb-2">
+      <h3 className="s3 text-text-tertiary">{label}</h3>
+      {pill && (
+        <span
+          className={cn(
+            "inline-flex h-6 items-center rounded-full border px-2 h9",
+            urgent ? "border-border-accent bg-bg-accent text-[var(--accent-hover)]" : "border-border-dark bg-white text-text-title",
+          )}
+        >
+          {pill}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function Questions({ t, offer }: { t: Tender; offer: Offer }) {
   const n = offer.unanswered;
   return (
-    <RequirementGroup label="Questions on your quote" count={n} countLabel={n ? `${n} to answer` : "All answered"} accentPill={n > 0}>
+    <section className="flex flex-col">
+      <GroupHead label="Questions on your quote" pill={n ? `${n} to answer` : "All answered"} urgent={n > 0} />
       {t.quote.questions.map((q) => (
         <QuestionRow key={q.key} q={q} offer={offer} />
       ))}
-    </RequirementGroup>
+      <p className="pt-3 p7 text-text-secondary">You can send without answering. We then use what we read.</p>
+    </section>
   );
 }
 
@@ -646,20 +680,30 @@ function Header({ t, title, text }: { t: Tender; title: string; text?: string })
   );
 }
 
-function Cell({ label, value, note, was, flag }: { label: string; value: string; note?: string; was?: string; flag?: string }) {
+type Fact = { label: string; value: string; note?: string; was?: string; flag?: string };
+
+/** One column of what the customer compares: an s3 label over SpecList facts rows (label left, value right). */
+function FactColumn({ label, rows }: { label: string; rows: Fact[] }) {
   return (
-    <div className={cn("flex flex-col gap-1 rounded-md border px-3.5 py-3", flag ? "border-status-warning-border bg-status-warning-bg" : "border-border-dark bg-bg-container-grey")}>
-      <span className="p7 text-text-tertiary">{label}</span>
-      <span className="h8 text-text-primary">{value}</span>
-      {note && <span className="p7 text-text-secondary">{note}</span>}
-      {was && <span className="p7 text-text-tertiary line-through">{was}</span>}
-      {flag && (
-        <span className="flex items-center gap-1.5 p7 text-status-warning-text">
-          <Icon name="alert" size={14} className="shrink-0" />
-          {flag}
-        </span>
-      )}
-    </div>
+    <section className="flex min-w-0 flex-col">
+      <h4 className="border-b border-border-light pb-2 s3 text-text-tertiary">{label}</h4>
+      <dl>
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-start justify-between gap-4 border-b border-border-light py-2.5">
+            <dt className="p6 text-text-secondary">{r.label}</dt>
+            <dd className="flex flex-col items-end text-right">
+              <span className={cn("h8", r.flag ? "text-status-warning-text" : "text-text-primary")}>
+                {r.flag && <Icon name="alert" size={14} className="mr-1 inline-block -translate-y-px" />}
+                {r.value}
+              </span>
+              {r.flag && <span className="p7 text-status-warning-text">{r.flag}</span>}
+              {r.note && <span className="p7 text-text-tertiary">{r.note}</span>}
+              {r.was && <span className="p7 text-text-tertiary line-through">{r.was}</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -669,15 +713,29 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
   const w = offer.warranties;
   const startNow = startAfter(offer);
   const u = offer.unit ?? "days";
+  const price: Fact[] = [
+    { label: "Total", value: offer.price, note: "excl. VAT" },
+    { label: "Per kWp", value: gbp(money(offer.price) / q.kwp), note: `from ${q.kwp} kWp` },
+  ];
+  const speed: Fact[] = [
+    { label: "Start", value: startNow, was: startNow !== offer.start ? offer.start : undefined },
+    { label: "Lead time", value: q.lead },
+    { label: "Installation", value: `${q.installation} ${u}` },
+    { label: "Commissioning", value: `${q.commissioning} ${u}` },
+  ];
+  const quality: Fact[] = [
+    { label: "Panels", value: `${w.panels} years`, flag: w.panels < q.expected.panels ? `Expected ${q.expected.panels}+` : undefined },
+    { label: "Workmanship", value: `${w.workmanship} years`, flag: w.workmanship < q.expected.workmanship ? `Expected ${q.expected.workmanship}+` : undefined },
+    { label: "Inverters", value: `${w.inverters} years` },
+    { label: "PI insurance", value: q.piInsurance },
+  ];
   return (
     <>
       <div className="flex items-start justify-between gap-6">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="s3 text-text-tertiary">Sent · due {due}</span>
           <h2 id="offer-h" className="h6 text-text-primary">Your indicative offer is in</h2>
-          <p className="p6 text-text-secondary">
-            You can edit it until {due}; CQuel is told when you change it. After the deadline, CQuel tells you if you&apos;re on the shortlist.
-          </p>
+          <p className="p6 text-text-secondary">You can change it until {due}. After that, CQuel tells you if you&apos;re on the shortlist.</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button type="tertiary">View your files</Button>
@@ -686,57 +744,40 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
           </Button>
         </div>
       </div>
-      <ChipTrack steps={steps(t, "sent")} />
 
-      <div className="flex flex-col gap-1">
-        <h3 className="h7 text-text-primary">What the customer compares</h3>
-        <p className="p7 text-text-secondary">Your figures after your answers. Flags show what&apos;s outside the range the customer expects.</p>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="s3 text-text-tertiary">Price</span>
-        <div className="grid grid-cols-4 gap-3">
-          <Cell label="Total price" value={offer.price} note="excl. VAT" />
-          <Cell label="Price per kWp" value={gbp(money(offer.price) / q.kwp)} note={`worked out from ${q.kwp} kWp`} />
+      <section className="flex flex-col gap-3">
+        <div>
+          <h3 className="h7 text-text-primary">What the customer compares</h3>
+          <p className="p7 text-text-secondary">Amber means outside what the customer expects.</p>
         </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="s3 text-text-tertiary">Speed</span>
-        <div className="grid grid-cols-4 gap-3">
-          <Cell label="Start" value={startNow} was={startNow !== offer.start ? offer.start : undefined} />
-          <Cell label="Lead time" value={q.lead} />
-          <Cell label="Installation" value={`${q.installation} ${u}`} />
-          <Cell label="Commissioning" value={`${q.commissioning} ${u}`} />
+        <div className="grid grid-cols-3 gap-8">
+          <FactColumn label="Price" rows={price} />
+          <FactColumn label="Speed" rows={speed} />
+          <FactColumn label="Warranties and cover" rows={quality} />
         </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="s3 text-text-tertiary">Quality</span>
-        <div className="grid grid-cols-4 gap-3">
-          <Cell label="Panel warranty" value={`${w.panels} years`} flag={w.panels < q.expected.panels ? `Expected at least ${q.expected.panels}` : undefined} />
-          <Cell label="Workmanship warranty" value={`${w.workmanship} years`} flag={w.workmanship < q.expected.workmanship ? `Expected at least ${q.expected.workmanship}` : undefined} />
-          <Cell label="Inverter warranty" value={`${w.inverters} years`} />
-          <Cell label="PI insurance" value={q.piInsurance} />
-        </div>
-      </div>
+      </section>
 
-      <RequirementGroup
-        label="Your answers"
-        count={q.questions.length}
-        countLabel={`${q.questions.length - offer.unanswered} of ${q.questions.length}`}
-      >
+      <section className="flex flex-col">
+        <div className="flex items-center justify-between gap-3 border-b border-border-light pb-2">
+          <h3 className="s3 text-text-tertiary">Your answers</h3>
+          <span className="inline-flex h-6 items-center rounded-full border border-border-dark bg-white px-2 h9 text-text-title">
+            {q.questions.length - offer.unanswered} of {q.questions.length}
+          </span>
+        </div>
         {q.questions.map((qq) => {
           const a = offer.answers[qq.key];
           return (
-            <div key={qq.key} className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 py-3">
+            <div key={qq.key} className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-3">
               <StateMark state={a ? "done" : "open"} size={20} />
               <div className="min-w-0">
                 <p className="h8 text-text-primary">{qq.title}</p>
-                <p className="p7 text-text-secondary">{a ? answerLine(qq, a) : "Not answered: the customer sees what we read"}</p>
+                <p className="truncate p7 text-text-secondary">{a ? answerLine(qq, a) : "Not answered: the customer sees what we read"}</p>
               </div>
               {a ? <span /> : <Button type="tertiary" onClick={offer.edit}>Answer now</Button>}
             </div>
           );
         })}
-      </RequirementGroup>
+      </section>
     </>
   );
 }
@@ -871,7 +912,7 @@ export function OfferWindow({
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-dark px-6">
         <IconButton icon="cross" label="Close" onClick={() => offer.setOpen(false)} />
         <div className="min-w-0">
-          <h2 id="offer-w-h" className="h7 text-text-primary">{offer.resend ? "Edit your offer" : "Your indicative offer"}</h2>
+          <h2 id="offer-w-h" className="h6 text-text-primary">{offer.resend ? "Edit your offer" : "Your indicative offer"}</h2>
           <p className="truncate p7 text-text-secondary">
             {t.title} · due {due}
           </p>
@@ -880,28 +921,26 @@ export function OfferWindow({
 
       <div className="flex min-h-0 flex-1">
         <main className="min-w-0 flex-1 overflow-y-auto">
-          <div className="mx-auto flex max-w-[860px] flex-col gap-5 px-8 pb-12 pt-6">
+          <div className="mx-auto flex max-w-[860px] flex-col gap-8 px-8 pb-12 pt-6">
             <ChipTrack steps={steps(t, phase)} />
-            {phase === "check" && <p className="p6 text-text-secondary">This is what the customer sees. Edit anything we got wrong.</p>}
-            <section className="flex flex-col gap-2">
-              <h3 className="s3 text-text-tertiary">Your files{offer.files.length ? ` · ${offer.files.length}` : ""}</h3>
-              <Files t={t} offer={offer} reading={phase === "reading"} />
-            </section>
+            <Files t={t} offer={offer} reading={phase === "reading"} />
             {phase === "check" && (
               <>
-                <section className="flex flex-col gap-1">
-                  <h3 className="s3 text-text-tertiary">What we read</h3>
+                <section className="flex flex-col">
+                  <GroupHead label="What we read" pill={offer.openCount ? `${offer.openCount} to fill in` : "All checked"} urgent={offer.openCount > 0} />
                   <CheckRows t={t} offer={offer} />
+                  <p className="pt-3 p7 text-text-secondary">The customer sees these values. Edit anything we got wrong.</p>
                 </section>
-                <section className="flex flex-col gap-1.5">
-                  <p className="h8 text-text-primary">
-                    Also in your offer <span className="p7 font-normal text-text-tertiary">· not asked for in the brief</span>
-                  </p>
-                  <ul className="list-disc pl-5 p6 text-text-secondary">
+                <section className="flex flex-col">
+                  <GroupHead label="Also in your offer" />
+                  <ul>
                     {t.quote.alsoInOffer.map((x) => (
-                      <li key={x}>{x}</li>
+                      <li key={x} className="border-b border-border-light py-3 p6 text-text-primary">
+                        {x}
+                      </li>
                     ))}
                   </ul>
+                  <p className="pt-3 p7 text-text-secondary">Not asked for in the brief. The customer sees these too.</p>
                 </section>
                 <Questions t={t} offer={offer} />
               </>

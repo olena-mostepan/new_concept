@@ -757,9 +757,12 @@ export function FilterChips({
 export function YourActionOnly({
   checked,
   onChange,
+  label,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
+  /** Fixed label for screens outside the customer/ops i18n (supplier). */
+  label?: string;
 }) {
   const { t } = useConceptI18n();
   return (
@@ -782,7 +785,7 @@ export function YourActionOnly({
         {checked && <Icon name="check" size={12} />}
       </span>
       <span className="whitespace-nowrap p6 text-text-primary">
-        {t("Your action only")}
+        {label ?? t("Your action only")}
       </span>
     </label>
   );

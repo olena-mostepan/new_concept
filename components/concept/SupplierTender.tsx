@@ -38,7 +38,7 @@ function SupplierBar({ t }: { t: Tender }) {
     <header className="sticky top-0 z-40 border-b border-border-dark bg-white">
       <div className="mx-auto flex h-16 w-full max-w-screen-2xl items-center justify-between px-8">
         <Link
-          href="/concept/supplier"
+          href="/concept/supplier/tenders"
           className={cn("group inline-flex items-center gap-1.5 h8 text-text-primary", focusRing)}
         >
           <Icon name="arrow-left" size={16} />

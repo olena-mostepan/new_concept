@@ -265,7 +265,7 @@ function UploadRow({ offer }: { offer: Offer }) {
 }
 
 /** DS: UploadRow, then a DocumentList in a white box (border-light, radius-md, padding 0 12). */
-function Files({ t, offer, reading }: { t: Tender; offer: Offer; reading?: boolean }) {
+function Files({ t, offer, reading, readOnly }: { t: Tender; offer: Offer; reading?: boolean; readOnly?: boolean }) {
   const n = offer.files.length;
   return (
     <section className="flex flex-col gap-3">
@@ -277,7 +277,7 @@ function Files({ t, offer, reading }: { t: Tender; offer: Offer; reading?: boole
           </span>
         )}
       </div>
-      <UploadRow offer={offer} />
+      {!readOnly && <UploadRow offer={offer} />}
       {n > 0 && (
         <ul className="rounded-md border border-border-light bg-white px-3">
           {offer.files.map((name, i) => {
@@ -295,7 +295,9 @@ function Files({ t, offer, reading }: { t: Tender; offer: Offer; reading?: boole
                     </p>
                   )}
                 </div>
-                {reading ? (
+                {readOnly ? (
+                  <IconButton icon="download" size="small" label={`Download ${name}`} />
+                ) : reading ? (
                   <Icon name="spinner" size={16} className="shrink-0 animate-spin text-icon-default" />
                 ) : (
                   <IconButton icon="trash" size="small" label={`Remove ${name}`} onClick={() => offer.removeFile(name)} />
@@ -738,7 +740,7 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
           <p className="p6 text-text-secondary">You can change it until {due}. After that, CQuel tells you if you&apos;re on the shortlist.</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button type="tertiary">View your files</Button>
+          <Button type="tertiary" onClick={() => offer.setOpen(true)}>View your files</Button>
           <Button type="secondary" onClick={offer.edit}>
             Edit your offer
           </Button>
@@ -900,7 +902,8 @@ export function OfferWindow({
       window.removeEventListener("keydown", onKey);
     };
   }, [open, offer]);
-  if (!open || phase === "sent") return null;
+  if (!open) return null;
+  const viewing = phase === "sent";
   const due = t.round.due.replace("due ", "");
   const facts = [
     ...t.jobFacts.filter((f) => ["Sites", "Size", "Installation"].includes(f.label)),
@@ -912,7 +915,7 @@ export function OfferWindow({
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-dark px-6">
         <IconButton icon="cross" label="Close" onClick={() => offer.setOpen(false)} />
         <div className="min-w-0">
-          <h2 id="offer-w-h" className="h6 text-text-primary">{offer.resend ? "Edit your offer" : "Your indicative offer"}</h2>
+          <h2 id="offer-w-h" className="h6 text-text-primary">{viewing ? "Your files" : offer.resend ? "Edit your offer" : "Your indicative offer"}</h2>
           <p className="truncate p7 text-text-secondary">
             {t.title} · due {due}
           </p>
@@ -922,8 +925,8 @@ export function OfferWindow({
       <div className="flex min-h-0 flex-1">
         <main className="min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex max-w-[860px] flex-col gap-8 px-8 pb-12 pt-6">
-            <ChipTrack steps={steps(t, phase)} />
-            <Files t={t} offer={offer} reading={phase === "reading"} />
+            {!viewing && <ChipTrack steps={steps(t, phase)} />}
+            <Files t={t} offer={offer} reading={phase === "reading"} readOnly={viewing} />
             {phase === "check" && (
               <>
                 <section className="flex flex-col">
@@ -991,6 +994,18 @@ export function OfferWindow({
       </div>
 
       <footer className="flex h-[72px] shrink-0 items-center justify-end gap-3 border-t border-border-dark px-6">
+        {viewing ? (
+          <>
+            <p className="p7 text-text-secondary">Sent. You can change it until {due}.</p>
+            <Button type="secondary" size="large" onClick={() => offer.setOpen(false)}>
+              Close
+            </Button>
+            <Button type="secondary" size="large" onClick={offer.edit}>
+              Edit your offer
+            </Button>
+          </>
+        ) : (
+          <>
         <p className="p7 text-text-secondary" role="status">
           {statusLine(offer)}
         </p>
@@ -1006,6 +1021,8 @@ export function OfferWindow({
         <Button type="primary" size="large" disabled={phase !== "check" || offer.openCount > 0} onClick={offer.send}>
           {offer.resend ? "Send changes" : "Send your offer"}
         </Button>
+          </>
+        )}
       </footer>
     </div>
   );

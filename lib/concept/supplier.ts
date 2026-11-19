@@ -81,6 +81,10 @@ export interface QuoteExample {
   questions: QuoteQuestion[];
   /** Read from the quote; shown as "You assumed" after sending. */
   assumed: string;
+  /** Brief in short, under the search in the offer window. */
+  briefAsks: string[];
+  /** "About this in the brief": the brief's own words for each check row and question. */
+  about: Record<string, { title: string; quote: string; source: string; note?: string }>;
 }
 
 export interface SupplierTender {
@@ -203,6 +207,55 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
         },
       ],
       assumed: "Export limit 200 kW · no asbestos · roofs take the load",
+      briefAsks: [
+        "Salt-air and seagull protection",
+        "Building Safety Act 2022 · CDM 2015",
+        "Installation in the off-peak season",
+        "Seaside or theme park case studies",
+      ],
+      about: {
+        price: {
+          title: "Total price",
+          quote: "Bidders are asked to price surveys, design, permits, connections, installation, access and making good, testing, commissioning and handover, operation and maintenance.",
+          source: "Tender brief · What you price",
+          note: "Not included: PPA financing, tendered separately. One total for every site; it isn't binding.",
+        },
+        sites: {
+          title: "Sites covered",
+          quote: "Solar PV of approx. 125 kWp at the Boulevard Hotel. Solar PV of approx. 115 kWp at the Big Blue Hotel.",
+          source: "Tender brief · The job",
+          note: "Burger King is sized at the site visit. If you can't do a site, say which.",
+        },
+        start: {
+          title: "Start",
+          quote: "Schedule installation in the off-peak season (typically winter, when the park has reduced operations).",
+          source: "Tender brief · The job",
+          note: "Contract start ~Sep (estimate).",
+        },
+        duration: {
+          title: "Duration",
+          quote: "Schedule installation in the off-peak season (typically winter, when the park has reduced operations).",
+          source: "Tender brief · The job",
+          note: "The customer compares lead, installation and commissioning time under Speed.",
+        },
+        warranties: {
+          title: "Warranties",
+          quote: "Standards and warranties: adhere to the UK Building Safety Act 2022; comply with all relevant UK Building Regulations.",
+          source: "Tender brief · How the customer chooses",
+          note: "Expected: panels at least 25 years, workmanship at least 5. The customer compares warranties under Quality.",
+        },
+        seafront: {
+          title: "Seafront protection",
+          quote: "System design must suit salt air exposure at the seaside site.",
+          source: "Tender brief · The job",
+          note: "Say how you protect panels, frames and fixings from salt air.",
+        },
+        offpeak: {
+          title: "Off-peak installation",
+          quote: "Schedule installation in the off-peak season (typically winter, when the park has reduced operations).",
+          source: "Tender brief · The job",
+        },
+      },
     },
     findSuggestions: ["Export limit", "Not in my price", "Roof space", "Warranties"],
     findIndex: [
@@ -218,6 +271,8 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { text: "Half-hourly data (electricity use)", source: "XLSX · Boulevard Hotel", action: "download", tab: "sites" },
       { text: "Project Commission Form: CQuel's commission on work you win", source: "PDF · Documents for all sites", action: "download", tab: "sites" },
       { text: "Safety rules: Building Safety Act 2022, CDM 2015", source: "The job · Overview", action: "open", tab: "overview" },
+      { text: "System design must suit salt air exposure at the seaside site", source: "Tender brief · The job", action: "open", tab: "overview" },
+      { text: "Schedule installation in the off-peak season (typically winter, when the park has reduced operations)", source: "Tender brief · The job", action: "open", tab: "overview" },
     ],
     service: "Solar PV",
     title: "Solar PV on 3 roofs in Blackpool",

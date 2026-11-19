@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { OfferPanel, YouSaid, saidJob, saidPrice, useOffer, type Offer } from "./SupplierOffer";
+import { OfferPanel, OfferWindow, YouSaid, saidJob, saidPrice, useOffer, type Offer } from "./SupplierOffer";
 import * as Tabs from "@radix-ui/react-tabs";
 import { cn } from "@/lib/utils";
 import type { FindEntry, SpecRow, SupplierTender as Tender } from "@/lib/concept/supplier";
@@ -132,8 +132,8 @@ function Rail({ t }: { t: Tender }) {
 /* ----------------------------------------------------------------- offer */
 
 function StickyOffer({ t, show, offer }: { t: Tender; show: boolean; offer: Offer }) {
-  const visible = show && (offer.phase === "start" || offer.phase === "check");
-  const scrollToCard = () => document.getElementById("offer-h")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const inProgress = offer.phase === "reading" || offer.phase === "check";
+  const visible = show && !offer.open && (offer.phase === "start" || inProgress);
   return (
     <div
       aria-hidden={!visible}
@@ -146,40 +146,27 @@ function StickyOffer({ t, show, offer }: { t: Tender; show: boolean; offer: Offe
         <div className="flex min-w-0 items-center gap-3">
           <ResponsibilityPill owner="you" label="Your action" />
           <div className="min-w-0">
-            {offer.phase === "check" ? (
-              <>
-                <p className="h8 text-text-primary">{offer.resend ? "Edit your offer" : "Check what we read"}</p>
-                <p className="p7 text-text-secondary">
-                  {offer.openCount > 0
-                    ? `${offer.openCount} to fill in before you send`
-                    : offer.unanswered > 0
-                      ? `${offer.unanswered} ${offer.unanswered === 1 ? "question" : "questions"} not answered: we use what we read`
-                      : "Ready to send"}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="h8 text-text-primary">{t.offer.title}</p>
-                <p className="p7 text-text-secondary">Due {t.round.due.replace("due ", "")} · not binding, you update it after the site visit</p>
-              </>
-            )}
+            <p className="h8 text-text-primary">{inProgress ? (offer.resend ? "Edit your offer" : "Finish your indicative offer") : t.offer.title}</p>
+            <p className="p7 text-text-secondary">
+              {inProgress
+                ? offer.openCount > 0
+                  ? `${offer.openCount} to fill in before you send`
+                  : offer.unanswered > 0
+                    ? `${offer.unanswered} ${offer.unanswered === 1 ? "question" : "questions"} not answered`
+                    : "Ready to send"
+                : `Due ${t.round.due.replace("due ", "")} · not binding, you update it after the site visit`}
+            </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-4">
-          {offer.phase === "check" ? (
-            offer.openCount > 0 ? (
-              <Button type="primary" size="large" onClick={scrollToCard}>
-                Fill in
-              </Button>
-            ) : (
-              <Button type="primary" size="large" onClick={offer.send}>
-                {offer.resend ? "Send changes" : "Send your offer"}
-              </Button>
-            )
+          {inProgress ? (
+            <Button type="primary" size="large" onClick={() => offer.setOpen(true)}>
+              Continue your offer
+            </Button>
           ) : (
             <>
               <Button type="link">Decline this tender</Button>
-              <Button type="primary" size="large" icon="upload" onClick={offer.pick}>
+              <Button type="primary" size="large" icon="upload" onClick={offer.begin}>
                 Upload your quote
               </Button>
             </>
@@ -209,11 +196,15 @@ function Find({
   t,
   onTab,
   onAsk,
+  compact = false,
 }: {
   t: Tender;
   onTab: (id: TabId) => void;
   onAsk: (q: Question) => void;
+  /** In the offer window's right column: no card, an s3 label, results stacked. */
+  compact?: boolean;
 }) {
+  const idBase = compact ? "find-w" : "find";
   const [q, setQ] = useState("");
   const [asking, setAsking] = useState(false);
   const [draft, setDraft] = useState("");
@@ -229,12 +220,17 @@ function Find({
     "flex h-11 w-full items-center gap-2.5 rounded-md border border-border-dark bg-white px-3.5 hover:border-black-4 focus-within:border-black-7 focus-within:shadow-[inset_0_0_0_1px_var(--black-7)]";
 
   return (
-    <section aria-labelledby="find-h" className="flex flex-col gap-3 rounded-lg border border-border-dark bg-bg-container px-5 pb-5 pt-4">
-      <label id="find-h" htmlFor="find-q" className="h7 text-text-primary">Find it in this tender</label>
+    <section
+      aria-labelledby={`${idBase}-h`}
+      className={cn("flex flex-col gap-3", !compact && "rounded-lg border border-border-dark bg-bg-container px-5 pb-5 pt-4")}
+    >
+      <label id={`${idBase}-h`} htmlFor={`${idBase}-q`} className={compact ? "s3 text-text-tertiary" : "h7 text-text-primary"}>
+        Find it in this tender
+      </label>
       <div className={field}>
         <Icon name="search" size={20} className="text-icon-default" />
         <input
-          id="find-q"
+          id={`${idBase}-q`}
           value={q}
           onChange={(e) => {
             setQ(e.target.value);
@@ -247,7 +243,7 @@ function Find({
         {q && <IconButton icon="cross" size="small" label="Clear search" onClick={() => setQ("")} />}
       </div>
 
-      {query.length < 2 && !sent && (
+      {query.length < 2 && !sent && !compact && (
         <div className="flex flex-wrap gap-2">
           {t.findSuggestions.map((s) => (
             <button
@@ -264,7 +260,7 @@ function Find({
 
       {query.length >= 2 && results.length > 0 && (
         <>
-          <ul className="overflow-hidden rounded-md border border-border-dark">
+          <ul className="overflow-hidden rounded-md border border-border-dark bg-white">
             {results.map((r, i) => (
               <li key={r.text} className={cn(i > 0 && "border-t border-border-light")}>
                 <button
@@ -289,7 +285,7 @@ function Find({
       )}
 
       {query.length >= 2 && results.length === 0 && !asking && (
-        <div className="flex items-center justify-between gap-4 rounded-md border border-border-dark bg-bg-container-grey px-4 py-3.5">
+        <div className={cn("flex gap-4 rounded-md border border-border-dark bg-bg-container-grey px-4 py-3.5", compact ? "flex-col items-start bg-white" : "items-center justify-between")}>
           <div>
             <p className="h8 text-text-primary">Nothing about “{query}” in this tender</p>
             <p className="p6 text-text-secondary">Ask CQuel. The answer comes back to Questions and by email.</p>
@@ -527,6 +523,25 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
       </Chapter>
 
       <StickyOffer t={t} show={showSticky} offer={offer} />
+      <OfferWindow
+        t={t}
+        offer={offer}
+        find={
+          <Find
+            t={t}
+            compact
+            onAsk={onAsk}
+            onTab={(id) => {
+              offer.setOpen(false);
+              onTab(id);
+            }}
+          />
+        }
+        onFullBrief={() => {
+          offer.setOpen(false);
+          window.setTimeout(() => document.getElementById("c-job")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+        }}
+      />
     </div>
   );
 }

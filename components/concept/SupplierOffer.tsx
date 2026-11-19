@@ -9,10 +9,10 @@
  * unanswered (we use what we read; to check with Ops). Who sets the expected ranges: to confirm.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { QuoteQuestion, SupplierTender as Tender } from "@/lib/concept/supplier";
-import { Button, ChipTrack, Icon, ResponsibilityPill, focusRing } from "./ui";
+import { Button, ChipTrack, Icon, IconButton, ResponsibilityPill, focusRing } from "./ui";
 import { RequirementGroup, StateMark } from "./ops-asset/opsUi";
 
 export type OfferPhase = "start" | "reading" | "check" | "sent";
@@ -36,6 +36,14 @@ export interface Offer {
   sites: number[];
   answers: Record<string, Answer | undefined>;
   resend: boolean;
+  /** The offer window (C8 · B3) is open. */
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  /** Opens the window and the file picker. */
+  begin: () => void;
+  /** The row or question you're on: the right column shows "About this in the brief". */
+  focus: string | null;
+  setFocus: (k: string | null) => void;
   /** Check rows still open (block sending). */
   openCount: number;
   /** Red questions not answered (don't block sending). */
@@ -70,6 +78,8 @@ export function useOffer(t: Tender): Offer {
   const [sites, setSites] = useState<number[]>(() => t.sites.map((s) => s.n));
   const [answers, setAnswers] = useState<Record<string, Answer | undefined>>({});
   const [resend, setResend] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [focus, setFocus] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -86,6 +96,14 @@ export function useOffer(t: Tender): Offer {
     sites,
     answers,
     resend,
+    open,
+    setOpen,
+    begin: () => {
+      setOpen(true);
+      window.setTimeout(() => inputRef.current?.click(), 60);
+    },
+    focus,
+    setFocus,
     openCount: unit ? 0 : 1,
     unanswered,
     inputRef,
@@ -104,14 +122,19 @@ export function useOffer(t: Tender): Offer {
     send: () => {
       setPhase("sent");
       setResend(false);
+      setOpen(false);
+      setFocus(null);
+      window.scrollTo({ top: 0 });
     },
     edit: () => {
       setResend(true);
       setPhase("check");
+      setOpen(true);
     },
     cancelEdit: () => {
       setResend(false);
       setPhase("sent");
+      setOpen(false);
     },
     setPrice,
     setStart,
@@ -277,6 +300,8 @@ function Files({ t, offer, reading }: { t: Tender; offer: Offer; reading?: boole
 /* ----------------------------------------------------------- check rows */
 
 function Row({
+  k,
+  offer,
   name,
   done,
   line,
@@ -284,6 +309,8 @@ function Row({
   action,
   children,
 }: {
+  k: string;
+  offer: Offer;
   name: string;
   done: boolean;
   line: string;
@@ -291,8 +318,16 @@ function Row({
   action?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const on = offer.focus === k;
   return (
-    <div className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 border-b border-border-light py-3.5">
+    <div
+      onClick={() => offer.setFocus(k)}
+      onFocusCapture={() => offer.setFocus(k)}
+      className={cn(
+        "-mx-3 grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 rounded-md border-b border-border-light px-3 py-3.5",
+        on && "bg-black-1",
+      )}
+    >
       <span className="mt-0.5">
         <StateMark state={done ? "done" : "open"} size={20} />
       </span>
@@ -424,19 +459,19 @@ function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
   const close = () => setEditing(null);
   return (
     <div>
-      <Row name="Total price" done line={`${offer.price} excl. VAT · ${q.price.source}`} action={editing !== "price" && edit("price")}>
+      <Row k="price" offer={offer} name="Total price" done line={`${offer.price} excl. VAT · ${q.price.source}`} action={editing !== "price" && edit("price")}>
         {editing === "price" && <TextEdit initial={offer.price} label="Total price" onSave={(v) => { offer.setPrice(v); close(); }} onCancel={close} />}
       </Row>
-      <Row name="Sites covered" done line={`${sitesLine(t, offer.sites)} · ${q.sitesSource}`} action={editing !== "sites" && edit("sites")}>
+      <Row k="sites" offer={offer} name="Sites covered" done line={`${sitesLine(t, offer.sites)} · ${q.sitesSource}`} action={editing !== "sites" && edit("sites")}>
         {editing === "sites" && <SitesEdit t={t} offer={offer} onDone={close} />}
       </Row>
-      <Row name="Start" done line={`${offer.start} (your preferred start) · ${q.start.source}`} action={editing !== "start" && edit("start")}>
+      <Row k="start" offer={offer} name="Start" done line={`${offer.start} (your preferred start) · ${q.start.source}`} action={editing !== "start" && edit("start")}>
         {editing === "start" && <TextEdit initial={offer.start} label="Start" onSave={(v) => { offer.setStart(v); close(); }} onCancel={close} />}
       </Row>
       {offer.unit && editing !== "duration" ? (
-        <Row name="Duration" done line={`${durationLine(t, offer.unit)} · ${q.durationSource}`} action={edit("duration")} />
+        <Row k="duration" offer={offer} name="Duration" done line={`${durationLine(t, offer.unit)} · ${q.durationSource}`} action={edit("duration")} />
       ) : (
-        <Row name="Duration" done={false} line={`${durationLine(t, null)} · ${q.durationSource}`} flags={offer.unit ? undefined : ["No unit given for installation and commissioning: days or weeks?"]}>
+        <Row k="duration" offer={offer} name="Duration" done={false} line={`${durationLine(t, null)} · ${q.durationSource}`} flags={offer.unit ? undefined : ["No unit given for installation and commissioning: days or weeks?"]}>
           <div className="flex items-center gap-2">
             <Seg label="Unit for installation and commissioning" options={["days", "weeks"] as Unit[]} value={unit} onChange={setUnit} />
             <Button
@@ -458,6 +493,8 @@ function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
         </Row>
       )}
       <Row
+        k="warranties"
+        offer={offer}
         name="Warranties"
         done
         line={`${warrantyLine(offer.warranties)} · ${q.warranties.source}`}
@@ -481,9 +518,11 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
   const [wrong, setWrong] = useState(saved?.wrong ?? "");
   const ready = q.kind === "text" ? text.trim().length > 0 : !!choice && (choice !== "Yes" || text.trim().length > 0);
 
+  const on = offer.focus === q.key;
+  const focusProps = { onClick: () => offer.setFocus(q.key), onFocusCapture: () => offer.setFocus(q.key) };
   if (saved && !open) {
     return (
-      <div className="grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-3.5">
+      <div {...focusProps} className={cn("-mx-3 grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 rounded-md border-b border-border-light px-3 py-3.5", on && "bg-black-1")}>
         <StateMark state="done" size={20} />
         <div className="min-w-0">
           <p className="h8 text-text-primary">{q.title}</p>
@@ -500,7 +539,7 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
   }
 
   return (
-    <div className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-4 border-b border-border-light py-4">
+    <div {...focusProps} className={cn("-mx-3 grid grid-cols-[20px_minmax(0,1fr)] gap-x-4 rounded-md border-b border-border-light px-3 py-4", on && "bg-black-1")}>
       <span className="mt-0.5">
         <StateMark state="open" size={20} />
       </span>
@@ -702,35 +741,51 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
   );
 }
 
+function FileInput({ offer }: { offer: Offer }) {
+  return (
+    <input
+      ref={offer.inputRef}
+      type="file"
+      multiple
+      accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
+      className="sr-only"
+      tabIndex={-1}
+      aria-hidden
+      onChange={(e) => {
+        const names = Array.from(e.target.files ?? []).map((f) => f.name);
+        if (names.length) offer.onFiles(names);
+        e.target.value = "";
+      }}
+    />
+  );
+}
+
+function statusLine(offer: Offer) {
+  if (offer.phase === "start") return "Upload your files to start";
+  if (offer.phase === "reading") return "Reading your files";
+  if (offer.openCount > 0) return `${offer.openCount} to fill in before you send`;
+  if (offer.unanswered > 0) return `${offer.unanswered} ${offer.unanswered === 1 ? "question" : "questions"} not answered: we use what we read`;
+  return offer.resend ? "CQuel is told when you send changes" : "Ready to send";
+}
+
+/** The offer card on the Overview: start, in progress (window closed), sent. */
 export function OfferPanel({ t, offer, cardRef }: { t: Tender; offer: Offer; cardRef: React.Ref<HTMLElement> }) {
   const { phase } = offer;
+  const inProgress = phase === "reading" || phase === "check";
   return (
     <section
       ref={cardRef}
       aria-labelledby="offer-h"
       className={cn("flex flex-col gap-4 rounded-lg border border-border-dark bg-bg-container px-6 py-5", phase !== "sent" && "border-t-4 border-t-brand-6")}
     >
-      <input
-        ref={offer.inputRef}
-        type="file"
-        multiple
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        onChange={(e) => {
-          const names = Array.from(e.target.files ?? []).map((f) => f.name);
-          if (names.length) offer.onFiles(names);
-          e.target.value = "";
-        }}
-      />
+      <FileInput offer={offer} />
 
       {phase === "start" && (
         <>
           <div className="flex items-start justify-between gap-6">
             <Header t={t} title={t.offer.title} text={t.offer.text} />
             <div className="flex shrink-0 flex-col items-end gap-2">
-              <Button type="primary" size="large" icon="upload" onClick={offer.pick}>
+              <Button type="primary" size="large" icon="upload" onClick={offer.begin}>
                 Upload your quote
               </Button>
               <p className="p6 text-text-secondary">
@@ -742,60 +797,178 @@ export function OfferPanel({ t, offer, cardRef }: { t: Tender; offer: Offer; car
         </>
       )}
 
-      {phase === "reading" && (
+      {inProgress && (
         <>
-          <Header t={t} title={offer.resend ? "Edit your offer" : t.offer.title} />
-          <ChipTrack steps={steps(t, "reading")} />
-          <Files t={t} offer={offer} reading />
-          <div className="flex justify-end">
-            <Button type="tertiary" onClick={offer.cancelReading}>
-              Cancel
-            </Button>
-          </div>
-        </>
-      )}
-
-      {phase === "check" && (
-        <>
-          <Header t={t} title={offer.resend ? "Edit your offer" : "Check what we read"} text="This is what the customer sees. Edit anything we got wrong." />
-          <ChipTrack steps={steps(t, "check")} />
-          <Files t={t} offer={offer} />
-          <CheckRows t={t} offer={offer} />
-          <div className="flex flex-col gap-1.5">
-            <p className="h8 text-text-primary">
-              Also in your offer <span className="p7 font-normal text-text-tertiary">· not asked for in the brief</span>
-            </p>
-            <ul className="list-disc pl-5 p6 text-text-secondary">
-              {t.quote.alsoInOffer.map((x) => (
-                <li key={x}>{x}</li>
-              ))}
-            </ul>
-          </div>
-          <Questions t={t} offer={offer} />
-          <div className="flex items-center justify-end gap-3">
-            <p className="p7 text-text-secondary" role="status">
-              {offer.openCount > 0
-                ? `${offer.openCount} to fill in before you send`
-                : offer.unanswered > 0
-                  ? `${offer.unanswered} ${offer.unanswered === 1 ? "question" : "questions"} not answered: we use what we read`
-                  : offer.resend
-                    ? "CQuel is told when you send changes"
-                    : "Ready to send"}
-            </p>
-            {offer.resend && (
-              <Button type="secondary" onClick={offer.cancelEdit}>
-                Cancel
+          <div className="flex items-start justify-between gap-6">
+            <Header t={t} title={offer.resend ? "Edit your offer" : "Finish your indicative offer"} text={`${offer.files.length} ${offer.files.length === 1 ? "file" : "files"} · ${statusLine(offer)}`} />
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <Button type="primary" size="large" onClick={() => offer.setOpen(true)}>
+                Continue your offer
               </Button>
-            )}
-            <Button type="primary" disabled={offer.openCount > 0} onClick={offer.send}>
-              {offer.resend ? "Send changes" : "Send your offer"}
-            </Button>
+              <p className="p6 text-text-secondary">
+                Not bidding? <Button type="link">Decline this tender</Button>
+              </p>
+            </div>
           </div>
+          <ChipTrack steps={steps(t, "check")} />
         </>
       )}
 
       {phase === "sent" && <Sent t={t} offer={offer} />}
     </section>
+  );
+}
+
+function AboutCard({ t, k }: { t: Tender; k: string }) {
+  const a = t.quote.about[k];
+  if (!a) return null;
+  return (
+    <section aria-live="polite" className="flex flex-col gap-1.5 rounded-md border border-status-info-border bg-status-info-bg px-4 py-3">
+      <span className="p7 text-text-tertiary">About {a.title.toLowerCase()} in the brief</span>
+      <p className="p6 text-text-primary">&ldquo;{a.quote}&rdquo;</p>
+      <p className="p7 text-text-secondary">{a.source}</p>
+      {a.note && <p className="p7 text-text-secondary">{a.note}</p>}
+    </section>
+  );
+}
+
+/**
+ * The offer window (C8 · B3): the offer on the left, one scroll; on the right (400, grey, fixed)
+ * "About this in the brief" for the row you're on, Find it in this tender, the brief in short.
+ */
+export function OfferWindow({
+  t,
+  offer,
+  find,
+  onFullBrief,
+}: {
+  t: Tender;
+  offer: Offer;
+  find: ReactNode;
+  onFullBrief: () => void;
+}) {
+  const { phase, open } = offer;
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && offer.setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, offer]);
+  if (!open || phase === "sent") return null;
+  const due = t.round.due.replace("due ", "");
+  const facts = [
+    ...t.jobFacts.filter((f) => ["Sites", "Size", "Installation"].includes(f.label)),
+    ...t.facts.filter((f) => f.label === "Budget"),
+  ];
+
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="offer-w-h" className="fixed inset-0 z-50 flex flex-col bg-white">
+      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-dark px-6">
+        <IconButton icon="cross" label="Close" onClick={() => offer.setOpen(false)} />
+        <div className="min-w-0">
+          <h2 id="offer-w-h" className="h7 text-text-primary">{offer.resend ? "Edit your offer" : "Your indicative offer"}</h2>
+          <p className="truncate p7 text-text-secondary">
+            {t.title} · due {due}
+          </p>
+        </div>
+        <span className="flex-1" />
+        <Button type="secondary" onClick={() => offer.setOpen(false)}>
+          Save and close
+        </Button>
+      </header>
+
+      <div className="flex min-h-0 flex-1">
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto flex max-w-[860px] flex-col gap-5 px-8 pb-12 pt-6">
+            <ChipTrack steps={steps(t, phase)} />
+            {phase === "check" && <p className="p6 text-text-secondary">This is what the customer sees. Edit anything we got wrong.</p>}
+            <section className="flex flex-col gap-2">
+              <h3 className="s3 text-text-tertiary">Your files{offer.files.length ? ` · ${offer.files.length}` : ""}</h3>
+              <Files t={t} offer={offer} reading={phase === "reading"} />
+            </section>
+            {phase === "check" && (
+              <>
+                <section className="flex flex-col gap-1">
+                  <h3 className="s3 text-text-tertiary">What we read</h3>
+                  <CheckRows t={t} offer={offer} />
+                </section>
+                <section className="flex flex-col gap-1.5">
+                  <p className="h8 text-text-primary">
+                    Also in your offer <span className="p7 font-normal text-text-tertiary">· not asked for in the brief</span>
+                  </p>
+                  <ul className="list-disc pl-5 p6 text-text-secondary">
+                    {t.quote.alsoInOffer.map((x) => (
+                      <li key={x}>{x}</li>
+                    ))}
+                  </ul>
+                </section>
+                <Questions t={t} offer={offer} />
+              </>
+            )}
+            {phase === "reading" && (
+              <div className="flex justify-end">
+                <Button type="tertiary" onClick={offer.cancelReading}>
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
+        </main>
+
+        <aside aria-label="The brief" className="flex w-[400px] shrink-0 flex-col gap-5 overflow-y-auto border-l border-border-dark bg-bg-container-grey px-6 pb-8 pt-5">
+          {offer.focus && <AboutCard t={t} k={offer.focus} />}
+          {find}
+          <section className="flex flex-col gap-3">
+            <h3 className="s3 text-text-tertiary">The brief</h3>
+            <dl className="border-t border-border-light">
+              {facts.map((f) => (
+                <div key={f.label} className="flex items-baseline justify-between gap-4 border-b border-border-light py-2">
+                  <dt className="p6 text-text-secondary">{f.label}</dt>
+                  <dd className="text-right h8 text-text-primary">
+                    {f.estimate && <span className="text-text-tertiary" title="Estimate">~</span>}
+                    {f.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div className="flex flex-col gap-1">
+              <span className="h9 text-text-secondary">The brief asks for</span>
+              <ul className="list-disc pl-5 p7 text-text-primary">
+                {t.quote.briefAsks.map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="h9 text-text-secondary">Not known yet</span>
+              <p className="p7 text-text-primary">{t.openCells.map((c) => c.value).join(" · ")}</p>
+            </div>
+            <Button type="link" className="self-start p7" onClick={onFullBrief}>
+              Full brief
+            </Button>
+          </section>
+        </aside>
+      </div>
+
+      <footer className="flex h-[72px] shrink-0 items-center justify-end gap-3 border-t border-border-dark px-6">
+        <p className="p7 text-text-secondary" role="status">
+          {statusLine(offer)}
+        </p>
+        {offer.resend && (
+          <Button type="secondary" onClick={offer.cancelEdit}>
+            Cancel
+          </Button>
+        )}
+        <Button type="primary" size="large" disabled={phase !== "check" || offer.openCount > 0} onClick={offer.send}>
+          {offer.resend ? "Send changes" : "Send your offer"}
+        </Button>
+      </footer>
+    </div>
   );
 }
 

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 58, 18 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 60, 18 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -206,6 +206,7 @@ What an invited supplier sees: one tender at a time (Overview, Sites & documents
   5. Chapter 3 What nobody knows yet: CQuel is asking the customer · Checked at the site visit.
   6. Chapter 4 How the customer chooses: Price · Timing · Quality (InfoCells with icons), then the contract line with a link to the Commission Form.
   - StickyActionBar: a full-width bar fixed to the bottom of the window (72 high, content in the 1536 column) with the offer's action while the OfferCard is out of view. Never both at once.
+- **The indicative offer (C4, 18 Nov):** the whole flow happens inside the OfferCard: start → reading → check what we read → sent, and editing after sending. Check rows are RequirementRows (no new components). After sending the card no longer needs you (no orange bar, pill or primary), shows the five values and "How your offer reads to the customer" (against what they asked for, never against other suppliers; no scores or ranks), and each chapter gets an `own` InfoCell with what the supplier said (blue, one `cite` icon). The StickyActionBar follows the card's state: Upload, then "Fill in" / "Send your offer"; hidden while reading and once sent. Every change after sending notifies CQuel; "How your offer reads" is written automatically and not checked by Ops first.
 - **Two kinds of progress, never alike:** the tender's stages (StageList, dots on a vertical line, in the rail, the same for everyone) and the supplier's own steps (Steps chips on a horizontal track, in the OfferCard).
 - **Sites & documents:** "Documents for all sites" (DocumentList in a Card, "Download everything" in the header) and the Sites table with per-site download and "View site". The list of sites lives here, not under the map.
 - **Questions:** questions sent from the FindField or the Questions form ("About" Select, "Your question" Textarea, "We reply here and by email.", `secondary` "Send question", disabled until there is text). The tab shows a count once there are any: "Questions (1)". Empty: "No questions yet".
@@ -230,7 +231,7 @@ What an invited supplier sees: one tender at a time (Overview, Sites & documents
 - The StickyActionBar is `aria-hidden` and can't be clicked while it's off screen.
 
 ### Not decided yet
-- Continuity after the offer ("You said", "How your offer reads to the customer") is parked.
+- Offer variants (not in round 1); prices per site (round 1 asks for one total); the Commission Form is signed at the site visit.
 - Reply time for questions, and whether answers that change the brief go to every supplier, are still to confirm with Ops.
 
 ## Page furniture

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 58, 18 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 60, 18 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -763,6 +763,15 @@ A small grey box inside a Chapter. (C3, 18 Nov 2026.)
 - Label `p7` text-tertiary, value `h8` (or `p6` for a sentence, `sentence`), optional `p7` text-secondary note.
 - With `icon`: a 20px icon in `icon-default` on the left (money, time, best for the criteria).
 
+### `own`: what the supplier said (YouSaid, C4 18 Nov)
+- After the offer is sent, each Overview chapter gets one `own` cell, full width under its InfoCells:
+  - The job: "You said · 3 of 3 sites · start 6 weeks after the contract · 10 weeks on site";
+  - What you price: "You said · £318,400 excl. VAT · <warranties>";
+  - What nobody knows yet: "You assumed · Export limit 200 kW · no asbestos · roofs take the load", note "Read from your quote. When CQuel gets the answers, this says whether your assumption holds."
+- Look (Olena: "should be highlighted, maybe blue", "we need an icon there", "only 1 icon not 2 types", "isn't it too big"): `status-info-bg` with a 1px `status-info-border`, `radius-md`, padding 12/14. One icon for every `own` cell: `cite`, 16, in `status-info-text`, 8 from the text, top-aligned on the label's line. Then label `p7` text-tertiary ("You said" by default), value `h8`, optional `p7` note.
+- The blue ties it to the TenderRail's header band and sets the supplier's own answers apart from the grey brief cells. No dot, no status meaning: it's "yours", not "info needed". The icon is part of the variant, not a prop.
+- Never shown before the offer is sent.
+
 ### Layout
 Equal columns, 12 apart (pass `items` and `cols`); one column on narrow screens.
 - The job: beside the map (3fr map, 2fr cells), the cells in a 2 × 2 grid: the two hotels · expected generation · roof space · safety rules.
@@ -770,7 +779,7 @@ Equal columns, 12 apart (pass `items` and `cols`); one column on narrow screens.
 - Two for open items (CQuel is asking the customer · Checked at the site visit).
 
 ### The consumer provides
-`label`, `value`, `note`, `sentence`, `icon`; or `items` and `cols` for the row.
+`label`, `value`, `note`, `sentence`, `icon`, `own`; or `items` and `cols` for the row.
 
 ---
 
@@ -935,21 +944,38 @@ What we still need, under a route service or a package step.
 
 ## OfferCard
 
-The one card that needs you on the supplier Overview: what the supplier has to do now. (C3, 18 Nov 2026.)
+The one card that needs you on the supplier Overview, and the whole indicative offer flow: upload, check, send, and after. The brief, the FindField and the chapters stay on the same page. (C3 18 Nov; states C4 18 Nov.)
 
-### Anatomy
-- White, `border-dark`, `radius-lg`, the 4px `brand-6` top bar (the one card that needs you, agreed 17 Nov), padding 20/24, 16 between parts.
-- Left: the ResponsibilityPill "Your action" and `s3` "Due 9 May"; the title in `h6` ("Send an indicative offer"); one `p6` text-secondary line ("Upload your quote with one total for every site. It isn't binding: you update it after the site visit.").
-- Right: `primary` large "Upload your quote" (`upload` icon); under it the `p6` sentence "Not bidding? Decline this tender", the link in `h8` inside the sentence (14px, never 12).
-- **Steps** (Chip track): Upload your quote (`now`) · Check what we read · Send it, each with a `p7` note. These are the supplier's own steps only; the tender's stages are the StageList in the rail.
+### Frame
+- White, `border-dark`, `radius-lg`, padding 20/24, 16 between parts.
+- While it needs you (start, reading, check): the 4px `brand-6` top bar, the ResponsibilityPill "Your action" and `s3` "Due 9 May".
+- Steps (Chip track): Upload your quote · Check what we read · Send it. These are the supplier's own steps only; the tender's stages are the StageList in the rail. Step notes show only at the start.
 
-### Rules
-- Words: the stage is "indicative offer", the file is "your quote". Never "first price".
-- The deadline is said here, once.
-- At most one per page. When it scrolls out of view, StickyActionBar takes over its action.
+### States
+1. **Start:** the title "Send an indicative offer" in `h6`, the `p6` line "Upload your quote with one total for every site. It isn't binding: you update it after the site visit."; on the right `primary` large "Upload your quote" (`upload` icon), which opens the file picker (PDF, Excel, CSV); under it the `p6` sentence "Not bidding? Decline this tender" with the link in `h8` (14px). Steps: Upload `now`.
+2. **Reading:** steps Upload `done` · Check `now` · Send `next`. A file row: a 36px document icon box, the name in `h8`, "PDF · 2.1 MB · Reading: total price, sites, start, duration, warranties" in `p7`, a 4px progress bar 240 wide (`black-2` track, `black-7` fill), and Cancel (`tertiary`). No time estimate.
+3. **Check what we read:** the title "Check what we read" with "This is what the customer sees. Edit anything we got wrong." The file row with Replace (`tertiary`; it reads the new file again). The check rows (RequirementRow, see its README). Footer, right-aligned: a `p7` status line ("2 to fill in before you send" / "Ready to send") and `primary` "Send your offer", disabled while any row is open.
+4. **Sent:** the card no longer needs you: no orange bar, no pill, no primary.
+   - `s3` "Sent · due 9 May", the title "Your indicative offer is in", the `p6` line "You can edit it until 9 May; CQuel is told when you change it. After the deadline, CQuel tells you if you're on the shortlist."
+   - Right: "View your quote" (`tertiary`) and "Edit your offer" (`secondary`).
+   - All three step chips `done`.
+   - Five InfoCells in one row: Total price · Sites covered · Start · Duration · Warranties.
+   - **How your offer reads to the customer** (`h7`, with the `p7` line "Against what they asked for, not against other suppliers"): the same check rows, display only. A done mark when the offer fits ("Price is within the budget · Your total £318,400 · their budget ~£350,000", "All 3 sites covered"); an open ring for a gap to fix in the final offer ("Seafront protection isn't in your quote") with "See in the brief" (`tertiary`).
+- **Editing after sending** reopens the check state with the title "Edit your offer", Cancel (`secondary`) and "Send changes" (`primary`); the status line reads "CQuel is told when you send changes".
+
+### Decided (Olena, 18 Nov)
+- Every change after sending notifies CQuel.
+- "How your offer reads" is shown to suppliers and written automatically from the quote and the brief; Ops don't check the lines first.
+- It never compares with other suppliers. No scores, no ranks.
+
+### Words
+The stage is "indicative offer", the file is "your quote". Never "first price".
+
+### Still open
+Variants (not in round 1); prices per site (round 1 asks for one total; per-site prices would make "Total price" one row per site); the Commission Form is signed at the site visit.
 
 ### The consumer provides
-`id` (for StickyActionBar's `targetId`), `due`, `title`, `text`, `action: {label, onClick | href, icon?}`, `onDecline` or `declineHref`, `steps: [{label, note, state?}]`, `cardRef`.
+`state`: 'start' | 'reading' | 'check' | 'sent'; `editing` (after sending); `id`, `cardRef`; `due`, `title`, `text`; start: `action`, `onDecline` / `declineHref`; reading: `file: {name, meta}`, `progress` (0–1, else animated), `onCancel`; check: `file`, `onReplace`, the check rows as `children`, `openCount`, `onSend`, `onCancelEdit`; sent: `summary` (InfoCell items), `reads: [{ok, title, text, action?}]`, `onView` / `viewHref`, `onEdit`, `sentText`; `steps` to override the labels.
 
 ---
 
@@ -1179,8 +1205,17 @@ Each service has a list of checks per solution. A **Required** check blocks the 
 - **Urgent pill** (`urgent`): while the Blocking group has open items, the pill is the light accent (`bg-accent`, `border-accent`, `accent-hover` text). At 0 it goes back to white. The Recommended pill stays neutral.
 - **Edit asset data:** the groups are titled "Required" and "Recommended".
 
+### Supplier offer: check what we read (C4, 18 Nov)
+No new components: each thing round 1 needs (total price, sites covered, start, duration, warranties) is a RequirementRow with the 20px StateMark.
+- `done`: the line is "<value> · page <n>" (or "· Typed"); Edit (`tertiary`, `edit` icon) opens the grey edit box. For a single value use `edit: {kind: 'value'}`: the value input (420), Save (`primary`), Cancel (`secondary`). No Source select.
+- `missing` with `inputBelow`: the line "Not in your quote", and under it the input (420, an example placeholder) and Save.
+- `disagree` with `line`: "Your quote has 2 totals. Choose one, or enter another." One FoundValue per total with "Use £318,400" (`secondary`), then "Another value". We never choose for the supplier.
+- Sites covered: `edit: {kind: 'list', items, selected}`: `s3` "Sites in your price · n of N" with "Select all" (link), a search field above 10 sites, a scrolling list (max 232) of "n · site name" checkboxes, "Save n sites" (`primary`) and Cancel. The row then reads "18 of 20 · not covered: …".
+- `open` (display only, with `action`): a gap in "How your offer reads to the customer", e.g. "Seafront protection isn't in your quote" with "See in the brief" (`tertiary`). `readonly` on a `done` row hides Edit.
+- **Buttons stay as in the rest of the system:** `soft` on the white row (Save next to the input, "Another value"), `secondary` on tinted boxes (FoundValue's Use). The concept build has no `soft` yet; it should add one rather than use `secondary` here.
+
 ### The consumer provides
-`name`, `state`, `required`, `value`, `source`, `unit`, `hint`, `found` (FoundValue props), `options` (two FoundValues), `uploadLabel`, `placeholder`, `edit: {value, sources, source, was, warning: {title, text}}`, and `onUse`, `onEnterAnother`, `onUpload`, `onNotAvailable`, `onSave(value)`, `onUndo`, `onEdit`, `onCancel`. RequirementGroup takes `label`, `count`, `countLabel` ("open", or `['file', 'files']` for singular and plural), `pill` (any text), `urgent`, children.
+`name`, `state`, `required`, `value`, `source`, `unit`, `hint`, `found` (FoundValue props), `options` (two FoundValues), `uploadLabel`, `placeholder`, `edit: {kind?: 'value' | 'list', value, placeholder, items, selected, noun, title, sources, source, was, warning: {title, text}}`, `line` (overrides the line), `inputBelow`, `readonly`, `action`, and `onUse`, `onEnterAnother`, `onUpload`, `onNotAvailable`, `onSave(value)`, `onUndo`, `onEdit`, `onCancel`. RequirementGroup takes `label`, `count`, `countLabel` ("open", or `['file', 'files']` for singular and plural), `pill` (any text), `urgent`, children.
 
 ---
 
@@ -1477,6 +1512,11 @@ The offer's action while the OfferCard is out of view: a full-width bar fixed to
   - Left: ResponsibilityPill "Your action", then the stage title in `h8` ("Send an indicative offer") over a `p7` text-secondary line ("Due 9 May · not binding, you update it after the site visit").
   - Right: the `link` "Decline this tender", then the `primary` large "Upload your quote" (`upload` icon).
 
+### Offer states (C4)
+- **Start:** "Send an indicative offer", the due line, Decline and "Upload your quote".
+- **Check:** "Check what we read" (or "Edit your offer") over "2 to fill in before you send" / "Ready to send". Right: "Fill in" (`primary`) scrolls back to the card while rows are open; once nothing is open, "Send your offer" (`primary`) sends from the bar. No Decline.
+- **Reading and Sent:** the bar doesn't show.
+
 ### Behaviour
 - Slides up (200ms) when the OfferCard scrolls out of view (IntersectionObserver, the top bar's 64 as the margin) and slides back down when the card returns. No slide with reduced motion.
 - It never shows at the same time as the OfferCard, so there is still one primary in view.
@@ -1484,7 +1524,7 @@ The offer's action while the OfferCard is out of view: a full-width bar fixed to
 - The main column keeps 112 bottom padding so the bar never covers the last card.
 
 ### The consumer provides
-`targetId` (the OfferCard's id; the bar watches it) or `show`, `title`, `line`, `onDecline` or `declineHref`, `action: {label, onClick | href}`. `inline` draws it in place for previews.
+`targetId` (the OfferCard's id; the bar watches it) or `show`, `title`, `line`, `onDecline` or `declineHref`, `action: {label, onClick | href, icon?}` (`icon: null` for none). `inline` draws it in place for previews.
 
 ---
 

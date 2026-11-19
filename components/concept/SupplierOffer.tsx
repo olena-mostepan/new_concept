@@ -876,10 +876,6 @@ export function OfferWindow({
             {t.title} · due {due}
           </p>
         </div>
-        <span className="flex-1" />
-        <Button type="secondary" onClick={() => offer.setOpen(false)}>
-          Save and close
-        </Button>
       </header>
 
       <div className="flex min-h-0 flex-1">
@@ -959,9 +955,13 @@ export function OfferWindow({
         <p className="p7 text-text-secondary" role="status">
           {statusLine(offer)}
         </p>
-        {offer.resend && (
-          <Button type="secondary" onClick={offer.cancelEdit}>
+        {offer.resend ? (
+          <Button type="secondary" size="large" onClick={offer.cancelEdit}>
             Cancel
+          </Button>
+        ) : (
+          <Button type="secondary" size="large" onClick={() => offer.setOpen(false)}>
+            Save and close
           </Button>
         )}
         <Button type="primary" size="large" disabled={phase !== "check" || offer.openCount > 0} onClick={offer.send}>

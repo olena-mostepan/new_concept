@@ -4,6 +4,7 @@
  * Only facts the platform holds; estimates show a "~" before the value (estimate: true). No future dates beyond the tender's own deadline.
  */
 import type { Doc } from "./model";
+import { SOLUTION_ICON, rowDue, tenderRow } from "./supplierList";
 
 export interface SupplierFact {
   label: string;
@@ -384,4 +385,32 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
   },
 ];
 
-export const supplierTender = (id: string) => SUPPLIER_TENDERS.find((t) => t.id === id);
+/** "Heat pump" → "heat pump", but "EV charging" and "LED lighting" stay. */
+const lowerFirst = (s: string) => (/^[A-Z]{2}/.test(s) ? s : s[0].toLowerCase() + s.slice(1));
+
+/**
+ * A tender by id. Only Blackpool has its own content; the other list rows reuse
+ * Blackpool's brief, sites and documents with their own name, customer, solution
+ * and due date, so every state can be opened.
+ */
+export const supplierTender = (id: string): SupplierTender | undefined => {
+  const own = SUPPLIER_TENDERS.find((t) => t.id === id);
+  if (own) return own;
+  const row = tenderRow(id);
+  if (!row) return undefined;
+  const base = SUPPLIER_TENDERS[0];
+  const due = rowDue(row);
+  return {
+    ...base,
+    id: row.id,
+    title: row.title,
+    customer: row.customer ?? "",
+    service: SOLUTION_ICON[row.solution].label,
+    icon3d: row.solution === "solar" ? base.icon3d : undefined,
+    whyInvited:
+      row.solution === "solar"
+        ? base.whyInvited
+        : `You install ${lowerFirst(SOLUTION_ICON[row.solution].label)} and work in this area.`,
+    round: due ? { ...base.round, due: `due ${due}` } : base.round,
+  };
+};

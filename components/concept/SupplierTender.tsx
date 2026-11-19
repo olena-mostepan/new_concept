@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AFTER_DEADLINE, tenderRow, type TenderRow, type TenderState } from "@/lib/concept/supplierList";
 import { OfferPanel, OfferWindow, YouSaid, saidJob, saidPrice, useOffer, type Offer } from "./SupplierOffer";
 import * as Tabs from "@radix-ui/react-tabs";
 import { cn } from "@/lib/utils";
@@ -57,7 +58,37 @@ function SupplierBar({ t }: { t: Tender }) {
 
 /* ---------------------------------------------------------------- parent */
 
-function Rail({ t }: { t: Tender }) {
+/** "How this tender runs" for this supplier: done, now (orange) or where it ended. */
+function stagesFor(t: Tender, state: TenderState) {
+  const at: Record<TenderState, number> = {
+    new: 0, notStarted: 0, started: 0, sent: 0,
+    shortlisted: 2, visitDates: 2, visitBooked: 2,
+    notShortlisted: 1, declined: 0, missed: 0,
+  };
+  const ended: Record<string, string> = {
+    notShortlisted: "Not shortlisted",
+    declined: "You declined",
+    missed: "No offer sent",
+  };
+  const i = at[state];
+  return t.process.map((step, k) => ({
+    ...step,
+    done: k < i || (k === i && Boolean(ended[state])),
+    now: k === i && !ended[state],
+    detail:
+      k === i && ended[state]
+        ? ended[state]
+        : k === 1 && i > 1
+          ? "You're on it"
+          : k < i
+            ? step.detail.replace(" · now", "")
+            : step.detail,
+    off: Boolean(ended[state]) && k > i,
+  }));
+}
+
+function Rail({ t, state }: { t: Tender; state: TenderState }) {
+  const process = stagesFor(t, state);
   return (
     <aside className="flex min-h-[calc(100vh-64px)] w-[400px] shrink-0 flex-col border-r border-border-dark bg-white">
       <div className="relative overflow-hidden border-b border-status-info-border bg-status-info-bg px-8 pb-5 pt-6">
@@ -73,7 +104,7 @@ function Rail({ t }: { t: Tender }) {
         <div className="relative flex flex-col gap-1 pt-14">
           <span className="s3 text-text-tertiary">Tender · {t.service}</span>
           <h1 className="h6 text-text-primary">{t.title}</h1>
-          <p className="p7 text-text-secondary">For {t.customer}</p>
+          {t.customer && <p className="p7 text-text-secondary">For {t.customer}</p>}
         </div>
       </div>
       <div className="flex flex-col gap-4 px-8 pb-14 pt-5">
@@ -97,16 +128,20 @@ function Rail({ t }: { t: Tender }) {
         <div className="flex flex-col gap-3 pt-2">
           <h2 className="s3 text-text-tertiary">How this tender runs</h2>
           <ol>
-            {t.process.map((step, i) => (
-              <li key={step.title} className="relative grid grid-cols-[12px_1fr] gap-3 pb-3.5 last:pb-0">
-                {i < t.process.length - 1 && (
+            {process.map((step, i) => (
+              <li key={step.title} className={cn("relative grid grid-cols-[12px_1fr] gap-3 pb-3.5 last:pb-0", step.off && "opacity-50")}>
+                {i < process.length - 1 && (
                   <span className="absolute left-[5px] top-4 -bottom-0.5 w-0.5 bg-border-dark" aria-hidden />
                 )}
                 <span
                   aria-hidden
                   className={cn(
                     "relative z-10 mt-1 size-3 rounded-full",
-                    step.now ? "bg-brand-6 shadow-[0_0_0_3px_var(--bg-accent)]" : "border-2 border-black-4 bg-white",
+                    step.now
+                      ? "bg-brand-6 shadow-[0_0_0_3px_var(--bg-accent)]"
+                      : step.done
+                        ? "bg-black-7"
+                        : "border-2 border-black-4 bg-white",
                   )}
                 />
                 <div>
@@ -131,9 +166,9 @@ function Rail({ t }: { t: Tender }) {
 
 /* ----------------------------------------------------------------- offer */
 
-function StickyOffer({ t, show, offer }: { t: Tender; show: boolean; offer: Offer }) {
+function StickyOffer({ t, show, offer, after }: { t: Tender; show: boolean; offer: Offer; after?: boolean }) {
   const inProgress = offer.phase === "reading" || offer.phase === "check";
-  const visible = show && !offer.open && (offer.phase === "start" || inProgress);
+  const visible = !after && show && !offer.open && (offer.phase === "start" || inProgress);
   return (
     <div
       aria-hidden={!visible}
@@ -454,9 +489,9 @@ function SiteMap({ t, onTab }: { t: Tender; onTab: (id: TabId) => void }) {
 
 /* --------------------------------------------------------------- overview */
 
-function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; onAsk: (q: Question) => void }) {
+function Overview({ t, onTab, onAsk, state, row }: { t: Tender; onTab: (id: TabId) => void; onAsk: (q: Question) => void; state: TenderState; row?: TenderRow }) {
   const offerRef = useRef<HTMLElement>(null);
-  const offer = useOffer(t);
+  const offer = useOffer(t, state);
   const sent = offer.phase === "sent";
   const [showSticky, setShowSticky] = useState(false);
   useEffect(() => {
@@ -469,7 +504,7 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
 
   return (
     <div className="flex flex-col gap-4">
-      <OfferPanel t={t} offer={offer} cardRef={offerRef} />
+      <OfferPanel t={t} offer={offer} cardRef={offerRef} state={state} row={row} />
       <Find t={t} onTab={onTab} onAsk={onAsk} />
 
       <Chapter n={1} id="c-job" title="The job">
@@ -522,7 +557,7 @@ function Overview({ t, onTab, onAsk }: { t: Tender; onTab: (id: TabId) => void; 
         </p>
       </Chapter>
 
-      <StickyOffer t={t} show={showSticky} offer={offer} />
+      <StickyOffer t={t} show={showSticky} offer={offer} after={AFTER_DEADLINE.includes(state)} />
       <OfferWindow
         t={t}
         offer={offer}
@@ -691,6 +726,8 @@ function Questions({ t, questions, onAsk }: { t: Tender; questions: Question[]; 
 /* ------------------------------------------------------------------- page */
 
 export function SupplierTender({ t }: { t: Tender }) {
+  const row = tenderRow(t.id);
+  const state: TenderState = row?.state ?? "new";
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams();
@@ -707,7 +744,7 @@ export function SupplierTender({ t }: { t: Tender }) {
     <div className="min-h-screen bg-[linear-gradient(to_right,white_50%,var(--bg-container-grey)_50%)]">
       <SupplierBar t={t} />
       <div className="mx-auto flex w-full max-w-screen-2xl items-stretch bg-bg-container-grey">
-        <Rail t={t} />
+        <Rail t={t} state={state} />
         <main className="min-w-0 flex-1 px-8 pb-28 pt-6">
           <Tabs.Root value={tab} onValueChange={(v) => setTab(v as TabId)}>
             <Tabs.List className={cn(tabListClass, "mt-2")} aria-label="Tender sections">
@@ -719,7 +756,7 @@ export function SupplierTender({ t }: { t: Tender }) {
               ))}
             </Tabs.List>
             <Tabs.Content value="overview" className="outline-none">
-              <Overview t={t} onTab={setTab} onAsk={ask} />
+              <Overview key={t.id} t={t} onTab={setTab} onAsk={ask} state={state} row={row} />
             </Tabs.Content>
             <Tabs.Content value="sites" className="outline-none">
               <SitesAndDocs t={t} />

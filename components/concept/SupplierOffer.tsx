@@ -12,6 +12,8 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { QuoteQuestion, SupplierTender as Tender } from "@/lib/concept/supplier";
+import { AFTER_DEADLINE, type TenderRow, type TenderState } from "@/lib/concept/supplierList";
+import { Outcome } from "./SupplierOutcome";
 import { Button, ChipTrack, Icon, IconButton, ResponsibilityPill, focusRing } from "./ui";
 import { StateMark } from "./ops-asset/opsUi";
 
@@ -67,13 +69,25 @@ export interface Offer {
 const inputClass =
   "h-10 rounded-md border border-border-dark bg-white px-3 p6 font-sans text-text-primary outline-none placeholder:text-text-tertiary focus:border-black-7 focus:shadow-[inset_0_0_0_1px_var(--black-7)]";
 
-export function useOffer(t: Tender): Offer {
+/** File names for tenders opened part-way (offer started, sent, after the deadline). */
+const PRESET_FILES = ["Quote_DesRenewables.pdf", "Design_report.pdf", "HS_policy.pdf"];
+
+function initialPhase(state: TenderState): OfferPhase {
+  if (state === "started") return "check";
+  if (state === "sent" || state === "shortlisted" || state === "visitDates" || state === "visitBooked" || state === "notShortlisted") return "sent";
+  return "start";
+}
+
+export function useOffer(t: Tender, state: TenderState = "new"): Offer {
   const q = t.quote;
-  const [phase, setPhase] = useState<OfferPhase>("start");
-  const [files, setFiles] = useState<string[]>([]);
+  const first = initialPhase(state);
+  const [phase, setPhase] = useState<OfferPhase>(first);
+  const [files, setFiles] = useState<string[]>(
+    first === "check" ? PRESET_FILES.slice(0, 2) : first === "sent" ? PRESET_FILES : [],
+  );
   const [price, setPrice] = useState(q.price.value);
   const [start, setStart] = useState(q.start.value);
-  const [unit, setUnit] = useState<Unit | null>(null);
+  const [unit, setUnit] = useState<Unit | null>(first === "sent" ? "days" : null);
   const [warranties, setWarranties] = useState({ panels: q.warranties.panels, inverters: q.warranties.inverters, workmanship: q.warranties.workmanship });
   const [sites, setSites] = useState<number[]>(() => t.sites.map((s) => s.n));
   const [answers, setAnswers] = useState<Record<string, Answer | undefined>>({});
@@ -154,7 +168,7 @@ export function sitesLine(t: Tender, ns: number[]) {
 }
 const sitesCount = (t: Tender, ns: number[]) => `${ns.length} of ${t.sites.length}`;
 
-function money(v: string) {
+export function money(v: string) {
   const n = Number(v.replace(/[^0-9.]/g, ""));
   return Number.isFinite(n) ? n : 0;
 }
@@ -682,10 +696,10 @@ function Header({ t, title, text }: { t: Tender; title: string; text?: string })
   );
 }
 
-type Fact = { label: string; value: string; note?: string; was?: string; flag?: string };
+export type Fact = { label: string; value: string; note?: string; was?: string; flag?: string };
 
 /** One column of what the customer compares: an s3 label over SpecList facts rows (label left, value right). */
-function FactColumn({ label, rows }: { label: string; rows: Fact[] }) {
+export function FactColumn({ label, rows }: { label: string; rows: Fact[] }) {
   return (
     <section className="flex min-w-0 flex-col">
       <h4 className="border-b border-border-light pb-2 s3 text-text-tertiary">{label}</h4>
@@ -812,8 +826,22 @@ function statusLine(offer: Offer) {
 }
 
 /** The offer card on the Overview: start, in progress (window closed), sent. */
-export function OfferPanel({ t, offer, cardRef }: { t: Tender; offer: Offer; cardRef: React.Ref<HTMLElement> }) {
+export function OfferPanel({
+  t,
+  offer,
+  cardRef,
+  state = "new",
+  row,
+}: {
+  t: Tender;
+  offer: Offer;
+  cardRef: React.Ref<HTMLElement>;
+  state?: TenderState;
+  row?: TenderRow;
+}) {
   const { phase } = offer;
+  if (AFTER_DEADLINE.includes(state))
+    return <Outcome t={t} offer={offer} state={state} row={row} cardRef={cardRef} />;
   const inProgress = phase === "reading" || phase === "check";
   return (
     <section

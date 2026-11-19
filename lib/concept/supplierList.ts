@@ -74,6 +74,7 @@ export const TENDER_ROWS: TenderRow[] = [
   {
     id: "blackpool-pv",
     state: "new",
+    href: "/concept/supplier/tenders/blackpool-pv",
     solution: "solar",
     title: "Solar PV on 3 roofs in Blackpool",
     customer: "Blackpool Pleasure Beach",

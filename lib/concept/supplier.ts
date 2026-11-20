@@ -62,6 +62,20 @@ export interface QuoteQuestion {
   /** yesno: what the Yes answer needs. */
   followUp?: string;
 }
+/** How a supplier offers (C12): one offer, one offer in lots, one per site, or several that overlap. */
+export type OfferStructure = "one" | "lots" | "perSite" | "overlap";
+
+export const STRUCTURES: Record<OfferStructure, { label: string; text: string; short: string }> = {
+  one: { label: "One offer for all of them", text: "One contract, one set of terms, one total.", short: "One offer for all sites" },
+  lots: { label: "One offer, in lots", text: "One contract delivered in lots; each site is in one lot.", short: "One offer, in lots" },
+  perSite: { label: "One offer per site", text: "Each site priced and awardable on its own.", short: "One offer per site" },
+  overlap: {
+    label: "Several offers that overlap",
+    text: "Different groupings, each on its own terms. A site can be in more than one; the customer awards it under one.",
+    short: "Several offers that overlap",
+  },
+};
+
 export interface QuoteExample {
   /** What each picked file is read as, in order. */
   files: QuoteFile[];
@@ -86,6 +100,11 @@ export interface QuoteExample {
   briefAsks: string[];
   /** "About this in the brief": the brief's own words for each check row and question. */
   about: Record<string, { title: string; quote: string; source: string; note?: string }>;
+  /** The structure read from the quote, and the prices that go with each structure. Split prices are examples. */
+  structure: { read: OfferStructure; source: string };
+  lots: Array<{ name: string; sites: number[]; price: string }>;
+  perSite: Record<number, string>;
+  offers: Array<{ key: string; sites: number[]; condition?: string; price: string }>;
 }
 
 export interface SupplierTender {
@@ -101,6 +120,8 @@ export interface SupplierTender {
   priceCells: SpecRow[];
   openCells: SpecRow[];
   contractLine: string;
+  /** Offer structures this tender takes, set by Ops with the brief (at least one). */
+  structures: OfferStructure[];
   quote: QuoteExample;
   findIndex: FindEntry[];
   service: string;
@@ -155,8 +176,10 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     priceCells: [
       { label: "Included", value: "Design to handover, grid connection, maintenance" },
       { label: "Not included", value: "PPA financing, arranged separately" },
-      { label: "Send us", value: "Your quote with a total. We read start, duration and warranties from it." },
+      { label: "Send us", value: "Your quote. We read the price, start, duration and warranties from it." },
+      { label: "Offers this tender takes", value: "One offer for all sites, one offer in lots, or one offer per site. You can leave sites out." },
     ],
+    structures: ["one", "lots", "perSite"],
     openCells: [
       { label: "CQuel is asking the customer", value: "Export limit and DNO position · roof type, age, asbestos, ownership" },
       { label: "Checked at the site visit", value: "Roof strength · Burger King size · access hours · finish date" },
@@ -170,6 +193,17 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       ],
       price: { value: "£293,478", source: "Quote, page 1" },
       sitesSource: "Quote, page 1",
+      structure: { read: "lots", source: "Quote, page 1" },
+      lots: [
+        { name: "Lot 1", sites: [1, 2], price: "£221,900" },
+        { name: "Lot 2", sites: [3], price: "£71,578" },
+      ],
+      perSite: { 1: "£128,400", 2: "£93,500", 3: "£71,578" },
+      offers: [
+        { key: "A", sites: [1, 2, 3], condition: "Only if all 3 are awarded", price: "£279,000" },
+        { key: "B", sites: [1, 2], price: "£214,000" },
+        { key: "C", sites: [1], condition: "Lease instead of purchase", price: "£1,950 a month" },
+      ],
       start: { value: "1 Sep", source: "Quote" },
       lead: "6 weeks",
       installation: 28,
@@ -385,6 +419,28 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
   },
 ];
 
+/** Prototype: tenders that show the other structure cases. */
+const STRUCTURE_OVERRIDES: Record<string, Partial<SupplierTender>> = {
+  // Ops enabled one structure only: no choice row.
+  "sirius-norderstedt": {
+    structures: ["one"],
+    priceCells: [
+      ...SUPPLIER_TENDERS[0].priceCells.slice(0, 3),
+      { label: "Offers this tender takes", value: "One offer for all sites. You can leave sites out." },
+    ],
+    quote: { ...SUPPLIER_TENDERS[0].quote, structure: { read: "one", source: "Quote, page 1" } },
+  },
+  // All four enabled; the quote has overlapping offers.
+  "hines-hainichen": {
+    structures: ["one", "lots", "perSite", "overlap"],
+    priceCells: [
+      ...SUPPLIER_TENDERS[0].priceCells.slice(0, 3),
+      { label: "Offers this tender takes", value: "Any: one offer, in lots, per site, or several that overlap. You can leave sites out." },
+    ],
+    quote: { ...SUPPLIER_TENDERS[0].quote, structure: { read: "overlap", source: "Quote, pages 1–2" } },
+  },
+};
+
 /** "Heat pump" → "heat pump", but "EV charging" and "LED lighting" stay. */
 const lowerFirst = (s: string) => (/^[A-Z]{2}/.test(s) ? s : s[0].toLowerCase() + s.slice(1));
 
@@ -406,11 +462,12 @@ export const supplierTender = (id: string): SupplierTender | undefined => {
     title: row.title,
     customer: row.customer ?? "",
     service: SOLUTION_ICON[row.solution].label,
-    icon3d: row.solution === "solar" ? base.icon3d : undefined,
+    icon3d: row.solution === "solar" ? base.icon3d : SOLUTION_ICON[row.solution].src || undefined,
     whyInvited:
       row.solution === "solar"
         ? base.whyInvited
         : `You install ${lowerFirst(SOLUTION_ICON[row.solution].label)} and work in this area.`,
     round: due ? { ...base.round, due: `due ${due}` } : base.round,
+    ...STRUCTURE_OVERRIDES[row.id],
   };
 };

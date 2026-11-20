@@ -523,8 +523,8 @@ function Overview({ t, onTab, onAsk, state, row }: { t: Tender; onTab: (id: TabI
       </Chapter>
 
       <Chapter n={2} id="c-price" title="What you price">
-        <Cells rows={t.priceCells} cols={3} />
-        {sent && <YouSaid value={saidPrice(offer)} />}
+        <Cells rows={t.priceCells} cols={t.priceCells.length > 3 ? 2 : 3} />
+        {sent && <YouSaid value={saidPrice(offer, t)} />}
       </Chapter>
 
       <Chapter n={3} id="c-open" title="What nobody knows yet">

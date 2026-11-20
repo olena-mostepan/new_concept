@@ -11,7 +11,7 @@
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import type { QuoteQuestion, SupplierTender as Tender } from "@/lib/concept/supplier";
+import { STRUCTURES, type OfferStructure, type QuoteQuestion, type SupplierTender as Tender } from "@/lib/concept/supplier";
 import { AFTER_DEADLINE, type TenderRow, type TenderState } from "@/lib/concept/supplierList";
 import { Outcome } from "./SupplierOutcome";
 import { Button, ChipTrack, Icon, IconButton, ResponsibilityPill, focusRing } from "./ui";
@@ -36,6 +36,9 @@ export interface Offer {
   unit: Unit | null;
   warranties: { panels: number; inverters: number; workmanship: number };
   sites: number[];
+  /** How you're offering; null when the structure we read isn't one this tender takes. */
+  structure: OfferStructure | null;
+  setStructure: (s: OfferStructure) => void;
   answers: Record<string, Answer | undefined>;
   resend: boolean;
   /** The offer window (C8 · B3) is open. */
@@ -90,6 +93,10 @@ export function useOffer(t: Tender, state: TenderState = "new"): Offer {
   const [unit, setUnit] = useState<Unit | null>(first === "sent" ? "days" : null);
   const [warranties, setWarranties] = useState({ panels: q.warranties.panels, inverters: q.warranties.inverters, workmanship: q.warranties.workmanship });
   const [sites, setSites] = useState<number[]>(() => t.sites.map((s) => s.n));
+  const [structure, setStructure] = useState<OfferStructure | null>(() => {
+    if (t.structures.length === 1) return t.structures[0];
+    return t.structures.includes(q.structure.read) ? q.structure.read : null;
+  });
   const [answers, setAnswers] = useState<Record<string, Answer | undefined>>({});
   const [resend, setResend] = useState(false);
   const [open, setOpen] = useState(false);
@@ -108,6 +115,8 @@ export function useOffer(t: Tender, state: TenderState = "new"): Offer {
     unit,
     warranties,
     sites,
+    structure,
+    setStructure,
     answers,
     resend,
     open,
@@ -118,7 +127,7 @@ export function useOffer(t: Tender, state: TenderState = "new"): Offer {
     },
     focus,
     setFocus,
-    openCount: unit ? 0 : 1,
+    openCount: (unit ? 0 : 1) + (structure ? 0 : 1) + (sites.length ? 0 : 1) + (structure && unassigned(t, structure, sites).length ? 1 : 0),
     unanswered,
     inputRef,
     pick: () => inputRef.current?.click(),
@@ -168,11 +177,54 @@ export function sitesLine(t: Tender, ns: number[]) {
 }
 const sitesCount = (t: Tender, ns: number[]) => `${ns.length} of ${t.sites.length}`;
 
+/** Kept sites that no lot covers (lots only; per site and overlapping always cover what they list). */
+export function unassigned(t: Tender, structure: OfferStructure, sites: number[]) {
+  if (structure !== "lots") return [];
+  const inLots = new Set(t.quote.lots.flatMap((l) => l.sites));
+  return t.sites.filter((s) => sites.includes(s.n) && !inLots.has(s.n));
+}
+
+/** Price lines for the chosen structure, only for the sites the supplier kept. */
+export function priceRows(t: Tender, offer: Pick<Offer, "structure" | "sites" | "price">) {
+  const q = t.quote;
+  const kept = (ns: number[]) => ns.filter((n) => offer.sites.includes(n));
+  const name = (n: number) => t.sites.find((s) => s.n === n)?.name ?? `Site ${n}`;
+  const names = (ns: number[]) => (ns.length === t.sites.length && ns.length > 2 ? `All ${ns.length}` : ns.map(name).join(" · "));
+  switch (offer.structure) {
+    case "lots": {
+      const lots = q.lots.map((l) => ({ ...l, sites: kept(l.sites) })).filter((l) => l.sites.length);
+      return { rows: lots.map((l) => ({ key: l.name, label: l.name, sites: names(l.sites), price: l.price })), total: gbp(lots.reduce((n, l) => n + money(l.price), 0)), totalLabel: "Total" };
+    }
+    case "perSite": {
+      const ns = offer.sites;
+      return { rows: ns.map((n) => ({ key: String(n), label: name(n), sites: "", price: q.perSite[n] ?? "—" })), total: gbp(ns.reduce((n, k) => n + money(q.perSite[k] ?? "0"), 0)), totalLabel: `If all ${ns.length}` };
+    }
+    case "overlap": {
+      const offers = q.offers.map((o) => ({ ...o, sites: kept(o.sites) })).filter((o) => o.sites.length);
+      return { rows: offers.map((o) => ({ key: o.key, label: `Offer ${o.key}`, sites: names(o.sites), condition: o.condition, price: o.price })), total: undefined, totalLabel: "" };
+    }
+    default:
+      return { rows: [], total: offer.price, totalLabel: "Total" };
+  }
+}
+
+/** One line for summaries: "£293,478 · in 2 lots", "3 offers · from £214,000". */
+export function priceSummary(t: Tender, offer: Pick<Offer, "structure" | "sites" | "price">) {
+  const p = priceRows(t, offer);
+  if (offer.structure === "lots") return `${p.total} · in ${p.rows.length} ${p.rows.length === 1 ? "lot" : "lots"}`;
+  if (offer.structure === "perSite") return `${p.rows.length} ${p.rows.length === 1 ? "site price" : "site prices"} · ${p.total} if all`;
+  if (offer.structure === "overlap") {
+    const totals = p.rows.map((r) => money(r.price)).filter((n) => n > 10000);
+    return `${p.rows.length} ${p.rows.length === 1 ? "offer" : "offers"}${totals.length ? ` · from ${gbp(Math.min(...totals))}` : ""}`;
+  }
+  return offer.price;
+}
+
 export function money(v: string) {
   const n = Number(v.replace(/[^0-9.]/g, ""));
   return Number.isFinite(n) ? n : 0;
 }
-const gbp = (n: number) => `£${Math.round(n).toLocaleString("en-GB")}`;
+export const gbp = (n: number) => `£${Math.round(n).toLocaleString("en-GB")}`;
 
 function durationLine(t: Tender, unit: Unit | null) {
   const q = t.quote;
@@ -201,9 +253,9 @@ function startAfter(offer: Offer) {
 export function saidJob(t: Tender, offer: Offer) {
   return `${sitesCount(t, offer.sites)} sites · start ${startAfter(offer)} · installation ${t.quote.installation} ${offer.unit ?? ""}`.trim();
 }
-export function saidPrice(offer: Offer) {
+export function saidPrice(offer: Offer, t?: Tender) {
   const w = offer.warranties;
-  return `${offer.price} excl. VAT · panels ${w.panels} years, workmanship ${w.workmanship} years`;
+  return `${t ? priceSummary(t, offer) : offer.price} excl. VAT · panels ${w.panels} years, workmanship ${w.workmanship} years`;
 }
 
 function answerLine(q: QuoteQuestion, a: Answer | undefined) {
@@ -479,6 +531,144 @@ function SitesEdit({ t, offer, onDone }: { t: Tender; offer: Offer; onDone: () =
   );
 }
 
+/** Sites: one checkbox row per site; a site can be left out (grey, never amber). */
+function SitesRow({ t, offer }: { t: Tender; offer: Offer }) {
+  const all = t.sites.map((s) => s.n);
+  const n = offer.sites.length;
+  const toggle = (k: number, on: boolean) =>
+    offer.setSites(on ? [...offer.sites, k].sort((a, b) => a - b) : offer.sites.filter((x) => x !== k));
+  return (
+    <Row
+      k="sites"
+      offer={offer}
+      name="Sites"
+      done={n > 0}
+      line={n ? `${n} of ${t.sites.length} · ${t.quote.sitesSource}` : "Choose at least one site"}
+      action={
+        <span className="flex items-center gap-3">
+          <Button type="link" onClick={() => offer.setSites(all)}>All</Button>
+          <Button type="link" onClick={() => offer.setSites([])}>None</Button>
+        </span>
+      }
+    >
+      <div>
+        {t.sites.map((s) => {
+          const on = offer.sites.includes(s.n);
+          return (
+            <label key={s.n} className="flex cursor-pointer items-start gap-3 border-b border-border-light py-2.5 last:border-b-0">
+              <input
+                type="checkbox"
+                className={cn("mt-0.5 size-4 shrink-0 accent-[var(--black-7)]", focusRing)}
+                checked={on}
+                onChange={(e) => toggle(s.n, e.target.checked)}
+              />
+              <span className="min-w-0">
+                <span className={cn("block h8", on ? "text-text-primary" : "text-text-tertiary")}>
+                  {s.n} · {s.name}
+                </span>
+                <span className="block p7 text-text-secondary">
+                  {on ? `${s.systemNote === "Estimate" ? "~" : ""}${s.system}` : "Left out: the customer sees you didn't offer for it"}
+                </span>
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </Row>
+  );
+}
+
+/** How you're offering: only the structures this tender takes (set by Ops); the one we read is preselected. */
+function StructureRow({ t, offer }: { t: Tender; offer: Offer }) {
+  const read = t.quote.structure.read;
+  if (t.structures.length === 1)
+    return <Row k="structure" offer={offer} name="How you're offering" done line={`${STRUCTURES[t.structures[0]].short} · set by CQuel for this tender`} />;
+  const readOk = t.structures.includes(read);
+  return (
+    <Row
+      k="structure"
+      offer={offer}
+      name="How you're offering"
+      done={Boolean(offer.structure)}
+      line={`${t.structures.length} options for this tender · read from ${t.quote.structure.source.toLowerCase()}`}
+      flags={readOk ? undefined : [`Your quote reads as ${STRUCTURES[read].short.toLowerCase()}. This tender doesn't take that: pick one`]}
+    >
+      <div role="radiogroup" aria-label="How you're offering">
+        {t.structures.map((k) => {
+          const on = offer.structure === k;
+          return (
+            <label key={k} className="flex cursor-pointer items-start gap-3 border-b border-border-light py-2.5 last:border-b-0">
+              <input
+                type="radio"
+                name="structure"
+                className={cn("mt-0.5 size-4 shrink-0 accent-[var(--black-7)]", focusRing)}
+                checked={on}
+                onChange={() => offer.setStructure(k)}
+              />
+              <span className="min-w-0">
+                <span className="flex flex-wrap items-center gap-2 h8 text-text-primary">
+                  {STRUCTURES[k].label}
+                  {k === read && (
+                    <span className="inline-flex h-5 items-center rounded-full border border-status-info-border bg-status-info-bg px-1.5 h9 text-status-info-text">
+                      We read this
+                    </span>
+                  )}
+                </span>
+                <span className="block p7 text-text-secondary">{STRUCTURES[k].text}</span>
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </Row>
+  );
+}
+
+/** Price for lots, per site or overlapping offers: a plain list, total at the bottom. */
+function PriceRow({ t, offer }: { t: Tender; offer: Offer }) {
+  const p = priceRows(t, offer);
+  const missing = offer.structure ? unassigned(t, offer.structure, offer.sites) : [];
+  const counts =
+    offer.structure === "overlap"
+      ? t.sites
+          .filter((s) => offer.sites.includes(s.n))
+          .map((s) => `${s.name} in ${p.rows.filter((r) => r.sites.includes(s.name) || r.sites.startsWith("All")).length}`)
+          .join(" · ")
+      : "";
+  return (
+    <Row
+      k="price"
+      offer={offer}
+      name={offer.structure === "overlap" ? "Your offers" : offer.structure === "lots" ? "Price per lot" : "Price per site"}
+      done={missing.length === 0}
+      line={`${priceSummary(t, offer)} · excl. VAT · ${t.quote.price.source}`}
+      flags={missing.length ? [`Not in any lot: ${missing.map((s) => s.name).join(", ")}`] : undefined}
+    >
+      <div>
+        {p.rows.map((r) => (
+          <div key={r.key} className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-baseline gap-x-4 border-b border-border-light py-2">
+            <span className="h8 text-text-primary">{r.label}</span>
+            <span className="min-w-0 p6 text-text-secondary">
+              {r.sites}
+              {"condition" in r && r.condition ? (r.sites ? ` · ${r.condition}` : r.condition) : ""}
+            </span>
+            <span className="text-right h8 tabular-nums text-text-primary">{r.price}</span>
+          </div>
+        ))}
+        {p.total && (
+          <div className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-baseline gap-x-4 py-2">
+            <span className="h8 text-text-primary">{p.totalLabel}</span>
+            <span />
+            <span className="text-right h8 tabular-nums text-text-primary">{p.total}</span>
+          </div>
+        )}
+        {counts && <p className="pt-2 p7 text-text-secondary">{counts}. The customer awards each site under one offer.</p>}
+        <p className="pt-1 p7 text-text-tertiary">Split prices are examples in the prototype.</p>
+      </div>
+    </Row>
+  );
+}
+
 function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
   const [editing, setEditing] = useState<string | null>(null);
   const q = t.quote;
@@ -490,12 +680,15 @@ function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
   const close = () => setEditing(null);
   return (
     <div>
-      <Row k="price" offer={offer} name="Total price" done line={`${offer.price} excl. VAT · ${q.price.source}`} action={editing !== "price" && edit("price")}>
-        {editing === "price" && <TextEdit initial={offer.price} label="Total price" onSave={(v) => { offer.setPrice(v); close(); }} onCancel={close} />}
-      </Row>
-      <Row k="sites" offer={offer} name="Sites covered" done line={`${sitesLine(t, offer.sites)} · ${q.sitesSource}`} action={editing !== "sites" && edit("sites")}>
-        {editing === "sites" && <SitesEdit t={t} offer={offer} onDone={close} />}
-      </Row>
+      <SitesRow t={t} offer={offer} />
+      <StructureRow t={t} offer={offer} />
+      {offer.structure === "one" || !offer.structure ? (
+        <Row k="price" offer={offer} name="Total price" done line={`${offer.price} excl. VAT · ${q.price.source}`} action={editing !== "price" && edit("price")}>
+          {editing === "price" && <TextEdit initial={offer.price} label="Total price" onSave={(v) => { offer.setPrice(v); close(); }} onCancel={close} />}
+        </Row>
+      ) : (
+        <PriceRow t={t} offer={offer} />
+      )}
       <Row k="start" offer={offer} name="Start" done line={`${offer.start} · your preferred start · ${q.start.source}`} action={editing !== "start" && edit("start")}>
         {editing === "start" && <TextEdit initial={offer.start} label="Start" onSave={(v) => { offer.setStart(v); close(); }} onCancel={close} />}
       </Row>
@@ -729,10 +922,17 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
   const w = offer.warranties;
   const startNow = startAfter(offer);
   const u = offer.unit ?? "days";
-  const price: Fact[] = [
-    { label: "Total", value: offer.price, note: "excl. VAT" },
-    { label: "Per kWp", value: gbp(money(offer.price) / q.kwp), note: `from ${q.kwp} kWp` },
-  ];
+  const split = priceRows(t, offer);
+  const price: Fact[] =
+    offer.structure && offer.structure !== "one"
+      ? [
+          ...split.rows.map((r) => ({ label: r.label, value: r.price, note: [r.sites, "condition" in r ? r.condition : ""].filter(Boolean).join(" · ") || undefined })),
+          ...(split.total ? [{ label: split.totalLabel, value: split.total, note: "excl. VAT" }] : []),
+        ]
+      : [
+          { label: "Total", value: offer.price, note: "excl. VAT" },
+          { label: "Per kWp", value: gbp(money(offer.price) / q.kwp), note: `from ${q.kwp} kWp` },
+        ];
   const speed: Fact[] = [
     { label: "Start", value: startNow, was: startNow !== offer.start ? offer.start : undefined },
     { label: "Lead time", value: q.lead },
@@ -767,7 +967,7 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
           <p className="p7 text-text-secondary">Amber means outside what the customer expects.</p>
         </div>
         <div className="grid grid-cols-3 gap-8">
-          <FactColumn label="Price" rows={price} />
+          <FactColumn label={offer.structure && offer.structure !== "one" ? `Price · ${STRUCTURES[offer.structure].short.toLowerCase()}` : "Price"} rows={price} />
           <FactColumn label="Speed" rows={speed} />
           <FactColumn label="Warranties and cover" rows={quality} />
         </div>
@@ -891,7 +1091,11 @@ export function OfferPanel({
 }
 
 function AboutCard({ t, k }: { t: Tender; k: string }) {
-  const a = t.quote.about[k];
+  const takes = t.priceCells.find((c) => c.label === "Offers this tender takes");
+  const a =
+    k === "structure" && takes
+      ? { title: "Offers this tender takes", quote: takes.value, source: "Set by CQuel with the brief", note: undefined }
+      : t.quote.about[k];
   if (!a) return null;
   return (
     <section aria-live="polite" className="flex flex-col gap-1.5 rounded-md border border-status-info-border bg-status-info-bg px-4 py-3">

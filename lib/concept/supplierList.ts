@@ -57,8 +57,10 @@ export const SOLUTION_ICON: Record<ListSolution, { src: string; label: string }>
   led: { src: "/icons/services/led.png", label: "LED lighting" },
   "heat-pump": { src: "/icons/services/heat-pump.png", label: "Heat pump" },
   ev: { src: "/icons/services/ev-charging.png", label: "EV charging" },
+  /** No 3D battery icon in the set yet (only the line icon battery-storage.svg). */
   battery: { src: "", label: "Battery storage" },
-  cooling: { src: "", label: "Air conditioning" },
+  /** No AC icon yet: the heat-pump icon is an outdoor unit, the same kit. */
+  cooling: { src: "/icons/services/heat-pump.png", label: "Air conditioning" },
 };
 
 export const SUPPLIER_NAME = "Des Renewables Ltd";

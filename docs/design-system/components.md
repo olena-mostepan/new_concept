@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 60, 18 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 63, 19 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -8,6 +8,7 @@ One section per component: its rules and what the consumer provides. The prototy
 
 ## Contents
 
+- [AboutCard](#aboutcard)
 - [ActivityList](#activitylist)
 - [AssetHeader](#assetheader)
 - [AssetPicker](#assetpicker)
@@ -50,6 +51,7 @@ One section per component: its rules and what the consumer provides. The prototy
 - [NeedsDecision](#needsdecision)
 - [NeedsPanel](#needspanel)
 - [OfferCard](#offercard)
+- [OfferWindow](#offerwindow)
 - [OpsAssetsTable](#opsassetstable)
 - [PackageCard](#packagecard)
 - [PackageStrip](#packagestrip)
@@ -58,10 +60,13 @@ One section per component: its rules and what the consumer provides. The prototy
 - [PhaseStepper](#phasestepper)
 - [PlanTrack](#plantrack)
 - [Progress](#progress)
+- [QuestionRow](#questionrow)
+- [QuoteFiles](#quotefiles)
 - [Radio](#radio)
 - [RequirementRow](#requirementrow)
 - [ResponsibilityPill](#responsibilitypill)
 - [SearchField](#searchfield)
+- [SegmentedChoice](#segmentedchoice)
 - [Select](#select)
 - [SelectionBar](#selectionbar)
 - [ServiceCards](#servicecards)
@@ -87,6 +92,24 @@ One section per component: its rules and what the consumer provides. The prototy
 - [UploadRow](#uploadrow)
 - [Workspace](#workspace)
 - [YourActionOnly](#youractiononly)
+
+## AboutCard
+
+"About <item> in the brief": the brief's own words for the check row or question the supplier is on. Top of the OfferWindow's right column. (19 Nov 2026.)
+
+### Anatomy
+- On the info blue, like the `own` InfoCell (You said): `status-info-bg`, a 1px `status-info-border`, `radius-md`, padding 12/16. `aria-live="polite"`, so it's read out when it changes.
+- `p7` text-tertiary "About warranties in the brief"; the brief's own words in quotes in `p6`; the source in `p7` text-secondary ("Tender brief · How the customer chooses"); an optional `p7` text-secondary note ("Expected: panels at least 25 years, workmanship at least 5").
+
+### Rules
+- Shown only when a row or question is selected; one at a time.
+- One per check row and red question. It never makes up words: if the brief says nothing about the item, there's no card.
+- The blue means "from the brief, about the thing you're on", the same family as the tender header band and You said. No dot, no status.
+
+### The consumer provides
+`title` (the item: "Warranties"), `quote`, `source`, `note`.
+
+---
 
 ## ActivityList
 
@@ -666,6 +689,12 @@ Find it in this tender, and ask when nothing is found: finding and asking are on
 ### The consumer provides
 `index: [{text, source, action: 'open' | 'download', onClick}]`, `suggestions` (max 4), `onAsk(text)`, `onOpenQuestions`, `title`, `placeholder`. For previews: `defaultQuery`, `defaultAsking`, `defaultSent`.
 
+### `compact` (the OfferWindow's right column, 19 Nov)
+- No card around it. The label is `s3` text-tertiary "Find it in this tender". No suggestion pills.
+- Results sit on white in the grey column. "Nothing found" stacks the text over "Ask CQuel", on white.
+- A result that opens a tab closes the window first. Asking CQuel keeps the window open.
+- The Overview keeps the full FindField.
+
 ---
 
 ## FormField
@@ -772,6 +801,10 @@ A small grey box inside a Chapter. (C3, 18 Nov 2026.)
 - The blue ties it to the TenderRail's header band and sets the supplier's own answers apart from the grey brief cells. No dot, no status meaning: it's "yours", not "info needed". The icon is part of the variant, not a prop.
 - Never shown before the offer is sent.
 
+### States (C5)
+- **Flagged** (`flag`): `status-warning-bg` with a `status-warning-border` border, and the flag line under the value (14px `alert`, `status-warning-text`: "Expected at least 25"). A state of InfoCell, not a new component.
+- **Changed** (`was`): when an answer changed a value, the old one shows under it in `p7` text-tertiary, struck through: Start "Nov" with "1 Sep" struck through.
+
 ### Layout
 Equal columns, 12 apart (pass `items` and `cols`); one column on narrow screens.
 - The job: beside the map (3fr map, 2fr cells), the cells in a 2 × 2 grid: the two hotels · expected generation · roof space · safety rules.
@@ -779,7 +812,7 @@ Equal columns, 12 apart (pass `items` and `cols`); one column on narrow screens.
 - Two for open items (CQuel is asking the customer · Checked at the site visit).
 
 ### The consumer provides
-`label`, `value`, `note`, `sentence`, `icon`, `own`; or `items` and `cols` for the row.
+`label`, `value`, `note`, `sentence`, `icon`, `own`, `flag`, `was`; or `items` and `cols` for the row.
 
 ---
 
@@ -951,17 +984,15 @@ The one card that needs you on the supplier Overview, and the whole indicative o
 - While it needs you (start, reading, check): the 4px `brand-6` top bar, the ResponsibilityPill "Your action" and `s3` "Due 9 May".
 - Steps (Chip track): Upload your quote · Check what we read · Send it. These are the supplier's own steps only; the tender's stages are the StageList in the rail. Step notes show only at the start.
 
-### States
-1. **Start:** the title "Send an indicative offer" in `h6`, the `p6` line "Upload your quote with one total for every site. It isn't binding: you update it after the site visit."; on the right `primary` large "Upload your quote" (`upload` icon), which opens the file picker (PDF, Excel, CSV); under it the `p6` sentence "Not bidding? Decline this tender" with the link in `h8` (14px). Steps: Upload `now`.
-2. **Reading:** steps Upload `done` · Check `now` · Send `next`. A file row: a 36px document icon box, the name in `h8`, "PDF · 2.1 MB · Reading: total price, sites, start, duration, warranties" in `p7`, a 4px progress bar 240 wide (`black-2` track, `black-7` fill), and Cancel (`tertiary`). No time estimate.
-3. **Check what we read:** the title "Check what we read" with "This is what the customer sees. Edit anything we got wrong." The file row with Replace (`tertiary`; it reads the new file again). The check rows (RequirementRow, see its README). Footer, right-aligned: a `p7` status line ("2 to fill in before you send" / "Ready to send") and `primary` "Send your offer", disabled while any row is open.
-4. **Sent:** the card no longer needs you: no orange bar, no pill, no primary.
-   - `s3` "Sent · due 9 May", the title "Your indicative offer is in", the `p6` line "You can edit it until 9 May; CQuel is told when you change it. After the deadline, CQuel tells you if you're on the shortlist."
-   - Right: "View your quote" (`tertiary`) and "Edit your offer" (`secondary`).
-   - All three step chips `done`.
-   - Five InfoCells in one row: Total price · Sites covered · Start · Duration · Warranties.
-   - **How your offer reads to the customer** (`h7`, with the `p7` line "Against what they asked for, not against other suppliers"): the same check rows, display only. A done mark when the offer fits ("Price is within the budget · Your total £318,400 · their budget ~£350,000", "All 3 sites covered"); an open ring for a gap to fix in the final offer ("Seafront protection isn't in your quote") with "See in the brief" (`tertiary`).
-- **Editing after sending** reopens the check state with the title "Edit your offer", Cancel (`secondary`) and "Send changes" (`primary`); the status line reads "CQuel is told when you send changes".
+### States (the card on the Overview; the flow itself is in the OfferWindow since 19 Nov)
+1. **Start:** the title "Send an indicative offer" in `h6`, the `p6` line "Upload your quote with one total for every site. It isn't binding: you update it after the site visit."; on the right `primary` large "Upload your quote" (`upload` icon), which opens the OfferWindow and the file picker together; under it the `p6` sentence "Not bidding? Decline this tender" (link `h8`, 14px). Steps: Upload `now`, with notes.
+2. **In progress** (`progress`: the window was closed before sending): the pill and "Due 9 May", the title "Finish your indicative offer", the `p6` line "3 files · <status line>"; on the right `primary` large "Continue your offer" with Decline under it. Steps: Check what we read `now`.
+3. **Sent:** the card no longer needs you: no orange bar, no pill, no primary.
+   - `s3` "Sent · due 9 May", the title "Your indicative offer is in", the `p6` line "You can edit it until 9 May; CQuel is told when you change it. After the deadline, CQuel tells you if you're on the shortlist."; right: "View your files" (`tertiary`) and "Edit your offer" (`secondary`). All three steps `done`.
+   - **What the customer compares** (C5; replaces "How your offer reads"): `h7`, with "Your figures after your answers. Flags show what's outside the range the customer expects." Three groups, each an `s3` label over a 4-column InfoCell grid: **Price** (Total price, note "excl. VAT" · Price per kWp, worked out) · **Speed** (Start · Lead time · Installation · Commissioning) · **Quality** (Panel warranty · Workmanship warranty · Inverter warranty · PI insurance). Out-of-range values are flagged InfoCells; a value an answer changed shows the old one struck through.
+   - **Your answers:** a RequirementGroup with a neutral pill "1 of 2", one row per question: done with the answer, or open with "Not answered: the customer sees what we read" and "Answer now" (`tertiary`), which reopens the OfferWindow.
+- "Edit your offer" and "Answer now" reopen the OfferWindow ("Edit your offer", Cancel, "Send changes").
+- `reading` and `check` still render in the card for older screens, but new screens use the OfferWindow.
 
 ### Decided (Olena, 18 Nov)
 - Every change after sending notifies CQuel.
@@ -975,7 +1006,50 @@ The stage is "indicative offer", the file is "your quote". Never "first price".
 Variants (not in round 1); prices per site (round 1 asks for one total; per-site prices would make "Total price" one row per site); the Commission Form is signed at the site visit.
 
 ### The consumer provides
-`state`: 'start' | 'reading' | 'check' | 'sent'; `editing` (after sending); `id`, `cardRef`; `due`, `title`, `text`; start: `action`, `onDecline` / `declineHref`; reading: `file: {name, meta}`, `progress` (0–1, else animated), `onCancel`; check: `file`, `onReplace`, the check rows as `children`, `openCount`, `onSend`, `onCancelEdit`; sent: `summary` (InfoCell items), `reads: [{ok, title, text, action?}]`, `onView` / `viewHref`, `onEdit`, `sentText`; `steps` to override the labels.
+`state`: 'start' | 'progress' | 'sent' (also 'reading' | 'check'); `editing` (after sending); `id`, `cardRef`; `due`, `title`, `text`; start: `action`, `onDecline` / `declineHref`; reading: `file: {name, meta}`, `progress` (0–1, else animated), `onCancel`; check: `file`, `onReplace`, the check rows as `children`, `openCount`, `onSend`, `onCancelEdit`; progress: `progressText`, `onContinue`; sent: `compare: [{label, items}]` (InfoCell items), `answers: [{title, done, line, onAnswer}]`, `onView` / `viewHref`, `viewLabel`, `onEdit`, `sentText` (C4's `summary` and `reads` still work); `steps` to override the labels.
+
+---
+
+## OfferWindow
+
+The supplier's indicative offer in its own full window over the tender page, with the brief to hand. Everything from C4 and C5 (files, check rows, "Also in your offer", questions) lives here; the Overview keeps only the OfferCard. Like the Ops AssetWindow. (19 Nov 2026; canvas C6–C9, option B3.)
+
+Olena, 19 Nov: putting the whole flow on one screen isn't good UI.
+
+### Frame
+- Fixed, full screen, white, `role="dialog"`, `aria-modal`. Escape and Close both close it, and nothing is lost. The page behind doesn't scroll.
+- **Header** (64, `border-dark` line under, padding 0 24): Close (IconButton `cross`); the title in `h7` ("Your indicative offer", or "Edit your offer" after sending) over "<tender title> · due 9 May" in `p7` text-secondary; on the right "Save and close" (`secondary`).
+- **Footer** (72, `border-dark` line on top, padding 0 24, right-aligned): the `p7` status line; Cancel (`secondary`, only when editing after sending); `primary` large "Send your offer" / "Send changes", disabled until the files are read and every check row is done. Sending closes the window and shows the sent card on the Overview.
+
+### Left (main)
+Scrolls. Content at most 860, centred, padding 24/32/48, 20 between parts:
+1. The supplier's Steps (ChipTrack); step notes only before upload.
+2. "This is what the customer sees. Edit anything we got wrong." (`p6`, once files are read).
+3. "Your files" (OfferSection + QuoteFiles).
+4. "What we read": the check rows (RequirementRow, with flags).
+5. "Also in your offer" (`h8`, "· not asked for in the brief" in `p7` text-tertiary, a `p6` text-secondary bullet list): what the supplier sent that the brief didn't ask for, so nothing is lost.
+6. "Questions on your quote" (RequirementGroup + QuestionRow).
+
+### Right column
+400 wide, `bg-container-grey`, a `border-dark` line on the left, scrolls on its own, padding 20/24/32, 20 between parts:
+1. AboutCard for the selected row, only when one is selected.
+2. FindField `compact` ("Find it in this tender").
+3. **The brief, in short:** key facts as SpecList `facts` rows (Sites · Size · Installation · Budget, with the `~` estimate mark); "The brief asks for" as a `p7` bullet list; "Not known yet" as one `p7` line; "Full brief" (link), which closes the window and scrolls the Overview to "1 The job".
+
+### The selected row
+Clicking or tabbing into a check row or question selects it: a `black-1` ground, `radius-md`, the row widened by 12 each side so the text doesn't move, and the right column shows its AboutCard. One at a time.
+
+### Status line
+"Upload your files to start" · "Reading your files" · "1 to fill in before you send" · "1 question not answered: we use what we read" · "Ready to send" (or "CQuel is told when you send changes" when editing).
+
+### Narrow screens
+Below 1000 the right column moves under the main column and the body scrolls as one.
+
+### Not in this update
+A per-site view (per-site systems) belongs with the final offer. Linking every check row to its brief item depends on the brief being split into items; the build has links for the five check rows and two questions only.
+
+### The consumer provides
+`phase`: 'start' | 'reading' | 'check'; `editing`; `tenderTitle`, `due`; `openCount`, `unanswered` (or `status`); `about` (AboutCard props); `find` (FindField props); `brief: {facts, asks, notKnown, onFullBrief}`; `onClose`, `onSaveClose`, `onSend`, `onCancelEdit`; the main content as children (OfferSection: `title`, `also`, children). `inline` and `height` for previews.
 
 ---
 
@@ -1160,6 +1234,51 @@ A thin progress bar: 4 high, black-2 track, black-6 fill. Not orange: progress i
 
 ---
 
+## QuestionRow
+
+A question on the supplier's quote: where the quote looks wrong or misses something the brief asks for. David's Clarifications, red items only; amber and green stay with Ops (agreed 17 Nov). (C5, 18 Nov 2026.)
+
+### Where
+In the OfferWindow, under "What we read" and "Also in your offer", inside a RequirementGroup "Questions on your quote" with the urgent pill "n to answer" (at 0: "All answered", neutral).
+
+### Open question (StateMark open)
+- The title in `h8`, what the brief asks in `p7` text-secondary.
+- A grey box (`bg-container-grey`, `border-dark`, `radius-md`, padding 10/14): "What we read" (`p7` text-tertiary), the reading in `p6`, then the file's own words in quotes with a link to the source (`p7`, "Tender form ↗").
+- CQuel's question in `h8`.
+- The answer form, by kind:
+  - **text:** a Textarea ("Your answer"), with "Attach a file" (`tertiary`, `upload` icon);
+  - **yesno:** SegmentedChoice Yes / No / Not sure yet. Yes shows only what Yes needs ("Which months?" with an input); "Not sure yet" shows "The customer sees that this is settled at the site visit."
+- "Save answer" (`secondary`); right-aligned, "Something in our reading is wrong?" (link, `p7`), which opens a Textarea "What did we get wrong?" saved with the answer.
+
+### Answered question
+Collapses to one row (StateMark done): the title, "Answered: Yes, Nov to Feb" in `p7`, and Edit (`tertiary`, `edit` icon).
+
+### Rules
+- Sending with questions open is allowed (Olena, 18 Nov: "yes, for now"; to check with Ops). The status line reads "1 question not answered: we use what we read".
+- In the OfferWindow it can be the selected row: `black-1` ground, and the right column shows its AboutCard.
+
+### The consumer provides
+`question: {key, title, asks, read, quote, source, sourceHref, question, kind: 'text' | 'yesno', followUp, followUpPlaceholder}`, `answer: {text, choice, wrong}` (saved), `answerLine`, `onSave(answer)`, `onAttach`, `selected`, `onSelect`.
+
+---
+
+## QuoteFiles
+
+The supplier's offer files: the drop row and the list of what was uploaded. Several files per offer. (C5, 18 Nov 2026; lives in the OfferWindow under "Your files".)
+
+### Anatomy
+- **UploadRow** with the offer wording: "Drop your quote and anything that goes with it", "Quote, price breakdown, drawings, datasheets. PDF, Word or Excel.", "Upload files" (`secondary`, `upload` icon).
+- **File rows** under it: a 36px document icon box, the name in `h8` with an `xsmall` neutral Tag for what we read it as (Quote · Drawing · Policy), a `p7` line saying what's in it ("1 page · one total for the sites, net and gross, no breakdown"), and Remove (`tertiary`). A file with nothing for this tender: "Read · nothing for this tender found in it".
+- **While reading:** every row says "Reading…" with the 4px bar (240, `black-2` track, `black-7` fill); no Tag, no Remove.
+
+### Rules
+- Adding files later reads them again and keeps what was already checked.
+
+### The consumer provides
+`files: [{name, kind, meta}]`, `reading`, `onUpload`, `onRemove(name)`.
+
+---
+
 ## Radio
 
 A 16px round choice; checked is a 5px black-7 ring.
@@ -1217,6 +1336,12 @@ No new components: each thing round 1 needs (total price, sites covered, start, 
 ### The consumer provides
 `name`, `state`, `required`, `value`, `source`, `unit`, `hint`, `found` (FoundValue props), `options` (two FoundValues), `uploadLabel`, `placeholder`, `edit: {kind?: 'value' | 'list', value, placeholder, items, selected, noun, title, sources, source, was, warning: {title, text}}`, `line` (overrides the line), `inputBelow`, `readonly`, `action`, and `onUse`, `onEnterAnother`, `onUpload`, `onNotAvailable`, `onSave(value)`, `onUndo`, `onEdit`, `onCancel`. RequirementGroup takes `label`, `count`, `countLabel` ("open", or `['file', 'files']` for singular and plural), `pill` (any text), `urgent`, children.
 
+### Supplier offer: flags, choices and selection (C5 18 Nov, window 19 Nov)
+- **Flag** (`flags`): a `p7` line in `status-warning-text` with the 14px `alert` icon, under the value line. It says what the customer will see: "Panels: expected at least 25 years · Workmanship: expected at least 5 years". A flag never blocks sending.
+- **No unit:** a value without a unit is an `open` row with a flag ("No unit given for installation and commissioning: days or weeks?"); under it (as `children`) a SegmentedChoice Days / Weeks and Save. This is the only kind of check row that blocks sending.
+- **Warranties** edit as three number inputs with "years" inside (`edit: {kind: 'fields', fields: [{key, label, unit, value}]}`): Panels · Inverters · Workmanship. The flags update on save.
+- **Selected row** (`selected`, `onSelect`): in the OfferWindow, clicking or tabbing into a row selects it: `black-1` ground, `radius-md`, widened 12 each side so the text doesn't move. The right column shows its AboutCard.
+
 ---
 
 ## ResponsibilityPill
@@ -1261,6 +1386,24 @@ Hover border black-4 · focus 2px black-7 border · disabled bg-container-grey.
 ### Rules
 - Always a visible label. The placeholder is a hint, never the label.
 - One search per list. It sits first in the FilterBar.
+
+---
+
+## SegmentedChoice
+
+A small radiogroup of 2–4 options side by side: Days / Weeks, Yes / No / Not sure yet. (C5, 18 Nov 2026.)
+
+### Anatomy
+- 36 high, `border-dark`, `radius-md`, the options split by 1px `border-dark` lines.
+- The chosen option is `black-7` with white `h8`; the others are white `p6`, hover `black-2`.
+- `role="radiogroup"` with a label; each option is a `radio`. Keyboard focus: the inset black ring.
+
+### Rules
+- For a short, closed choice inside a form or a check row. More than four options, or long labels: Radio or Select.
+- Not a filter (that's FilterChips) and not navigation (that's Tabs).
+
+### The consumer provides
+`label`, `options` (strings, or `{value, label}`), `value`, `onChange(value)`.
 
 ---
 
@@ -1413,6 +1556,11 @@ Label | value rows for values that are sentences: "The job", "What to price and 
 
 - **C3 (18 Nov):** the supplier Overview no longer uses SpecList; its chapters use InfoCells (Chapter). SpecList stays for label | sentence rows elsewhere.
 
+### `facts` rows (key facts)
+- One fact per row: the label in `p6` text-secondary on the left, the value in `h8` on the right; a `border-light` line above the first row and under each.
+- An estimate gets the `~` mark in text-tertiary before the value (`estimate`), read out as "Estimate:".
+- Use: the brief in short in the OfferWindow (Sites · Size · Installation · Budget).
+
 ---
 
 ## StageList
@@ -1513,9 +1661,9 @@ The offer's action while the OfferCard is out of view: a full-width bar fixed to
   - Right: the `link` "Decline this tender", then the `primary` large "Upload your quote" (`upload` icon).
 
 ### Offer states (C4)
-- **Start:** "Send an indicative offer", the due line, Decline and "Upload your quote".
-- **Check:** "Check what we read" (or "Edit your offer") over "2 to fill in before you send" / "Ready to send". Right: "Fill in" (`primary`) scrolls back to the card while rows are open; once nothing is open, "Send your offer" (`primary`) sends from the bar. No Decline.
-- **Reading and Sent:** the bar doesn't show.
+- **Before upload:** "Send an indicative offer", the due line, Decline and "Upload your quote".
+- **In progress** (the OfferWindow was closed before sending): "Finish your indicative offer" with the status line, and "Continue your offer".
+- **Hidden** while the OfferWindow is open and after sending. (C4's "Fill in" / "Send your offer" from the bar moved into the window's footer.)
 
 ### Behaviour
 - Slides up (200ms) when the OfferCard scrolls out of view (IntersectionObserver, the top bar's 64 as the margin) and slides back down when the card returns. No slide with reduced motion.
@@ -1610,6 +1758,12 @@ Package, asset and project lists: a group header, column labels and light rows.
 - Last column (`type: 'button'`): tertiary "View site" with `chevron-right` on the right.
 - The card header carries "Price all three. If you can't do one, say which in your quote." in `p7`.
 - **Row actions:** supplier tables may carry actions in rows (download, "View site"): suppliers come to take files away, and the per-site download is the job. Customer tables keep "no action buttons in rows".
+
+### Supplier: the Tenders list (19 Nov)
+- One flush Card per group (Needs you · In progress · Closed), each a Table with `title` and `count`; empty groups are hidden.
+- Columns TENDER (`title` with the customer as detail) · SOLUTION · SITES (left-aligned under its label, tabular figures) · NEXT STEP (`twoLines`; OUTCOME in Closed) · pill (`owner`, 120) · chevron (16); grid `1.4fr 0.8fr 80px 1.2fr 120px 16px`.
+- NEXT STEP's main line is `h8` in Needs you (`emphasis`), `p6` elsewhere. Only Needs you rows carry the "Your action" pill. Closed rows are `muted`. A new invitation not opened yet has `changed` (the ChangedDot in the 32 left padding).
+- No solution icons in rows.
 
 ---
 
@@ -1853,6 +2007,7 @@ The customer's one responsibility filter: a checkbox in the FilterBar, "Your act
 - Sits after the selects, before Clear filters, aligned to the 40px controls. Checked: a black-7 box with a white tick. Never orange.
 - It's the same filter as pressing the Your action SummaryCard; the two stay in sync and live in the URL (`?responsibility=you`).
 - Ops screens use a Responsibility FilterSelect instead.
+- **`label`** (19 Nov): the checkbox's words. Supplier screens pass "Your action only" so the label doesn't follow the prototype's customer/ops wording switch. Without it the default is "Your action only"; existing screens are unchanged.
 
 ### The consumer provides
-`checked`, `onChange`.
+`checked`, `onChange`, `label`.

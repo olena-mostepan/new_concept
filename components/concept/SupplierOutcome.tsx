@@ -13,7 +13,7 @@ import type { SupplierTender as Tender } from "@/lib/concept/supplier";
 import type { TenderRow, TenderState } from "@/lib/concept/supplierList";
 import { Button, ChipTrack, ResponsibilityPill } from "./ui";
 import { StateMark } from "./ops-asset/opsUi";
-import { money, sitesLine, type Offer } from "./SupplierOffer";
+import { money, priceSummary, sitesLine, type Offer } from "./SupplierOffer";
 
 type Visit = { date: string; time: string; people: string };
 
@@ -72,7 +72,7 @@ function SentOffer({ t, offer }: { t: Tender; offer: Offer }) {
       <SectionHead label="Your indicative offer" pill="Sent" />
       <p className="flex flex-wrap items-center gap-x-2 p6 text-text-secondary">
         <span>
-          {offer.price} · {sitesLine(t, offer.sites)} · start {offer.start}
+          {priceSummary(t, offer)} · {sitesLine(t, offer.sites)} · start {offer.start}
         </span>
         <Button type="link" onClick={() => offer.setOpen(true)}>
           View your offer
@@ -207,7 +207,8 @@ function Compare({ t, offer }: { t: Tender; offer: Offer }) {
   const q = t.quote;
   const start = t.facts.find((f) => f.label === "Contract start");
   const rows = [
-    { label: "Price per kWp", yours: gbp(money(offer.price) / q.kwp), asked: `Budget ~${t.facts.find((f) => f.label === "Budget")?.value ?? "not set"}` },
+    ...(offer.structure === "one" ? [] : [{ label: "Price", yours: priceSummary(t, offer), asked: `Budget ~${t.facts.find((f) => f.label === "Budget")?.value ?? "not set"}` }]),
+    ...(offer.structure !== "one" ? [] : [{ label: "Price per kWp", yours: gbp(money(offer.price) / q.kwp), asked: `Budget ~${t.facts.find((f) => f.label === "Budget")?.value ?? "not set"}` }]),
     { label: "Start", yours: offer.start, asked: start ? `~${start.value}` : "Not set" },
     { label: "Panel warranty", yours: `${offer.warranties.panels} years`, asked: `${q.expected.panels}+ years`, flag: offer.warranties.panels < q.expected.panels },
     { label: "Workmanship warranty", yours: `${offer.warranties.workmanship} years`, asked: `${q.expected.workmanship}+ years`, flag: offer.warranties.workmanship < q.expected.workmanship },

@@ -1,4 +1,4 @@
-<!-- Exported from the CQuel design system artifact (version 60, 18 Nov 2026).
+<!-- Exported from the CQuel design system artifact (version 63, 19 Nov 2026).
 Source of truth: https://claude.ai/artifact/5TNiRyXkn3UDAK9GfsWRgZ — re-export after design-system changes; don't edit by hand.
 In this folder: README.md (rules), components.md (every component), tokens.json, types.md (props), decisions.md (decisions and settled preferences). -->
 
@@ -188,7 +188,7 @@ The Ops package page, the Ops asset page, the AssetWindow (Fix assets, Edit asse
 
 ## Supplier screens
 
-What an invited supplier sees: one tender at a time (Overview, Sites & documents, Questions). Example: Solar PV on 3 roofs in Blackpool, for Blackpool Pleasure Beach. Updated for C3 (18 Nov 2026): the tender is the parent, the process and the supplier's own steps are told apart, finding and asking are one field, the job has a real map, and the page reads as a short story.
+What an invited supplier sees: the Tenders list (their home), then one tender at a time (Overview, Sites & documents, Questions). Example: Solar PV on 3 roofs in Blackpool, for Blackpool Pleasure Beach. Updated for C3 (18 Nov 2026): the tender is the parent, the process and the supplier's own steps are told apart, finding and asking are one field, the job has a real map, and the page reads as a short story.
 
 - **Same system.** The same tokens, type and orange rule: orange means "this needs you": the OfferCard's top bar, the Your action pill, the `now` chip, the current stage dot.
 - **Responsibility** is only "Your action", as on customer screens.
@@ -206,7 +206,27 @@ What an invited supplier sees: one tender at a time (Overview, Sites & documents
   5. Chapter 3 What nobody knows yet: CQuel is asking the customer · Checked at the site visit.
   6. Chapter 4 How the customer chooses: Price · Timing · Quality (InfoCells with icons), then the contract line with a link to the Commission Form.
   - StickyActionBar: a full-width bar fixed to the bottom of the window (72 high, content in the 1536 column) with the offer's action while the OfferCard is out of view. Never both at once.
-- **The indicative offer (C4, 18 Nov):** the whole flow happens inside the OfferCard: start → reading → check what we read → sent, and editing after sending. Check rows are RequirementRows (no new components). After sending the card no longer needs you (no orange bar, pill or primary), shows the five values and "How your offer reads to the customer" (against what they asked for, never against other suppliers; no scores or ranks), and each chapter gets an `own` InfoCell with what the supplier said (blue, one `cite` icon). The StickyActionBar follows the card's state: Upload, then "Fill in" / "Send your offer"; hidden while reading and once sent. Every change after sending notifies CQuel; "How your offer reads" is written automatically and not checked by Ops first.
+- **The indicative offer (C4–C5 18 Nov, window 19 Nov):** the Overview keeps the OfferCard (start · in progress · sent); the flow itself is in the **OfferWindow**, a full window like the Ops AssetWindow, with the brief to hand on the right (AboutCard for the selected row, FindField `compact`, the brief in short). In the window: the supplier's steps, "Your files" (QuoteFiles, several files), "What we read" (RequirementRows with flags; only a missing unit blocks sending), "Also in your offer" (what the brief didn't ask for), and "Questions on your quote" (QuestionRow, red items only; sending with questions open is allowed for now). Footer: the status line and "Send your offer". After sending the card shows "What the customer compares" (Price · Speed · Quality InfoCells, flagged or changed) and "Your answers"; each chapter gets an `own` InfoCell (You said). Every change after sending notifies CQuel. The StickyActionBar offers "Upload your quote" or "Continue your offer" and hides while the window is open and after sending.
+- **The Tenders list (19 Nov, C11 option B without the preview pane):** the supplier's home is the Tenders list: every tender they're invited to, in one list. It uses the same layout as the customer and ops service lists; there is no separate list pattern for suppliers. Options A (grouped list), B with a preview pane and C (invitation cards on top) stay on the canvas for reference only.
+  - **Header:** as the customer app header: the company's first letter in a 32px `black-7` square (`h8`, white), the "Powered by CQuel" pill (`p7`, `border-dark`, `bg-container-grey`), the supplier's name in `h5`, the round avatar on the right (32, `border-dark`, `bg-container-grey`, `h9`). No Questions link and no primary button. The nav row under it uses the same nav links (active: `h8`, 2px `brand-6` underline); only sections with content show, today **Tenders** only (Overview, Questions, Surveys, Contracts, Delivery come later). The tender page keeps the DetailBar supplier variant; its back link "Tenders" goes to this list.
+  - **Page:** PageHeader "Tenders" with the ChangedDot key ("Changed in the last 7 days"), no facts row. FilterBar with one select: Search ("Tender or customer"), Solution (FilterSelect, only solutions the supplier has tenders in), YourActionOnly (`label` "Your action only"), Clear filters once anything is set.
+  - **Groups:** one white card per group, in this order: **Needs you · In progress · Closed**; empty groups are hidden. Needs you: anything the supplier must do (new invitation, offer not sent, offer started, sign the Commission Form, add visit dates). In progress: offer sent, visits booked, waiting on the customer or CQuel. Closed: not shortlisted, declined, deadline passed with nothing sent; rows muted (`text-tertiary`), as in "Passed through".
+  - **Table:** TENDER · SOLUTION · SITES · NEXT STEP (OUTCOME in Closed) · pill (120) · chevron (16); grid `1.4fr 0.8fr 80px 1.2fr 120px 16px`, gap 24. Rows follow the Table rules: the whole row is the link, the name in `h8` text-title with the customer under it in `p7` text-tertiary when we have it, sites in tabular figures. **No solution icons in rows**; the solution is its own column. NEXT STEP is a main / detail pair in the offer card's words; the main line is `h8` when the row needs the supplier, `p6` otherwise. Only Needs you rows carry the "Your action" pill; nothing else is coloured. ChangedDot marks a new invitation not opened yet, in the 32 left padding.
+  - **Row states:**
+
+    | State | Group | Next step / Outcome |
+    |---|---|---|
+    | Invited, not opened | Needs you | Indicative offer due 9 May / New invitation (+ ChangedDot) |
+    | Invited, opened, nothing uploaded | Needs you | Indicative offer due 9 May / Not started |
+    | Offer started, not sent | Needs you | Finish your offer / due 9 May |
+    | Offer sent, before the deadline | In progress | Offer sent / you can change it until 9 May |
+    | Shortlisted, form not signed | Needs you | Sign the Commission Form |
+    | Form signed, visit dates missing | Needs you | Add visit dates / 2 of 3 sites |
+    | Visits booked | In progress | Site visit 14 May |
+    | Not shortlisted | Closed | Not shortlisted / feedback from CQuel |
+    | Declined | Closed | You declined / 26 Apr |
+    | Deadline passed, nothing sent | Closed | No offer sent / deadline was 20 Dec |
+  - **Open:** does "Not for us" ask why? Do unanswered invitations expire? Final offer and winning states aren't designed yet.
 - **Two kinds of progress, never alike:** the tender's stages (StageList, dots on a vertical line, in the rail, the same for everyone) and the supplier's own steps (Steps chips on a horizontal track, in the OfferCard).
 - **Sites & documents:** "Documents for all sites" (DocumentList in a Card, "Download everything" in the header) and the Sites table with per-site download and "View site". The list of sites lives here, not under the map.
 - **Questions:** questions sent from the FindField or the Questions form ("About" Select, "Your question" Textarea, "We reply here and by email.", `secondary` "Send question", disabled until there is text). The tab shows a count once there are any: "Questions (1)". Empty: "No questions yet".
@@ -232,6 +252,8 @@ What an invited supplier sees: one tender at a time (Overview, Sites & documents
 
 ### Not decided yet
 - Offer variants (not in round 1); prices per site (round 1 asks for one total); the Commission Form is signed at the site visit.
+- Expected ranges (who sets them, e.g. panel warranty at least 25 years): ask David and Ops; the build uses David's figures.
+- Per-site systems, David's price breakdown and a per-site view in the window belong with the final offer. Linking every check row to its brief item waits on the brief being split into items.
 - Reply time for questions, and whether answers that change the brief go to every supplier, are still to confirm with Ops.
 
 ## Page furniture

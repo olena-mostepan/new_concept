@@ -239,7 +239,20 @@ export interface HistoryItem {
   date: string
 }
 
-export type MoveKind = 'split' | 'continued' | 'tendered_again' | 'dropped' | 'moved' | 'not_chosen'
+export type EndingKind = 'continued' | 'outside' | 'not_going_ahead'
+
+export interface PackageEnding {
+  kind: EndingKind
+  on: string
+  /** continued: the package the work carried on in */
+  to?: string
+  /** outside: who the customer went with, when Ops know */
+  supplier?: string
+  /** What Ops wrote in "Why it ended". The customer sees it. */
+  reason?: string
+}
+
+export type MoveKind = 'split' | 'continued' | 'tendered_again' | 'dropped' | 'moved' | 'not_chosen' | 'not_going_ahead'
 
 export interface ProjectRow {
   buildingId: string
@@ -385,6 +398,8 @@ export interface Workstream {
   from?: { workstreamId: string; kind: Exclude<MoveKind, 'dropped'>; on: string; reason?: string }
   /** Set when the package has ended because all its assets went elsewhere or were dropped. */
   closedOn?: string
+  /** Set when the package has ended: the work continued in another package, the customer chose a supplier outside CQuel, or it isn't going ahead. */
+  ending?: PackageEnding
   tender?: TenderProfile
   pricing?: PricingInfo
   deliveryProfile?: DeliveryProfile

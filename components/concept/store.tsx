@@ -87,6 +87,11 @@ interface Store {
     },
   ) => void;
   removeWorkstream: (workstreamId: string) => void;
+  /** Ops: end a live package (supplier outside CQuel, or not going ahead). */
+  endPackage: (
+    workstreamId: string,
+    ending: NonNullable<Workstream["ending"]>,
+  ) => void;
   setPlanState: (batchId: string, state: Batch["planState"]) => void;
   agreePlan: (batchId: string) => void;
   decide: (
@@ -312,6 +317,23 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
               (id) => !w.projects.some((project) => project.buildingId === id),
             )
             .map((buildingId) => ({ buildingId, step: 0 })),
+        ];
+      }),
+    endPackage: (workstreamId, ending) =>
+      update((a) => {
+        const w = a.workstreams.find((x) => x.id === workstreamId);
+        if (!w) return;
+        w.ending = ending;
+        w.owner = "done";
+        w.needs = [];
+        const title =
+          ending.kind === "outside"
+            ? "Package ended · supplier outside CQuel"
+            : "Package ended · not going ahead";
+        const day = ending.on.split(" ").slice(0, 2).join(" ");
+        w.activity = [
+          { date: day, title, text: ending.reason ?? "" },
+          ...(w.activity ?? []),
         ];
       }),
     removeWorkstream: (workstreamId) =>

@@ -1,5 +1,5 @@
 import { service, type ServiceId, type Workstream } from "@/lib/concept/model";
-import { isClosed, isCompleted, short } from "@/lib/concept/derive";
+import { closedOnDate, isClosed, isCompleted, short } from "@/lib/concept/derive";
 import { t, type Lang } from "@/lib/concept/i18n";
 import { offersIn } from "./TenderWorkstream";
 
@@ -13,6 +13,7 @@ export type PackageTabId =
   | "delivery";
 
 export function packageStatusService(w: Workstream): ServiceId {
+  if (w.ending) return w.service;
   if (isClosed(w)) {
     const last = w.phases[w.phases.length - 1];
     return last?.service ?? w.service;
@@ -57,11 +58,17 @@ export function packageStatusCta(w: Workstream, lang: Lang = "en") {
   return { label: t(lang, base.label), tab };
 }
 
-export function packageStatusHeadline(w: Workstream, lang: Lang = "en") {
-  if (isClosed(w) && w.closedOn) {
+export function packageStatusHeadline(
+  w: Workstream,
+  lang: Lang = "en",
+  _continuedTo?: Workstream,
+) {
+  // Every closed package reads the same: "This package is / Closed · date".
+  const closedOn = closedOnDate(w);
+  if (isClosed(w) && closedOn) {
     return {
       lead: t(lang, "This package is"),
-      name: t(lang, "Closed · {0}", short(w.closedOn, lang)),
+      name: t(lang, "Closed · {0}", short(closedOn, lang)),
     };
   }
   if (isCompleted(w)) {

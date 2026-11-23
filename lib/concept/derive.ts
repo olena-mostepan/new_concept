@@ -19,8 +19,23 @@ export const WORKSTREAM_ALIAS: Record<string, string> = {
 
 export const getWorkstream = (a: Account, id: string) => a.workstreams.find((w) => w.id === (WORKSTREAM_ALIAS[id] ?? id))
 
-/** Closed packages (all assets moved or dropped) stay out of live customer lists. */
-export const isClosed = (w: Workstream) => Boolean(w.closedOn)
+/** The package has ended: continued elsewhere, supplier outside CQuel, or not going ahead. */
+export const isEnded = (w: Workstream) => Boolean(w.ending)
+
+/** Closed packages (all assets moved or dropped, or the package ended) stay out of live customer lists. */
+export const isClosed = (w: Workstream) => Boolean(w.closedOn) || isEnded(w)
+
+/** The date a closed or ended package stopped. */
+export const closedOnDate = (w: Workstream) => w.ending?.on ?? w.closedOn
+
+/** Ended because the work carried on in another package: that package carries it in lists. */
+/** Every asset carried on in the follow-on package, so the follow-on carries the line of work. */
+export const isContinuedAway = (w: Workstream) =>
+  w.ending?.kind === 'continued' && w.projects.length > 0 && w.projects.every((r) => r.left?.kind === 'continued')
+
+/** The package this one continued from, if Ops made the follow-on a separate package. */
+export const continuedFrom = (a: Account, w: Workstream) =>
+  a.workstreams.find((x) => x.ending?.kind === 'continued' && x.ending.to === w.id)
 
 /** Row excluded from active project counts (dropped or no longer in this package). */
 export function rowIsInactive(p: ProjectRow): boolean {
@@ -199,7 +214,8 @@ export function checkPhases(a: Account) {
     }
     const nows = w.phases.filter((phase) => phase.state === 'now').length
     const proposedPlanned = Boolean(w.proposed) && w.phases.length > 0 && w.phases.every((phase) => phase.state === 'planned')
-    if (nows !== 1 && !isCompleted(w) && !proposedPlanned) {
+    // An ended package (supplier outside CQuel) can stop with no phase under way.
+    if (nows !== 1 && !isCompleted(w) && !proposedPlanned && !isEnded(w)) {
       console.warn(`Workstream ${w.id}: ${nows} phases are now`)
     }
     for (const phase of w.phases) {
@@ -1665,8 +1681,12 @@ export function projectsAtBuilding(a: Account, buildingId: string): BuildingProj
   const out: BuildingProject[] = []
   for (const w of a.workstreams) {
     if (!batches.has(w.batchId)) continue
+    // A package that continued in another one is carried by its successor: one line of work.
+    if (isContinuedAway(w)) continue
     const row = w.projects.find((p) => p.buildingId === buildingId)
     if (!row) continue
+    // This asset carried on in the follow-on package, which carries its line of work.
+    if (row.left?.kind === 'continued' && row.left.to) continue
     if (isClosed(w) || rowIsInactive(row)) {
       out.push({ workstream: w, row })
       continue

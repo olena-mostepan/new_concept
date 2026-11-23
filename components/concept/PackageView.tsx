@@ -22,6 +22,7 @@ import {
   getWorkstream,
   indicativeSteps,
   isClosed,
+  isCompleted,
   parse,
   phaseIsInheritedFrom,
   pricingSteps,
@@ -60,7 +61,8 @@ import { SurveysTab } from "./SurveysTab";
 import { TenderPanel } from "./TenderWorkstream";
 import { ContractPanel, PricingPanel } from "./PricingWorkstream";
 import { DeliveryPanel } from "./DeliveryWorkstream";
-import { useHrefs } from "./useHrefs";
+import { useConceptMode, useHrefs } from "./useHrefs";
+import { EndPackageButton, EndedSteps, WhyItEnded } from "./EndedPackage";
 import { useConcept } from "./store";
 import { tabsFor, type PackageTabId } from "./packageTabs";
 
@@ -187,7 +189,7 @@ export function packageCardChips(w: Workstream): PackageCardChip[] {
 }
 
 function packagePanelAside(w: Workstream) {
-  const assets = `${w.projects.length} assets`;
+  const assets = `${w.projects.length} ${w.projects.length === 1 ? "asset" : "assets"}`;
   return w.supplier ? `${w.supplier} · ${assets}` : assets;
 }
 
@@ -221,7 +223,27 @@ function StepsCard({
   account: ReturnType<typeof useConcept>["account"];
   w: Workstream;
 }) {
-  if (isClosed(w)) return null;
+  if (isClosed(w)) {
+    if (!w.ending) return null;
+    // Ended packages keep their steps as the record of what was done.
+    const chips = packageCardChips(w).map((chip) =>
+      chip.id === w.service &&
+      (w.ending?.kind === "not_going_ahead" ||
+        (w.ending?.kind === "outside" && w.service !== "tender"))
+        ? { ...chip, lead: "ended" as const }
+        : chip.id === w.service
+          ? { ...chip, lead: "done" as const }
+          : chip,
+    );
+    return (
+      <PackageCard
+        chips={chips}
+        panelTitle={`${service(w.service).label} for this package`}
+        panelAside={packagePanelAside(w)}
+        panelChildren={<EndedSteps w={w} sid={w.service} />}
+      />
+    );
+  }
   if (w.owner === "done") return null;
   const columns =
     w.service === "delivery"
@@ -375,7 +397,9 @@ function OverviewAssets({
               from: "workstream",
               ws: w.id,
             });
-            const muted = Boolean(project.left);
+            const muted =
+              Boolean(project.left) ||
+              Boolean(w.ending && w.ending.kind !== "continued");
             const lines = inPackageColumnLines(account, w, project);
             const stepLabel = labels[project.step] ?? "—";
             return (
@@ -448,6 +472,7 @@ function OverviewAssets({
 
 export function PackageView({ w }: { w: Workstream }) {
   const hrefs = useHrefs();
+  const mode = useConceptMode();
   const { account } = useConcept();
   const { lang, t, words } = useConceptI18n();
   const router = useRouter();
@@ -490,6 +515,13 @@ export function PackageView({ w }: { w: Workstream }) {
   return (
     <Page>
       <WorkstreamFrame live={w}>
+        <div className="relative">
+        {/* Ops: the action sits at the right end of the tab row, as on the batch page. */}
+        {mode === "ops" && !isClosed(w) && !isCompleted(w) && !w.proposed && (
+          <div className="absolute right-0 top-[-6px] z-10">
+            <EndPackageButton w={w} />
+          </div>
+        )}
         <Tabs.Root value={tab} onValueChange={setTab}>
           <Tabs.List className={tabListClass} aria-label={words.Package}>
             {tabs.map((item) => (
@@ -519,8 +551,10 @@ export function PackageView({ w }: { w: Workstream }) {
             ))}
           </Tabs.List>
         </Tabs.Root>
+        </div>
         {tab === "overview" && (
           <>
+            <WhyItEnded w={w} />
             <StepsCard account={account} w={w} />
             <OverviewAssets account={account} w={w} />
             <WorkstreamFacts

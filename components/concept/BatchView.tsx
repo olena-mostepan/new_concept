@@ -13,8 +13,10 @@ import {
   getBatch,
   getBuilding,
   getWorkstream,
+  closedOnDate,
   isClosed,
   isCompleted,
+  isContinuedAway,
   noun,
   parse,
   phasesIn,
@@ -26,7 +28,7 @@ import {
   wsIn,
   wsInAll,
 } from "@/lib/concept/derive";
-import { leftHowLabel } from "@/lib/concept/moves";
+import { endingRowLine, endingTitle, leftHowLabel } from "@/lib/concept/moves";
 import { nAssets, nProjects } from "@/lib/concept/words";
 import { t, type Lang } from "@/lib/concept/i18n";
 import { useConceptI18n } from "./useConceptI18n";
@@ -50,6 +52,7 @@ import {
   DocumentList,
   ListMore,
   focusRing,
+  groupTitle,
   tableRowLinkClass,
   tableRowNameCellClass,
   tabListClass,
@@ -89,7 +92,7 @@ function sentence(text: string) {
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }
 
-type ExtraFilter = "" | "dropped" | "moved";
+type ExtraFilter = "" | "dropped" | "moved" | "ended";
 
 /** Building has at least one live (non-inactive) project row in this batch. */
 function batchProjectsForBuilding(
@@ -99,13 +102,51 @@ function batchProjectsForBuilding(
 ): { workstream: Workstream; row: ProjectRow }[] {
   const out: { workstream: Workstream; row: ProjectRow }[] = [];
   for (const w of wsInAll(account, batch.id)) {
-    if (w.proposed) continue;
+    if (w.proposed || isClosed(w)) continue;
     for (const row of w.projects) {
       if (row.buildingId !== buildingId) continue;
       if (!rowIsInactive(row)) out.push({ workstream: w, row });
     }
   }
   return out;
+}
+
+/** Rows that ended: in a package that ended (supplier outside CQuel, not going ahead), or an asset that stopped when the rest continued. */
+function endedRows(
+  account: Account,
+  batch: Batch,
+  buildingId: string,
+): { workstream: Workstream; row: ProjectRow }[] {
+  const out: { workstream: Workstream; row: ProjectRow }[] = [];
+  for (const w of wsInAll(account, batch.id)) {
+    if (w.proposed) continue;
+    const packageEnded = Boolean(w.ending && w.ending.kind !== "continued");
+    for (const row of w.projects) {
+      if (row.buildingId !== buildingId) continue;
+      if (row.left?.kind === "not_going_ahead" || (packageEnded && !row.left))
+        out.push({ workstream: w, row });
+    }
+  }
+  return out;
+}
+
+function countEndedAssets(account: Account, batch: Batch): number {
+  return batch.buildingIds.filter(
+    (id) => endedRows(account, batch, id).length > 0,
+  ).length;
+}
+
+/** "After Tender · 9 Oct" for a package that continued from another one. */
+function afterLine(account: Account, w: Workstream, lang: Lang): string | null {
+  if (w.from?.kind !== "continued") return null;
+  const src = getWorkstream(account, w.from.workstreamId);
+  if (!src) return null;
+  return t(
+    lang,
+    "After {0} · {1}",
+    t(lang, serviceDef(src.service).label),
+    short(w.from.on, lang),
+  );
 }
 
 function inactiveLeftRows(
@@ -178,27 +219,6 @@ function countMovedOnlyAssets(account: Account, batch: Batch): number {
   return n;
 }
 
-function howItCameFrom(
-  account: Account,
-  w: Workstream,
-  lang: Lang,
-): { main: string; sub?: string } {
-  if (isClosed(w)) {
-    return {
-      main: t(lang, "Closed · {0} at the start", closedPackageFootprint(w)),
-    };
-  }
-  if (w.from) {
-    const src = getWorkstream(account, w.from.workstreamId);
-    const pkg = src?.name ?? w.from.workstreamId;
-    return {
-      main: t(lang, "From {0} · {1}", pkg, leftHowLabel(w.from.kind)),
-    };
-  }
-  if (w.startedOn) return { main: t(lang, "Started {0}", short(w.startedOn, lang)) };
-  return { main: w.proposed ? "—" : t(lang, "Started") };
-}
-
 function closedPackageFootprint(w: Workstream): number {
   const est = w.phases.find((ph) => ph.service === "indicative");
   const snap = est?.projects;
@@ -223,7 +243,7 @@ function closedPackageOutcomeLine(w: Workstream): string {
 }
 
 function batchNowLine(account: Account, w: Workstream, lang: Lang): string {
-  if (isClosed(w)) return t(lang, "Closed · {0}", short(w.closedOn, lang));
+  if (isClosed(w)) return t(lang, "Closed · {0}", short(closedOnDate(w), lang));
   if (w.proposed) return t(lang, "Proposed");
   if (isCompleted(w))
     return t(
@@ -231,7 +251,7 @@ function batchNowLine(account: Account, w: Workstream, lang: Lang): string {
       "Complete · {0}",
       w.completedOn ? short(w.completedOn, lang) : "—",
     );
-  return t(serviceDef(w.service).label);
+  return t(lang, serviceDef(w.service).label);
 }
 
 function movedToBatchName(account: Account, batchId: string): string {
@@ -494,13 +514,20 @@ function BatchPage({
   const view = params.get("view") === "packages" ? "packages" : "assets";
   const rawService = params.get("service") ?? "";
   const extra: ExtraFilter =
-    rawService === "dropped" || rawService === "moved" ? rawService : "";
+    rawService === "dropped" || rawService === "moved" || rawService === "ended"
+      ? rawService
+      : "";
 
   const serviceCards = [
     {
       id: "",
       label: tr("All"),
-      count: countAssetsAnyLive(account, batch),
+      // Assets with live work or an ended package: the rows the list shows.
+      count: batch.buildingIds.filter(
+        (id) =>
+          batchProjectsForBuilding(account, batch, id).length > 0 ||
+          endedRows(account, batch, id).length > 0,
+      ).length,
       done: 0,
     },
     ...SERVICES.map((item) => ({
@@ -524,6 +551,10 @@ function BatchPage({
       count: nMovedOnly,
     });
 
+  const nEnded = countEndedAssets(account, batch);
+  if (nEnded > 0)
+    moveCards.push({ id: "ended", label: tr("Ended"), count: nEnded });
+
   const cards = [...serviceCards, ...moveCards];
 
   const validService = SERVICES.some((s) => s.id === rawService);
@@ -531,6 +562,7 @@ function BatchPage({
     rawService === "" ||
     rawService === "dropped" ||
     rawService === "moved" ||
+    rawService === "ended" ||
     validService
       ? rawService
       : "";
@@ -564,6 +596,13 @@ function BatchPage({
   for (const id of batch.buildingIds) {
     const liveAll = batchProjectsForBuilding(account, batch, id);
     const allMuted = inactiveLeftRows(account, batch, id);
+    const ended = endedRows(account, batch, id);
+
+    if (extra === "ended") {
+      if (!ended.length) continue;
+      tableRows.push({ kind: "building", buildingId: id, live: liveAll, muted: ended });
+      continue;
+    }
 
     if (extra === "dropped" || extra === "moved") {
       const muted = allMuted.filter((m) => m.row.left?.kind === extra);
@@ -588,12 +627,12 @@ function BatchPage({
       (m) => m.row.left?.kind === "dropped" || m.row.left?.kind === "moved",
     );
 
-    if (liveFiltered.length) {
+    if (liveFiltered.length || (!selected && ended.length)) {
       tableRows.push({
         kind: "building",
         buildingId: id,
         live: liveFiltered,
-        muted: mutedDropMove,
+        muted: selected ? mutedDropMove : [...ended, ...mutedDropMove],
       });
     } else if (mutedDropMove.length) {
       if (mutedDropMove.some((m) => m.row.left?.kind === "dropped"))
@@ -627,8 +666,10 @@ function BatchPage({
   const expandedDropped = extra === "dropped" || openDropped;
   const expandedMoved = extra === "moved" || openMoved;
 
-  const packageCount = wsInAll(account, batch.id).filter((w) => !w.proposed)
-    .length;
+  // One row per line of work: a package that continued is carried by its successor.
+  const packageCount = wsInAll(account, batch.id).filter(
+    (w) => !w.proposed && !isContinuedAway(w),
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -660,7 +701,10 @@ function BatchPage({
             }}
           >
             {cards.map((card) => {
-              const isMove = card.id === "dropped" || card.id === "moved";
+              const isMove =
+                card.id === "dropped" ||
+                card.id === "moved" ||
+                card.id === "ended";
               const on = card.id === selected;
               return (
                 <button
@@ -708,7 +752,7 @@ function BatchPage({
           <Card bodyClassName="p-0">
             <div className="overflow-x-auto">
               <div className="min-w-[720px]">
-                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
+                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-4">
                   <span className="s3 text-text-tertiary">{words.Asset}</span>
                   <span className="s3 text-text-tertiary">{words.Package}</span>
                   <span className="s3 text-text-tertiary">{tr("Services")}</span>
@@ -725,7 +769,7 @@ function BatchPage({
                         batch: batch.id,
                       })}
                       className={cn(
-                        "grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                        "grid min-h-14 grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3 pl-8 pr-4",
                         tableRowLinkClass,
                       )}
                     >
@@ -733,7 +777,9 @@ function BatchPage({
                         <ChangedDot on={buildingChanged(account, building.id)}>
                           <span
                             className={cn(
-                              "block h8 text-text-title",
+                              "block h8",
+                              // An asset whose packages have all ended is a muted row.
+                              row.live.length ? "text-text-title" : "text-text-tertiary",
                               tableRowNameCellClass,
                             )}
                           >
@@ -763,17 +809,48 @@ function BatchPage({
                         ))}
                       </span>
                       <span className="min-w-0 space-y-1">
-                        {row.live.map((item) => (
-                          <span
-                            key={`${item.workstream.id}-svc`}
-                            className="block p6 text-text-primary"
-                          >
-                            {tr(serviceDef(item.workstream.service).label)}
-                          </span>
-                        ))}
+                        {row.live.map((item) => {
+                          const after = afterLine(account, item.workstream, lang);
+                          return (
+                            <span
+                              key={`${item.workstream.id}-svc`}
+                              className="block p6 text-text-primary"
+                            >
+                              {tr(serviceDef(item.workstream.service).label)}
+                              {after && (
+                                <span className="text-text-tertiary">
+                                  {" · "}
+                                  {after.charAt(0).toLowerCase() + after.slice(1)}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
                         {row.muted.map((item) => {
+                          if (item.workstream.ending && !item.row.left) {
+                            return (
+                              <span
+                                key={`${item.workstream.id}-end`}
+                                className="block p6 text-text-tertiary"
+                              >
+                                {endingRowLine(account, item.workstream, lang)}
+                              </span>
+                            );
+                          }
                           const lk = item.row.left?.kind;
                           const reason = item.row.left?.reason ?? "";
+                          if (lk === "not_going_ahead") {
+                            return (
+                              <span
+                                key={`${item.workstream.id}-nga`}
+                                className="block p6 text-text-tertiary"
+                              >
+                                {tr(serviceDef(item.workstream.service).label)}
+                                {" · "}
+                                {tr("not going ahead")}
+                              </span>
+                            );
+                          }
                           if (lk === "dropped") {
                             return (
                               <span
@@ -805,7 +882,7 @@ function BatchPage({
                       <Icon
                         name="chevron-right"
                         size={16}
-                        className="mt-1 text-text-tertiary"
+                        className="text-text-tertiary"
                       />
                     </Link>
                   );
@@ -846,7 +923,7 @@ function BatchPage({
                               batch: batch.id,
                             })}
                             className={cn(
-                        "grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                        "grid min-h-14 grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3 pl-8 pr-4",
                         tableRowLinkClass,
                       )}
                           >
@@ -886,7 +963,7 @@ function BatchPage({
                             <Icon
                               name="chevron-right"
                               size={16}
-                              className="mt-1 text-text-tertiary"
+                              className="text-text-tertiary"
                             />
                           </Link>
                         );
@@ -929,7 +1006,7 @@ function BatchPage({
                               batch: batch.id,
                             })}
                             className={cn(
-                        "grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6",
+                        "grid min-h-14 grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_16px] items-center gap-x-6 border-t border-border-light py-3 pl-8 pr-4",
                         tableRowLinkClass,
                       )}
                           >
@@ -971,7 +1048,7 @@ function BatchPage({
                             <Icon
                               name="chevron-right"
                               size={16}
-                              className="mt-1 text-text-tertiary"
+                              className="text-text-tertiary"
                             />
                           </Link>
                         );
@@ -1021,167 +1098,208 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
   const hrefs = useHrefs();
   const { lang, t: tr, words } = useConceptI18n();
   const inBatch = wsInAll(account, batch.id);
+  const byStart = (a: Workstream, b: Workstream) =>
+    parse(b.startedOn || "1 Jan 2000") - parse(a.startedOn || "1 Jan 2000") ||
+    a.name.localeCompare(b.name, "en", { sensitivity: "base" });
   const proposed = inBatch
     .filter((w) => w.proposed)
     .sort((a, b) => a.name.localeCompare(b.name));
-  const rest = inBatch.filter((w) => !w.proposed);
+  // One row per line of work: a package that continued has no row of its own.
+  const rest = inBatch.filter((w) => !w.proposed && !isContinuedAway(w));
   const openPackages = rest
     .filter((w) => !isClosed(w) && !isCompleted(w))
+    .sort(byStart);
+  const completed = rest
+    .filter((w) => !isClosed(w) && isCompleted(w))
+    .sort(byStart);
+  const ended = rest
+    .filter((w) => isClosed(w))
     .sort(
       (a, b) =>
-        parse(b.startedOn || "1 Jan 2000") - parse(a.startedOn || "1 Jan 2000") ||
+        parse(closedOnDate(b) || "1 Jan 2000") -
+          parse(closedOnDate(a) || "1 Jan 2000") ||
         a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
     );
-  const folded = rest
-    .filter((w) => isClosed(w) || isCompleted(w))
-    .sort(
-      (a, b) =>
-        parse(b.startedOn || "1 Jan 2000") - parse(a.startedOn || "1 Jan 2000") ||
-        a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
-    );
-  const [openClosed, setOpenClosed] = useState(false);
 
-  const gridClass =
-    "grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-start gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6";
+  // DS Table: one flush Card per group (h7 title + count), column labels, rows 12/16/12/32, at least 56 tall.
+  const cols =
+    "grid-cols-[minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,0.6fr)_16px]";
+  const rowClass = cn(
+    "grid min-h-14 items-center gap-x-6 border-t border-border-light py-3 pl-8 pr-4",
+    cols,
+  );
+
+  /** Second line under NOW: where the package came from, or when it started. */
+  const cameFrom = (w: Workstream): string => {
+    const after = afterLine(account, w, lang);
+    if (after) return after;
+    if (w.from) {
+      const src = getWorkstream(account, w.from.workstreamId);
+      return tr(
+        "From {0} · {1}",
+        src?.name ?? w.from.workstreamId,
+        leftHowLabel(w.from.kind),
+      );
+    }
+    if (w.startedOn) return tr("Started {0}", short(w.startedOn, lang));
+    return "";
+  };
+
+  type Row = {
+    w: Workstream;
+    main: string;
+    detail: string;
+    assets: string;
+    link: boolean;
+  };
+  const liveRow = (w: Workstream): Row => ({
+    w,
+    main: batchNowLine(account, w, lang),
+    detail: cameFrom(w),
+    assets: String(activeProjects(w).length),
+    link: true,
+  });
+  const proposedRow = (w: Workstream): Row => ({
+    w,
+    main: tr("Proposed"),
+    detail: "",
+    assets: String(activeProjects(w).length),
+    link: false,
+  });
+  const endedRow = (w: Workstream): Row => {
+    const on = closedOnDate(w);
+    return {
+      w,
+      main: w.ending?.kind === "continued"
+        ? tr(
+            "Continued in {0} · {1} of {2}",
+            tr(
+              serviceDef(
+                getWorkstream(account, w.ending.to ?? "")?.service ?? w.service,
+              ).label,
+            ),
+            w.projects.filter((r) => r.left?.kind === "continued").length,
+            closedPackageFootprint(w),
+          )
+        : w.ending
+        ? endingTitle(account, w, lang)
+        : closedPackageOutcomeLine(w).startsWith("Split")
+          ? tr("Split · {0}", short(on, lang))
+          : tr("Closed · {0}", short(on, lang)),
+      detail: w.ending
+        ? `${tr(serviceDef(w.service).label)} · ${short(on, lang)}`
+        : closedPackageOutcomeLine(w),
+      assets: tr("{0} at the start", closedPackageFootprint(w)),
+      link: true,
+    };
+  };
+
+  const groups: Array<{ id: string; title: string; rows: Row[]; muted: boolean }> = [
+    {
+      id: "live",
+      title: tr("In progress"),
+      rows: [...openPackages.map(liveRow), ...proposed.map(proposedRow)],
+      muted: false,
+    },
+    { id: "completed", title: tr("Completed"), rows: completed.map(liveRow), muted: true },
+    { id: "ended", title: tr("Ended"), rows: ended.map(endedRow), muted: true },
+  ].filter((g) => g.rows.length > 0);
 
   return (
-    <Card bodyClassName="p-0">
-      <div className="overflow-x-auto">
-        <div className="min-w-[900px]">
-          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-center gap-x-6 border-b border-border-light py-2.5 pl-8 pr-6">
-            <span className="s3 text-text-tertiary">{words.Package}</span>
-            <span className="s3 text-text-tertiary">{tr("Now")}</span>
-            <span className="s3 text-text-tertiary">{words.Assets}</span>
-            <span className="s3 text-text-tertiary">{tr("How it came")}</span>
-          </div>
-
-          {openPackages.map((w) => {
-            const fromLine = howItCameFrom(account, w, lang);
-            const assetsN = activeProjects(w).length;
-            return (
-              <Link
-                key={w.id}
-                href={hrefs.workstream(w.id, "batch")}
-                className={cn(gridClass, tableRowLinkClass)}
-              >
-                <span className="min-w-0">
-                  <span
-                    className={cn(
-                      "block h8 text-text-title",
-                      tableRowNameCellClass,
-                    )}
-                  >
-                    {w.name}
-                  </span>
-                </span>
-                <span className="p6 text-text-primary">
-                  {batchNowLine(account, w, lang)}
-                </span>
-                <span className="p6 text-text-primary tabular-nums">{assetsN}</span>
-                <span className="min-w-0 p6 text-text-secondary">
-                  <span className="block">{fromLine.main}</span>
-                  {fromLine.sub && (
-                    <span className="mt-0.5 block p7 text-text-tertiary">
-                      {fromLine.sub}
-                    </span>
-                  )}
-                </span>
-              </Link>
-            );
-          })}
-
-          {proposed.map((w) => {
-            const fromLine = howItCameFrom(account, w, lang);
-            const assetsN = activeProjects(w).length;
-            return (
-              <div key={w.id} className={gridClass}>
-                <span className="min-w-0">
-                  <span className="block h8 text-text-title">{w.name}</span>
-                </span>
-                <span className="p6 text-text-primary">{tr("Proposed")}</span>
-                <span className="p6 text-text-primary tabular-nums">{assetsN}</span>
-                <span className="min-w-0 p6 text-text-secondary">
-                  <span className="block">{fromLine.main}</span>
-                </span>
-              </div>
-            );
-          })}
-
-          {folded.length > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={() => setOpenClosed(!openClosed)}
+    <div className="space-y-4">
+      {groups.map((g) => (
+        <section
+          key={g.id}
+          className="overflow-hidden rounded-lg border border-border-dark bg-bg-container"
+        >
+          <header className="border-b border-border-light py-4 pl-8 pr-6">
+            <h2 className={groupTitle}>
+              {g.title}{" "}
+              <span className="p6 text-text-tertiary tabular-nums">
+                {g.rows.length}
+              </span>
+            </h2>
+          </header>
+          <div className="overflow-x-auto">
+            <div className="min-w-[760px]">
+              <div
                 className={cn(
-                  "grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.5fr)_minmax(0,1.35fr)] items-center gap-x-6 border-t border-border-light py-3.5 pl-8 pr-6 text-left",
-                  tableRowLinkClass,
+                  "grid items-center gap-x-6 py-2.5 pl-8 pr-4",
+                  cols,
                 )}
               >
-                <span className="p6 text-text-tertiary">
-                  {tr("{0} closed", folded.length)}
+                <span className="s3 text-text-tertiary">{words.Package}</span>
+                <span className="s3 text-text-tertiary">{tr("Now")}</span>
+                <span className="s3 text-right text-text-tertiary">
+                  {words.Assets}
                 </span>
                 <span />
-                <span />
-                <span className="flex justify-end">
-                  <Icon
-                    name={openClosed ? "chevron-up" : "chevron-down"}
-                    size={16}
-                    className="text-text-tertiary"
-                  />
-                </span>
-              </button>
-              {openClosed &&
-                folded.map((w) => {
-                  const atStart = closedPackageFootprint(w);
-                  const outcome = closedPackageOutcomeLine(w);
-                  const fromLine = howItCameFrom(account, w, lang);
-                  const assetsCol = isClosed(w)
-                    ? tr("{0} at the start", atStart)
-                    : String(activeProjects(w).length);
-                  const nowCol = batchNowLine(account, w, lang);
-                  const body = (
-                    <>
-                      <span
-                        className={cn(
-                          "min-w-0 h8 text-text-tertiary",
-                          tableRowNameCellClass,
-                        )}
-                      >
-                        {w.name}
-                      </span>
-                      <span className="p6 text-text-tertiary">{nowCol}</span>
-                      <span className="p6 text-text-tertiary tabular-nums">
-                        {assetsCol}
-                      </span>
-                      <span className="min-w-0 p6 text-text-tertiary">
-                        <span className="block">{fromLine.main}</span>
-                        {isClosed(w) && outcome && (
-                          <span className="mt-0.5 block p7 text-text-tertiary">
-                            {outcome}
-                          </span>
-                        )}
-                      </span>
-                    </>
-                  );
-                  return (
-                    <Link
-                      key={w.id}
-                      href={hrefs.workstream(w.id, "batch")}
+              </div>
+              {g.rows.map((r) => {
+                const body = (
+                  <>
+                    <span
                       className={cn(
-                        gridClass,
-                        tableRowLinkClass,
-                        isClosed(w) && "bg-black-1",
+                        "min-w-0 h8",
+                        g.muted ? "text-text-tertiary" : "text-text-title",
+                        r.link && tableRowNameCellClass,
                       )}
                     >
-                      {body}
-                    </Link>
-                  );
-                })}
-            </>
-          )}
-        </div>
-      </div>
-    </Card>
+                      {r.w.name}
+                    </span>
+                    <span className="min-w-0">
+                      <span
+                        className={cn(
+                          "block p6",
+                          g.muted ? "text-text-tertiary" : "text-text-secondary",
+                        )}
+                      >
+                        {r.main}
+                      </span>
+                      {r.detail && (
+                        <span className="mt-0.5 block p7 text-text-tertiary">
+                          {r.detail}
+                        </span>
+                      )}
+                    </span>
+                    <span
+                      className={cn(
+                        "p6 text-right tabular-nums",
+                        g.muted ? "text-text-tertiary" : "text-text-secondary",
+                      )}
+                    >
+                      {r.assets}
+                    </span>
+                    {r.link ? (
+                      <Icon
+                        name="chevron-right"
+                        size={16}
+                        className="text-text-tertiary"
+                      />
+                    ) : (
+                      <span />
+                    )}
+                  </>
+                );
+                return r.link ? (
+                  <Link
+                    key={r.w.id}
+                    href={hrefs.workstream(r.w.id, "batch")}
+                    className={cn(rowClass, tableRowLinkClass)}
+                  >
+                    {body}
+                  </Link>
+                ) : (
+                  <div key={r.w.id} className={rowClass}>
+                    {body}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      ))}
+    </div>
   );
 }
 

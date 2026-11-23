@@ -64,6 +64,10 @@ const OFFICES = b('o', [
   ['Domplatz 8', 'Münster'],
   ['Grand-Place 3', 'Namur'],
   ['Rue Neuve 61', 'Charleroi'],
+  // Only in Heat pumps · Wärmewerk, which isn't going ahead (part 36).
+  ['Lessingstraße 9', 'Leipzig'],
+  ['Bahnhofstraße 21', 'Chemnitz'],
+  ['Am Markt 4', 'Erfurt'],
 ])
 OFFICES[18].photo = '/concept/sites/prager.jpg'
 
@@ -517,6 +521,120 @@ const halvering: Account = {
         { name: 'Chargeo price', type: 'PDF', meta: '2 Oct', action: 'Download' },
         { name: 'Contract', meta: 'After you agree the price', muted: true },
       ],
+    },
+    // Offices · packages that ended or continued (part 36)
+    {
+      id: 'led-offices', batchId: 'offices', name: 'LED · Offices DE', service: 'tender',
+      phases: [
+        {
+          service: 'tender', state: 'done', startedOn: '2 Sep 2026', completedOn: '9 Oct 2026',
+          projects: o(13, 14, 15).map((id) => p(id, 5)),
+        },
+      ],
+      solution: 'led', supplier: 'Lumatec',
+      owner: 'done', now: '', startedOn: '2 Sep 2026', completedOn: '9 Oct 2026',
+      ending: { kind: 'continued', to: 'led-offices-pricing', on: '9 Oct 2026' },
+      tender: {
+        source: 'CQuel network', approached: 24, invited: 6, invitedOn: '9 Sep 2026', matchedOn: '7 Sep 2026',
+        brief: 'Workstream brief', briefAgreedOn: '6 Sep 2026',
+        offers: { received: 3, partial: 0, noResponse: 3, summary: '3 of 6 in. Lumatec chosen on 9 Oct.' },
+      },
+      needs: [],
+      projects: [
+        p('o13', 5, { left: { kind: 'continued', to: 'led-offices-pricing', on: '9 Oct 2026' } }),
+        ...o(14, 15).map((id) =>
+          p(id, 5, {
+            left: {
+              kind: 'not_going_ahead', on: '9 Oct 2026',
+              reason: 'Lease ends in 2027. The customer won’t refit before then.',
+            },
+          }),
+        ),
+      ],
+      activity: [
+        { date: '9 Oct', title: '1 of 3 assets continued in Pricing', text: 'Lumatec chosen. Friedrichstraße 200 carries on in Pricing. The other 2 aren’t going ahead. Their leases end in 2027.' },
+        { date: '29 Sep', title: 'Offers in', text: '3 of 6 suppliers sent an offer.' },
+        { date: '9 Sep', title: '6 suppliers invited', text: 'Matched to the brief from 24 approached.' },
+        { date: '2 Sep', title: 'Package started', text: '3 projects allocated from Offices DE, FR and BE.' },
+      ],
+      lead: 'Rich Amos',
+    },
+    {
+      id: 'led-offices-pricing', batchId: 'offices', name: 'LED · Offices DE', service: 'pricing',
+      from: { workstreamId: 'led-offices', kind: 'continued', on: '9 Oct 2026' },
+      phases: [
+        {
+          service: 'tender', state: 'done', startedOn: '2 Sep 2026', completedOn: '9 Oct 2026',
+          projects: [p('o13', 5)],
+          tender: {
+            source: 'CQuel network', approached: 24, invited: 6, invitedOn: '9 Sep 2026', matchedOn: '7 Sep 2026',
+            brief: 'Workstream brief', briefAgreedOn: '6 Sep 2026',
+            offers: { received: 3, partial: 0, noResponse: 3, summary: '3 of 6 in. Lumatec chosen on 9 Oct.' },
+          },
+        },
+        { service: 'pricing', state: 'now', startedOn: '9 Oct 2026' },
+        { service: 'delivery', state: 'planned' },
+      ],
+      solution: 'led', supplier: 'Lumatec',
+      owner: 'cquel', now: '', startedOn: '9 Oct 2026',
+      pricing: { priced: 'Per project', source: 'Tender', setOn: '9 Oct 2026', requestedOn: '12 Oct 2026', receivedOn: '16 Oct 2026' },
+      needs: [{ label: 'Price analysis', why: 'Price received 16 Oct', owner: 'cquel', since: '16 Oct 2026' }],
+      projects: [p('o13', 2)],
+      activity: [
+        { date: '16 Oct', title: 'Price received from Lumatec', text: 'For 1 project.' },
+        { date: '12 Oct', title: 'Price requested', text: 'From Lumatec, for 1 project.' },
+        { date: '9 Oct', title: 'Continued from Tender', text: 'Lumatec chosen in the tender. 1 of 3 assets carried on.' },
+      ],
+      lead: 'Rich Amos',
+    },
+    {
+      id: 'led-fr', batchId: 'offices', name: 'LED · FR offices', service: 'tender',
+      phases: [
+        { service: 'tender', state: 'done', startedOn: '26 Aug 2026', completedOn: '14 Oct 2026' },
+        { service: 'delivery', state: 'planned' },
+      ],
+      solution: 'led',
+      owner: 'done', now: '', startedOn: '26 Aug 2026',
+      ending: {
+        kind: 'outside', on: '14 Oct 2026', supplier: 'Own facilities contractor',
+        reason: 'The customer kept its facilities contractor for the lighting. The offers from this tender stay under Tender results.',
+      },
+      tender: {
+        source: 'CQuel network', approached: 31, invited: 5, invitedOn: '2 Sep 2026', matchedOn: '30 Sep 2026',
+        brief: 'Workstream brief', briefAgreedOn: '29 Aug 2026',
+        offers: { received: 4, partial: 0, noResponse: 1, summary: '4 of 5 in.' },
+      },
+      needs: [],
+      projects: o(5, 6).map((id) => p(id, 5)),
+      activity: [
+        { date: '14 Oct', title: 'Package ended · supplier outside CQuel', text: 'The customer kept its facilities contractor for the lighting.' },
+        { date: '30 Sep', title: 'Results sent to you', text: '4 offers compared.' },
+        { date: '2 Sep', title: '5 suppliers invited', text: 'Matched to the brief from 31 approached.' },
+        { date: '26 Aug', title: 'Package started', text: '2 projects allocated from Offices DE, FR and BE.' },
+      ],
+      lead: 'Rich Amos',
+    },
+    {
+      id: 'hp-waermewerk', batchId: 'offices', name: 'Heat pumps · Wärmewerk', service: 'pricing',
+      phases: [
+        { service: 'pricing', state: 'now', startedOn: '6 Oct 2026' },
+        { service: 'delivery', state: 'planned' },
+      ],
+      solution: 'ashp', supplier: 'Wärmewerk Süd',
+      owner: 'done', now: '', startedOn: '6 Oct 2026',
+      ending: {
+        kind: 'not_going_ahead', on: '13 Oct 2026',
+        reason: 'The customer decided not to work with Wärmewerk Süd after reviewing their earlier installations. No prices were received.',
+      },
+      pricing: { source: 'Incumbent', setOn: '6 Oct 2026', requestedOn: '8 Oct 2026' },
+      needs: [],
+      projects: o(25, 26, 27).map((id) => p(id, 1)),
+      activity: [
+        { date: '13 Oct', title: 'Package ended · not going ahead', text: 'The customer decided not to work with Wärmewerk Süd.' },
+        { date: '8 Oct', title: 'Price requested', text: 'From Wärmewerk Süd, for 3 projects.' },
+        { date: '6 Oct', title: 'Package started', text: '3 projects allocated from Offices DE, FR and BE.' },
+      ],
+      lead: 'Rich Amos',
     },
     {
       id: 'ev-be', batchId: 'offices', name: 'EV charging · BE offices', service: 'delivery',

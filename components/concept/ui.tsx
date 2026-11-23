@@ -600,6 +600,28 @@ export function RoundTick({ size = 14 }: { size?: number }) {
   );
 }
 
+/** Grey circle with a white cross: a service or step that stopped without finishing. */
+export function RoundCross({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="shrink-0"
+    >
+      <circle cx="12" cy="12" r="12" fill="var(--black-muted, #6c737f)" />
+      <path
+        d="M8.5 8.5l7 7M15.5 8.5l-7 7"
+        fill="none"
+        stroke="white"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function Chip({
   children,
   lead,
@@ -609,8 +631,8 @@ export function Chip({
   size = "default",
 }: {
   children: ReactNode;
-  /** Display chips: a tick, an orange dot, or a plain later step. */
-  lead?: "done" | "now" | "next";
+  /** Display chips: a tick, an orange dot, a plain later step, or a cross (stopped without finishing). */
+  lead?: "done" | "now" | "next" | "ended";
   /** Filter chips: the number after the label. */
   count?: number;
   /** Filter chips: black fill, white label. */
@@ -642,6 +664,11 @@ export function Chip({
             "border border-brand-3 bg-bg-accent text-text-primary",
             big ? "px-[13px] h8" : "px-[9px] h9",
           ),
+        lead === "ended" &&
+          cn(
+            "border border-border-dark bg-bg-container text-text-secondary",
+            big ? "pl-[7px] pr-[13px] h8" : "pl-1 pr-[9px] h9",
+          ),
         lead === "next" &&
           cn(
             "border border-dashed border-black-4 bg-(--chip-surface) text-text-tertiary",
@@ -656,6 +683,7 @@ export function Chip({
   const body = (
     <>
       {lead === "done" && <RoundTick size={big ? 16 : 14} />}
+      {lead === "ended" && <RoundCross size={big ? 16 : 14} />}
       {lead === "now" && (
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6" aria-hidden />
       )}
@@ -688,7 +716,7 @@ export function ChipTrack({
 }: {
   steps: Array<{
     key: string;
-    lead: "done" | "now" | "next";
+    lead: "done" | "now" | "next" | "ended";
     label: ReactNode;
     notes?: Array<{ text: string; className: string }>;
   }>;
@@ -1261,7 +1289,7 @@ export function PackagePicker({
           position="popper"
           sideOffset={4}
           align="start"
-          className={cn(dropdownMenuContentClass, "w-[min(330px,var(--radix-select-trigger-width))]")}
+          className={cn(dropdownMenuContentClass, "w-[330px] max-w-[330px]")}
         >
           <RadixSelect.Viewport className="max-h-[320px] overflow-y-auto p-0">
             {(() => {
@@ -1281,7 +1309,9 @@ export function PackagePicker({
                   }
                   blocks.push(
                     <RadixSelect.Group key={`group-${labelText}-${i}`}>
-                      <RadixSelect.Label className="block px-3 pb-1 pt-2 p7 text-text-tertiary">
+                      {/* DS FactSelect: "Earlier" under a border-light line, aligned with the rows. */}
+                      <div className="mx-[-6px] my-1.5 border-t border-border-light" aria-hidden />
+                      <RadixSelect.Label className="block px-2.5 pb-1 pt-0.5 p7 text-text-tertiary">
                         {labelText}
                       </RadixSelect.Label>
                       {groupItems.map((item) => {
@@ -1293,15 +1323,15 @@ export function PackagePicker({
                             textValue={item.name}
                             className={cn(
                               dropdownMenuItemClass,
-                              "flex w-full cursor-pointer items-start gap-2 text-left font-sans text-text-primary",
-                              isSelected ? "h8" : "p6",
+                              "flex w-full cursor-pointer items-start gap-2 px-2.5 py-2 text-left font-sans",
+                              isSelected ? "h8 text-text-primary" : "p6 text-text-secondary",
                             )}
                           >
                             <div className="min-w-0 flex-1">
                               <RadixSelect.ItemText className="item-row-label block">
                                 {item.name}
                               </RadixSelect.ItemText>
-                              <span className="mt-0.5 block p7 text-text-secondary">
+                              <span className="mt-0.5 block p7 font-normal text-text-tertiary">
                                 {item.subline}
                               </span>
                             </div>
@@ -1323,7 +1353,7 @@ export function PackagePicker({
                       textValue={item.name}
                       className={cn(
                         dropdownMenuItemClass,
-                        "flex w-full cursor-pointer items-start gap-2 text-left font-sans text-text-primary",
+                        "flex w-full cursor-pointer items-start gap-2 px-2.5 py-2 text-left font-sans text-text-primary",
                         isSelected ? "h8" : "p6",
                       )}
                     >
@@ -1331,7 +1361,7 @@ export function PackagePicker({
                         <RadixSelect.ItemText className="item-row-label block">
                           {item.name}
                         </RadixSelect.ItemText>
-                        <span className="mt-0.5 block p7 text-text-secondary">
+                        <span className="mt-0.5 block p7 font-normal text-text-tertiary">
                           {item.subline}
                         </span>
                       </div>
@@ -1355,7 +1385,7 @@ export function PackagePicker({
 export type PackageCardChip = {
   id: string;
   label: string;
-  lead: "done" | "now";
+  lead: "done" | "now" | "ended";
   selectable?: boolean;
   selected?: boolean;
   onSelect?: () => void;
@@ -1456,7 +1486,7 @@ export function PackageCard({
         chipRow
       )}
       {panelTitle && panelChildren && (
-        <div className="surface-grey mt-4 rounded-md bg-bg-container-grey px-4 pb-4 pt-3">
+        <div className="surface-grey mt-4 rounded-md border border-border-dark bg-bg-container-grey px-4 pb-4 pt-3">
           <div className="mb-4 flex items-baseline justify-between gap-3">
             <h3 className="h8 text-text-primary">{panelTitle}</h3>
             {panelAside && (

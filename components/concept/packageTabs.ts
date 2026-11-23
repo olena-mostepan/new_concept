@@ -1,5 +1,5 @@
 import type { Account, ServiceId, Workstream } from "@/lib/concept/model";
-import { presentedTotal, phaseIsInheritedFrom, workstreamView } from "@/lib/concept/derive";
+import { isClosed, presentedTotal, phaseIsInheritedFrom, workstreamView } from "@/lib/concept/derive";
 import { offersIn } from "./TenderWorkstream";
 import { packagePrimaryTab } from "./packageStatus";
 
@@ -68,8 +68,15 @@ export function opsTabsFor(w: Workstream) {
 }
 
 export function tabsFor(w: Workstream, account: Account) {
+  const tabs = tabsForLive(w, account);
+  // A closed or ended package has no current service: no dot on its tabs.
+  return isClosed(w) ? tabs.map((tab) => ({ ...tab, dot: false })) : tabs;
+}
+
+function tabsForLive(w: Workstream, account: Account) {
   const current = packagePrimaryTab(w);
   const inheritedEstimates = phaseIsInheritedFrom(w, account, "indicative");
+  const inheritedTender = phaseIsInheritedFrom(w, account, "tender");
   const tabs: Array<{
     id: PackageTabId;
     label: string;
@@ -106,7 +113,8 @@ export function tabsFor(w: Workstream, account: Account) {
     tabs.push({
       id: "brief",
       label: "Brief",
-      dot: current === "brief",
+      from: inheritedTender,
+      dot: !inheritedTender && current === "brief",
     });
     const invited = tender.tender?.invited ?? 0;
     const received = offersIn(tender.tender?.offers);
@@ -114,13 +122,15 @@ export function tabsFor(w: Workstream, account: Account) {
       tabs.push({
         id: "supplier-matching",
         label: `Supplier matching (${invited})`,
+        from: inheritedTender,
       });
     }
     if (received > 0) {
       tabs.push({
         id: "tender-results",
         label: `Tender results (${received})`,
-        dot: current === "tender-results",
+        from: inheritedTender,
+        dot: !inheritedTender && current === "tender-results",
       });
     }
   }

@@ -43,7 +43,9 @@ import {
   visitStateLabel,
   type BuildingProject,
 } from "@/lib/concept/derive";
-import { inPackageFactLine, leftHowLabel } from "@/lib/concept/moves";
+import { endingWord, inPackageFactLine, leftHowLabel } from "@/lib/concept/moves";
+import { AssetNotGoingAhead, EndedSteps, WhyItEnded } from "./EndedPackage";
+import { Tag } from "@/components/ds/tag";
 import { cn } from "@/lib/utils";
 import {
   PackageCard,
@@ -178,7 +180,7 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
     mode === "ops" && selected && Boolean(account.opsAssetData?.[selected.workstream.id]?.[buildingId]);
 
   const dotSid =
-    selected && !assetLeftPackage(selected)
+    selected && !assetLeftPackage(selected) && !selected.workstream.ending
       ? packagePrimaryService(selected.workstream)
       : null;
 
@@ -223,6 +225,11 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
               <Tabs.Trigger key={sid} value={sid} className={tabTriggerClass}>
                 <span className="inline-flex items-center gap-1.5">
                   {t(service(sid).label)}
+                  {phaseIsInheritedFrom(selected.workstream, account, sid) && (
+                    <Tag type="neutral" size="xsmall" dot={false}>
+                      {t("from")}
+                    </Tag>
+                  )}
                   {dotSid === sid && (
                     <TabDot label={t("Current service")} />
                   )}
@@ -232,6 +239,8 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
           </Tabs.List>
           <div className="mt-6 space-y-6">
             <Tabs.Content value="overview" className="space-y-6 outline-none">
+              <WhyItEnded w={selected.workstream} />
+              <AssetNotGoingAhead row={selected.row} />
               <OverviewPanel account={account} building={building} item={selected} />
               {opsData && (
                 <OpsAssetData w={selected.workstream} buildingId={building.id} buildingName={building.name} />
@@ -396,17 +405,17 @@ function toPickerOption(
   isEarlierGroup: boolean,
 ): PickerOpt {
   const w = item.workstream;
-  const batch = getBatch(account, w.batchId);
-  const batchName = batch?.name ?? "Batch";
   let subline: string;
-  if (isClosed(w)) {
+  if (w.ending) {
+    subline = `Ended ${short(w.ending.on)} · ${endingWord(account, w)}`;
+  } else if (isClosed(w)) {
     subline = "Closed";
-  } else if (isEarlierGroup && rowIsInactive(item.row)) {
-    subline = `${batchName} · Earlier`;
+  } else if (isEarlierGroup && item.row.left) {
+    // DS FactSelect: earlier rows use the move wording.
+    subline = `Left ${short(item.row.left.on)} · ${leftHowLabel(item.row.left.kind)}`;
   } else {
-    subline = isCompleted(w)
-      ? `${batchName} · Complete`
-      : `${batchName} · ${service(w.service).label}`;
+    // DS FactSelect: the line is the current service, "Complete" or "Closed".
+    subline = isCompleted(w) ? "Complete" : service(w.service).label;
   }
   return { id: w.id, name: w.name, subline };
 }
@@ -545,23 +554,34 @@ function OverviewPanel({
     const phase = w.phases.find((c) => c.service === entry.id);
     if (!phase || (phase.state !== "done" && phase.state !== "now"))
       return [];
+    const ended = Boolean(w.ending) && entry.id === w.service;
     return [
       {
         id: entry.id,
         label: entry.label,
-        lead: phase.state === "now" ? ("now" as const) : ("done" as const),
+        lead: ended
+          ? w.ending?.kind === "not_going_ahead" ||
+            (w.ending?.kind === "outside" && w.service !== "tender")
+            ? ("ended" as const)
+            : ("done" as const)
+          : phase.state === "now"
+            ? ("now" as const)
+            : ("done" as const),
       },
     ];
   });
 
   const panelChildren =
-    sid === "delivery" && item.row.delivery ? (
+    w.ending && sid === w.service ? (
+      <EndedSteps w={w} sid={sid} reachedStep={item.row.step} />
+    ) : sid === "delivery" && item.row.delivery ? (
       <DeliveryTrack item={item} />
     ) : (
       <ServiceStepTrack item={item} serviceId={sid} />
     );
 
-  const left = assetLeftPackage(item);
+  // An ended package reads like one the asset has left: no "This asset is in".
+  const left = assetLeftPackage(item) || Boolean(w.ending);
   const headline = assetStatusHeadlineCopy(w, left);
   const asideContent =
     !left && headline.name ? (
@@ -925,7 +945,38 @@ function mergeAssetHistory(
         year: historyEventYear(row.hold.since),
       });
     }
-    if (row.left?.on && row.left.kind) {
+    if (w.ending && w.ending.kind !== "continued" && !row.left) {
+      synthetic.push({
+        event: `Package ended · ${endingWord(account, w)}`,
+        detail: pkg,
+        date: w.ending.on,
+        year: historyEventYear(w.ending.on),
+      });
+    }
+    if (w.from?.kind === "continued" && !row.joined) {
+      synthetic.push({
+        event: `Continued in ${service(w.service).label}`,
+        detail: pkg,
+        date: w.from.on,
+        year: historyEventYear(w.from.on),
+      });
+    }
+    if (row.left?.kind === "continued") {
+      const to = row.left.to ? getWorkstream(account, row.left.to) : undefined;
+      synthetic.push({
+        event: to ? `Continued in ${service(to.service).label}` : "Continued",
+        detail: pkg,
+        date: row.left.on,
+        year: historyEventYear(row.left.on),
+      });
+    } else if (row.left?.kind === "not_going_ahead") {
+      synthetic.push({
+        event: "Not going ahead",
+        detail: pkg,
+        date: row.left.on,
+        year: historyEventYear(row.left.on),
+      });
+    } else if (row.left?.on && row.left.kind) {
       synthetic.push({
         event: `Left package · ${leftHowLabel(row.left.kind)}`,
         detail: pkg,

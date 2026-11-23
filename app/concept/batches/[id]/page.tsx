@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useParams } from "next/navigation";
-import { getBatch, solutionName, wsInAll } from "@/lib/concept/derive";
+import { getBatch, isContinuedAway, solutionName, wsInAll } from "@/lib/concept/derive";
 import type { Batch } from "@/lib/concept/model";
 import { Page, PageHeader } from "@/components/concept/ui";
 import { BatchView } from "@/components/concept/BatchView";
@@ -35,8 +35,10 @@ function batchFacts(
   t: (en: string, ...args: unknown[]) => string,
   words: { Assets: string; Packages: string },
 ): Array<{ label: string; value: string }> {
-  const packages = wsInAll(account, batch.id).filter((item) => !item.proposed)
-    .length;
+  // One row per line of work: a package that continued is carried by its successor.
+  const packages = wsInAll(account, batch.id).filter(
+    (item) => !item.proposed && !isContinuedAway(item),
+  ).length;
   const facts: Array<{ label: string; value: string }> = [
     { label: t("Goal"), value: batch.goal },
     { label: words.Assets, value: String(batch.buildingIds.length) },

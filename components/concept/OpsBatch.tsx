@@ -9,7 +9,7 @@ import {
   type Owner,
   type Workstream,
 } from "@/lib/concept/model";
-import { getBuilding, openNeeds, short, wsInAll } from "@/lib/concept/derive";
+import { getBuilding, isContinuedAway, openNeeds, short, wsInAll } from "@/lib/concept/derive";
 import { Tag } from "@/components/ds/tag";
 import { cn } from "@/lib/utils";
 import { Button, Icon, Page, PageHeader, ServiceIcon } from "./ui";
@@ -34,7 +34,9 @@ export function OpsBatch({ id }: { id: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const batch = account.batches.find((item) => item.id === id);
-  const streams = batch ? wsInAll(account, batch.id) : [];
+  const streams = batch
+    ? wsInAll(account, batch.id).filter((w) => !isContinuedAway(w))
+    : [];
   const [openIds, setOpenIds] = useState<string[]>([]);
 
   if (!batch) {

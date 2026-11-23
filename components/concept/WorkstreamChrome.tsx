@@ -11,6 +11,7 @@ import {
   type Workstream,
 } from "@/lib/concept/model";
 import {
+  closedOnDate,
   currentPhase,
   getBatch,
   getWorkstream,
@@ -23,6 +24,7 @@ import {
   totalCapacity,
 } from "@/lib/concept/derive";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/concept/i18n";
 import {
   Button,
   IconButton,
@@ -83,7 +85,11 @@ export function PackageStatusCard({
   const searchParams = useSearchParams();
   const { lang } = useConceptI18n();
   const sid = packageStatusService(w);
-  const headline = packageStatusHeadline(w, lang);
+  const continuedTo =
+    w.ending?.kind === "continued" && w.ending.to
+      ? getWorkstream(account, w.ending.to)
+      : undefined;
+  const headline = packageStatusHeadline(w, lang, continuedTo);
   const closed = isClosed(w);
   const complete = isCompleted(w);
   const cta = packageStatusCta(w, lang);
@@ -120,6 +126,17 @@ export function PackageStatusCard({
             </p>
           )}
         </div>
+        {continuedTo && (
+          <Button
+            type="strong"
+            size="large"
+            icon="chevron-right"
+            iconPosition="right"
+            href={hrefs.workstream(continuedTo.id)}
+          >
+            {t(lang, "Open {0}", t(lang, service(continuedTo.service).label))}
+          </Button>
+        )}
         {!closed && !complete && showFix && (
           <Button
             type="strong"
@@ -185,6 +202,7 @@ export function WorkstreamHeader({
   changedKey = true,
   fix,
   statusAside,
+  opsAction,
 }: {
   w: Workstream;
   /** Ops version: the status card can carry Fix assets. Crumbs, facts and the key are the same as the customer's. */
@@ -192,6 +210,8 @@ export function WorkstreamHeader({
   changedKey?: boolean;
   fix?: { count: number; onClick?: () => void };
   statusAside?: ReactNode;
+  /** Ops: an action beside the status card (End package…). */
+  opsAction?: ReactNode;
 }) {
   const hrefs = useHrefs();
   const { account } = useConcept();
@@ -218,7 +238,11 @@ export function WorkstreamHeader({
   if (fromWs) {
     facts.push({
       label: t("From"),
-      value: fromWs.name,
+      // A package that continued keeps its source's name: name the service instead.
+      value:
+        w.from?.kind === "continued"
+          ? `${t(service(fromWs.service).label)} · ${short(w.from.on, lang)}`
+          : fromWs.name,
       href: hrefs.workstream(fromWs.id),
     });
   }
@@ -228,10 +252,11 @@ export function WorkstreamHeader({
       label: words.Assets,
       value: t("{0} at the start", w.projects.length),
     });
-    if (w.closedOn) {
+    const endedOn = closedOnDate(w);
+    if (endedOn) {
       facts.push({
-        label: t("Closed"),
-        value: short(w.closedOn, lang),
+        label: w.ending ? t("Ended") : t("Closed"),
+        value: short(endedOn, lang),
       });
     }
   } else {
@@ -243,15 +268,30 @@ export function WorkstreamHeader({
           : String(assetsLive),
     });
   }
-  if (w.supplier) facts.push({ label: t("Supplier"), value: w.supplier });
+  if (w.ending?.kind === "outside") {
+    facts.push({
+      label: t("Supplier"),
+      value: w.ending.supplier
+        ? t("{0} · outside CQuel", w.ending.supplier)
+        : t("Outside CQuel"),
+    });
+  } else if (w.supplier) facts.push({ label: t("Supplier"), value: w.supplier });
 
-  const aside =
+  const card =
     statusAside ??
     (fix ? (
       <PackageStatusCard w={w} fix={fix} ops={ops} />
     ) : (
       <PackageStatusCard w={w} ops={ops} />
     ));
+  const aside = opsAction ? (
+    <div className="flex flex-col items-end gap-3">
+      {card}
+      {opsAction}
+    </div>
+  ) : (
+    card
+  );
 
   return (
     <PageHeader
@@ -472,15 +512,17 @@ export function WorkstreamFrame({
   children,
   ops,
   fix,
+  opsAction,
 }: {
   live: Workstream;
   children: ReactNode;
   ops?: boolean;
   fix?: { count: number; onClick?: () => void };
+  opsAction?: ReactNode;
 }) {
   return (
     <>
-      <WorkstreamHeader w={live} ops={ops} fix={fix} />
+      <WorkstreamHeader w={live} ops={ops} fix={fix} opsAction={opsAction} />
       <div className="space-y-6 pb-12">{children}</div>
     </>
   );

@@ -5,6 +5,7 @@
  */
 import type { Doc } from "./model";
 import { SOLUTION_ICON, rowDue, tenderRow } from "./supplierList";
+import { hammTender } from "./supplierHamm";
 
 export interface SupplierFact {
   label: string;
@@ -28,6 +29,8 @@ export interface SupplierSite {
   system: string;
   systemNote?: string;
   files: Doc[];
+  /** The site a building belongs to, when a site has several buildings (Hamm). The row itself is then a building. */
+  group?: string;
   /** Map pin position, % of the map box. */
   pin: { left: number; top: number };
 }
@@ -61,17 +64,23 @@ export interface QuoteQuestion {
   kind: "text" | "yesno";
   /** yesno: what the Yes answer needs. */
   followUp?: string;
+  /** "Whole tender: answer once", "This offer", "Building: …" (C13). */
+  scope?: string;
+  /** Asked of every bidder at once, not about this bid only. */
+  everyBidder?: boolean;
+  /** Answered by a file (C14): the button label, e.g. "Upload certificates". */
+  upload?: string;
 }
 /** How a supplier offers (C12): one offer, one offer in lots, one per site, or several that overlap. */
 export type OfferStructure = "one" | "lots" | "perSite" | "overlap";
 
 export const STRUCTURES: Record<OfferStructure, { label: string; text: string; short: string }> = {
-  one: { label: "One offer for all of them", text: "One contract, one set of terms, one total.", short: "One offer for all sites" },
-  lots: { label: "One offer, in lots", text: "One contract delivered in lots; each site is in one lot.", short: "One offer, in lots" },
-  perSite: { label: "One offer per site", text: "Each site priced and awardable on its own.", short: "One offer per site" },
+  one: { label: "One offer for all of them", text: "One contract, one set of terms, one total.", short: "One offer for all assets" },
+  lots: { label: "One offer, in lots", text: "One contract delivered in lots; each asset is in one lot.", short: "One offer, in lots" },
+  perSite: { label: "One offer per asset", text: "Each asset priced and awardable on its own.", short: "One offer per asset" },
   overlap: {
     label: "Several offers that overlap",
-    text: "Different groupings, each on its own terms. A site can be in more than one; the customer awards it under one.",
+    text: "Different groupings, each on its own terms. An asset can be in more than one; the customer awards it under one.",
     short: "Several offers that overlap",
   },
 };
@@ -105,6 +114,14 @@ export interface QuoteExample {
   lots: Array<{ name: string; sites: number[]; price: string }>;
   perSite: Record<number, string>;
   offers: Array<{ key: string; sites: number[]; condition?: string; price: string }>;
+  /** File names the prototype uses when a tender opens part-way (else a generic set). */
+  fileNames?: string[];
+  /** Terms read from the offer, shown as one check row (heat supply contracts). */
+  terms?: SpecRow[];
+  /** What the per-building figure is, e.g. "Base charge a year, net". */
+  priceUnit?: string;
+  /** Variants read from the offer (C13): brief = which brief variant it answers. */
+  quoteVariants?: Array<{ key: string; label: string; brief: string; note?: string; wholeOnly?: boolean; prices: Record<number, string> }>;
 }
 
 export interface SupplierTender {
@@ -113,7 +130,7 @@ export interface SupplierTender {
   process: Array<{ title: string; detail: string; now?: boolean }>;
   jobLead: string;
   seafront: string;
-  map: { image: string; credit: string; width: number; height: number };
+  map?: { image: string; credit: string; width: number; height: number };
   findSuggestions: string[];
   /** Every fact list on the page uses the same SpecRow shape. */
   jobFacts: SpecRow[];
@@ -122,6 +139,16 @@ export interface SupplierTender {
   contractLine: string;
   /** Offer structures this tender takes, set by Ops with the brief (at least one). */
   structures: OfferStructure[];
+  /** "£" by default. */
+  currency?: string;
+  /** "site" by default; "building" when sites hold several buildings. */
+  unitWord?: "site" | "building";
+  /** Which check rows apply after price; all three by default. */
+  checks?: Array<"start" | "duration" | "warranties">;
+  /** Variants the brief defines (C13). Suppliers price only these. */
+  variants?: Array<{ key: string; label: string; need: "required" | "optional"; note?: string }>;
+  /** What the tender needs, by scope (C13). found = what we read it from. */
+  expectedFiles?: Array<{ label: string; scope: "offer" | "tender" | "product" | "building"; need: string; found?: string }>;
   quote: QuoteExample;
   findIndex: FindEntry[];
   service: string;
@@ -162,9 +189,9 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { title: "Final offer", detail: "Updated after the visit" },
       { title: "Customer chooses", detail: "After the final offers" },
     ],
-    jobLead: "Roof-mounted PV on 3 seafront sites: 2 hotels and 1 restaurant.",
+    jobLead: "Roof-mounted PV on 3 seafront assets: 2 hotels and 1 restaurant.",
     jobFacts: [
-      { label: "Sites", value: "3" },
+      { label: "Assets", value: "3" },
       { label: "Size", value: "240 kWp", estimate: true },
       { label: "Expected generation", value: "380,000 kWh/yr", estimate: true },
       { label: "Roof space", value: "2,475 m²" },
@@ -177,7 +204,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { label: "Included", value: "Design to handover, grid connection, maintenance" },
       { label: "Not included", value: "PPA financing, arranged separately" },
       { label: "Send us", value: "Your quote. We read the price, start, duration and warranties from it." },
-      { label: "Offers this tender takes", value: "One offer for all sites, one offer in lots, or one offer per site. You can leave sites out." },
+      { label: "Offers this tender takes", value: "One offer for all assets, one offer in lots, or one offer per asset. You can leave assets out." },
     ],
     structures: ["one", "lots", "perSite"],
     openCells: [
@@ -253,13 +280,13 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
           title: "Total price",
           quote: "Bidders are asked to price surveys, design, permits, connections, installation, access and making good, testing, commissioning and handover, operation and maintenance.",
           source: "Tender brief · What you price",
-          note: "Not included: PPA financing, tendered separately. One total for every site; it isn't binding.",
+          note: "Not included: PPA financing, tendered separately. One total for every asset; it isn't binding.",
         },
         sites: {
-          title: "Sites covered",
+          title: "Assets covered",
           quote: "Solar PV of approx. 125 kWp at the Boulevard Hotel. Solar PV of approx. 115 kWp at the Big Blue Hotel.",
           source: "Tender brief · The job",
-          note: "Burger King is sized at the site visit. If you can't do a site, say which.",
+          note: "Burger King is sized at the site visit. If you can't do an asset, say which.",
         },
         start: {
           title: "Start",
@@ -294,7 +321,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     },
     findSuggestions: ["Export limit", "Not in my price", "Roof space", "Warranties"],
     findIndex: [
-      { text: "Roof space: 2,475 m² in total, 3 sites", source: "The job · Overview", action: "open", tab: "overview" },
+      { text: "Roof space: 2,475 m² in total, 3 assets", source: "The job · Overview", action: "open", tab: "overview" },
       { text: "Drawings and roof layouts", source: "ZIP · Boulevard Hotel, Big Blue Hotel, Burger King", action: "download", tab: "sites" },
       { text: "Roof type, age, asbestos and ownership: not known yet, CQuel is asking the customer", source: "What nobody knows yet · Overview", action: "open", tab: "overview" },
       { text: "Roof strength is checked at the site visit", source: "What nobody knows yet · Overview", action: "open", tab: "overview" },
@@ -304,7 +331,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { text: "Warranties: we read them from your quote", source: "What you price · Overview", action: "open", tab: "overview" },
       { text: "Expected generation: 380,000 kWh a year (estimate)", source: "The job · Overview", action: "open", tab: "overview" },
       { text: "Half-hourly data (electricity use)", source: "XLSX · Boulevard Hotel", action: "download", tab: "sites" },
-      { text: "Project Commission Form: CQuel's commission on work you win", source: "PDF · Documents for all sites", action: "download", tab: "sites" },
+      { text: "Project Commission Form: CQuel's commission on work you win", source: "PDF · Documents for all assets", action: "download", tab: "sites" },
       { text: "Safety rules: Building Safety Act 2022, CDM 2015", source: "The job · Overview", action: "open", tab: "overview" },
       { text: "System design must suit salt air exposure at the seaside site", source: "Tender brief · The job", action: "open", tab: "overview" },
       { text: "Schedule installation in the off-peak season (typically winter, when the park has reduced operations)", source: "Tender brief · The job", action: "open", tab: "overview" },
@@ -313,7 +340,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     title: "Solar PV on 3 roofs in Blackpool",
     customer: "Blackpool Pleasure Beach",
     supplier: { name: "Des Renewables Ltd", initials: "DR" },
-    whyInvited: "You install commercial solar PV, and you're 41 miles from the sites.",
+    whyInvited: "You install commercial solar PV, and you're 41 miles from the assets.",
     facts: [
       { label: "Budget", value: "£350,000", estimate: true },
       { label: "Budget approved", value: "No" },
@@ -323,7 +350,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     round: { label: "Round 1 of 2", due: "due 9 May" },
     offer: {
       title: "Send an indicative offer",
-      text: "Upload your quote with one total for every site. It isn't binding: you update it after the site visit.",
+      text: "Upload your quote with one total for every asset. It isn't binding: you update it after the site visit.",
       footer: "Commission only on work you win",
     },
     offerSteps: [
@@ -342,14 +369,14 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     priceAndSend: [
       { label: "Your price covers", value: "Surveys, design, permits and grid connection, supply and installation, access and making good, testing and handover, maintenance" },
       { label: "Not in your price", value: "PPA financing. The customer buys the power through a PPA, arranged separately." },
-      { label: "Sites", value: "All 3. If you can't do one, say which in your quote." },
+      { label: "Assets", value: "All 3. If you can't do one, say which in your quote." },
       { label: "We need", value: "Your quote with a total price. We read the start date, duration and warranties from it." },
-      { label: "Also helps", value: "A price breakdown (our template is in Sites & documents) and seaside or theme park case studies" },
+      { label: "Also helps", value: "A price breakdown (our template is in Assets & documents) and seaside or theme park case studies" },
     ],
     job: [
-      { label: "Sites", value: "3: 2 seafront hotels and 1 restaurant, Blackpool" },
+      { label: "Assets", value: "3: 2 seafront hotels and 1 restaurant, Blackpool" },
       { label: "System", value: "Roof-mounted PV. Boulevard Hotel 125 kWp, Big Blue Hotel 115 kWp, Burger King sized at the site visit" },
-      { label: "Roof space", value: "2,475 m² in total, 3 sites" },
+      { label: "Roof space", value: "2,475 m² in total, 3 assets" },
       { label: "Expected generation", value: "380,000 kWh a year · Estimate" },
       { label: "Seafront", value: "Salt air. Say how you protect panels, frames and fixings." },
       { label: "Timing", value: "Contract from Sep (estimate). Installation in the off-peak season, while the park has reduced operations." },
@@ -357,7 +384,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
     ],
     atVisit: [
       { label: "Roof strength", value: "A structural check is part of the visit" },
-      { label: "Burger King size", value: "Sized on site" },
+      { label: "Burger King size", value: "Sized at the site visit" },
       { label: "Access", value: "Working hours and access while the hotels stay open" },
       { label: "Finish date", value: "The customer confirms it" },
     ],
@@ -366,7 +393,7 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
       { label: "Roofs", value: "Type, age, asbestos and building ownership", note: "CQuel is asking the customer" },
     ],
     criteria: [
-      { icon: "money", title: "Price", text: "Your total for every site" },
+      { icon: "money", title: "Price", text: "Your total for every asset" },
       { icon: "time", title: "Timing", text: "Start and how long it takes" },
       { icon: "best", title: "Quality", text: "Warranties, kit, seafront protection" },
     ],
@@ -419,6 +446,8 @@ export const SUPPLIER_TENDERS: SupplierTender[] = [
   },
 ];
 
+SUPPLIER_TENDERS.push(hammTender(SUPPLIER_TENDERS[0]));
+
 /** Prototype: tenders that show the other structure cases. */
 const STRUCTURE_OVERRIDES: Record<string, Partial<SupplierTender>> = {
   // Ops enabled one structure only: no choice row.
@@ -426,7 +455,7 @@ const STRUCTURE_OVERRIDES: Record<string, Partial<SupplierTender>> = {
     structures: ["one"],
     priceCells: [
       ...SUPPLIER_TENDERS[0].priceCells.slice(0, 3),
-      { label: "Offers this tender takes", value: "One offer for all sites. You can leave sites out." },
+      { label: "Offers this tender takes", value: "One offer for all assets. You can leave assets out." },
     ],
     quote: { ...SUPPLIER_TENDERS[0].quote, structure: { read: "one", source: "Quote, page 1" } },
   },
@@ -435,7 +464,7 @@ const STRUCTURE_OVERRIDES: Record<string, Partial<SupplierTender>> = {
     structures: ["one", "lots", "perSite", "overlap"],
     priceCells: [
       ...SUPPLIER_TENDERS[0].priceCells.slice(0, 3),
-      { label: "Offers this tender takes", value: "Any: one offer, in lots, per site, or several that overlap. You can leave sites out." },
+      { label: "Offers this tender takes", value: "Any: one offer, in lots, per asset, or several that overlap. You can leave assets out." },
     ],
     quote: { ...SUPPLIER_TENDERS[0].quote, structure: { read: "overlap", source: "Quote, pages 1–2" } },
   },

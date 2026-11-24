@@ -40,6 +40,7 @@ export type TenderRow = {
   title: string;
   /** Customer, when the platform holds it. */
   customer?: string;
+  /** Number of assets in the tender (shown as ASSETS). */
   sites: number;
   /** Where the tender is for this supplier (for Closed: where it ended). */
   stage: ListStage;
@@ -73,6 +74,18 @@ export const SUPPLIER_INITIALS = "DR";
  * deadlines. Other dates are examples.
  */
 export const TENDER_ROWS: TenderRow[] = [
+  {
+    id: "hamm-heat-pumps",
+    state: "started",
+    href: "/concept/supplier/tenders/hamm-heat-pumps",
+    solution: "heat-pump",
+    title: "Hamm heat pumps: heat-as-a-service tender",
+    customer: "Aroundtown",
+    sites: 4,
+    stage: "Indicative offer",
+    next: { main: "Finish your offer", detail: "11 files uploaded · due 31 Oct" },
+    group: "you",
+  },
   {
     id: "blackpool-pv",
     state: "new",

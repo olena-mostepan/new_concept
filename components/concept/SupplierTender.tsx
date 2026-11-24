@@ -1,5 +1,6 @@
 "use client";
 
+import { customerInfo, type CustomerInfo } from "@/lib/concept/supplierCustomers";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -89,6 +90,7 @@ function stagesFor(t: Tender, state: TenderState) {
 
 function Rail({ t, state }: { t: Tender; state: TenderState }) {
   const process = stagesFor(t, state);
+  const about = customerInfo(t.customer);
   return (
     <aside className="flex min-h-[calc(100vh-64px)] w-[400px] shrink-0 flex-col border-r border-border-dark bg-white">
       <div className="relative overflow-hidden border-b border-status-info-border bg-status-info-bg px-8 pb-5 pt-6">
@@ -104,7 +106,22 @@ function Rail({ t, state }: { t: Tender; state: TenderState }) {
         <div className="relative flex flex-col gap-1 pt-14">
           <span className="s3 text-text-tertiary">Tender · {t.service}</span>
           <h1 className="h6 text-text-primary">{t.title}</h1>
-          {t.customer && <p className="p7 text-text-secondary">For {t.customer}</p>}
+          {t.customer && (
+            <p className="p7 text-text-secondary">
+              For{" "}
+              {about ? (
+                <Button
+                  type="link"
+                  className="p7"
+                  onClick={() => document.getElementById("about-customer")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  {t.customer}
+                </Button>
+              ) : (
+                t.customer
+              )}
+            </p>
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-8 px-8 pb-14 pt-6">
@@ -152,6 +169,7 @@ function Rail({ t, state }: { t: Tender; state: TenderState }) {
             ))}
           </ol>
         </div>
+        {about && <AboutCustomer c={about} />}
         <section className="flex flex-col gap-2 rounded-lg border border-border-accent bg-status-warning-bg px-5 py-4">
           <h2 className="h7 text-text-primary">How CQuel is paid</h2>
           <p className="p6 text-text-secondary">{t.paid}</p>
@@ -161,6 +179,37 @@ function Rail({ t, state }: { t: Tender; state: TenderState }) {
         </section>
       </div>
     </aside>
+  );
+}
+
+/** C15: the customer, mostly the company itself, then a smaller "With CQuel" group. A section, not a card. */
+function AboutCustomer({ c }: { c: CustomerInfo }) {
+  const rows = (xs: Array<{ label: string; value: string }>) => (
+    <dl className="border-t border-border-light">
+      {xs.map((f) => (
+        <div key={f.label} className="flex items-baseline justify-between gap-4 border-b border-border-light py-2">
+          <dt className="p6 text-text-secondary">{f.label}</dt>
+          <dd className="text-right h8 text-text-primary">{f.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+  return (
+    <section id="about-customer" aria-labelledby="about-customer-h" className="flex scroll-mt-6 flex-col gap-3">
+      <h2 id="about-customer-h" className="s3 text-text-tertiary">About the customer</h2>
+      <div className="flex flex-col gap-1">
+        <p className="h7 text-text-primary">{c.name}</p>
+        <p className="p6 text-text-primary">{c.who}</p>
+      </div>
+      {rows(c.company)}
+      {c.withCquel && (
+        <div className="flex flex-col gap-2 pt-1">
+          <h3 className="h8 text-text-title">With CQuel</h3>
+          {rows(c.withCquel)}
+        </div>
+      )}
+      {c.follow && <p className="p6 text-text-secondary">{c.follow}</p>}
+    </section>
   );
 }
 

@@ -281,13 +281,13 @@ export function Outcome({
             yours
             label="Site visit"
             title="Arrange the site visit"
-            text="Book it with the site, then add the date for each site here. CQuel and the customer don't attend."
+            text="Book it with the customer's contact, then add the date for each asset here. CQuel and the customer don't attend."
           />
           <Track now={1} />
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-0.5 rounded-md border border-border-light bg-bg-container-grey px-4 py-3">
               <span className="p7 text-text-tertiary">Site contact</span>
-              <span className="h8 text-text-primary">{t.customer || "The site"}</span>
+              <span className="h8 text-text-primary">{t.customer || "The asset"}</span>
               <span className="p7 text-text-secondary">Name and phone are in CQuel&apos;s email</span>
             </div>
             <div className="flex flex-col gap-0.5 rounded-md border border-border-light bg-bg-container-grey px-4 py-3">

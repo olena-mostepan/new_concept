@@ -28,7 +28,7 @@ import {
 type TabId = "overview" | "sites" | "questions";
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "overview", label: "Overview" },
-  { id: "sites", label: "Sites & documents" },
+  { id: "sites", label: "Assets & documents" },
   { id: "questions", label: "Questions" },
 ];
 
@@ -107,7 +107,7 @@ function Rail({ t, state }: { t: Tender; state: TenderState }) {
           {t.customer && <p className="p7 text-text-secondary">For {t.customer}</p>}
         </div>
       </div>
-      <div className="flex flex-col gap-4 px-8 pb-14 pt-5">
+      <div className="flex flex-col gap-8 px-8 pb-14 pt-6">
         <Banner type="info" icon="info" title="Why you were invited" className="border-border-dark bg-bg-container-grey">
           {t.whyInvited}
         </Banner>
@@ -125,7 +125,7 @@ function Rail({ t, state }: { t: Tender; state: TenderState }) {
             ))}
           </dl>
         </div>
-        <div className="flex flex-col gap-3 pt-2">
+        <div className="flex flex-col gap-3">
           <h2 className="s3 text-text-tertiary">How this tender runs</h2>
           <ol>
             {process.map((step, i) => (
@@ -251,8 +251,10 @@ function Find({
     return t.findIndex.filter((e) => words.every((w) => `${e.text} ${e.source}`.toLowerCase().includes(w)));
   }, [query, t.findIndex]);
 
-  const field =
-    "flex h-11 w-full items-center gap-2.5 rounded-md border border-border-dark bg-white px-3.5 hover:border-black-4 focus-within:border-black-7 focus-within:shadow-[inset_0_0_0_1px_var(--black-7)]";
+  const field = cn(
+    "flex w-full items-center rounded-md border border-border-dark bg-white hover:border-black-4",
+    compact ? "h-10 gap-2 px-3" : "h-11 gap-2.5 px-3.5",
+  ) + " focus-within:border-black-7 focus-within:shadow-[inset_0_0_0_1px_var(--black-7)]";
 
   return (
     <section
@@ -263,7 +265,7 @@ function Find({
         Find it in this tender
       </label>
       <div className={field}>
-        <Icon name="search" size={20} className="text-icon-default" />
+        <Icon name="search" size={compact ? 16 : 20} className="text-icon-default" />
         <input
           id={`${idBase}-q`}
           value={q}
@@ -272,7 +274,7 @@ function Find({
             setAsking(false);
             setSent(null);
           }}
-          placeholder="Search the brief, files and answered questions"
+          placeholder={compact ? "Search the brief and files" : "Search the brief, files and answered questions"}
           className="min-w-0 flex-1 bg-transparent p6 text-text-primary outline-none placeholder:text-text-tertiary"
         />
         {q && <IconButton icon="cross" size="small" label="Clear search" onClick={() => setQ("")} />}
@@ -436,53 +438,86 @@ function Chapter({ n, id, title, children }: { n: number; id: string; title: str
 
 function SiteMap({ t, onTab }: { t: Tender; onTab: (id: TabId) => void }) {
   const [open, setOpen] = useState<number | null>(null);
-  const site = t.sites.find((s) => s.n === open);
+  if (!t.map) return null;
+  /* One pin per site; where a site holds several buildings, the pin shows how many and the card lists them. */
+  const markers: Array<{ key: number; label: string; name: string; pin: { left: number; top: number }; items: Tender["sites"] }> = [];
+  for (const s of t.sites) {
+    const m = s.group ? markers.find((x) => x.name === s.group) : undefined;
+    if (m) m.items.push(s);
+    else markers.push({ key: s.n, label: "", name: s.group ?? s.name, pin: s.pin, items: [s] });
+  }
+  markers.forEach((m, i) => {
+    m.label = t.sites.some((s) => s.group) ? String(i + 1) : String(m.items[0].n);
+    if (m.items.length > 1) {
+      m.pin = {
+        left: m.items.reduce((n, s) => n + s.pin.left, 0) / m.items.length,
+        top: m.items.reduce((n, s) => n + s.pin.top, 0) / m.items.length,
+      };
+    }
+  });
+  const marker = markers.find((m) => m.key === open);
   return (
     <div
-      className="relative overflow-hidden rounded-md border border-border-light"
+      className="relative rounded-md border border-border-light"
       style={{ aspectRatio: `${t.map.width} / ${t.map.height}` }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={t.map.image} alt="" className="absolute inset-0 size-full object-cover" />
-      {t.sites.map((s) => (
+      <img src={t.map.image} alt="" className="absolute inset-0 size-full rounded-md object-cover" />
+      {markers.map((m) => (
         <button
-          key={s.n}
+          key={m.key}
           type="button"
-          aria-label={`Site ${s.n}, ${s.name}`}
-          aria-expanded={open === s.n}
-          onClick={() => setOpen(open === s.n ? null : s.n)}
+          aria-label={`Asset ${m.label}, ${m.name}`}
+          aria-expanded={open === m.key}
+          onClick={() => setOpen(open === m.key ? null : m.key)}
           className={cn(
             "absolute inline-flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-black-7 h9 text-white outline-none focus-visible:shadow-focus",
-            open === s.n ? "size-7 shadow-[0_0_0_3px_rgba(30,40,50,.25)]" : "size-6",
+            open === m.key ? "size-7 shadow-[0_0_0_3px_rgba(30,40,50,.25)]" : "size-6",
           )}
-          style={{ left: `${s.pin.left}%`, top: `${s.pin.top}%` }}
+          style={{ left: `${m.pin.left}%`, top: `${m.pin.top}%` }}
         >
-          {s.n}
+          {m.label}
         </button>
       ))}
-      {site && (
+      {marker && (
         <div
-          className="absolute z-10 flex w-60 flex-col gap-1.5 rounded-md border border-border-dark bg-white px-3.5 py-3 shadow-floating"
-          style={{ left: `calc(${site.pin.left}% + 22px)`, top: `${Math.max(4, Math.min(site.pin.top, 60))}%` }}
+          className="absolute z-10 flex w-64 flex-col gap-1.5 rounded-md border border-border-dark bg-white px-3.5 py-3 shadow-floating"
+          style={
+            marker.pin.left > 60
+              ? { right: `calc(${100 - marker.pin.left}% + 22px)`, top: `${Math.max(4, Math.min(marker.pin.top, 40))}%` }
+              : { left: `calc(${marker.pin.left}% + 22px)`, top: `${Math.max(4, Math.min(marker.pin.top, 40))}%` }
+          }
         >
           <div className="flex items-start justify-between gap-2">
-            <span className="h8 text-text-primary">{site.n} · {site.name}</span>
+            <span className="h8 text-text-primary">{marker.label} · {marker.name}</span>
             <IconButton icon="cross" size="small" label="Close" onClick={() => setOpen(null)} />
           </div>
-          <span className="p7 text-text-secondary">{site.address}</span>
-          <span className="p6 text-text-primary">
-            {site.system}
-            {site.systemNote ? ` · ${site.systemNote}` : ""}
-          </span>
+          {marker.items.length === 1 ? (
+            <>
+              <span className="p7 text-text-secondary">{marker.items[0].address}</span>
+              <span className="p6 text-text-primary">
+                {marker.items[0].system}
+                {marker.items[0].systemNote ? ` · ${marker.items[0].systemNote}` : ""}
+              </span>
+            </>
+          ) : (
+            <span className="p6 text-text-primary">
+              {marker.items.length} buildings: {marker.items.map((s) => s.name.replace(marker.name, "").trim() || s.name).join(", ")}
+            </span>
+          )}
           <Button type="tertiary" size="small" icon="chevron-right" iconPosition="right" className="self-start px-0" onClick={() => onTab("sites")}>
-            {site.files.length} {site.files.length === 1 ? "file" : "files"}
+            {marker.items.length === 1
+              ? `${marker.items[0].files.length} ${marker.items[0].files.length === 1 ? "file" : "files"}`
+              : "Assets & documents"}
           </Button>
         </div>
       )}
-      <span className="absolute right-2 top-2 rounded-full border border-border-dark bg-white px-2 py-0.5 p7 text-text-secondary">
-        {t.distance}
-      </span>
-      <span className="absolute bottom-0 left-0 bg-white/85 px-1.5 py-0.5 p7 text-text-secondary">{t.map.credit}</span>
+      {t.distance && (
+        <span className="absolute right-2 top-2 rounded-full border border-border-dark bg-white px-2 py-0.5 p7 text-text-secondary">
+          {t.distance}
+        </span>
+      )}
+      <span className="absolute bottom-0 left-0 rounded-bl-md bg-white/85 px-1.5 py-0.5 p7 text-text-secondary">{t.map.credit}</span>
     </div>
   );
 }
@@ -509,15 +544,21 @@ function Overview({ t, onTab, onAsk, state, row }: { t: Tender; onTab: (id: TabI
 
       <Chapter n={1} id="c-job" title="The job">
         <p className="p6 text-text-primary">{t.jobLead}</p>
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-3">
-          <SiteMap t={t} onTab={onTab} />
-          <Cells rows={t.jobFacts} cols={2} />
-        </div>
+        {t.map ? (
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-3">
+            <SiteMap t={t} onTab={onTab} />
+            <Cells rows={t.jobFacts} cols={2} />
+          </div>
+        ) : (
+          <Cells rows={t.jobFacts} cols={4} />
+        )}
         {sent && <YouSaid value={saidJob(t, offer)} />}
         <div className="flex items-center justify-between gap-3">
           <p className="p7 text-text-secondary">{t.seafront}</p>
           <Button type="tertiary" icon="chevron-right" iconPosition="right" onClick={() => onTab("sites")}>
-            {`Sites & documents · ${t.sites.length} sites, ${t.fileCount} files`}
+            {t.unitWord === "building"
+              ? `Assets & documents · ${new Set(t.sites.map((x) => x.group)).size} assets, ${t.sites.length} buildings`
+              : `Assets & documents · ${t.sites.length} assets, ${t.fileCount} files`}
           </Button>
         </div>
       </Chapter>
@@ -587,14 +628,16 @@ function SitesAndDocs({ t }: { t: Tender }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-4">
-        <div className="min-w-0 flex-1">
-          <SiteMap t={t} onTab={() => undefined} />
-        </div>
+        {t.map && (
+          <div className="min-w-0 flex-1">
+            <SiteMap t={t} onTab={() => undefined} />
+          </div>
+        )}
         <Card
-          className="w-[400px] shrink-0"
+          className={t.map ? "w-[400px] shrink-0" : "min-w-0 flex-1"}
           title={
             <>
-              Documents for all sites <span className="font-normal text-text-tertiary">{t.sharedDocs.length}</span>
+              Documents for all assets <span className="font-normal text-text-tertiary">{t.sharedDocs.length}</span>
             </>
           }
           right={<Button type="link" ariaLabel={`Download all ${t.fileCount} files`}>Download all</Button>}
@@ -606,14 +649,14 @@ function SitesAndDocs({ t }: { t: Tender }) {
       <Card
         title={
           <>
-            Sites <span className="font-normal text-text-tertiary">{t.sites.length}</span>
+            Assets <span className="font-normal text-text-tertiary">{t.sites.length}</span>
           </>
         }
         right={<span className="p7">{t.sitesHint}</span>}
         bodyClassName="p-0"
       >
-        <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_110px] items-center gap-4 border-b border-border-light px-4 py-2 pl-8">
-          <span className="s3 text-text-tertiary">Site</span>
+        <div className="grid grid-cols-[minmax(200px,320px)_minmax(180px,260px)_minmax(140px,220px)_minmax(110px,1fr)] items-center gap-x-10 border-b border-border-light px-4 py-2 pl-8">
+          <span className="s3 text-text-tertiary">Asset</span>
           <span className="s3 text-text-tertiary">System</span>
           <span className="s3 text-text-tertiary">Documents</span>
           <span />
@@ -622,7 +665,7 @@ function SitesAndDocs({ t }: { t: Tender }) {
           <div
             key={s.n}
             className={cn(
-              "grid min-h-14 grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_110px] items-center gap-4 px-4 py-3 pl-8 hover:bg-black-1",
+              "grid min-h-14 grid-cols-[minmax(200px,320px)_minmax(180px,260px)_minmax(140px,220px)_minmax(110px,1fr)] items-center gap-x-10 px-4 py-3 pl-8 hover:bg-black-1",
               i < t.sites.length - 1 && "border-b border-border-light",
             )}
           >
@@ -634,17 +677,21 @@ function SitesAndDocs({ t }: { t: Tender }) {
               {s.system}
               {s.systemNote && <span className="block p7 text-text-tertiary">{s.systemNote}</span>}
             </div>
-            <div className="grid grid-cols-[minmax(0,1fr)_32px] items-center gap-2">
+            {s.files.length ? (
               <div className="min-w-0">
-                <p className="p6 text-text-primary">{s.files.length} {s.files.length === 1 ? "file" : "files"}</p>
+                <p className="flex items-center gap-1 p6 text-text-primary">
+                  {s.files.length} {s.files.length === 1 ? "file" : "files"}
+                  <IconButton icon="download" label={`Download files for ${s.name}`} />
+                </p>
                 <p className="truncate p7 text-text-tertiary">
                   {s.files.map((f, j) => (j === 0 ? f.name : f.name.toLowerCase())).join(", ")}
                 </p>
               </div>
-              <IconButton icon="download" label={`Download files for ${s.name}`} />
-            </div>
+            ) : (
+              <p className="p6 text-text-tertiary">No files</p>
+            )}
             <div className="flex justify-end">
-              <Button type="tertiary" icon="chevron-right" iconPosition="right">View site</Button>
+              <Button type="tertiary" icon="chevron-right" iconPosition="right">View asset</Button>
             </div>
           </div>
         ))}

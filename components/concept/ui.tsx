@@ -782,6 +782,74 @@ export function FilterChips({
   );
 }
 
+/** DS Checkbox: 16px, radius-sm; checked black-7 with a white tick (never orange). Optional two-line label. */
+export function Checkbox({
+  checked,
+  onChange,
+  label,
+  detail,
+  muted,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: ReactNode;
+  detail?: ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3">
+      <input type="checkbox" className="peer sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span
+        aria-hidden
+        className={cn(
+          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] outline-none peer-focus-visible:shadow-focus",
+          checked ? "border-black-7 bg-black-7 text-white" : "border-black-6 bg-white",
+        )}
+      >
+        {checked && <Icon name="check" size={12} />}
+      </span>
+      <span className="min-w-0">
+        <span className={cn("block h8", muted ? "text-text-tertiary" : "text-text-primary")}>{label}</span>
+        {detail && <span className="block p7 text-text-secondary">{detail}</span>}
+      </span>
+    </label>
+  );
+}
+
+/** DS Radio: 16px round; checked is a 5px black-7 ring. Optional two-line label. */
+export function Radio({
+  name,
+  checked,
+  onChange,
+  label,
+  detail,
+}: {
+  name: string;
+  checked: boolean;
+  onChange: () => void;
+  label: ReactNode;
+  detail?: ReactNode;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3">
+      <input
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className={cn(
+          "mt-0.5 size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-black-4 bg-bg-container checked:border-[5px] checked:border-black-7",
+          focusRing,
+        )}
+      />
+      <span className="min-w-0">
+        <span className="flex flex-wrap items-center gap-2 h8 text-text-primary">{label}</span>
+        {detail && <span className="block p7 text-text-secondary">{detail}</span>}
+      </span>
+    </label>
+  );
+}
+
 export function YourActionOnly({
   checked,
   onChange,

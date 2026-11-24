@@ -14,8 +14,10 @@ import { cn } from "@/lib/utils";
 import { STRUCTURES, type OfferStructure, type QuoteQuestion, type SupplierTender as Tender } from "@/lib/concept/supplier";
 import { AFTER_DEADLINE, type TenderRow, type TenderState } from "@/lib/concept/supplierList";
 import { Outcome } from "./SupplierOutcome";
-import { Button, ChipTrack, Icon, IconButton, ResponsibilityPill, focusRing } from "./ui";
+import { Button, ChipTrack, Checkbox, Icon, IconButton, Radio, ResponsibilityPill, focusRing } from "./ui";
+import { Tag } from "@/components/ds/tag";
 import { StateMark } from "./ops-asset/opsUi";
+import { CountPill } from "./ops-workspace";
 
 export type OfferPhase = "start" | "reading" | "check" | "sent";
 type Unit = "days" | "weeks";
@@ -39,6 +41,9 @@ export interface Offer {
   /** How you're offering; null when the structure we read isn't one this tender takes. */
   structure: OfferStructure | null;
   setStructure: (s: OfferStructure) => void;
+  /** One offer for all: do prices hold if only some are awarded? null = not answered. */
+  partial: boolean | null;
+  setPartial: (v: boolean) => void;
   answers: Record<string, Answer | undefined>;
   resend: boolean;
   /** The offer window (C8 · B3) is open. */
@@ -86,11 +91,14 @@ export function useOffer(t: Tender, state: TenderState = "new"): Offer {
   const first = initialPhase(state);
   const [phase, setPhase] = useState<OfferPhase>(first);
   const [files, setFiles] = useState<string[]>(
-    first === "check" ? PRESET_FILES.slice(0, 2) : first === "sent" ? PRESET_FILES : [],
+    t.quote.fileNames && first !== "start"
+      ? t.quote.fileNames
+      : first === "check" ? PRESET_FILES.slice(0, 2) : first === "sent" ? PRESET_FILES : [],
   );
   const [price, setPrice] = useState(q.price.value);
   const [start, setStart] = useState(q.start.value);
   const [unit, setUnit] = useState<Unit | null>(first === "sent" ? "days" : null);
+  const [partial, setPartial] = useState<boolean | null>(first === "sent" ? true : null);
   const [warranties, setWarranties] = useState({ panels: q.warranties.panels, inverters: q.warranties.inverters, workmanship: q.warranties.workmanship });
   const [sites, setSites] = useState<number[]>(() => t.sites.map((s) => s.n));
   const [structure, setStructure] = useState<OfferStructure | null>(() => {
@@ -117,6 +125,8 @@ export function useOffer(t: Tender, state: TenderState = "new"): Offer {
     sites,
     structure,
     setStructure,
+    partial,
+    setPartial,
     answers,
     resend,
     open,
@@ -127,7 +137,9 @@ export function useOffer(t: Tender, state: TenderState = "new"): Offer {
     },
     focus,
     setFocus,
-    openCount: (unit ? 0 : 1) + (structure ? 0 : 1) + (sites.length ? 0 : 1) + (structure && unassigned(t, structure, sites).length ? 1 : 0),
+    openCount: (unit || !checksOf(t).includes("duration") ? 0 : 1) +
+      (structure === "one" && sites.length > 1 && partial === null ? 1 : 0) +
+      missingVariants(t).length + (structure ? 0 : 1) + (sites.length ? 0 : 1) + (structure && unassigned(t, structure, sites).length ? 1 : 0),
     unanswered,
     inputRef,
     pick: () => inputRef.current?.click(),
@@ -177,6 +189,16 @@ export function sitesLine(t: Tender, ns: number[]) {
 }
 const sitesCount = (t: Tender, ns: number[]) => `${ns.length} of ${t.sites.length}`;
 
+export const checksOf = (t: Tender) => t.checks ?? ["start", "duration", "warranties"];
+/** "site" or "building", by tender. */
+export const unitOf = (t: Tender, n = 1) => `${t.unitWord ?? "asset"}${n === 1 ? "" : "s"}`;
+/** Required brief variants the quote doesn't answer. */
+export function missingVariants(t: Tender) {
+  if (!t.variants || !t.quote.quoteVariants) return [];
+  return t.variants.filter((v) => v.need === "required" && !t.quote.quoteVariants!.some((q) => q.brief === v.key));
+}
+export const fmt = (t: Tender, n: number) => `${t.currency ?? "£"}${Math.round(n).toLocaleString("en-GB")}`;
+
 /** Kept sites that no lot covers (lots only; per site and overlapping always cover what they list). */
 export function unassigned(t: Tender, structure: OfferStructure, sites: number[]) {
   if (structure !== "lots") return [];
@@ -188,16 +210,16 @@ export function unassigned(t: Tender, structure: OfferStructure, sites: number[]
 export function priceRows(t: Tender, offer: Pick<Offer, "structure" | "sites" | "price">) {
   const q = t.quote;
   const kept = (ns: number[]) => ns.filter((n) => offer.sites.includes(n));
-  const name = (n: number) => t.sites.find((s) => s.n === n)?.name ?? `Site ${n}`;
+  const name = (n: number) => t.sites.find((s) => s.n === n)?.name ?? `Asset ${n}`;
   const names = (ns: number[]) => (ns.length === t.sites.length && ns.length > 2 ? `All ${ns.length}` : ns.map(name).join(" · "));
   switch (offer.structure) {
     case "lots": {
       const lots = q.lots.map((l) => ({ ...l, sites: kept(l.sites) })).filter((l) => l.sites.length);
-      return { rows: lots.map((l) => ({ key: l.name, label: l.name, sites: names(l.sites), price: l.price })), total: gbp(lots.reduce((n, l) => n + money(l.price), 0)), totalLabel: "Total" };
+      return { rows: lots.map((l) => ({ key: l.name, label: l.name, sites: names(l.sites), price: l.price })), total: fmt(t, lots.reduce((n, l) => n + money(l.price), 0)), totalLabel: "Total" };
     }
     case "perSite": {
       const ns = offer.sites;
-      return { rows: ns.map((n) => ({ key: String(n), label: name(n), sites: "", price: q.perSite[n] ?? "—" })), total: gbp(ns.reduce((n, k) => n + money(q.perSite[k] ?? "0"), 0)), totalLabel: `If all ${ns.length}` };
+      return { rows: ns.map((n) => ({ key: String(n), label: name(n), sites: "", price: q.perSite[n] ?? "—" })), total: fmt(t, ns.reduce((n, k) => n + money(q.perSite[k] ?? "0"), 0)), totalLabel: `If all ${ns.length}` };
     }
     case "overlap": {
       const offers = q.offers.map((o) => ({ ...o, sites: kept(o.sites) })).filter((o) => o.sites.length);
@@ -210,12 +232,17 @@ export function priceRows(t: Tender, offer: Pick<Offer, "structure" | "sites" | 
 
 /** One line for summaries: "£293,478 · in 2 lots", "3 offers · from £214,000". */
 export function priceSummary(t: Tender, offer: Pick<Offer, "structure" | "sites" | "price">) {
+  const qv = t.quote.quoteVariants;
+  if (qv) {
+    const n = offer.sites.length;
+    return `${qv.length} variants · ${n} of ${t.sites.length} ${unitOf(t, t.sites.length)}`;
+  }
   const p = priceRows(t, offer);
   if (offer.structure === "lots") return `${p.total} · in ${p.rows.length} ${p.rows.length === 1 ? "lot" : "lots"}`;
-  if (offer.structure === "perSite") return `${p.rows.length} ${p.rows.length === 1 ? "site price" : "site prices"} · ${p.total} if all`;
+  if (offer.structure === "perSite") return `${p.rows.length} ${p.rows.length === 1 ? "asset price" : "asset prices"} · ${p.total} if all`;
   if (offer.structure === "overlap") {
     const totals = p.rows.map((r) => money(r.price)).filter((n) => n > 10000);
-    return `${p.rows.length} ${p.rows.length === 1 ? "offer" : "offers"}${totals.length ? ` · from ${gbp(Math.min(...totals))}` : ""}`;
+    return `${p.rows.length} ${p.rows.length === 1 ? "offer" : "offers"}${totals.length ? ` · from ${fmt(t, Math.min(...totals))}` : ""}`;
   }
   return offer.price;
 }
@@ -251,7 +278,7 @@ function startAfter(offer: Offer) {
 
 /** What the customer sees, one line each. Used for "You said". */
 export function saidJob(t: Tender, offer: Offer) {
-  return `${sitesCount(t, offer.sites)} sites · start ${startAfter(offer)} · installation ${t.quote.installation} ${offer.unit ?? ""}`.trim();
+  return `${sitesCount(t, offer.sites)} assets · start ${startAfter(offer)} · installation ${t.quote.installation} ${offer.unit ?? ""}`.trim();
 }
 export function saidPrice(offer: Offer, t?: Tender) {
   const w = offer.warranties;
@@ -316,15 +343,15 @@ function UploadRow({ offer }: { offer: Offer }) {
     <div className="flex items-center justify-between gap-3 rounded-md border-[1.5px] border-dashed border-black-3 bg-black-2 py-3 pl-4 pr-3 hover:border-black-4">
       <div className="flex items-center gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border-dark bg-white">
-          <Icon name="upload" size={20} className="text-icon-dark" />
+          <Icon name="upload" size={20} className="text-icon-strong" />
         </span>
         <div>
           <p className="h8 text-text-primary">Drop your quote here</p>
-          <p className="p7 text-text-secondary">Add drawings and datasheets too. We read them and fill what we can.</p>
+          <p className="p7 text-text-secondary">Quote, drawings, datasheets. We read them and fill what we can.</p>
         </div>
       </div>
-      <Button type="secondary" icon="upload" onClick={offer.pick}>
-        Upload files
+      <Button type="secondary" onClick={offer.pick}>
+        Upload documents
       </Button>
     </div>
   );
@@ -333,8 +360,10 @@ function UploadRow({ offer }: { offer: Offer }) {
 /** DS: UploadRow, then a DocumentList in a white box (border-light, radius-md, padding 0 12). */
 function Files({ t, offer, reading, readOnly }: { t: Tender; offer: Offer; reading?: boolean; readOnly?: boolean }) {
   const n = offer.files.length;
+  const [all, setAll] = useState(false);
+  const shown = all || n <= 5 ? offer.files : offer.files.slice(0, 4);
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3 border-b border-border-light pb-2">
         <h3 className="s3 text-text-tertiary">Your files</h3>
         {n > 0 && (
@@ -346,7 +375,7 @@ function Files({ t, offer, reading, readOnly }: { t: Tender; offer: Offer; readi
       {!readOnly && <UploadRow offer={offer} />}
       {n > 0 && (
         <ul className="rounded-md border border-border-light bg-white px-3">
-          {offer.files.map((name, i) => {
+          {shown.map((name, i) => {
             const f = t.quote.files[i];
             return (
               <li key={name} className="flex items-center gap-3 border-b border-border-light py-2.5 last:border-b-0">
@@ -362,16 +391,21 @@ function Files({ t, offer, reading, readOnly }: { t: Tender; offer: Offer; readi
                   )}
                 </div>
                 {readOnly ? (
-                  <IconButton icon="download" size="small" label={`Download ${name}`} />
+                  <IconButton icon="download" label={`Download ${name}`} />
                 ) : reading ? (
                   <Icon name="spinner" size={16} className="shrink-0 animate-spin text-icon-default" />
                 ) : (
-                  <IconButton icon="trash" size="small" label={`Remove ${name}`} onClick={() => offer.removeFile(name)} />
+                  <IconButton icon="trash" label={`Remove ${name}`} onClick={() => offer.removeFile(name)} />
                 )}
               </li>
             );
           })}
         </ul>
+      )}
+      {n > 5 && (
+        <Button type="link" className="-mt-1 self-start" onClick={() => setAll(!all)}>
+          {all ? "Show fewer" : `Show all ${n} files`}
+        </Button>
       )}
     </section>
   );
@@ -405,10 +439,11 @@ function Row({
   const on = offer.focus === k;
   return (
     <div
+      id={`chk-${k}`}
       onClick={() => offer.setFocus(k)}
       onFocusCapture={() => offer.setFocus(k)}
       className={cn(
-        "grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 border-b border-border-light py-4",
+        "scroll-mt-4 grid grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 border-b border-border-light py-4",
         on && selectedRow,
       )}
     >
@@ -498,7 +533,7 @@ function SitesEdit({ t, offer, onDone }: { t: Tender; offer: Offer; onDone: () =
           Select all
         </Button>
       </div>
-      {all > 10 && <input className={cn(inputClass, "w-full")} placeholder="Search sites" aria-label="Search sites" value={q} onChange={(e) => setQ(e.target.value)} />}
+      {all > 10 && <input className={cn(inputClass, "w-full")} placeholder="Search assets" aria-label="Search assets" value={q} onChange={(e) => setQ(e.target.value)} />}
       <div className="max-h-[232px] overflow-y-auto rounded-md border border-border-dark bg-white">
         {shown.map((s) => (
           <label key={s.n} className="flex cursor-pointer items-center gap-2.5 border-b border-border-light px-3 py-2 last:border-b-0 p6 text-text-primary">
@@ -531,49 +566,283 @@ function SitesEdit({ t, offer, onDone }: { t: Tender; offer: Offer; onDone: () =
   );
 }
 
-/** Sites: one checkbox row per site; a site can be left out (grey, never amber). */
+/** Assets (or buildings grouped by asset): a done RequirementRow; Edit opens the list in the grey edit box (DS: Sites covered). */
 function SitesRow({ t, offer }: { t: Tender; offer: Offer }) {
-  const all = t.sites.map((s) => s.n);
+  const [editing, setEditing] = useState(false);
+  const [sel, setSel] = useState<number[]>(offer.sites);
   const n = offer.sites.length;
-  const toggle = (k: number, on: boolean) =>
-    offer.setSites(on ? [...offer.sites, k].sort((a, b) => a - b) : offer.sites.filter((x) => x !== k));
+  const word = unitOf(t, 2);
+  const left = t.sites.filter((s) => !offer.sites.includes(s.n));
+  const open = editing || n === 0;
+  const set = (ns: number[]) => setSel([...new Set(ns)].sort((a, b) => a - b));
+  const groups: Array<{ name?: string; sites: Tender["sites"] }> = [];
+  for (const s of t.sites) {
+    const g = groups.find((x) => x.name === s.group);
+    if (g) g.sites.push(s);
+    else groups.push({ name: s.group, sites: [s] });
+  }
+  const item = (s: Tender["sites"][number]) => {
+    const on = sel.includes(s.n);
+    return (
+      <div key={s.n} className="border-b border-border-light py-2 last:border-b-0">
+        <Checkbox
+          checked={on}
+          onChange={(v) => set(v ? [...sel, s.n] : sel.filter((x) => x !== s.n))}
+          muted={!on}
+          label={s.group ? s.name : `${s.n} · ${s.name}`}
+          detail={on ? `${s.systemNote === "Estimate" ? "~" : ""}${s.system}` : "Left out: the customer sees you didn't offer for it"}
+        />
+      </div>
+    );
+  };
   return (
     <Row
       k="sites"
       offer={offer}
-      name="Sites"
+      name={word[0].toUpperCase() + word.slice(1)}
       done={n > 0}
-      line={n ? `${n} of ${t.sites.length} · ${t.quote.sitesSource}` : "Choose at least one site"}
+      line={
+        n
+          ? `${n} of ${t.sites.length}${left.length ? ` · left out: ${left.map((s) => s.name).join(", ")}` : ""} · ${t.quote.sitesSource}`
+          : `Choose at least one ${unitOf(t)}`
+      }
       action={
-        <span className="flex items-center gap-3">
-          <Button type="link" onClick={() => offer.setSites(all)}>All</Button>
-          <Button type="link" onClick={() => offer.setSites([])}>None</Button>
-        </span>
+        !open && (
+          <Button type="tertiary" icon="edit" onClick={() => { setSel(offer.sites); setEditing(true); }}>
+            Edit
+          </Button>
+        )
       }
     >
-      <div>
-        {t.sites.map((s) => {
-          const on = offer.sites.includes(s.n);
-          return (
-            <label key={s.n} className="flex cursor-pointer items-start gap-3 border-b border-border-light py-2.5 last:border-b-0">
-              <input
-                type="checkbox"
-                className={cn("mt-0.5 size-4 shrink-0 accent-[var(--black-7)]", focusRing)}
-                checked={on}
-                onChange={(e) => toggle(s.n, e.target.checked)}
-              />
-              <span className="min-w-0">
-                <span className={cn("block h8", on ? "text-text-primary" : "text-text-tertiary")}>
-                  {s.n} · {s.name}
-                </span>
-                <span className="block p7 text-text-secondary">
-                  {on ? `${s.systemNote === "Estimate" ? "~" : ""}${s.system}` : "Left out: the customer sees you didn't offer for it"}
-                </span>
-              </span>
-            </label>
-          );
-        })}
-      </div>
+      {open && (
+        <div className="flex flex-col gap-2.5 rounded-md border border-border-dark bg-black-1 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="s3 text-text-tertiary">
+              {word[0].toUpperCase() + word.slice(1)} in your offer · {sel.length} of {t.sites.length}
+            </span>
+            <Button type="link" onClick={() => set(t.sites.map((s) => s.n))}>Select all</Button>
+          </div>
+          <div className="max-h-[320px] overflow-y-auto rounded-md border border-border-dark bg-white px-3">
+            {groups.map((g) =>
+              g.name ? (
+                <div key={g.name}>
+                  <div className="flex items-baseline justify-between gap-3 border-b border-border-light pb-1.5 pt-3">
+                    <span className="s3 text-text-tertiary">{g.name}</span>
+                    {g.sites.every((s) => sel.includes(s.n)) ? (
+                      <Button type="link" onClick={() => set(sel.filter((x) => !g.sites.some((s) => s.n === x)))}>None here</Button>
+                    ) : (
+                      <Button type="link" onClick={() => set([...sel, ...g.sites.map((s) => s.n)])}>All here</Button>
+                    )}
+                  </div>
+                  {g.sites.map(item)}
+                </div>
+              ) : (
+                g.sites.map(item)
+              ),
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="primary"
+              disabled={sel.length === 0}
+              onClick={() => {
+                offer.setSites(sel);
+                setEditing(false);
+              }}
+            >
+              {`Save ${sel.length} ${sel.length === 1 ? unitOf(t) : word}`}
+            </Button>
+            {n > 0 && (
+              <Button type="secondary" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </Row>
+  );
+}
+
+/** Only for "one offer for all": do the prices hold if only some are awarded? (C13) */
+function PartialRow({ t, offer }: { t: Tender; offer: Offer }) {
+  if (offer.structure !== "one" || offer.sites.length < 2) return null;
+  const w = unitOf(t, 2);
+  return (
+    <Row
+      k="partial"
+      offer={offer}
+      name={`If only some ${w} are awarded`}
+      done={offer.partial !== null}
+      line={
+        offer.partial === null
+          ? `The customer may choose different suppliers for different ${w}`
+          : offer.partial
+            ? `Your prices hold for any ${unitOf(t)}`
+            : "Your prices hold only if all are awarded"
+      }
+    >
+      <Seg
+        label={`Do your prices hold if only some ${w} are awarded?`}
+        options={["Yes", "No"] as Array<"Yes" | "No">}
+        value={offer.partial === null ? null : offer.partial ? "Yes" : "No"}
+        onChange={(v) => offer.setPartial(v === "Yes")}
+      />
+    </Row>
+  );
+}
+
+const tagClass = "inline-flex h-5 items-center rounded-full border px-1.5 h9";
+
+const amount = (v: string | undefined) => Number((v ?? "").replace(/[^0-9.]/g, "")) || 0;
+
+/** Buildings down, variants across (C14). Two header rows: the offer with its condition once, spanning
+ *  its terms; then the terms, right-aligned over the numbers. Locations are h8 rows (no band, same left edge) with their lot
+ *  and count once. Total a year in h8 over a black-7 rule. Left-out buildings drop out (or show, after sending). */
+export function VariantTable({ t, offer, showLeftOut }: { t: Tender; offer: Pick<Offer, "sites" | "structure">; showLeftOut?: boolean }) {
+  const qv = t.quote.quoteVariants ?? [];
+  const offerOf = (label: string) => label.split(",")[0].trim();
+  const termOf = (label: string) => (label.includes(",") ? label.split(",").slice(1).join(",").trim() : label);
+  const heads: Array<{ name: string; note?: string; wholeOnly?: boolean; span: number }> = [];
+  for (const v of qv) {
+    const last = heads[heads.length - 1];
+    if (last && last.name === offerOf(v.label)) last.span++;
+    else heads.push({ name: offerOf(v.label), note: v.note, wholeOnly: v.wholeOnly, span: 1 });
+  }
+  const lotOf = (n: number) => (offer.structure === "lots" ? t.quote.lots.find((l) => l.sites.includes(n))?.name : undefined);
+  const groups: string[] = [];
+  for (const s of t.sites) if (!groups.includes(s.group ?? "")) groups.push(s.group ?? "");
+  const inOffer = t.sites.filter((s) => offer.sites.includes(s.n));
+  const total = (key: string) => {
+    const v = qv.find((x) => x.key === key)!;
+    const sum = inOffer.reduce((a, s) => a + amount(v.prices[s.n]), 0);
+    return `${t.currency ?? "£"}${sum.toLocaleString("en-GB")}`;
+  };
+  const unit = unitOf(t).replace(/^./, (c) => c.toUpperCase());
+  const num = "pl-4 text-right";
+  const notes = heads.filter((h) => h.wholeOnly || (h.note && !/^no /i.test(h.note)));
+  return (
+    <div className="overflow-x-auto">
+      {notes.map((h) => (
+        <p key={h.name} className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 p7 text-text-secondary">
+          <span className="h9 text-text-primary">{h.name}</span>
+          {h.note && <span>{h.note}</span>}
+          {h.wholeOnly && <Tag type="warning" size="xsmall">Only if all are awarded</Tag>}
+        </p>
+      ))}
+      <table className="w-full min-w-[640px] border-collapse">
+        <colgroup>
+          <col />
+          {qv.map((v) => (
+            <col key={v.key} className="w-[112px]" />
+          ))}
+        </colgroup>
+        <thead>
+          <tr>
+            <th className="border-b border-border-dark pb-2 text-left align-bottom">
+              <span className="h9 text-text-secondary">{unit}</span>
+            </th>
+            {qv.map((v) => (
+              <th key={v.key} className={cn("border-b border-border-dark pb-2 align-bottom font-normal", num)}>
+                <span className="block h9 text-text-primary">{offerOf(v.label)}</span>
+                <span className="block p7 text-text-secondary">{termOf(v.label)}</span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {groups.map((g) => {
+            const rows = t.sites.filter((s) => (s.group ?? "") === g);
+            const shown = showLeftOut ? rows : rows.filter((s) => offer.sites.includes(s.n));
+            if (!shown.length) return null;
+            const lot = lotOf(shown[0].n);
+            return [
+              g ? (
+                <tr key={`g-${g}`}>
+                  <td colSpan={qv.length + 1} className="border-b border-border-light pb-2 pt-4">
+                    <span className="h8 text-text-primary">{g}</span>
+                    <span className="p7 text-text-tertiary">
+                      {lot ? ` · ${lot}` : ""} · {shown.length} {unitOf(t, shown.length)}
+                    </span>
+                  </td>
+                </tr>
+              ) : null,
+              ...shown.map((s) => {
+                const on = offer.sites.includes(s.n);
+                return (
+                  <tr key={s.n}>
+                    <td className="border-b border-border-light py-2 p6 text-text-primary">{s.name}</td>
+                    {on ? (
+                      qv.map((v) => (
+                        <td key={v.key} className={cn("border-b border-border-light py-2 p6 text-text-primary", num)}>
+                          {v.prices[s.n] ?? "—"}
+                        </td>
+                      ))
+                    ) : (
+                      <td colSpan={qv.length} className="border-b border-border-light py-2 pl-4 p6 text-text-tertiary">
+                        Not offered: open to other suppliers
+                      </td>
+                    )}
+                  </tr>
+                );
+              }),
+            ];
+          })}
+          <tr>
+            <td className="border-t border-black-7 pt-2.5 h8 text-text-primary">Total a year</td>
+            {qv.map((v) => (
+              <td key={v.key} className={cn("border-t border-black-7 pt-2.5 h8 text-text-primary", num)}>
+                {total(v.key)}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function VariantPriceRow({ t, offer }: { t: Tender; offer: Offer }) {
+  const missing = offer.structure ? unassigned(t, offer.structure, offer.sites) : [];
+  const noVariant = missingVariants(t);
+  const qv = t.quote.quoteVariants ?? [];
+  const optionalOut = (t.variants ?? []).filter((b) => b.need === "optional" && !qv.some((v) => v.brief === b.key));
+  const flags = [
+    ...(missing.length ? [`Not in any lot: ${missing.map((s) => s.name).join(", ")}`] : []),
+    ...(noVariant.length ? [`The brief asks for ${noVariant.map((v) => v.label).join(", ")}. Not in your files`] : []),
+  ];
+  return (
+    <Row
+      k="price"
+      offer={offer}
+      name="Prices"
+      done={flags.length === 0}
+      line={`${qv.length} variants · ${(t.quote.priceUnit ?? "price").replace(/^./, (c) => c.toLowerCase())} · ${t.quote.price.source}`}
+      flags={flags.length ? flags : undefined}
+    >
+      <VariantTable t={t} offer={offer} />
+      {optionalOut.map((b) => (
+        <p key={b.key} className="pt-2 p7 text-text-secondary">
+          {b.label} (optional in the brief): not offered
+        </p>
+      ))}
+    </Row>
+  );
+}
+
+function TermsRow({ t, offer }: { t: Tender; offer: Offer }) {
+  const terms = t.quote.terms;
+  if (!terms) return null;
+  return (
+    <Row k="terms" offer={offer} name="Terms" done line={`${terms.length} read · the same for every ${unitOf(t)}`}>
+      <dl>
+        {terms.map((r) => (
+          <div key={r.label} className="grid grid-cols-[160px_minmax(0,1fr)] gap-4 border-b border-border-light py-2 last:border-b-0">
+            <dt className="p6 text-text-secondary">{r.label}</dt>
+            <dd className="p6 text-text-primary">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
     </Row>
   );
 }
@@ -581,45 +850,77 @@ function SitesRow({ t, offer }: { t: Tender; offer: Offer }) {
 /** How you're offering: only the structures this tender takes (set by Ops); the one we read is preselected. */
 function StructureRow({ t, offer }: { t: Tender; offer: Offer }) {
   const read = t.quote.structure.read;
+  const [editing, setEditing] = useState(false);
+  const [pick, setPick] = useState(offer.structure);
   if (t.structures.length === 1)
     return <Row k="structure" offer={offer} name="How you're offering" done line={`${STRUCTURES[t.structures[0]].short} · set by CQuel for this tender`} />;
   const readOk = t.structures.includes(read);
+  const open = editing || !offer.structure;
+  const choice = open ? pick : offer.structure;
   return (
     <Row
       k="structure"
       offer={offer}
       name="How you're offering"
       done={Boolean(offer.structure)}
-      line={`${t.structures.length} options for this tender · read from ${t.quote.structure.source.toLowerCase()}`}
-      flags={readOk ? undefined : [`Your quote reads as ${STRUCTURES[read].short.toLowerCase()}. This tender doesn't take that: pick one`]}
+      line={
+        offer.structure
+          ? `${STRUCTURES[offer.structure].label} · ${offer.structure === read ? `read from ${t.quote.structure.source.toLowerCase()}` : "Typed"}`
+          : `${t.structures.length} options for this tender`
+      }
+      flags={!offer.structure && !readOk ? [`Your quote reads as ${STRUCTURES[read].short.toLowerCase()}. This tender doesn't take that: pick one`] : undefined}
+      action={
+        !open && (
+          <Button type="tertiary" icon="edit" onClick={() => { setPick(offer.structure); setEditing(true); }}>
+            Edit
+          </Button>
+        )
+      }
     >
-      <div role="radiogroup" aria-label="How you're offering">
-        {t.structures.map((k) => {
-          const on = offer.structure === k;
-          return (
-            <label key={k} className="flex cursor-pointer items-start gap-3 border-b border-border-light py-2.5 last:border-b-0">
-              <input
-                type="radio"
-                name="structure"
-                className={cn("mt-0.5 size-4 shrink-0 accent-[var(--black-7)]", focusRing)}
-                checked={on}
-                onChange={() => offer.setStructure(k)}
-              />
-              <span className="min-w-0">
-                <span className="flex flex-wrap items-center gap-2 h8 text-text-primary">
-                  {STRUCTURES[k].label}
-                  {k === read && (
-                    <span className="inline-flex h-5 items-center rounded-full border border-status-info-border bg-status-info-bg px-1.5 h9 text-status-info-text">
-                      We read this
-                    </span>
-                  )}
-                </span>
-                <span className="block p7 text-text-secondary">{STRUCTURES[k].text}</span>
-              </span>
-            </label>
-          );
-        })}
-      </div>
+      {open && (
+        <div className="flex flex-col gap-2.5 rounded-md border border-border-dark bg-black-1 px-4 py-3">
+          <span className="s3 text-text-tertiary">Options for this tender · {t.structures.length}</span>
+          <div role="radiogroup" aria-label="How you're offering" className="rounded-md border border-border-dark bg-white px-3">
+            {t.structures.map((k) => (
+              <div key={k} className="border-b border-border-light py-2 last:border-b-0">
+                <Radio
+                  name="structure"
+                  checked={choice === k}
+                  onChange={() => setPick(k)}
+                  label={
+                    <>
+                      {STRUCTURES[k].label}
+                      {k === read && (
+                        <Tag type="info" size="xsmall">
+                          We read this
+                        </Tag>
+                      )}
+                    </>
+                  }
+                  detail={STRUCTURES[k].text}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="primary"
+              disabled={!pick}
+              onClick={() => {
+                if (pick) offer.setStructure(pick);
+                setEditing(false);
+              }}
+            >
+              Save
+            </Button>
+            {offer.structure && (
+              <Button type="secondary" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </Row>
   );
 }
@@ -639,27 +940,27 @@ function PriceRow({ t, offer }: { t: Tender; offer: Offer }) {
     <Row
       k="price"
       offer={offer}
-      name={offer.structure === "overlap" ? "Your offers" : offer.structure === "lots" ? "Price per lot" : "Price per site"}
+      name={offer.structure === "overlap" ? "Your offers" : offer.structure === "lots" ? "Price per lot" : "Price per asset"}
       done={missing.length === 0}
       line={`${priceSummary(t, offer)} · excl. VAT · ${t.quote.price.source}`}
       flags={missing.length ? [`Not in any lot: ${missing.map((s) => s.name).join(", ")}`] : undefined}
     >
       <div>
         {p.rows.map((r) => (
-          <div key={r.key} className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-baseline gap-x-4 border-b border-border-light py-2">
-            <span className="h8 text-text-primary">{r.label}</span>
+          <div key={r.key} className="grid grid-cols-[minmax(120px,auto)_minmax(0,1fr)_auto] items-baseline gap-x-4 border-b border-border-light py-2 last-of-type:border-b-0">
+            <span className="p6 text-text-primary">{r.label}</span>
             <span className="min-w-0 p6 text-text-secondary">
               {r.sites}
               {"condition" in r && r.condition ? (r.sites ? ` · ${r.condition}` : r.condition) : ""}
             </span>
-            <span className="text-right h8 tabular-nums text-text-primary">{r.price}</span>
+            <span className="text-right p6 text-text-primary">{r.price}</span>
           </div>
         ))}
         {p.total && (
-          <div className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-baseline gap-x-4 py-2">
+          <div className="grid grid-cols-[minmax(120px,auto)_minmax(0,1fr)_auto] items-baseline gap-x-4 border-t border-black-7 pb-2 pt-2.5">
             <span className="h8 text-text-primary">{p.totalLabel}</span>
             <span />
-            <span className="text-right h8 tabular-nums text-text-primary">{p.total}</span>
+            <span className="text-right h8 text-text-primary">{p.total}</span>
           </div>
         )}
         {counts && <p className="pt-2 p7 text-text-secondary">{counts}. The customer awards each site under one offer.</p>}
@@ -682,17 +983,23 @@ function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
     <div>
       <SitesRow t={t} offer={offer} />
       <StructureRow t={t} offer={offer} />
-      {offer.structure === "one" || !offer.structure ? (
+      <PartialRow t={t} offer={offer} />
+      {t.quote.quoteVariants ? (
+        <VariantPriceRow t={t} offer={offer} />
+      ) : offer.structure === "one" || !offer.structure ? (
         <Row k="price" offer={offer} name="Total price" done line={`${offer.price} excl. VAT · ${q.price.source}`} action={editing !== "price" && edit("price")}>
           {editing === "price" && <TextEdit initial={offer.price} label="Total price" onSave={(v) => { offer.setPrice(v); close(); }} onCancel={close} />}
         </Row>
       ) : (
         <PriceRow t={t} offer={offer} />
       )}
+      <TermsRow t={t} offer={offer} />
+      {checksOf(t).includes("start") && (
       <Row k="start" offer={offer} name="Start" done line={`${offer.start} · your preferred start · ${q.start.source}`} action={editing !== "start" && edit("start")}>
         {editing === "start" && <TextEdit initial={offer.start} label="Start" onSave={(v) => { offer.setStart(v); close(); }} onCancel={close} />}
       </Row>
-      {offer.unit && editing !== "duration" ? (
+      )}
+      {!checksOf(t).includes("duration") ? null : offer.unit && editing !== "duration" ? (
         <Row k="duration" offer={offer} name="Duration" done line={`${durationLine(t, offer.unit)} · ${q.durationSource}`} action={edit("duration")} />
       ) : (
         <Row
@@ -714,6 +1021,7 @@ function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
           />
         </Row>
       )}
+      {checksOf(t).includes("warranties") && (
       <Row
         k="warranties"
         offer={offer}
@@ -725,15 +1033,24 @@ function CheckRows({ t, offer }: { t: Tender; offer: Offer }) {
       >
         {editing === "warranties" && <WarrantyEdit offer={offer} onDone={close} />}
       </Row>
+      )}
     </div>
   );
 }
 
 /* ------------------------------------------------------------ questions */
 
+function ScopeTags({ q }: { q: QuoteQuestion }) {
+  return (
+    <>
+      {q.scope && <span className={cn(tagClass, "border-border-dark bg-white text-text-title")}>{q.scope}</span>}
+    </>
+  );
+}
+
 function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
   const saved = offer.answers[q.key];
-  const [open, setOpen] = useState(!saved);
+  const [open, setOpen] = useState(false);
   const [text, setText] = useState(saved?.text ?? "");
   const [choice, setChoice] = useState<Answer["choice"]>(saved?.choice);
   const [wrongOpen, setWrongOpen] = useState(false);
@@ -742,12 +1059,40 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
 
   const on = offer.focus === q.key;
   const focusProps = { onClick: () => offer.setFocus(q.key), onFocusCapture: () => offer.setFocus(q.key) };
+  const rowId = `q-${q.key}`;
+  if (!saved && !open) {
+    return (
+      <div id={rowId} {...focusProps} className={cn("grid scroll-mt-4 grid-cols-[20px_minmax(0,1fr)_auto] items-start gap-x-4 border-b border-border-light py-4", on && selectedRow)}>
+        <StateMark state="open" size={20} />
+        <div className="min-w-0">
+          <p className="flex flex-wrap items-center gap-2 h8 text-text-primary">
+            {q.title}
+            <ScopeTags q={q} />
+          </p>
+          <p className="p7 text-text-secondary">{q.kind === "text" && !q.upload ? q.question : q.asks}</p>
+          <p className="p7 text-text-secondary">{q.read}</p>
+        </div>
+        {q.upload ? (
+          <Button type="secondary" icon="upload" onClick={() => offer.answer(q.key, { text: "File uploaded" })}>
+            {q.upload}
+          </Button>
+        ) : (
+          <Button type="secondary" onClick={() => setOpen(true)}>
+            Answer
+          </Button>
+        )}
+      </div>
+    );
+  }
   if (saved && !open) {
     return (
-      <div {...focusProps} className={cn("grid grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-4", on && selectedRow)}>
+      <div id={rowId} {...focusProps} className={cn("grid scroll-mt-4 grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border-light py-4", on && selectedRow)}>
         <StateMark state="done" size={20} />
         <div className="min-w-0">
-          <p className="h8 text-text-primary">{q.title}</p>
+          <p className="flex flex-wrap items-center gap-2 h8 text-text-primary">
+            {q.title}
+            <ScopeTags q={q} />
+          </p>
           <p className="p7 text-text-secondary">
             Answered: {answerLine(q, saved)}
             {saved.wrong ? " · you told us our reading was wrong" : ""}
@@ -761,20 +1106,23 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
   }
 
   return (
-    <div {...focusProps} className={cn("grid grid-cols-[20px_minmax(0,1fr)] gap-x-4 border-b border-border-light py-4", on && selectedRow)}>
+    <div id={rowId} {...focusProps} className={cn("grid scroll-mt-4 grid-cols-[20px_minmax(0,1fr)] gap-x-4 border-b border-border-light py-4", on && selectedRow)}>
       <span className="mt-0.5">
-        <StateMark state="open" size={20} />
+        <StateMark state={saved ? "done" : "open"} size={20} />
       </span>
       <div className="flex min-w-0 flex-col gap-2.5">
         <div>
-          <p className="h8 text-text-primary">{q.title}</p>
+          <p className="flex flex-wrap items-center gap-2 h8 text-text-primary">
+            {q.title}
+            <ScopeTags q={q} />
+          </p>
           <p className="p7 text-text-secondary">{q.asks}</p>
         </div>
         <div className="flex flex-col gap-1 rounded-md border border-border-dark bg-bg-container-grey px-3.5 py-2.5">
           <span className="p7 text-text-tertiary">What we read</span>
           <span className="p6 text-text-primary">{q.read}</span>
           <span className="p7 text-text-secondary">
-            &ldquo;{q.quote}&rdquo; · <Button type="link" className="p7">{`${q.source} ↗`}</Button>
+            {q.quote && <>&ldquo;{q.quote}&rdquo; · </>}<Button type="link" className="p7">{`${q.source} ↗`}</Button>
           </span>
         </div>
         <p className="h8 text-text-primary">{q.question}</p>
@@ -823,11 +1171,9 @@ function QuestionRow({ q, offer }: { q: QuoteQuestion; offer: Offer }) {
               Attach a file
             </Button>
           )}
-          {saved && (
-            <Button type="tertiary" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-          )}
+          <Button type="tertiary" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
           <span className="flex-1" />
           {!wrongOpen && (
             <Button type="link" className="p7" onClick={() => setWrongOpen(true)}>
@@ -862,8 +1208,8 @@ function GroupHead({ label, pill, urgent }: { label: string; pill?: string; urge
 function Questions({ t, offer }: { t: Tender; offer: Offer }) {
   const n = offer.unanswered;
   return (
-    <section className="flex flex-col">
-      <GroupHead label="Questions on your quote" pill={n ? `${n} to answer` : "All answered"} urgent={n > 0} />
+    <section id="sec-questions" className="flex scroll-mt-4 flex-col">
+      <GroupHead label="Questions" pill={n ? `${n} to answer` : "All answered"} urgent={n > 0} />
       {t.quote.questions.map((q) => (
         <QuestionRow key={q.key} q={q} offer={offer} />
       ))}
@@ -931,7 +1277,7 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
         ]
       : [
           { label: "Total", value: offer.price, note: "excl. VAT" },
-          { label: "Per kWp", value: gbp(money(offer.price) / q.kwp), note: `from ${q.kwp} kWp` },
+          ...(q.kwp ? [{ label: "Per kWp", value: gbp(money(offer.price) / q.kwp), note: `from ${q.kwp} kWp` }] : []),
         ];
   const speed: Fact[] = [
     { label: "Start", value: startNow, was: startNow !== offer.start ? offer.start : undefined },
@@ -966,11 +1312,21 @@ function Sent({ t, offer }: { t: Tender; offer: Offer }) {
           <h3 className="h7 text-text-primary">What the customer compares</h3>
           <p className="p7 text-text-secondary">Amber means outside what the customer expects.</p>
         </div>
+        {t.quote.quoteVariants ? (
+          <>
+            <VariantTable t={t} offer={offer} showLeftOut />
+            <p className="p7 text-text-secondary">
+              {t.quote.priceUnit} · {offer.sites.length} of {t.sites.length} {unitOf(t, t.sites.length)}
+              {t.quote.terms?.[0] ? ` · ${t.quote.terms[0].label}: ${t.quote.terms[0].value}` : ""}
+            </p>
+          </>
+        ) : (
         <div className="grid grid-cols-3 gap-8">
-          <FactColumn label={offer.structure && offer.structure !== "one" ? `Price · ${STRUCTURES[offer.structure].short.toLowerCase()}` : "Price"} rows={price} />
-          <FactColumn label="Speed" rows={speed} />
-          <FactColumn label="Warranties and cover" rows={quality} />
-        </div>
+            <FactColumn label={offer.structure && offer.structure !== "one" ? `Price · ${STRUCTURES[offer.structure].short.toLowerCase()}` : "Price"} rows={price} />
+            <FactColumn label="Speed" rows={speed} />
+            <FactColumn label="Warranties and cover" rows={quality} />
+          </div>
+        )}
       </section>
 
       <section className="flex flex-col">
@@ -1111,6 +1467,105 @@ function AboutCard({ t, k }: { t: Tender; k: string }) {
  * The offer window (C8 · B3): the offer on the left, one scroll; on the right (400, grey, fixed)
  * "About this in the brief" for the row you're on, Find it in this tender, the brief in short.
  */
+/** Left nav in the offer window: sections and check rows, with their state (C14, 24 Nov). */
+function navItems(t: Tender, offer: Offer) {
+  const checks = checksOf(t);
+  const rows: Array<{ id: string; label: string; done: boolean }> = [
+    { id: "chk-sites", label: unitOf(t, 2).replace(/^./, (c) => c.toUpperCase()), done: offer.sites.length > 0 },
+    { id: "chk-structure", label: "How you're offering", done: Boolean(offer.structure) },
+  ];
+  if (offer.structure === "one" && offer.sites.length > 1) rows.push({ id: "chk-partial", label: "Partial award", done: offer.partial !== null });
+  rows.push({ id: "chk-price", label: t.quote.quoteVariants ? "Prices" : "Price", done: (!offer.structure || unassigned(t, offer.structure, offer.sites).length === 0) && missingVariants(t).length === 0 });
+  if (t.quote.terms) rows.push({ id: "chk-terms", label: "Terms", done: true });
+  if (checks.includes("start")) rows.push({ id: "chk-start", label: "Start", done: true });
+  if (checks.includes("duration")) rows.push({ id: "chk-duration", label: "Duration", done: Boolean(offer.unit) });
+  if (checks.includes("warranties")) rows.push({ id: "chk-warranties", label: "Warranties", done: true });
+  return rows;
+}
+
+/** Offer window nav: sections in page order, the checks nested under "What we read".
+ *  White column with a border-dark rule, like the brief column on the right. Marks are StateMarks, counts the RequirementGroup pill; the current item is black-2. */
+function OfferNav({ t, offer, scroller }: { t: Tender; offer: Offer; scroller: React.RefObject<HTMLElement | null> }) {
+  const rows = navItems(t, offer);
+  const q = t.quote.questions.length;
+  const done = rows.filter((r) => r.done).length;
+  const qRows = t.quote.questions.map((x) => ({ id: `q-${x.key}`, label: x.title, done: Boolean(offer.answers[x.key]) }));
+  const sections: Array<{ id: string; label: string; count: string; urgent?: boolean; rows?: typeof rows }> = [
+    { id: "sec-files", label: "Your files", count: `${offer.files.length} ${offer.files.length === 1 ? "file" : "files"}` },
+    { id: "sec-read", label: "What we read", count: `${done} of ${rows.length}`, rows },
+    ...(q
+      ? [{ id: "sec-questions", label: "Questions", count: offer.unanswered ? `${offer.unanswered} to answer` : "All answered", urgent: offer.unanswered > 0, rows: qRows }]
+      : []),
+    { id: "sec-also", label: "Also in your offer", count: String(t.quote.alsoInOffer.length) },
+  ];
+  const ids = sections.flatMap((x) => [x.id, ...(x.rows ?? []).map((r) => r.id)]);
+  const [active, setActive] = useState(ids[0]);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const onScroll = () => {
+      const top = el.getBoundingClientRect().top + 24;
+      let cur = ids[0];
+      for (const id of ids) {
+        const node = document.getElementById(id);
+        if (node && node.getBoundingClientRect().top <= top) cur = id;
+      }
+      setActive(cur);
+    };
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  });
+  const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const btn = (on: boolean) =>
+    cn(
+      "flex w-full items-center gap-2 rounded-md px-3 text-left outline-none focus-visible:shadow-focus",
+      on ? "bg-black-2" : "hover:bg-black-1",
+    );
+  return (
+    <nav aria-label="Offer sections" className="w-[240px] shrink-0 overflow-y-auto border-r border-border-dark bg-white px-3 py-5">
+      <ul className="flex flex-col gap-2">
+        {sections.map((x) => (
+          <li key={x.id}>
+            <button type="button" aria-current={active === x.id ? "true" : undefined} className={cn(btn(active === x.id), "py-1.5")} onClick={() => go(x.id)}>
+              <span className={cn("min-w-0 flex-1 s3 uppercase", active === x.id ? "text-text-primary" : "text-text-tertiary")}>
+                {x.label}
+              </span>
+              {x.urgent ? (
+                <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-border-accent bg-bg-accent px-2 h9 text-[var(--accent-hover)]">{x.count}</span>
+              ) : (
+                <CountPill>{x.count}</CountPill>
+              )}
+            </button>
+            {x.rows && (
+              <ul className="mb-3 mt-1 flex flex-col">
+                {x.rows.map((r) => (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      aria-current={active === r.id ? "true" : undefined}
+                      className={cn(btn(active === r.id), "py-2")}
+                      onClick={() => go(r.id)}
+                    >
+                      <span className="flex w-4 shrink-0 justify-center" aria-hidden>
+                        <StateMark state={r.done ? "done" : "open"} size={16} />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate h8 text-text-primary">
+                        {r.label}
+                        {!r.done && <span className="sr-only"> (open)</span>}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 export function OfferWindow({
   t,
   offer,
@@ -1135,10 +1590,16 @@ export function OfferWindow({
     };
   }, [open, offer]);
   if (!open) return null;
+  return <OfferWindowBody t={t} offer={offer} find={find} onFullBrief={onFullBrief} />;
+}
+
+function OfferWindowBody({ t, offer, find, onFullBrief }: { t: Tender; offer: Offer; find: ReactNode; onFullBrief: () => void }) {
+  const { phase } = offer;
+  const scroller = useRef<HTMLElement | null>(null);
   const viewing = phase === "sent";
   const due = t.round.due.replace("due ", "");
   const facts = [
-    ...t.jobFacts.filter((f) => ["Sites", "Size", "Installation"].includes(f.label)),
+    ...t.jobFacts.filter((f) => ["Assets", "Size", "Installation"].includes(f.label)),
     ...t.facts.filter((f) => f.label === "Budget"),
   ];
 
@@ -1155,19 +1616,23 @@ export function OfferWindow({
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <main className="min-w-0 flex-1 overflow-y-auto">
+        {phase === "check" && <OfferNav t={t} offer={offer} scroller={scroller} />}
+        <main ref={scroller} className="min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex max-w-[860px] flex-col gap-8 px-8 pb-12 pt-6">
             {!viewing && <ChipTrack steps={steps(t, phase)} />}
-            <Files t={t} offer={offer} reading={phase === "reading"} readOnly={viewing} />
+            <div id="sec-files" className="scroll-mt-4">
+              <Files t={t} offer={offer} reading={phase === "reading"} readOnly={viewing} />
+            </div>
             {phase === "check" && (
               <>
-                <section className="flex flex-col">
+                <section id="sec-read" className="flex scroll-mt-4 flex-col">
                   <GroupHead label="What we read" pill={offer.openCount ? `${offer.openCount} to fill in` : "All checked"} urgent={offer.openCount > 0} />
                   <CheckRows t={t} offer={offer} />
                   <p className="pt-3 p7 text-text-secondary">The customer sees these values. Edit anything we got wrong.</p>
                 </section>
-                <section className="flex flex-col">
-                  <GroupHead label="Also in your offer" />
+                <Questions t={t} offer={offer} />
+                <section id="sec-also" className="flex scroll-mt-4 flex-col">
+                  <GroupHead label="Also in your offer" pill={String(t.quote.alsoInOffer.length)} />
                   <ul>
                     {t.quote.alsoInOffer.map((x) => (
                       <li key={x} className="border-b border-border-light py-3 p6 text-text-primary">
@@ -1177,7 +1642,6 @@ export function OfferWindow({
                   </ul>
                   <p className="pt-3 p7 text-text-secondary">Not asked for in the brief. The customer sees these too.</p>
                 </section>
-                <Questions t={t} offer={offer} />
               </>
             )}
             {phase === "reading" && (
@@ -1197,7 +1661,7 @@ export function OfferWindow({
             <h3 className="s3 text-text-tertiary">The brief</h3>
             <dl className="border-t border-border-light">
               {facts.map((f) => (
-                <div key={f.label} className="flex items-baseline justify-between gap-4 border-b border-border-light py-2">
+                <div key={f.label} className="flex items-baseline justify-between gap-4 border-b border-border-light py-2.5">
                   <dt className="p6 text-text-secondary">{f.label}</dt>
                   <dd className="text-right h8 text-text-primary">
                     {f.estimate && <span className="text-text-tertiary" title="Estimate">~</span>}
@@ -1206,19 +1670,19 @@ export function OfferWindow({
                 </div>
               ))}
             </dl>
-            <div className="flex flex-col gap-1">
-              <span className="h9 text-text-secondary">The brief asks for</span>
-              <ul className="list-disc pl-5 p7 text-text-primary">
+            <div className="mt-2 flex flex-col gap-1.5">
+              <span className="h8 text-text-title">The brief asks for</span>
+              <ul className="flex list-disc flex-col gap-1 pl-5 p6 text-text-primary">
                 {t.quote.briefAsks.map((x) => (
                   <li key={x}>{x}</li>
                 ))}
               </ul>
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="h9 text-text-secondary">Not known yet</span>
-              <p className="p7 text-text-primary">{t.openCells.map((c) => c.value).join(" · ")}</p>
+            <div className="mt-2 flex flex-col gap-1.5">
+              <span className="h8 text-text-title">Not known yet</span>
+              <p className="p6 text-text-primary">{t.openCells.map((c) => c.value).join(" · ")}</p>
             </div>
-            <Button type="link" className="self-start p7" onClick={onFullBrief}>
+            <Button type="link" className="self-start" onClick={onFullBrief}>
               Full brief
             </Button>
           </section>

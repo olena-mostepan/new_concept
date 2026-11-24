@@ -36,7 +36,7 @@ import {
 
 const rowGrid = {
   gridTemplateColumns:
-    "minmax(0,1.5fr) minmax(0,0.7fr) 56px minmax(0,0.7fr) minmax(0,1.1fr) 120px 16px",
+    "minmax(0,1.6fr) 64px minmax(0,0.7fr) minmax(0,1.1fr) 120px 16px",
 };
 
 /** Opened in this session: the "new" dot goes away. */
@@ -105,7 +105,6 @@ function Row({ row }: { row: TenderRow }) {
           </span>
         )}
       </span>
-      <span className={`min-w-0 p6 ${muted}`}>{SOLUTION_ICON[row.solution].label}</span>
       <span className={`p6 tabular-nums ${muted}`}>{row.sites}</span>
       <span className={`min-w-0 p6 ${muted}`}>{row.stage}</span>
       <span className="min-w-0">
@@ -218,8 +217,7 @@ export function SupplierTenders() {
                   style={rowGrid}
                 >
                   <span className="s3 text-text-tertiary">Tender</span>
-                  <span className="s3 text-text-tertiary">Solution</span>
-                  <span className="s3 text-text-tertiary">Sites</span>
+                  <span className="s3 text-text-tertiary">Assets</span>
                   <span className="s3 text-text-tertiary">
                     {g.id === "closed" ? "Ended at" : "Stage"}
                   </span>

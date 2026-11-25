@@ -46,19 +46,18 @@ export function SupplierOverview() {
             <img src="/icons/services/cash.png" alt="" className="absolute -right-3 -top-2 size-[96px] object-contain" />
           </section>
           {[
-            { icon: "progress", value: String(live.length), label: "Projects in delivery", href: "/concept/supplier/delivery" },
-            { icon: "money", value: short(sumProjected(claims)), label: "To invoice, next 90 days", href: "/concept/supplier/delivery" },
-            { icon: "document", value: String(toRaise), label: "Invoices ready to raise", href: "/concept/supplier/delivery" },
-            { icon: "checklist", value: String(active), label: "Active tenders", href: "/concept/supplier/tenders" },
+            { icon: "delivery", value: String(live.length), label: "Projects in delivery", href: "/concept/supplier/delivery" },
+            { icon: "pricing", value: short(sumProjected(claims)), label: "To invoice, next 90 days", href: "/concept/supplier/delivery" },
+            { icon: "indicative", value: String(toRaise), label: "Invoices ready to raise", href: "/concept/supplier/delivery" },
+            { icon: "tender", value: String(active), label: "Active tenders", href: "/concept/supplier/tenders" },
           ].map((f) => (
             <Link
               key={f.label}
               href={f.href}
               className="flex flex-col gap-4 rounded-lg border border-border-dark bg-bg-container p-4 outline-none hover:border-black-4 focus-visible:shadow-focus"
             >
-              <span className="flex size-10 items-center justify-center rounded-md border border-border-dark bg-bg-container-grey">
-                <Icon name={f.icon} size={20} className="text-icon-dark" />
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/icons/services/${f.icon}.png`} alt="" className="-ml-1 size-16 object-contain" />
               <Figure value={f.value} label={f.label} />
             </Link>
           ))}

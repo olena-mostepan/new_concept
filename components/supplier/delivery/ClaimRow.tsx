@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { FileUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { DeliveryClaim } from '@/lib/supplier/delivery/types'
@@ -126,7 +127,11 @@ export function ClaimRow({
   reviewActions?: ClaimReviewActions
 }) {
   const { claimLine, moneyLine } = claimNarrative(claim)
-  const jobHref = `/supplier/jobs/${claim.id}`
+  // Concept supplier portal opens the concept asset page; the old portal keeps its job page.
+  const inConcept = usePathname()?.startsWith('/concept') ?? false
+  const jobHref = inConcept
+    ? `/concept/supplier/delivery/${claim.id}`
+    : `/supplier/jobs/${claim.id}`
   const inReviewFocus = Boolean(reviewActions)
   const showInvoiceDrop = claim.status !== 'settled' && !reviewDimmed
 

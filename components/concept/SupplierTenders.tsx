@@ -42,7 +42,13 @@ const rowGrid = {
 /** Opened in this session: the "new" dot goes away. */
 const opened = new Set<string>();
 
-function SupplierHeader() {
+const SECTIONS = [
+  { id: "tenders", label: "Tenders", href: "/concept/supplier/tenders" },
+  { id: "delivery", label: "Delivery", href: "/concept/supplier/delivery" },
+] as const;
+
+/** Supplier app header: the section nav (Tenders · Delivery). */
+export function SupplierHeader({ active = "tenders" }: { active?: "tenders" | "delivery" }) {
   return (
     <header className="border-b border-border-dark bg-white">
       <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-3 px-6 py-3.5 sm:px-8 lg:px-10">
@@ -67,13 +73,21 @@ function SupplierHeader() {
       </div>
       <nav className="border-t border-border-dark bg-white" aria-label="Sections">
         <div className="mx-auto flex max-w-screen-2xl items-center gap-8 px-6 sm:px-8 lg:px-10">
-          <Link
-            href="/concept/supplier/tenders"
-            aria-current="page"
-            className="relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-none border-b-2 border-brand-6 py-3 h8 text-text-primary outline-none focus-visible:shadow-focus"
-          >
-            Tenders
-          </Link>
+          {SECTIONS.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              aria-current={active === item.id ? "page" : undefined}
+              className={cn(
+                "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-none border-b-2 py-3 outline-none focus-visible:shadow-focus",
+                active === item.id
+                  ? "border-brand-6 h8 text-text-primary"
+                  : "border-transparent p6 text-text-secondary hover:border-black-3 hover:text-text-primary",
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
       </nav>
     </header>

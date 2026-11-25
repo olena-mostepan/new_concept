@@ -103,14 +103,31 @@ function applyClaimPatchToJob(
 }
 
 /** Delivery tab body for a job (header/tabs live in SupplierJobPage). */
+/** What a custom look (the concept's design-system version) gets to draw the job with. */
+export type DeliveryPanelApi = {
+  job: JobDeliveryDetail
+  onDateClick: (stage: JobDeliveryStage) => void
+  onYes: () => void
+  onChangeDate: () => void
+  onMovedOn: () => void
+  onAlreadyInvoiced: () => void
+  onUploadInvoice: (stage?: JobDeliveryStage) => void
+  onEditPlan: () => void
+  onUseInvoiceAmount: (stage: JobDeliveryStage) => void
+  onKeepModel: (stage: JobDeliveryStage) => void
+}
+
 export function SupplierJobDeliveryPanel({
   jobId,
   uploadOpen = false,
   onUploadOpenChange,
+  render,
 }: {
   jobId: string
   uploadOpen?: boolean
   onUploadOpenChange?: (open: boolean) => void
+  /** Draw the money cards, phases and payment stages another way; state and modals stay here. */
+  render?: (api: DeliveryPanelApi) => React.ReactNode
 }) {
   const initial = getJobDelivery(jobId)
   const [job, setJob] = React.useState<JobDeliveryDetail | null>(
@@ -236,28 +253,45 @@ export function SupplierJobDeliveryPanel({
 
   return (
     <div className="space-y-6">
-      <JobMoneyCards job={detail} />
+      {render ? (
+        render({
+          job: detail,
+          onDateClick: handleDateClick,
+          onYes: handleConfirmRaise,
+          onChangeDate: () => openModal('changeDate'),
+          onMovedOn: () => openModal('moved'),
+          onAlreadyInvoiced: () => openModal('invoiced'),
+          onUploadInvoice: handleUploadInvoice,
+          onEditPlan: () => openModal('editPlan'),
+          onUseInvoiceAmount: handleUseInvoice,
+          onKeepModel: handleKeepModel,
+        })
+      ) : (
+        <>
+        <JobMoneyCards job={detail} />
 
-      <DeliveryPhasesStepper
-        job={detail}
-        onDateClick={handleDateClick}
-        onYes={handleConfirmRaise}
-        onChangeDate={() => openModal('changeDate')}
-        onMovedOn={() => openModal('moved')}
-        onAlreadyInvoiced={() => openModal('invoiced')}
-        onUploadInvoice={handleUploadInvoice}
-        onEditPlan={() => openModal('editPlan')}
-      />
+        <DeliveryPhasesStepper
+          job={detail}
+          onDateClick={handleDateClick}
+          onYes={handleConfirmRaise}
+          onChangeDate={() => openModal('changeDate')}
+          onMovedOn={() => openModal('moved')}
+          onAlreadyInvoiced={() => openModal('invoiced')}
+          onUploadInvoice={handleUploadInvoice}
+          onEditPlan={() => openModal('editPlan')}
+        />
 
-      <PaymentStagesCard
-        job={detail}
-        onEditDate={handleDateClick}
-        onEditPlan={() => openModal('editPlan')}
-        onUploadInvoice={handleUploadInvoice}
-        onUseInvoiceAmount={handleUseInvoice}
-        onKeepModel={handleKeepModel}
-        onMovedOn={() => openModal('moved')}
-      />
+        <PaymentStagesCard
+          job={detail}
+          onEditDate={handleDateClick}
+          onEditPlan={() => openModal('editPlan')}
+          onUploadInvoice={handleUploadInvoice}
+          onUseInvoiceAmount={handleUseInvoice}
+          onKeepModel={handleKeepModel}
+          onMovedOn={() => openModal('moved')}
+        />
+        </>
+      )}
 
       <ChangeDateModal
         open={modal === 'changeDate'}

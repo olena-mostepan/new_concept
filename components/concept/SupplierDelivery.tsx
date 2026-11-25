@@ -9,10 +9,11 @@ import { SupplierDeliveryView } from "@/components/supplier/delivery/SupplierDel
 import { SupplierJobDeliveryPanel } from "@/components/supplier/delivery/SupplierJobDeliveryView";
 import { SupplierHeader } from "./SupplierTenders";
 import { SupplierDeliveryTab } from "./SupplierDeliveryDs";
+import { DELIVERY_DS_LOOK } from "./SupplierDeliveryListDs";
 import { Icon, PageHeader, focusRing, tabListClass, tabTriggerClass, type FactItem } from "./ui";
 
 /**
- * Supplier concept · Delivery (25 Nov). The list is today's Delivery view, unchanged;
+ * Supplier concept · Delivery (25 Nov). Today's Delivery list (data, review flow, windows) drawn in the design system;
  * a job opens the asset page below.
  */
 export function SupplierDelivery() {
@@ -20,7 +21,8 @@ export function SupplierDelivery() {
     <div className="min-h-screen bg-bg-container-grey">
       <SupplierHeader active="delivery" />
       <main className="mx-auto w-full max-w-screen-2xl px-6 pb-28 pt-8 sm:px-8 lg:px-10">
-        <SupplierDeliveryView />
+        <PageHeader title="Delivery" />
+        <SupplierDeliveryView look={DELIVERY_DS_LOOK} />
       </main>
     </div>
   );

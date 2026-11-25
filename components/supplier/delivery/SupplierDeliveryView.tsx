@@ -17,7 +17,7 @@ import {
 import { applyStageShift } from '@/lib/supplier/delivery/dates'
 import type { DeliveryClaim } from '@/lib/supplier/delivery/types'
 import { MoneyLeverBanner } from '@/components/supplier/delivery/MoneyLeverBanner'
-import { ClaimRow } from '@/components/supplier/delivery/ClaimRow'
+import { ClaimRow, type ClaimRowProps } from '@/components/supplier/delivery/ClaimRow'
 import { DeliveryReviewBar } from '@/components/supplier/delivery/DeliveryReviewBar'
 import { ChangeDateModal } from '@/components/supplier/delivery/ChangeDateModal'
 import { ProvideInvoiceModal } from '@/components/supplier/delivery/ProvideInvoiceModal'
@@ -25,7 +25,19 @@ import { showDeliverySuccessToast } from '@/components/supplier/delivery/deliver
 
 type ModalKind = 'changeDate' | 'invoice' | null
 
-export function SupplierDeliveryView() {
+/** Another look for the same list (the concept's design-system version): same props, same state. */
+export type DeliveryViewLook = {
+  Banner: React.ComponentType<React.ComponentProps<typeof MoneyLeverBanner>>
+  ReviewBar: React.ComponentType<React.ComponentProps<typeof DeliveryReviewBar>>
+  Row: React.ComponentType<ClaimRowProps>
+  /** Wraps the list: title and rows. */
+  List: React.ComponentType<{ listRef: React.Ref<HTMLElement>; reviewBar: React.ReactNode; children: React.ReactNode }>
+}
+
+export function SupplierDeliveryView({ look }: { look?: DeliveryViewLook } = {}) {
+  const Banner = look?.Banner ?? MoneyLeverBanner
+  const ReviewBar = look?.ReviewBar ?? DeliveryReviewBar
+  const Row = look?.Row ?? ClaimRow
   const [claims, setClaims] = React.useState<DeliveryClaim[]>(
     () => INITIAL_DELIVERY_PAYLOAD.claims,
   )
@@ -232,13 +244,85 @@ export function SupplierDeliveryView() {
 
   return (
     <div className="space-y-6">
-      <MoneyLeverBanner
+      <Banner
         sumProjected={projected}
         commission={commission}
         onLooksRight={confirmHighConfidence}
         onSomethingsOff={startReview}
       />
 
+      {look ? (
+        <look.List
+          listRef={listRef}
+          reviewBar={
+            reviewMode ? (
+              <ReviewBar
+                count={reviewQueue.length}
+                pickAny={pickAnyMode}
+                onExit={exitReview}
+              />
+            ) : null
+          }
+        >
+          {visibleClaims.map((claim) => {
+            const highlighted =
+              reviewMode && !pickAnyMode && claim.id === focusId
+            const dimmed =
+              reviewMode && !pickAnyMode && claim.id !== focusId
+
+            const pickAnyActions =
+              reviewMode &&
+              pickAnyMode &&
+              claim.status !== 'settled' &&
+              claim.status !== 'confirmed'
+                ? {
+                    onChangeDate: () => openModal('changeDate', claim),
+                    onLooksFine: () => {
+                      if (claim.status === 'confirmable') {
+                        patchAndMaybeAdvance(
+                          claim.id,
+                          confirmClaimPatch(claim),
+                          claim.amount,
+                        )
+                      } else {
+                        patchAndMaybeAdvance(
+                          claim.id,
+                          { confidence: 'high' },
+                          claim.amount,
+                        )
+                      }
+                    },
+                  }
+                : undefined
+
+            return (
+              <Row
+                key={claim.id}
+                claim={claim}
+                rowRef={(el) => {
+                  rowRefs.current[claim.id] = el
+                }}
+                onLooksRight={handleLooksRight}
+                onChangeDate={handleChangeDate}
+                onStageClick={handleStageClick}
+                onProvideInvoice={handleProvideInvoice}
+                reviewHighlighted={Boolean(highlighted)}
+                reviewDimmed={Boolean(dimmed)}
+                reviewActions={
+                  highlighted && focusClaim
+                    ? {
+                        onChangeDate: () =>
+                          openModal('changeDate', focusClaim),
+                        onLooksFine: looksFineCurrent,
+                        onSkip: skipCurrent,
+                      }
+                    : pickAnyActions
+                }
+              />
+            )
+          })}
+        </look.List>
+      ) : (
       <section
         ref={listRef}
         className="rounded-xl border border-cq-border bg-white "
@@ -249,7 +333,7 @@ export function SupplierDeliveryView() {
 
         {reviewMode ? (
           <div className="border-b border-cq-border px-4 py-3 sm:px-5">
-            <DeliveryReviewBar
+            <ReviewBar
               count={reviewQueue.length}
               pickAny={pickAnyMode}
               onExit={exitReview}
@@ -290,7 +374,7 @@ export function SupplierDeliveryView() {
                 : undefined
 
             return (
-              <ClaimRow
+              <Row
                 key={claim.id}
                 claim={claim}
                 rowRef={(el) => {
@@ -317,6 +401,7 @@ export function SupplierDeliveryView() {
           })}
         </ul>
       </section>
+      )}
 
       <ChangeDateModal
         open={modal === 'changeDate'}

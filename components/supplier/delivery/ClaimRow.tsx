@@ -105,6 +105,18 @@ function ClaimActions({
   return null
 }
 
+export type ClaimRowProps = {
+  claim: DeliveryClaim
+  rowRef?: (el: HTMLLIElement | null) => void
+  onLooksRight: (claim: DeliveryClaim) => void
+  onChangeDate: (claim: DeliveryClaim) => void
+  onStageClick?: (claim: DeliveryClaim, stageName: string) => void
+  onProvideInvoice: (claim: DeliveryClaim) => void
+  reviewHighlighted?: boolean
+  reviewDimmed?: boolean
+  reviewActions?: ClaimReviewActions
+}
+
 export function ClaimRow({
   claim,
   rowRef,
@@ -115,17 +127,7 @@ export function ClaimRow({
   reviewHighlighted = false,
   reviewDimmed = false,
   reviewActions,
-}: {
-  claim: DeliveryClaim
-  rowRef?: (el: HTMLLIElement | null) => void
-  onLooksRight: (claim: DeliveryClaim) => void
-  onChangeDate: (claim: DeliveryClaim) => void
-  onStageClick?: (claim: DeliveryClaim, stageName: string) => void
-  onProvideInvoice: (claim: DeliveryClaim) => void
-  reviewHighlighted?: boolean
-  reviewDimmed?: boolean
-  reviewActions?: ClaimReviewActions
-}) {
+}: ClaimRowProps) {
   const { claimLine, moneyLine } = claimNarrative(claim)
   // Concept supplier portal opens the concept asset page; the old portal keeps its job page.
   const inConcept = usePathname()?.startsWith('/concept') ?? false

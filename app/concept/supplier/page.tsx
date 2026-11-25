@@ -1,6 +1,11 @@
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { SupplierOverview } from "@/components/concept/SupplierOverview";
 
-/** Supplier concept home: the Tenders list. */
+/** Supplier concept home: Overview. */
 export default function SupplierHome() {
-  redirect("/concept/supplier/tenders");
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-bg-container-grey" />}>
+      <SupplierOverview />
+    </Suspense>
+  );
 }

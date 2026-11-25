@@ -43,12 +43,13 @@ const rowGrid = {
 const opened = new Set<string>();
 
 const SECTIONS = [
+  { id: "overview", label: "Overview", href: "/concept/supplier" },
   { id: "tenders", label: "Tenders", href: "/concept/supplier/tenders" },
   { id: "delivery", label: "Delivery", href: "/concept/supplier/delivery" },
 ] as const;
 
-/** Supplier app header: the section nav (Tenders · Delivery). */
-export function SupplierHeader({ active = "tenders" }: { active?: "tenders" | "delivery" }) {
+/** Supplier app header: the section nav (Overview · Tenders · Delivery). */
+export function SupplierHeader({ active = "tenders" }: { active?: "overview" | "tenders" | "delivery" }) {
   return (
     <header className="border-b border-border-dark bg-white">
       <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-3 px-6 py-3.5 sm:px-8 lg:px-10">

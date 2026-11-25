@@ -36,12 +36,14 @@ export function SupplierOverview() {
       <main className="mx-auto flex w-full max-w-screen-2xl flex-col gap-4 px-6 pb-28 pt-8 sm:px-8 lg:px-10">
         <PageHeader title="Overview" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_repeat(4,minmax(0,1fr))]">
-          <section className="flex flex-col justify-between gap-4 rounded-lg border border-border-dark bg-bg-container p-4">
-            <p className="s3 text-text-tertiary">Won through CQuel</p>
+          <section className="relative flex flex-col justify-between gap-4 overflow-hidden rounded-lg border border-status-info-border bg-status-info-bg p-4">
+            <p className="s3 text-status-info-text">Won through CQuel</p>
             <div className="flex gap-8">
               <Figure value={short(won)} label="Agreed" />
               <Figure value={short(won)} label="Signed" />
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/services/cash.png" alt="" className="absolute -right-3 -top-2 size-[96px] object-contain" />
           </section>
           {[
             { icon: "progress", value: String(live.length), label: "Projects in delivery", href: "/concept/supplier/delivery" },

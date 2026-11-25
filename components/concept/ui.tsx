@@ -117,7 +117,9 @@ export function ServiceIcon({
 }
 
 export function TypeLabelInfo({ kind }: { kind: "batch" | "package" | "asset" }) {
-  const { tip, aria } = TYPE_LABEL[kind];
+  const { t } = useConceptI18n();
+  const tip = t(TYPE_LABEL[kind].tip);
+  const aria = t(TYPE_LABEL[kind].aria);
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -178,6 +180,7 @@ export function FactsRow({
       fact.value !== "" &&
       fact.value !== "—",
   );
+  const { t } = useConceptI18n();
   if (!shown.length) return null;
   return (
     <dl
@@ -188,7 +191,7 @@ export function FactsRow({
     >
       {shown.map((fact) => (
         <div key={fact.label} className="min-w-40">
-          <dt className="p7 text-text-tertiary">{fact.label}</dt>
+          <dt className="p7 text-text-tertiary">{t(fact.label)}</dt>
           <dd className="mt-0.5">{factValue(fact)}</dd>
           {fact.detail && (
             <dd className="mt-0.5 p7 text-text-secondary">{fact.detail}</dd>
@@ -277,6 +280,7 @@ export function ListMore({
 }
 
 export function ChangedKey({ className }: { className?: string }) {
+  const { t } = useConceptI18n();
   return (
     <p
       className={cn(
@@ -285,7 +289,7 @@ export function ChangedKey({ className }: { className?: string }) {
       )}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-brand-6" aria-hidden />
-      Changed in the last 7 days
+      {t("Changed in the last 7 days")}
     </p>
   );
 }
@@ -721,6 +725,7 @@ export function ChipTrack({
     notes?: Array<{ text: string; className: string }>;
   }>;
 }) {
+  const { t } = useConceptI18n();
   const n = Math.max(steps.length, 1);
   return (
     <div className="relative">
@@ -740,12 +745,12 @@ export function ChipTrack({
             key={step.key}
             className="flex min-w-0 flex-col items-center text-center"
           >
-            <Chip lead={step.lead}>{step.label}</Chip>
+            <Chip lead={step.lead}>{typeof step.label === "string" ? t(step.label) : step.label}</Chip>
             {step.notes && step.notes.length > 0 && (
               <div className="mt-1">
                 {step.notes.map((note) => (
                   <p key={note.text} className={note.className}>
-                    {note.text}
+                    {t(note.text)}
                   </p>
                 ))}
               </div>
@@ -1000,7 +1005,8 @@ export function PageHeader({
   /** Design-system key: breadcrumb row (detail pages) or title row (section pages). */
   changedKey?: boolean;
 }) {
-  const typeText = kind ? TYPE_LABEL[kind].text : null;
+  const { t } = useConceptI18n();
+  const typeText = kind ? t(TYPE_LABEL[kind].text) : null;
 
   return (
     <header className="mb-6">
@@ -1459,10 +1465,10 @@ export type PackageCardChip = {
   onSelect?: () => void;
 };
 
-function renderPackageCardChip(chip: PackageCardChip, _switchable: boolean) {
+function renderPackageCardChip(chip: PackageCardChip, _switchable: boolean, t: (en: string) => string) {
   const display = (
     <Chip lead={chip.lead} size="big">
-      {chip.label}
+      {typeof chip.label === "string" ? t(chip.label) : chip.label}
     </Chip>
   );
   return <span key={chip.id}>{display}</span>;
@@ -1497,8 +1503,9 @@ export function PackageCard({
   panelAside?: string;
   panelChildren?: ReactNode;
 }) {
+  const { t, words } = useConceptI18n();
   const chipElements = chips.map((chip) =>
-    renderPackageCardChip(chip, switchable),
+    renderPackageCardChip(chip, switchable, t),
   );
 
   /** Service chips are display-only (tabs switch panels). */
@@ -1544,8 +1551,8 @@ export function PackageCard({
       {packageName ? (
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
-            <p className="p7 text-text-tertiary">{WORDS.Package}</p>
-            <p className="h7 text-text-primary">{packageName}</p>
+            <p className="p7 text-text-tertiary">{words.Package}</p>
+            <p className="h7 text-text-primary">{t(packageName)}</p>
             <div className="mt-3">{chipRow}</div>
           </div>
           {openPackage}
@@ -1556,9 +1563,9 @@ export function PackageCard({
       {panelTitle && panelChildren && (
         <div className="surface-grey mt-4 rounded-md border border-border-dark bg-bg-container-grey px-4 pb-4 pt-3">
           <div className="mb-4 flex items-baseline justify-between gap-3">
-            <h3 className="h8 text-text-primary">{panelTitle}</h3>
+            <h3 className="h8 text-text-primary">{t(panelTitle)}</h3>
             {panelAside && (
-              <p className="p7 text-text-tertiary">{panelAside}</p>
+              <p className="p7 text-text-tertiary">{typeof panelAside === "string" ? t(panelAside) : panelAside}</p>
             )}
           </div>
           {panelChildren}
@@ -1898,6 +1905,7 @@ export function DocumentList({
   readOnly?: boolean;
 }) {
   const hideActions = readOnly === true;
+  const { t } = useConceptI18n();
   return (
     <ul>
       {docs.map((doc, index) => (
@@ -1915,12 +1923,12 @@ export function DocumentList({
                 doc.muted ? "text-text-tertiary" : "text-text-title",
               )}
             >
-              {shortFact(doc.name)}
+              {shortFact(t(doc.name))}
             </p>
             <div className="mt-0.5 flex items-center gap-1.5">
               {!doc.muted && doc.type && (
                 <Tag type="neutral" size="xsmall">
-                  {doc.type}
+                  {t(doc.type)}
                 </Tag>
               )}
               <p
@@ -1929,20 +1937,20 @@ export function DocumentList({
                   doc.muted ? "text-text-tertiary" : "text-text-secondary",
                 )}
               >
-                {shortFact(doc.meta)}
+                {shortFact(t(doc.meta))}
               </p>
             </div>
           </div>
           {!hideActions && !doc.muted && doc.action === "Download" && (
             <span className="flex shrink-0 items-center gap-1">
               {doc.view && (
-                <IconButton icon="eye" label={`View ${doc.name}`} />
+                <IconButton icon="eye" label={t("View {0}", t(doc.name))} />
               )}
-              <IconButton icon="download" label={`Download ${doc.name}`} />
+              <IconButton icon="download" label={t("Download {0}", t(doc.name))} />
             </span>
           )}
           {!hideActions && !doc.muted && doc.action === "View" && (
-            <IconButton icon="chevron-right" label={`View ${doc.name}`} />
+            <IconButton icon="chevron-right" label={t("View {0}", t(doc.name))} />
           )}
         </li>
       ))}

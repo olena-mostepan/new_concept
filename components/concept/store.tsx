@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -33,8 +34,11 @@ import {
 } from "@/lib/concept/model";
 import {
   LANG_STORAGE_KEY,
+  localizeData,
   type Lang,
 } from "@/lib/concept/i18n";
+import { usePathname } from "next/navigation";
+import { isCustomerPath } from "./hrefs";
 import { nPackages, WORDS } from "@/lib/concept/words";
 import type { AssetCheckBundle } from "@/lib/concept/checks";
 import {
@@ -460,6 +464,13 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
 
 export function useConcept() {
   const s = useContext(Ctx);
+  const path = usePathname() ?? "";
+  // Customer version in German: the example data reads in German too.
+  const german = Boolean(s && s.lang === "de" && isCustomerPath(path));
+  const account = useMemo(
+    () => (s && german ? localizeData(s.account, "de") : s?.account),
+    [s?.account, german],
+  );
   if (!s) throw new Error("useConcept outside ConceptStoreProvider");
-  return s;
+  return german && account ? { ...s, account } : s;
 }

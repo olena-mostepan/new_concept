@@ -29,7 +29,8 @@ import {
   wsInAll,
 } from "@/lib/concept/derive";
 import { endingRowLine, endingTitle, leftHowLabel } from "@/lib/concept/moves";
-import { nAssets, nProjects } from "@/lib/concept/words";
+import { nAssets, nPackages, nProjects } from "@/lib/concept/words";
+import { formatDate } from "@/lib/concept/i18n/format";
 import { t, type Lang } from "@/lib/concept/i18n";
 import { useConceptI18n } from "./useConceptI18n";
 import {
@@ -45,12 +46,17 @@ import {
   type Workstream,
 } from "@/lib/concept/model";
 import {
+  Button,
   Icon,
   Card,
   CardLink,
   ChangedDot,
   DocumentList,
   ListMore,
+  ChipTrack,
+  OwnerPill,
+  ServiceIcon,
+  RoundTick,
   focusRing,
   groupTitle,
   tableRowLinkClass,
@@ -64,6 +70,7 @@ import { useConcept } from "./store";
 import { cn } from "@/lib/utils";
 
 function ActivityList({ items }: { items: Account["activity"] }) {
+  const { t, lang } = useConceptI18n();
   return (
     <ul>
       {items.map((item, index) => (
@@ -72,11 +79,11 @@ function ActivityList({ items }: { items: Account["activity"] }) {
           className={`flex justify-between gap-4 py-3 ${index > 0 ? "border-t border-border-light" : ""}`}
         >
           <div className="min-w-0">
-            <p className="h8 text-text-title">{item.title}</p>
-            <p className="p7 text-text-secondary">{item.text}</p>
+            <p className="h8 text-text-title">{t(item.title)}</p>
+            <p className="p7 text-text-secondary">{t(item.text)}</p>
           </div>
           <span className="shrink-0 whitespace-nowrap p7 text-text-tertiary">
-            {item.date}
+            {formatDate(item.date, lang)}
           </span>
         </li>
       ))}
@@ -261,9 +268,12 @@ function movedToBatchName(account: Account, batchId: string): string {
 function PilotDashboard({
   account,
   batch,
+  onBatchPage,
 }: {
   account: Account;
   batch: Batch;
+  /** The batch page of a proposed plan: the page header already names the batch and its goal. */
+  onBatchPage?: boolean;
 }) {
   const hrefs = useHrefs();
   const { agreePlan } = useConcept();
@@ -278,41 +288,95 @@ function PilotDashboard({
   const needs = all.flatMap((w) =>
     w.needs.filter((need) => need.owner === "you" && !need.received),
   );
-  const stages = routeStages(account, batch).map((stage) =>
-    stage.state === "skip" && stage.label.startsWith("or ")
-      ? { ...stage, label: stage.label.slice(3) }
-      : stage,
-  );
+  // Services this batch skips (e.g. Pricing with no existing supplier) are left out of the pilot plan.
+  const stages = routeStages(account, batch)
+    .filter((stage) => stage.state !== "skip")
+    .map((stage) => ({ ...stage, label: tr(stage.label), caption: tr(stage.caption) }));
   const notes = Object.fromEntries(
     stages.map((stage) => {
       const skipped = stage.id === "pricing" && stage.state === "skip";
       const text = skipped
         ? pricingNotNeeded
         : SERVICE_LABEL[stage.id as keyof typeof SERVICE_LABEL];
-      return [stage.id, { text, muted: stage.state === "skip" }];
+      return [stage.id, { text: tr(text), muted: stage.state === "skip" }];
     }),
   );
+  const pkgGrid = {
+    gridTemplateColumns: "minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.2fr) 16px",
+  };
+  const proposed = batch.planState !== "live";
   return (
-    <div className="space-y-4">
-      <Card
-        title={batch.name}
-        right={aside(
-          all.map((w) => solutionName(w.solution, lang)).join(" · "),
+    <div className="space-y-4 pb-12">
+      {/* The one card that needs you: 4px orange top bar, Your action pill and the page's primary button. */}
+      <section
+        className={cn(
+          "overflow-hidden rounded-lg border border-border-dark bg-bg-container",
+          proposed && "border-t-4 border-t-brand-6",
         )}
       >
-        <p className="mb-5 p6 text-text-secondary">
-          {tr("Goal:")} {batch.goal}
-        </p>
-        <RouteWithNeeds
-          pilot
-          stages={stages}
-          panels={[]}
-          notes={notes}
-          onAgree={
-            batch.planState === "live" ? undefined : () => agreePlan(batch.id)
-          }
-        />
-      </Card>
+        <header className="flex items-start justify-between gap-3 border-b border-border-light px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="h7 text-text-primary">
+              {onBatchPage ? tr("Plan") : batch.name}
+            </h2>
+            <p className="p7 text-text-secondary">
+              {onBatchPage && batch.planProposed
+                ? tr("Proposed {0}", formatDate(batch.planProposed, lang))
+                : `${tr("Goal:")} ${tr(batch.goal)}`}
+            </p>
+          </div>
+          {proposed && <OwnerPill owner="you" />}
+        </header>
+        <div className="p-4">
+          {/* Variant to look at (25 Nov): the 3D service icons above the services. */}
+          <div
+            className="mb-3 grid"
+            style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
+          >
+            {stages.map((stage, index) => (
+              <div key={stage.id} className="flex justify-center">
+                {/* The next service in colour, later ones in grey. */}
+                <ServiceIcon
+                  service={stage.id as ServiceId}
+                  size={72}
+                  grayscale={index > 0}
+                  className={index > 0 ? "opacity-70" : undefined}
+                />
+              </div>
+            ))}
+          </div>
+          <ChipTrack
+            steps={stages.map((stage) => ({
+              key: stage.id,
+              lead: "next" as const,
+              label: stage.label,
+              notes: [{ text: notes[stage.id]?.text ?? "", className: "p7 text-text-secondary" }],
+            }))}
+          />
+        </div>
+        {proposed && (
+          <footer className="flex items-center justify-between gap-6 border-t border-border-light bg-bg-container-grey px-4 py-3">
+            {batch.firstDecision ? (
+              <div className="min-w-0">
+                <p className="h8 text-text-title">
+                  {tr("Cost up to your first decision")}: {tr(batch.firstDecision.cost)}
+                </p>
+                <p className="p7 text-text-secondary">
+                  {tr(batch.firstDecision.gives)}.{" "}
+                  {tr("Then you decide whether to go on. If you stop, you pay nothing more.")}
+                </p>
+              </div>
+            ) : (
+              <span />
+            )}
+            <span className="shrink-0">
+              <Button type="primary" onClick={() => agreePlan(batch.id)}>
+                {tr("Agree plan")}
+              </Button>
+            </span>
+          </footer>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card
@@ -320,13 +384,15 @@ function PilotDashboard({
           title={tr("What we have")}
           right={aside(tr("{0} files", batch.filesCount ?? 0))}
         >
-          <ul>
+          <ul className="space-y-3">
             {(batch.received ?? []).map((file) => (
-              <li key={file.label} className="flex gap-2 py-1.5">
-                <Icon name="check" size={16} className="mt-0.5 shrink-0 text-icon-dark" />
+              <li key={file.label} className="flex gap-2">
+                <span className="mt-0.5 shrink-0">
+                  <RoundTick size={14} />
+                </span>
                 <div>
-                  <p className="p6 text-text-primary">{file.label}</p>
-                  <p className="p7 text-text-tertiary">{file.date}</p>
+                  <p className="p6 text-text-title">{tr(file.label)}</p>
+                  <p className="p7 text-text-secondary">{formatDate(file.date, lang)}</p>
                 </div>
               </li>
             ))}
@@ -337,17 +403,17 @@ function PilotDashboard({
           title={tr("What we still need")}
           right={aside(tr("After you agree the plan"))}
         >
-          <ul>
+          <ul className="space-y-3">
             {needs.map((need) => (
-              <li key={need.label} className="flex gap-2 py-1.5">
+              <li key={need.label} className="flex gap-2">
                 <span
                   className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
                   aria-hidden
                 />
                 <div>
-                  <p className="p6 text-text-primary">{need.label}</p>
-                  <p className="p7 text-text-tertiary">
-                    {need.scope ? `${need.scope} · ${need.why}` : need.why}
+                  <p className="h8 text-text-title">{tr(need.label)}</p>
+                  <p className="p7 text-text-secondary">
+                    {need.scope ? `${tr(need.scope)} · ${tr(need.why)}` : tr(need.why)}
                   </p>
                 </div>
               </li>
@@ -357,71 +423,66 @@ function PilotDashboard({
       </div>
 
       <Card
-        title={tr("Solutions")}
+        title={words.Packages}
         right={aside(
           tr(
             "{0} · {1}",
-            nProjects(projects, lang),
+            nPackages(all.length, lang),
             nAssets(batch.buildingIds.length, lang),
           ),
         )}
+        bodyClassName="p-0"
       >
-        <ul>
-          {all.map((w, index) => {
-            const sites = w.projects
-              .filter((p) => !rowIsInactive(p))
-              .map((p) => getBuilding(account, p.buildingId));
-            return (
-              <li
-                key={w.id}
-                className={
-                  index > 0 ? "border-t border-border-light py-3.5" : "py-3.5"
-                }
-              >
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[180px_minmax(0,1fr)_260px]">
-                  <div>
-                    <p className="h8 text-text-title">
-                      {solutionName(w.solution, lang)}
-                    </p>
-                    <p className="p7 text-text-secondary">
+        <div className="overflow-x-auto">
+          <div className="min-w-[640px]">
+            <div
+              className="grid items-center gap-x-6 py-2.5 pl-8 pr-6 s3 text-text-tertiary"
+              style={pkgGrid}
+            >
+              <span>{words.Package}</span>
+              <span>{words.Assets}</span>
+              <span>{tr("Result")}</span>
+              <span />
+            </div>
+            {all.map((w) => {
+              const sites = w.projects
+                .filter((p) => !rowIsInactive(p))
+                .map((p) => getBuilding(account, p.buildingId));
+              return (
+                <Link
+                  key={w.id}
+                  href={hrefs.workstream(w.id)}
+                  className={cn(
+                    "grid items-start gap-x-6 border-t border-border-light py-3 pl-8 pr-6",
+                    tableRowLinkClass,
+                  )}
+                  style={pkgGrid}
+                >
+                  <span className="min-w-0">
+                    <span className={cn("block h8 text-text-title", tableRowNameCellClass)}>
+                      {tr(w.name)}
+                    </span>
+                    <span className="mt-0.5 block p7 text-text-tertiary">
                       {nAssets(sites.length, lang)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="p6 text-text-primary">
-                      {sites.map((site, siteIndex) => (
-                        <span key={site.id}>
-                          {siteIndex > 0 && ", "}
-                          <Link
-                            href={hrefs.building(site.id, {
-                              project: w.id,
-                              from: "buildings",
-                            })}
-                            className="text-text-primary underline underline-offset-[3px] decoration-border-dark"
-                          >
-                            {site.name}
-                          </Link>
-                        </span>
-                      ))}
-                    </p>
+                    </span>
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block p6 text-text-primary">
+                      {sites.map((site) => site.name).join(", ")}
+                    </span>
                     {w.exclusion && (
-                      <p className="mt-1 p7 text-text-tertiary">
-                        Excluded: Leeds, Nottingham, Reading · pitched or shared
-                        roofs
-                      </p>
+                      <span className="mt-0.5 block p7 text-text-secondary">{tr(w.exclusion)}</span>
                     )}
-                  </div>
-                  <div>
-                    <p className="p7 text-text-tertiary">{tr("Result")}</p>
-                    <p className="p6 text-text-primary">
-                      {sentence(w.gives ?? "")}
-                    </p>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                  </span>
+                  <span className="min-w-0 p6 text-text-primary">
+                    {sentence(tr(w.gives ?? ""))}
+                  </span>
+                  <Icon name="chevron-right" size={16} className="mt-0.5 text-text-tertiary" />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -429,19 +490,23 @@ function PilotDashboard({
           className="h-full"
           title={tr("Recent activity")}
           right={<CardLink href={hrefs.batches}>{tr("See all")}</CardLink>}
+          bodyClassName="px-4 py-0"
         >
           <ul>
-            {activity.map((item) => (
+            {activity.map((item, index) => (
               <li
                 key={`${item.date}-${item.title}`}
-                className="flex items-start justify-between gap-4 py-1.5"
+                className={cn(
+                  "flex items-start justify-between gap-4 py-3",
+                  index > 0 && "border-t border-border-light",
+                )}
               >
-                <div>
-                  <p className="h8 text-text-title">{item.title}</p>
-                  <p className="p7 text-text-secondary">{item.text}</p>
+                <div className="min-w-0">
+                  <p className="h8 text-text-title">{tr(item.title)}</p>
+                  <p className="mt-0.5 p7 text-text-secondary">{tr(item.text)}</p>
                 </div>
                 <span className="shrink-0 p7 text-text-tertiary">
-                  {item.date}
+                  {formatDate(item.date, lang)}
                 </span>
               </li>
             ))}
@@ -451,6 +516,7 @@ function PilotDashboard({
           className="h-full"
           title={tr("Documents")}
           right={<CardLink href={hrefs.batches}>{tr("See all")}</CardLink>}
+          bodyClassName="px-4 py-0"
         >
           <DocumentList docs={docs} />
         </Card>
@@ -1316,5 +1382,8 @@ export function BatchView({
 }) {
   if (variant === "dashboard")
     return <PilotDashboard account={account} batch={batch} />;
+  // A proposed plan has no live work yet, so the batch page shows the plan itself.
+  if (batch.planState === "proposed")
+    return <PilotDashboard account={account} batch={batch} onBatchPage />;
   return <BatchPage account={account} batch={batch} actions={actions} />;
 }

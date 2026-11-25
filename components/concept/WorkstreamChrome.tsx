@@ -39,6 +39,7 @@ import {
 import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 import { useConceptI18n } from "./useConceptI18n";
+import { formatDate } from "@/lib/concept/i18n/format";
 import { workstreamCrumbs } from "./crumbs";
 import {
   assetsNeedFixingFirst,
@@ -246,7 +247,7 @@ export function WorkstreamHeader({
       href: hrefs.workstream(fromWs.id),
     });
   }
-  facts.push({ label: t("Solution"), value: SOLUTION_NAME[w.solution] });
+  facts.push({ label: t("Solution"), value: t(SOLUTION_NAME[w.solution]) });
   if (isClosed(w)) {
     facts.push({
       label: words.Assets,
@@ -448,7 +449,7 @@ export function WorkstreamFacts({
   activity: Array<{ date: string; title: string; text: string }>;
   documents?: Doc[];
 }) {
-  const { t } = useConceptI18n();
+  const { t, lang } = useConceptI18n();
   const path = usePathname();
   const params = useSearchParams();
   const qs = params.toString();
@@ -487,7 +488,7 @@ export function WorkstreamFacts({
                   )}
                 </div>
                 <span className="shrink-0 p7 text-text-tertiary">
-                  {item.date}
+                  {formatDate(item.date, lang)}
                 </span>
               </li>
             ))}

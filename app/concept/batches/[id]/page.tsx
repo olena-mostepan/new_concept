@@ -18,8 +18,9 @@ function batchSolutions(
 ) {
   const seen = new Set<string>();
   const solutions: string[] = [];
+  const proposedPlan = batch.planState === "proposed";
   for (const stream of wsInAll(account, batch.id).filter(
-    (item) => !item.proposed,
+    (item) => proposedPlan || !item.proposed,
   )) {
     if (seen.has(stream.solution)) continue;
     seen.add(stream.solution);
@@ -36,8 +37,10 @@ function batchFacts(
   words: { Assets: string; Packages: string },
 ): Array<{ label: string; value: string }> {
   // One row per line of work: a package that continued is carried by its successor.
+  // A proposed plan counts the packages it proposes.
+  const proposedPlan = batch.planState === "proposed";
   const packages = wsInAll(account, batch.id).filter(
-    (item) => !item.proposed && !isContinuedAway(item),
+    (item) => (proposedPlan || !item.proposed) && !isContinuedAway(item),
   ).length;
   const facts: Array<{ label: string; value: string }> = [
     { label: t("Goal"), value: batch.goal },

@@ -60,3 +60,36 @@ export function useT(lang: Lang) {
       plural(n, one, other, lang, ...args),
   };
 }
+
+/**
+ * Example data shown in German: copies the account and swaps the text fields
+ * (names, goals, needs, activity, documents…) that have a German entry. Ids and
+ * states are never touched; strings without an entry stay English.
+ */
+const DATA_TEXT_KEYS = new Set([
+  "name", "goal", "gives", "exclusion", "label", "why", "scope", "text", "title",
+  "meta", "value", "source", "filesSummary", "type", "cost", "happens",
+]);
+
+function deText(s: string): string {
+  const hit = dictionary[s];
+  return hit && hit !== "TODO-DE" ? hit : s;
+}
+
+export function localizeData<T>(value: T, lang: Lang, key?: string): T {
+  if (lang === "en" || value == null) return value;
+  if (typeof value === "string") return (key && DATA_TEXT_KEYS.has(key) ? deText(value) : value) as T;
+  if (Array.isArray(value)) return value.map((v) => localizeData(v, lang, key)) as T;
+  if (typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      // Route notes: every value is display text.
+      out[k] =
+        k === "routeNotes" && v && typeof v === "object"
+          ? Object.fromEntries(Object.entries(v).map(([s, txt]) => [s, typeof txt === "string" ? deText(txt) : txt]))
+          : localizeData(v, lang, k);
+    }
+    return out as T;
+  }
+  return value;
+}

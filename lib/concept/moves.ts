@@ -50,7 +50,7 @@ export function leftHowLabel(kind: MoveKind): string {
 
 /** In package fact (asset header): one line only, same words as IN PACKAGE column part 1. */
 export function inPackageFactLine(account: Account, w: Workstream, row: ProjectRow, lang: Lang = 'en'): string {
-  const started = w.startedOn ? short(w.startedOn) : '—'
+  const started = w.startedOn ? short(w.startedOn, lang) : ''
   if (w.ending && w.ending.kind !== 'continued' && !row.left) {
     return t(lang, 'Ended {0} · {1}', short(w.ending.on, lang), endingWord(account, w, lang))
   }
@@ -70,7 +70,7 @@ export function inPackageFactLine(account: Account, w: Workstream, row: ProjectR
   if (row.left) {
     return `Left ${short(row.left.on)} · ${leftHowLabel(row.left.kind)}`
   }
-  return `Since ${started}`
+  return started ? t(lang, 'Since {0}', started) : t(lang, 'Not started')
 }
 
 /**
@@ -110,5 +110,6 @@ export function inPackageColumnLines(
     if (project.left.to) line2 = resolveMoveDestination(account, project.left.to)
     return { line1, line2 }
   }
-  return { line1: `Since ${startedLabel}` }
+  // A proposed package hasn't started: no date to show.
+  return { line1: w.startedOn ? `Since ${startedLabel}` : 'Not started' }
 }

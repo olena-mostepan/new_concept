@@ -200,6 +200,8 @@ export interface Batch {
   planAgreed?: string
   /** When ops start the workstreams. */
   planLive?: string
+  /** Pilot: what it costs and what the customer gets up to the first go / no-go. */
+  firstDecision?: { cost: string; gives: string }
   /** Named lead, when the batch has one */
   lead?: string
   /** One received bundle, shown under the stage that will use it */

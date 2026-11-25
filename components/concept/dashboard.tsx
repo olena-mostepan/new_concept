@@ -675,7 +675,7 @@ function Batches({ account }: { account: Account }) {
 
 export function MatureDashboard({ account }: { account: Account }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-12">
       <FindBuilding account={account} />
       <Decisions account={account} />
       <Services account={account} />

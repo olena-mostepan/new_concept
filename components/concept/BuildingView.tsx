@@ -123,8 +123,8 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
   const crumbs = buildingCrumbs(account, buildingId, search, hrefs).map(
     ({ label, href }) => ({
       label:
-        label === "Overview" || label === "Batch" || label === words.Assets
-          ? t(label === words.Assets ? words.Assets : label)
+        label === "Overview" || label === "Batch" || label === "Assets"
+          ? t(label)
           : label,
       href,
     }),
@@ -150,6 +150,7 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
   const headerFacts =
     selected &&
     assetHeaderFacts(
+      t,
       hrefs,
       account,
       building,
@@ -157,6 +158,7 @@ export function BuildingView({ buildingId }: { buildingId: string }) {
       flat.length,
       packageIndex || 1,
       packagePickerValue,
+      lang,
     );
 
   const mergedHistory = mergeAssetHistory(account, allProjects);
@@ -436,6 +438,7 @@ function assetLeftPackage(item: BuildingProject): boolean {
 }
 
 function assetHeaderFacts(
+  t: (en: string, ...args: unknown[]) => string,
   hrefs: ReturnType<typeof useHrefs>,
   account: Account,
   building: Building,
@@ -443,15 +446,16 @@ function assetHeaderFacts(
   packageCount: number,
   packageIndex: number,
   packageValue: ReactNode,
+  lang: "en" | "de" = "en",
 ): FactItem[] {
   const w = selected.workstream;
   const batch = getBatch(account, w.batchId);
-  const inPkg = inPackageFactLine(account, w, selected.row);
+  const inPkg = inPackageFactLine(account, w, selected.row, lang);
   return [
     {
       label:
         packageCount >= 2
-          ? `Package · ${packageIndex} of ${packageCount}`
+          ? `${t("Package")} · ${t("{0} of {1}", packageIndex, packageCount)}`
           : "Package",
       value: packageValue,
     },
@@ -589,8 +593,8 @@ function OverviewPanel({
         <div className="flex items-center gap-4">
           <ServiceIcon service={w.service} size={72} className="shrink-0" />
           <div className="min-w-0">
-            <p className="p7 text-text-tertiary">{headline.lead}</p>
-            <p className="h4 text-text-primary">{headline.name}</p>
+            <p className="p7 text-text-tertiary">{t(headline.lead)}</p>
+            <p className="h4 text-text-primary">{t(headline.name ?? "")}</p>
           </div>
         </div>
         <Button
@@ -602,7 +606,7 @@ function OverviewPanel({
           ariaLabel={`Open ${w.name}`}
           className="shrink-0"
         >
-          Open package
+          {t("Open package")}
         </Button>
       </div>
     ) : (
@@ -615,7 +619,7 @@ function OverviewPanel({
         ariaLabel={`Open ${w.name}`}
         className="shrink-0"
       >
-        Open package
+        {t("Open package")}
       </Button>
     );
 

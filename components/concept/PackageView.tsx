@@ -33,6 +33,8 @@ import {
   type StepColumn,
 } from "@/lib/concept/derive";
 import { inPackageColumnLines } from "@/lib/concept/moves";
+import { nAssets } from "@/lib/concept/words";
+import type { Lang } from "@/lib/concept/i18n";
 import { useConceptI18n } from "./useConceptI18n";
 import { cn } from "@/lib/utils";
 import {
@@ -133,6 +135,7 @@ function startedLine(w: Workstream, index: number) {
 }
 
 function PhaseSteps({ w, columns }: { w: Workstream; columns: StepColumn[] }) {
+  const { t } = useConceptI18n();
   const states = looks(columns);
   const delivery = w.service === "delivery";
   return (
@@ -153,12 +156,12 @@ function PhaseSteps({ w, columns }: { w: Workstream; columns: StepColumn[] }) {
           note = `${column.count} awaiting start`;
         } else if (complete) {
           lead = "done";
-          label = `${column.label} · ${column.count}`;
+          label = `${t(column.label)} · ${column.count}`;
           const dates = phaseDates(w, index);
           if (dates.length) note = `last ${short(latest(dates))}`;
         } else if (underway) {
           lead = "now";
-          label = `${column.label} · ${column.count}`;
+          label = `${t(column.label)} · ${column.count}`;
           note = (startedLine(w, index) ?? column.happens) || null;
         }
         return {
@@ -188,8 +191,9 @@ export function packageCardChips(w: Workstream): PackageCardChip[] {
   });
 }
 
-function packagePanelAside(w: Workstream) {
-  const assets = `${w.projects.length} ${w.projects.length === 1 ? "asset" : "assets"}`;
+function packagePanelAside(w: Workstream, lang: Lang = "en") {
+  // Built from words.ts so the customer version can show it in German.
+  const assets = nAssets(w.projects.length, lang);
   return w.supplier ? `${w.supplier} · ${assets}` : assets;
 }
 
@@ -204,13 +208,14 @@ export function PackageOverviewSteps({
   columns: StepColumn[];
   chips?: PackageCardChip[];
 }) {
-  const title = `${service(w.service).label} for this package`;
+  const { t, lang } = useConceptI18n();
+  const title = t("{0} for this package", t(service(w.service).label));
   const chipList = chips ?? packageCardChips(w);
   return (
     <PackageCard
       chips={chipList}
       panelTitle={title}
-      panelAside={packagePanelAside(w)}
+      panelAside={packagePanelAside(w, lang)}
       panelChildren={<PhaseSteps w={w} columns={columns} />}
     />
   );
@@ -223,6 +228,7 @@ function StepsCard({
   account: ReturnType<typeof useConcept>["account"];
   w: Workstream;
 }) {
+  const { t, lang } = useConceptI18n();
   if (isClosed(w)) {
     if (!w.ending) return null;
     // Ended packages keep their steps as the record of what was done.
@@ -238,8 +244,8 @@ function StepsCard({
     return (
       <PackageCard
         chips={chips}
-        panelTitle={`${service(w.service).label} for this package`}
-        panelAside={packagePanelAside(w)}
+        panelTitle={t("{0} for this package", t(service(w.service).label))}
+        panelAside={packagePanelAside(w, lang)}
         panelChildren={<EndedSteps w={w} sid={w.service} />}
       />
     );
@@ -435,12 +441,12 @@ function OverviewAssets({
                     muted ? "text-text-tertiary" : "text-text-primary",
                   )}
                 >
-                  {stepLabel}
+                  {t(stepLabel)}
                 </span>
                 {showInPackageColumn && (
                   <div className="min-w-0">
                     <span className="block p6 text-text-primary">
-                      {lines.line1}
+                      {t(lines.line1)}
                     </span>
                     {lines.line2 && (
                       <span className="mt-0.5 block p7 text-text-tertiary">

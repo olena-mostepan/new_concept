@@ -2,6 +2,8 @@ import { type StepColumn } from "@/lib/concept/derive";
 import { nAssets } from "@/lib/concept/words";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui";
+import { useConceptI18n } from "./useConceptI18n";
+import type { Lang } from "@/lib/concept/i18n";
 
 type Look = "now" | "passed" | "upcoming";
 
@@ -17,8 +19,8 @@ function looks(columns: StepColumn[]): Look[] {
   });
 }
 
-function lineFor(column: StepColumn, look: Look): string | null {
-  if (look === "now" && column.count > 0) return nAssets(column.count);
+function lineFor(column: StepColumn, look: Look, lang: Lang): string | null {
+  if (look === "now" && column.count > 0) return nAssets(column.count, lang);
   return null;
 }
 
@@ -31,6 +33,7 @@ export function SimpleSteps({
   columns: StepColumn[];
   right: string;
 }) {
+  const { t, lang } = useConceptI18n();
   const states = looks(columns);
   const n = Math.max(columns.length, 1);
   return (
@@ -76,10 +79,10 @@ export function SimpleSteps({
                     look === "upcoming" && "p6 text-text-tertiary",
                   )}
                 >
-                  {column.label}
+                  {t(column.label)}
                 </p>
-                {lineFor(column, look) && (
-                  <p className="p7 text-text-primary">{lineFor(column, look)}</p>
+                {lineFor(column, look, lang) && (
+                  <p className="p7 text-text-primary">{lineFor(column, look, lang)}</p>
                 )}
               </div>
             );

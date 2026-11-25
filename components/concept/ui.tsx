@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Children,
   isValidElement,
+  useEffect,
   useRef,
   type CSSProperties,
   type ReactNode,
@@ -2178,3 +2179,84 @@ export function Route({
 export const workstreamLabel = (w: Workstream) => w.name;
 
 export { SERVICES, doneCount };
+
+/**
+ * Design system InfoDrawer: a 400 right-side panel for a row's details on a list,
+ * where opening a page would lose the user's place. White, elevation-overlay, on the scrim.
+ * Closes on Close, Esc and a click on the scrim.
+ * Supplier asset window (C16): `eyebrow` ("Asset 2 of 4"), `subtitle` (address), `onPrev`/`onNext`,
+ * facts as label-left / value-right rows, then sections passed as children.
+ */
+export function InfoDrawer({
+  open,
+  onClose,
+  title,
+  eyebrow,
+  subtitle,
+  onPrev,
+  onNext,
+  items,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  eyebrow?: string;
+  subtitle?: string;
+  onPrev?: () => void;
+  onNext?: () => void;
+  items: Array<{ label: string; value: ReactNode }>;
+  children?: ReactNode;
+  footer?: ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-bg-scrim" aria-hidden onClick={onClose} />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="info-drawer-title"
+        className="absolute inset-y-0 right-0 flex w-[400px] max-w-full flex-col bg-bg-container shadow-overlay"
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
+          <header className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              {eyebrow && <p className="s3 text-text-tertiary">{eyebrow}</p>}
+              <h2 id="info-drawer-title" className="mt-1 h6 text-text-primary">
+                {title}
+              </h2>
+              {subtitle && <p className="mt-1 p6 text-text-secondary">{subtitle}</p>}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {onPrev && <IconButton icon="chevron-left" type="secondary" label="Previous" onClick={onPrev} />}
+              {onNext && <IconButton icon="chevron-right" type="secondary" label="Next" onClick={onNext} />}
+              <IconButton icon="cross" type="secondary" label="Close" onClick={onClose} />
+            </div>
+          </header>
+          {items.length > 0 && (
+            <dl className="mt-4 border-y border-border-light">
+              {items.map((item, i) => (
+                <div key={item.label + i} className={cn("flex items-baseline justify-between gap-4 py-3", i > 0 && "border-t border-border-light")}>
+                  <dt className="p6 text-text-secondary">{item.label}</dt>
+                  <dd className="h8 text-right text-text-primary">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {children}
+        </div>
+        {footer && <footer className="border-t border-border-light px-6 py-3">{footer}</footer>}
+      </aside>
+    </div>
+  );
+}

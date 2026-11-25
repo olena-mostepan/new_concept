@@ -18,6 +18,7 @@ import {
   Dropdown,
   Icon,
   IconButton,
+  InfoDrawer,
   ResponsibilityPill,
   focusRing,
   tabListClass,
@@ -673,9 +674,103 @@ function Overview({ t, onTab, onAsk, state, row }: { t: Tender; onTab: (id: TabI
 
 /* ------------------------------------------------------ sites & documents */
 
+/** One asset of the tender: a site, or a group of buildings sharing an asset (Hamm). */
+function assetsOf(t: Tender) {
+  const out: Array<{ key: string; name: string; address: string; rows: Tender["sites"] }> = [];
+  for (const s of t.sites) {
+    const key = s.group ?? s.name;
+    const hit = out.find((a) => a.key === key);
+    if (hit) hit.rows.push(s);
+    else out.push({ key, name: key, address: s.address, rows: [s] });
+  }
+  return out;
+}
+
+/** "8 homes · 46 kW" → [8, 46], when a row says both. */
+function homesKw(system: string): [number, number] | null {
+  const m = system.match(/(\d+)\s*homes?\s*·\s*([\d.]+)\s*kW/);
+  return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
+/** The asset window (C16, 25 Nov): what the brief says about one asset, without leaving the tender. */
+function AssetDrawer({ t, assetKey, onPick, onClose }: { t: Tender; assetKey: string | null; onPick: (key: string) => void; onClose: () => void }) {
+  const assets = assetsOf(t);
+  const index = assets.findIndex((a) => a.key === assetKey);
+  const asset = assets[index];
+  if (!asset) return <InfoDrawer open={false} onClose={onClose} title="" items={[]} />;
+  const grouped = asset.rows.length > 1 || Boolean(asset.rows[0].group);
+  const sums = asset.rows.map((s) => homesKw(s.system));
+  const totals = sums.every(Boolean)
+    ? sums.reduce<[number, number]>((acc, x) => [acc[0] + x![0], acc[1] + x![1]], [0, 0])
+    : null;
+  const unit = t.unitWord === "building" ? "Buildings" : "Sites";
+  const items = grouped
+    ? [
+        { label: unit, value: String(asset.rows.length) },
+        ...(totals
+          ? [
+              { label: "Homes", value: String(totals[0]) },
+              { label: "Heat load", value: `${totals[1]} kW` },
+            ]
+          : []),
+      ]
+    : [{ label: "System", value: asset.rows[0].system }];
+  const brief = t.sharedDocs.filter((d) => d.name === "Brief");
+  const files = [...asset.rows.flatMap((s) => s.files), ...brief];
+  return (
+    <InfoDrawer
+      open
+      onClose={onClose}
+      eyebrow={`Asset ${index + 1} of ${assets.length}`}
+      title={asset.name}
+      subtitle={asset.address}
+      onPrev={index > 0 ? () => onPick(assets[index - 1].key) : undefined}
+      onNext={index < assets.length - 1 ? () => onPick(assets[index + 1].key) : undefined}
+      items={items}
+    >
+      {grouped && (
+        <section className="mt-6">
+          <h3 className="s3 text-text-tertiary">{unit}</h3>
+          <ul className="mt-2 border-t border-border-light">
+            {asset.rows.map((s) => {
+              const note = (s.systemNote ?? "").replace(/^Existing:\s*/, "");
+              const aside = note.match(/\(([^)]+)\)\s*$/)?.[1];
+              const existing = aside ? note.replace(/\s*\([^)]+\)\s*$/, "") : note;
+              return (
+                <li key={s.n} className="border-b border-border-light py-3">
+                  <p className="h8 text-text-title">{s.name}</p>
+                  <p className="mt-0.5 p7 text-text-secondary">
+                    {[s.system, existing].filter(Boolean).join(" · ")}
+                  </p>
+                  {aside && <p className="mt-0.5 p7 text-text-primary">{aside[0].toUpperCase() + aside.slice(1)}</p>}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+      {!grouped && asset.rows[0].systemNote && (
+        <p className="mt-3 p7 text-text-secondary">{asset.rows[0].systemNote}</p>
+      )}
+      {files.length > 0 && (
+        <section className="mt-6">
+          <h3 className="s3 text-text-tertiary">Files</h3>
+          <div className="mt-2 border-t border-border-light">
+            <DocumentList docs={files} />
+          </div>
+        </section>
+      )}
+    </InfoDrawer>
+  );
+}
+
 function SitesAndDocs({ t }: { t: Tender }) {
+  const [openAsset, setOpenAsset] = useState<string | null>(null);
+  // Single-asset tenders: the row already says it all, so no window.
+  const many = assetsOf(t).length > 1;
   return (
     <div className="flex flex-col gap-4">
+      <AssetDrawer t={t} assetKey={openAsset} onPick={setOpenAsset} onClose={() => setOpenAsset(null)} />
       <div className="flex items-start gap-4">
         {t.map && (
           <div className="min-w-0 flex-1">
@@ -740,7 +835,11 @@ function SitesAndDocs({ t }: { t: Tender }) {
               <p className="p6 text-text-tertiary">No files</p>
             )}
             <div className="flex justify-end">
-              <Button type="tertiary" icon="chevron-right" iconPosition="right">View asset</Button>
+              {many && (
+                <Button type="tertiary" icon="chevron-right" iconPosition="right" onClick={() => setOpenAsset(s.group ?? s.name)}>
+                  View asset
+                </Button>
+              )}
             </div>
           </div>
         ))}

@@ -10,6 +10,8 @@ export function GlobalHomeLink() {
   if (pathname === '/') return null
   // Test sessions use the customer version: Home would take participants out of it (Philippa, 26 Nov).
   if (pathname.startsWith('/concept/customer')) return null
+  // Ops (/concept) has the prototype bar with the View switch instead (26 Nov).
+  if (pathname.startsWith('/concept') && !pathname.startsWith('/concept/supplier')) return null
 
   return (
     <div className="border-b border-cq-border bg-cq-bg">

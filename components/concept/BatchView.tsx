@@ -547,7 +547,7 @@ export function PilotRail({ account, batch }: { account: Account; batch: Batch }
       name: building?.name ?? id,
       type: building?.type ? tr(building.type) : undefined,
       inPlan: packageOf.has(id),
-      status: packageOf.has(id) ? tr("In {0}", packageOf.get(id)) : undefined,
+      status: packageOf.has(id) ? tr("In a package") : undefined,
       href: hrefs.building(id, { from: "buildings" }),
     };
   });

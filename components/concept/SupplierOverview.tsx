@@ -37,17 +37,17 @@ export function SupplierOverview() {
         <PageHeader title="Overview" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_repeat(4,minmax(0,1fr))]">
           <section className="relative flex flex-col justify-between gap-4 overflow-hidden rounded-lg border border-status-info-border bg-status-info-bg p-4">
-            <p className="relative s3 text-status-info-text">Won through CQuel</p>
-            <div className="relative flex gap-8">
+            <p className="relative z-10 s3 text-status-info-text">Won through CQuel</p>
+            <div className="relative z-10 flex gap-6 pr-16">
               <Figure value={short(won)} label="Agreed" />
               <Figure value={short(won)} label="Signed" />
             </div>
             <div
               aria-hidden
-              className="absolute -right-5 -top-5 flex size-[132px] items-center justify-center rounded-full bg-white/55"
+              className="absolute -right-6 -top-6 flex size-[112px] items-center justify-center rounded-full bg-white/55"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/services/cash.png" alt="" className="size-[96px] object-contain" />
+              <img src="/icons/services/cash.png" alt="" className="size-[80px] object-contain" />
             </div>
           </section>
           {[

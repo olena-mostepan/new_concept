@@ -32,7 +32,32 @@ function AccountToggle() {
   return (
     <div className="border-b border-border-dark bg-bg-container-grey">
       <div className="mx-auto flex w-full max-w-screen-2xl items-center gap-3 px-6 py-2 sm:px-8 lg:px-10">
-        <span className="p7 text-text-tertiary">{t("Dashboard")}</span>
+        {/* Prototype control: the three versions of the concept. */}
+        <span className="p7 text-text-tertiary">{t("View")}</span>
+        <nav className="inline-flex rounded-md border border-border-dark bg-white p-0.5" aria-label={t("View")}>
+          {[
+            { label: "Customer", href: "/concept/customer", on: isCustomerPath(pathname) },
+            { label: "Supplier", href: "/concept/supplier", on: pathname.startsWith("/concept/supplier") },
+            {
+              label: "Ops",
+              href: "/concept",
+              on: !isCustomerPath(pathname) && !pathname.startsWith("/concept/supplier"),
+            },
+          ].map((v) => (
+            <Link
+              key={v.label}
+              href={v.href}
+              aria-current={v.on ? "page" : undefined}
+              className={cn(
+                "rounded-md px-3 py-1 p6 transition-colors outline-none focus-visible:shadow-focus",
+                v.on ? "bg-black-7 text-white" : "text-text-secondary hover:text-text-primary",
+              )}
+            >
+              {v.label}
+            </Link>
+          ))}
+        </nav>
+        <span className="ml-4 p7 text-text-tertiary">{t("Dashboard")}</span>
         <div
           className="inline-flex rounded-md border border-border-dark bg-white p-0.5"
           role="tablist"

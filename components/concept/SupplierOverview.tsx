@@ -37,13 +37,18 @@ export function SupplierOverview() {
         <PageHeader title="Overview" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_repeat(4,minmax(0,1fr))]">
           <section className="relative flex flex-col justify-between gap-4 overflow-hidden rounded-lg border border-status-info-border bg-status-info-bg p-4">
-            <p className="s3 text-status-info-text">Won through CQuel</p>
-            <div className="flex gap-8">
+            <p className="relative s3 text-status-info-text">Won through CQuel</p>
+            <div className="relative flex gap-8">
               <Figure value={short(won)} label="Agreed" />
               <Figure value={short(won)} label="Signed" />
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/services/cash.png" alt="" className="absolute -right-3 -top-2 size-[96px] object-contain" />
+            <div
+              aria-hidden
+              className="absolute -right-5 -top-5 flex size-[132px] items-center justify-center rounded-full bg-white/55"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/services/cash.png" alt="" className="size-[96px] object-contain" />
+            </div>
           </section>
           {[
             { icon: "projects-in-delivery", value: String(live.length), label: "Projects in delivery", href: "/concept/supplier/delivery" },

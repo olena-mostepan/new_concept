@@ -470,6 +470,8 @@ function assetHeaderFacts(
         ]
       : []),
     ...(building.city ? [{ label: "City", value: building.city }] : []),
+    // What the building is (Philippa, 26 Nov: "no information about the building").
+    ...(building.type ? [{ label: "Use", value: t(building.type) }] : []),
   ];
 }
 

@@ -383,6 +383,8 @@ export interface Workstream {
   gives?: string
   /** Sites left out, and why */
   exclusion?: string
+  /** Proposed but not part of what the customer agrees now: they decide on it later. */
+  optional?: boolean
   /** Short result once the workstream is done, e.g. "Voltreny chosen" */
   outcome?: string
   /** Workstream-page activity. Portfolio activity stays on the account. */

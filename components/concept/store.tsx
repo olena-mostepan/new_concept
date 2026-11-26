@@ -441,7 +441,8 @@ export function ConceptStoreProvider({ children }: { children: ReactNode }) {
         if (!b.planAgreed) b.planAgreed = TODAY;
         b.planLive = TODAY;
         a.workstreams
-          .filter((w) => w.batchId === batchId && w.proposed)
+          // Optional packages (e.g. EV charging) stay proposed: the customer decides on them later.
+          .filter((w) => w.batchId === batchId && w.proposed && !(w.optional ?? /\(optional\)/i.test(w.name)))
           .forEach((w) => {
             w.proposed = false;
             w.startedOn = TODAY;

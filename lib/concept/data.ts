@@ -689,10 +689,11 @@ const halvering: Account = {
 
 /** Pilot: one German retail park, four buildings. Made-up names, shaped like a real early-stage project. */
 const RHEINPARK = b('r', [
-  ['Rheinpark 1.1', 'Koblenz'],
-  ['Rheinpark 1.2', 'Koblenz'],
-  ['Rheinpark 1.3', 'Koblenz'],
-  ['Rheinpark 2.1', 'Koblenz'],
+  // Assets are named by address, as in owners' records (Olena, 26 Nov).
+  ['Industriestraße 12', 'Koblenz'],
+  ['Industriestraße 14', 'Koblenz'],
+  ['Industriestraße 16', 'Koblenz'],
+  ['Am Rheinhafen 3', 'Koblenz'],
 ])
 RHEINPARK[0].type = 'Retail park, main building'
 RHEINPARK[1].type = 'Retail unit'
@@ -710,7 +711,7 @@ const showcase: Account = {
   batches: [
     {
       id: 'pilot',
-      name: 'Rheinpark Koblenz',
+      name: 'Koblenz retail park',
       goal: 'replace the roof on the main building and decide whether to add solar PV',
       lead: 'Tamsin Quarrell',
       filesSummary: 'Site plan, roof report and electricity bills',
@@ -728,14 +729,14 @@ const showcase: Account = {
         gives: 'Feasibility report and a business case for roof only and roof with solar, with three ways to run the PV',
       },
       planState: 'proposed',
-      filesReceived: '6 Nov 2026',
+      filesReceived: '6 Oct 2026',
       filesCount: 14,
       received: [
-        { label: 'Site plan', date: '6 Nov' },
-        { label: 'Roof report, 2024', date: '6 Nov' },
-        { label: 'Electricity bills, landlord supply', date: '6 Nov' },
+        { label: 'Site plan', date: '6 Oct' },
+        { label: 'Roof report, 2024', date: '6 Oct' },
+        { label: 'Electricity bills, landlord supply', date: '6 Oct' },
       ],
-      planProposed: '13 Nov 2026',
+      planProposed: '13 Oct 2026',
       upcoming: [
         { stage: 'scope', label: 'Site visit, main building', why: "We'll book it once the structural records are in", owner: 'cquel' },
       ],
@@ -744,7 +745,7 @@ const showcase: Account = {
         { label: 'Roof', value: 'Flat, due for replacement', source: 'Roof report' },
         { label: 'Electricity', value: 'Landlord supply only; tenants have their own meters', source: 'Bills' },
       ],
-      createdOn: '5 Nov 2026',
+      createdOn: '5 Oct 2026',
     },
   ],
   workstreams: [
@@ -754,41 +755,41 @@ const showcase: Account = {
       solution: 'solar',
       owner: 'you', proposed: true, now: '',
       gives: 'cost and payback for roof only and roof with solar',
-      exclusion: 'Rheinpark 1.2, 1.3 and 2.1 later: smaller roofs, no structural records yet',
+      exclusion: 'Industriestraße 14, 16 and Am Rheinhafen 3 later: smaller roofs, no structural records yet',
       needs: [
-        { label: 'Structural drawings of the roof', scope: 'Rheinpark 1.1', why: 'to check the roof can carry the panels', owner: 'you', since: '13 Nov 2026' },
-        { label: 'Meter points and consumption per tenant', scope: 'Rheinpark 1.1', why: 'to size self-consumption and tenant power', owner: 'you', since: '13 Nov 2026' },
+        { label: 'Structural drawings of the roof', scope: 'Industriestraße 12', why: 'to check the roof can carry the panels', owner: 'you', since: '13 Oct 2026' },
+        { label: 'Meter points and consumption per tenant', scope: 'Industriestraße 12', why: 'to size self-consumption and tenant power', owner: 'you', since: '13 Oct 2026' },
       ],
       projects: r(1).map((id) =>
         p(id, 0, {
           basedOn: [
             { label: 'Roof', value: 'Flat, due for replacement', source: 'Roof report' },
-            { label: 'Electricity use', value: 'Landlord supply, 12 months', source: 'Bills, 6 Nov' },
+            { label: 'Electricity use', value: 'Landlord supply, 12 months', source: 'Bills, 6 Oct' },
           ],
         }),
       ),
       lead: 'Tamsin Quarrell',
     },
     {
-      id: 'pilot-ev', batchId: 'pilot', name: 'EV charging (optional)', service: 'indicative',
+      id: 'pilot-ev', batchId: 'pilot', name: 'EV charging (optional)', service: 'indicative', optional: true,
       phases: (['indicative', 'scope', 'tender', 'delivery'] as ServiceId[]).map((service) => ({ service, state: 'planned' as const })),
       solution: 'ev',
       owner: 'you', proposed: true, now: '',
       gives: 'cost and payback, if you want to add charging',
       needs: [
-        { label: 'Car park layout', scope: 'Rheinpark 1.1', why: 'to see where chargers can go', owner: 'you', since: '13 Nov 2026' },
+        { label: 'Car park layout', scope: 'Industriestraße 12', why: 'to see where chargers can go', owner: 'you', since: '13 Oct 2026' },
       ],
       projects: rows(r(1), 0), lead: 'Tamsin Quarrell',
     },
   ],
   activity: [
-    { date: '13 Nov', title: 'Plan proposed', text: 'Roof + Solar PV · 1 asset, EV charging · optional', batchId: 'pilot' },
-    { date: '6 Nov', title: 'Files received', text: '14 files', batchId: 'pilot' },
-    { date: '5 Nov', title: 'Batch set up', text: '4 assets', batchId: 'pilot' },
+    { date: '13 Oct', title: 'Plan proposed', text: 'Roof + Solar PV · 1 asset, EV charging · optional', batchId: 'pilot' },
+    { date: '6 Oct', title: 'Files received', text: '14 files', batchId: 'pilot' },
+    { date: '5 Oct', title: 'Batch set up', text: '4 assets', batchId: 'pilot' },
   ],
   documents: [
-    { name: 'Plan', type: 'PDF', meta: '13 Nov', action: 'Download', batchId: 'pilot' },
-    { name: 'Your files', type: '14 files', meta: 'you sent · 6 Nov', action: 'View', batchId: 'pilot' },
+    { name: 'Plan', type: 'PDF', meta: '13 Oct', action: 'Download', batchId: 'pilot' },
+    { name: 'Your files', type: '14 files', meta: 'you sent · 6 Oct', action: 'View', batchId: 'pilot' },
     { name: 'Indicative estimates', meta: 'After Estimates', muted: true, batchId: 'pilot' },
   ],
 }

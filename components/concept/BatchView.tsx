@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
@@ -56,6 +56,8 @@ import {
   ChipTrack,
   OwnerPill,
   ServiceIcon,
+  FactsRow,
+  TypeLabelInfo,
   RoundTick,
   focusRing,
   groupTitle,
@@ -65,6 +67,8 @@ import {
   tabTriggerClass,
 } from "./ui";
 import { RouteWithNeeds } from "./RouteWithNeeds";
+import { RouteGates } from "./RouteOptions";
+import { SiteAssetList } from "./PilotSite";
 import { useHrefs } from "./useHrefs";
 import { useConcept } from "./store";
 import { cn } from "@/lib/utils";
@@ -301,110 +305,181 @@ function PilotDashboard({
       return [stage.id, { text: tr(text), muted: stage.state === "skip" }];
     }),
   );
+  // The route as a story: where you are now, the services, and where your first decision falls.
+  type TrackStep = { id: string; label: string; lead: "now" | "next"; note: string; noteClass: string };
+  const live = batch.planState === "live";
+  const track: TrackStep[] = [];
+  if (!live)
+    track.push({ id: "plan", label: tr("Plan"), lead: "now", note: tr("Waiting for you"), noteClass: "p7 text-text-primary" });
+  stages.forEach((stage, index) => {
+    track.push({ id: stage.id, label: stage.label, lead: "next", note: notes[stage.id]?.text ?? "", noteClass: "p7 text-text-secondary" });
+    if (index === 0 && batch.firstDecision)
+      track.push({
+        id: "decision",
+        label: tr("Your decision"),
+        lead: "next",
+        note: tr("{0} up to here", tr(batch.firstDecision.cost)),
+        noteClass: "p7 text-text-title",
+      });
+  });
+  const isOptional = (w: Workstream) => w.optional ?? /\(optional\)/i.test(w.name);
+  const included = all.filter((w) => !isOptional(w));
+  const optional = all.filter(isOptional);
+  const includedSites = (w: Workstream) =>
+    w.projects
+      .filter((p) => !rowIsInactive(p))
+      .map((p) => getBuilding(account, p.buildingId).name)
+      .join(", ");
+  const inPlanIds = new Set(
+    all.filter((w) => !isOptional(w)).flatMap((w) => w.projects.filter((p) => !rowIsInactive(p)).map((p) => p.buildingId)),
+  );
+  const siteAssets = batch.buildingIds.map((id, index) => {
+    const building = getBuilding(account, id);
+    return {
+      id,
+      n: index + 1,
+      name: building?.name ?? id,
+      type: building?.type ? tr(building.type) : undefined,
+      inPlan: inPlanIds.has(id),
+      href: hrefs.building(id, { from: "buildings" }),
+    };
+  });
   const pkgGrid = {
     gridTemplateColumns: "minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.2fr) 16px",
   };
   const proposed = batch.planState !== "live";
   return (
     <div className="space-y-4 pb-12">
-      {/* The one card that needs you: 4px orange top bar, Your action pill and the page's primary button. */}
+      {/* The one card that needs you, built like the supplier OfferCard: pill + date, title, one line, the action on the right, the route under it. */}
       <section
         className={cn(
-          "overflow-hidden rounded-lg border border-border-dark bg-bg-container",
+          "flex flex-col gap-5 rounded-lg border border-border-dark bg-bg-container px-6 py-5",
           proposed && "border-t-4 border-t-brand-6",
         )}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-border-light px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="h7 text-text-primary">
-              {onBatchPage ? tr("Plan") : batch.name}
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="flex items-center gap-3">
+              {proposed && <OwnerPill owner="you" />}
+              {proposed && batch.planProposed && (
+                <span className="s3 text-text-tertiary">
+                  {tr("Proposed {0}", formatDate(batch.planProposed, lang))}
+                </span>
+              )}
+              {!proposed && batch.planAgreed && (
+                <span className="s3 text-text-tertiary">
+                  {tr("Agreed {0}", formatDate(batch.planAgreed, lang))}
+                </span>
+              )}
+            </div>
+            <h2 className="h6 text-text-primary">
+              {proposed
+                ? tr("Agree the plan for {0}", included.map((w) => tr(w.name)).join(", "))
+                : tr("Estimates under way for {0}", included.map((w) => tr(w.name)).join(", "))}
             </h2>
-            <p className="p7 text-text-secondary">
-              {onBatchPage && batch.planProposed
-                ? tr("Proposed {0}", formatDate(batch.planProposed, lang))
-                : `${tr("Goal:")} ${tr(batch.goal)}`}
-            </p>
-          </div>
-          {proposed && <OwnerPill owner="you" />}
-        </header>
-        <div className="p-4">
-          {/* Variant to look at (25 Nov): the 3D service icons above the services. */}
-          <div
-            className="mb-3 grid"
-            style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
-          >
-            {stages.map((stage, index) => (
-              <div key={stage.id} className="flex justify-center">
-                {/* The next service in colour, later ones in grey. */}
-                <ServiceIcon
-                  service={stage.id as ServiceId}
-                  size={72}
-                  grayscale={index > 0}
-                  className={index > 0 ? "opacity-70" : undefined}
-                />
-              </div>
-            ))}
-          </div>
-          <ChipTrack
-            steps={stages.map((stage) => ({
-              key: stage.id,
-              lead: "next" as const,
-              label: stage.label,
-              notes: [{ text: notes[stage.id]?.text ?? "", className: "p7 text-text-secondary" }],
-            }))}
-          />
-        </div>
-        {proposed && (
-          <footer className="flex items-center justify-between gap-6 border-t border-border-light bg-bg-container-grey px-4 py-3">
-            {batch.firstDecision ? (
-              <div className="min-w-0">
-                <p className="h8 text-text-title">
-                  {tr("Cost up to your first decision")}: {tr(batch.firstDecision.cost)}
-                </p>
-                <p className="p7 text-text-secondary">
-                  {tr(batch.firstDecision.gives)}.{" "}
-                  {tr("Then you decide whether to go on. If you stop, you pay nothing more.")}
-                </p>
-              </div>
-            ) : (
-              <span />
+            {proposed && batch.firstDecision && (
+              <p className="p6 text-text-secondary">
+                {tr("Estimates cost {0}. After the business case, you decide whether to go on.", tr(batch.firstDecision.cost))}
+              </p>
             )}
-            <span className="shrink-0">
-              <Button type="primary" onClick={() => agreePlan(batch.id)}>
+            {!proposed && (
+              <p className="p6 text-text-secondary">
+                {tr("We'll send you the business case. Then you decide whether to go on.")}
+              </p>
+            )}
+          </div>
+          {!proposed && included[0] && (
+            /* After agreeing nothing waits on her here: the strong button is the one way on (design system), to the package's Estimates. */
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <Button type="strong" size="large" icon="chevron-right" iconPosition="right" href={hrefs.workstream(included[0].id)}>
+                {tr("Open Estimates")}
+              </Button>
+            </div>
+          )}
+          {proposed && (
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <Button type="primary" size="large" onClick={() => agreePlan(batch.id)}>
                 {tr("Agree plan")}
               </Button>
-            </span>
-          </footer>
-        )}
+              <p className="p6 text-text-secondary">
+                {tr("Not sure?")} <Button type="link">{tr("Ask a question")}</Button>
+              </p>
+            </div>
+          )}
+        </div>
+        <RouteGates
+          agreed={!proposed}
+          services={stages.map((s) => ({
+            id: s.id,
+            label: s.label,
+            caption: notes[s.id]?.text ?? "",
+          }))}
+        />
       </section>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card
-          className="h-full"
-          title={tr("What we have")}
-          right={aside(tr("{0} files", batch.filesCount ?? 0))}
-        >
-          <ul className="space-y-3">
-            {(batch.received ?? []).map((file) => (
-              <li key={file.label} className="flex gap-2">
-                <span className="mt-0.5 shrink-0">
-                  <RoundTick size={14} />
-                </span>
-                <div>
-                  <p className="p6 text-text-title">{tr(file.label)}</p>
-                  <p className="p7 text-text-secondary">{formatDate(file.date, lang)}</p>
-                </div>
+      {/* Packages as two tiles: what the plan includes (solid, ticked) and what stays optional (dashed, like a later step). */}
+      <Card title={words.Packages} right={aside(nPackages(all.length, lang))}>
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {all.map((w) => {
+            const optional = isOptional(w);
+            const sites = w.projects
+              .filter((p) => !rowIsInactive(p))
+              .map((p) => getBuilding(account, p.buildingId).name);
+            return (
+              <li key={w.id}>
+                <Link
+                  href={hrefs.workstream(w.id)}
+                  className={cn(
+                    "flex h-full flex-col gap-2 rounded-md p-3 outline-none focus-visible:shadow-focus",
+                    optional
+                      ? "border border-dashed border-black-4 hover:bg-black-1"
+                      : "border border-border-dark hover:border-black-4",
+                  )}
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    {/* s3 caps label, the same for both tiles; the border tells them apart. */}
+                    <span className="s3 text-text-tertiary">
+                      {optional
+                        ? tr("Optional · you decide later")
+                        : proposed
+                          ? tr("In this plan")
+                          : tr("Estimates · started {0}", formatDate(batch.planAgreed ?? "", lang))}
+                    </span>
+                    <ServiceIcon
+                      service={(w.solution === "ev" ? "ev-charging" : "solar-pv") as ServiceId}
+                      size={48}
+                      grayscale={optional}
+                      className={cn("-my-1 -mr-1", optional && "opacity-70")}
+                    />
+                  </span>
+                  <span className="-mt-6 min-w-0">
+                    <span className="block h6 text-text-primary">
+                      {tr(w.name).replace(/ \(optional\)$/i, "")}
+                    </span>
+                    <span className="mt-0.5 block p7 text-text-secondary">{sites.join(", ")}</span>
+                  </span>
+                  <span className="p6 text-text-primary">{sentence(tr(w.gives ?? ""))}</span>
+                  <span className="mt-auto flex items-center gap-1 pt-1 h8 text-text-primary">
+                    {tr("Open package")}
+                    <Icon name="chevron-right" size={16} />
+                  </span>
+                </Link>
               </li>
-            ))}
-          </ul>
-        </Card>
+            );
+          })}
+        </ul>
+      </Card>
+
+      {/* What we have is in Documents ("Your files"); only what we still need stays as its own card. */}
+      <div>
         <Card
           className="h-full"
-          title={tr("What we still need")}
-          right={aside(tr("After you agree the plan"))}
+          title={proposed ? tr("What we still need") : tr("What we need from you")}
+          right={proposed ? aside(tr("After you agree the plan")) : <OwnerPill owner="you" />}
         >
           <ul className="space-y-3">
-            {needs.map((need) => (
+            {/* Only what the agreed packages need; an optional package's needs wait until it's chosen. */}
+            {included.flatMap((w) => w.needs.filter((n) => n.owner === "you" && !n.received)).map((need) => (
               <li key={need.label} className="flex gap-2">
                 <span
                   className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-6"
@@ -413,7 +488,9 @@ function PilotDashboard({
                 <div>
                   <p className="h8 text-text-title">{tr(need.label)}</p>
                   <p className="p7 text-text-secondary">
-                    {need.scope ? `${tr(need.scope)} · ${tr(need.why)}` : tr(need.why)}
+                    {[need.scope && tr(need.scope), tr(need.why), !proposed && batch.planAgreed && tr("asked {0}", formatDate(batch.planAgreed, lang))]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </div>
               </li>
@@ -421,69 +498,6 @@ function PilotDashboard({
           </ul>
         </Card>
       </div>
-
-      <Card
-        title={words.Packages}
-        right={aside(
-          tr(
-            "{0} · {1}",
-            nPackages(all.length, lang),
-            nAssets(batch.buildingIds.length, lang),
-          ),
-        )}
-        bodyClassName="p-0"
-      >
-        <div className="overflow-x-auto">
-          <div className="min-w-[640px]">
-            <div
-              className="grid items-center gap-x-6 py-2.5 pl-8 pr-6 s3 text-text-tertiary"
-              style={pkgGrid}
-            >
-              <span>{words.Package}</span>
-              <span>{words.Assets}</span>
-              <span>{tr("Result")}</span>
-              <span />
-            </div>
-            {all.map((w) => {
-              const sites = w.projects
-                .filter((p) => !rowIsInactive(p))
-                .map((p) => getBuilding(account, p.buildingId));
-              return (
-                <Link
-                  key={w.id}
-                  href={hrefs.workstream(w.id)}
-                  className={cn(
-                    "grid items-start gap-x-6 border-t border-border-light py-3 pl-8 pr-6",
-                    tableRowLinkClass,
-                  )}
-                  style={pkgGrid}
-                >
-                  <span className="min-w-0">
-                    <span className={cn("block h8 text-text-title", tableRowNameCellClass)}>
-                      {tr(w.name)}
-                    </span>
-                    <span className="mt-0.5 block p7 text-text-tertiary">
-                      {nAssets(sites.length, lang)}
-                    </span>
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block p6 text-text-primary">
-                      {sites.map((site) => site.name).join(", ")}
-                    </span>
-                    {w.exclusion && (
-                      <span className="mt-0.5 block p7 text-text-secondary">{tr(w.exclusion)}</span>
-                    )}
-                  </span>
-                  <span className="min-w-0 p6 text-text-primary">
-                    {sentence(tr(w.gives ?? ""))}
-                  </span>
-                  <Icon name="chevron-right" size={16} className="mt-0.5 text-text-tertiary" />
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card
@@ -522,6 +536,80 @@ function PilotDashboard({
         </Card>
       </div>
     </div>
+  );
+}
+
+/** Pilot: what the batch is about, as a white column at the page edge (like the supplier TenderRail). */
+export function PilotRail({ account, batch }: { account: Account; batch: Batch }) {
+  const hrefs = useHrefs();
+  const { lang, t: tr, words } = useConceptI18n();
+  const all = wsIn(account, batch.id);
+  const isOptional = (w: Workstream) => w.optional ?? /\(optional\)/i.test(w.name);
+  // Which agreed package each asset is in (optional packages don't count yet).
+  const packageOf = new Map<string, string>();
+  for (const w of all.filter((x) => !isOptional(x)))
+    for (const p of w.projects.filter((x) => !rowIsInactive(x)))
+      if (!packageOf.has(p.buildingId)) packageOf.set(p.buildingId, tr(w.name));
+  const inPackage = batch.buildingIds.filter((id) => packageOf.has(id)).length;
+  const siteAssets = batch.buildingIds.map((id, index) => {
+    const building = getBuilding(account, id);
+    return {
+      id,
+      n: index + 1,
+      name: building?.name ?? id,
+      type: building?.type ? tr(building.type) : undefined,
+      inPlan: packageOf.has(id),
+      status: packageOf.has(id) ? tr("In {0}", packageOf.get(id)) : undefined,
+      href: hrefs.building(id, { from: "buildings" }),
+    };
+  });
+  return (
+        <aside className="relative flex w-full shrink-0 flex-col border-b border-border-dark bg-white lg:min-h-[calc(100vh-130px)] lg:w-[360px] lg:border-r lg:border-b-0 lg:before:absolute lg:before:inset-y-0 lg:before:right-full lg:before:w-screen lg:before:bg-white lg:before:content-['']">
+          <div className="relative overflow-hidden border-b border-status-info-border bg-status-info-bg px-8 pb-5 pt-6">
+            <div className="relative flex flex-col gap-1">
+              <span className="flex items-center gap-1 s3 text-text-tertiary">
+                {tr("Batch")}
+                <span className="-my-1">
+                  <TypeLabelInfo kind="batch" />
+                </span>
+              </span>
+              <h2 className="h6 text-text-primary">{batch.name}</h2>
+              <p className="p7 text-text-secondary">
+                {[
+                  getBuilding(account, batch.buildingIds[0])?.city,
+                  nAssets(batch.buildingIds.length, lang),
+                  inPackage < batch.buildingIds.length ? tr("{0} in a package", inPackage) : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-6 px-8 pb-6 pt-5">
+            <div className="flex flex-col gap-1">
+              <h3 className="s3 text-text-tertiary">{tr("Goal")}</h3>
+              <p className="p6 text-text-primary">{sentence(tr(batch.goal))}</p>
+            </div>
+            <dl className="border-t border-border-light">
+              {[
+                { label: tr("Solution"), value: [...new Set(all.map((w) => solutionName(w.solution, lang)))].join(", ") },
+                { label: words.Packages, value: String(all.length) },
+                { label: tr("Plan proposed"), value: batch.planProposed ? formatDate(batch.planProposed, lang) : "" },
+              ]
+                .filter((f) => f.value)
+                .map((f) => (
+                  <div key={f.label} className="flex items-baseline justify-between gap-4 border-b border-border-light py-2">
+                    <dt className="p6 text-text-secondary">{f.label}</dt>
+                    <dd className="text-right h8 text-text-primary">{f.value}</dd>
+                  </div>
+                ))}
+            </dl>
+            <div className="flex flex-col gap-2">
+              <h3 className="s3 text-text-tertiary">{words.Assets}</h3>
+              <SiteAssetList assets={siteAssets} />
+            </div>
+          </div>
+        </aside>
   );
 }
 
@@ -1369,6 +1457,15 @@ function PackagesTable({ account, batch }: { account: Account; batch: Batch }) {
   );
 }
 
+function ToDashboard() {
+  const router = useRouter();
+  const hrefs = useHrefs();
+  useEffect(() => {
+    router.replace(hrefs.overview);
+  }, [router, hrefs.overview]);
+  return null;
+}
+
 export function BatchView({
   account,
   batch,
@@ -1382,8 +1479,7 @@ export function BatchView({
 }) {
   if (variant === "dashboard")
     return <PilotDashboard account={account} batch={batch} />;
-  // A proposed plan has no live work yet, so the batch page shows the plan itself.
-  if (batch.planState === "proposed")
-    return <PilotDashboard account={account} batch={batch} onBatchPage />;
+  // A proposed plan has no live work yet: the plan lives on the dashboard, so the batch page sends you there.
+  if (batch.planState === "proposed") return <ToDashboard />;
   return <BatchPage account={account} batch={batch} actions={actions} />;
 }

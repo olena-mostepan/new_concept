@@ -470,8 +470,8 @@ function PilotDashboard({
         </ul>
       </Card>
 
-      {/* What we have is in Documents ("Your files"); only what we still need stays as its own card. */}
-      <div>
+      {/* What we still need beside Documents; Recent activity was dropped (Olena, 26 Nov). */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card
           className="h-full"
           title={proposed ? tr("What we still need") : tr("What we need from you")}
@@ -497,42 +497,30 @@ function PilotDashboard({
             ))}
           </ul>
         </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card
-          className="h-full"
-          title={tr("Recent activity")}
-          right={<CardLink href={hrefs.batches}>{tr("See all")}</CardLink>}
-          bodyClassName="px-4 py-0"
-        >
-          <ul>
-            {activity.map((item, index) => (
-              <li
-                key={`${item.date}-${item.title}`}
-                className={cn(
-                  "flex items-start justify-between gap-4 py-3",
-                  index > 0 && "border-t border-border-light",
-                )}
-              >
-                <div className="min-w-0">
-                  <p className="h8 text-text-title">{tr(item.title)}</p>
-                  <p className="mt-0.5 p7 text-text-secondary">{tr(item.text)}</p>
-                </div>
-                <span className="shrink-0 p7 text-text-tertiary">
-                  {formatDate(item.date, lang)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        {/* Documents in the "What we have" look: every file the batch holds, newest first, with where it came from. */}
         <Card
           className="h-full"
           title={tr("Documents")}
-          right={<CardLink href={hrefs.batches}>{tr("See all")}</CardLink>}
-          bodyClassName="px-4 py-0"
+          right={aside(tr("{0} files", (batch.filesCount ?? 0) + docs.filter((d) => d.name !== "Your files" && !d.muted).length))}
         >
-          <DocumentList docs={docs} />
+          <ul className="space-y-3">
+            {[
+              ...docs
+                .filter((d) => d.name !== "Your files" && !d.muted)
+                .map((d) => ({ label: tr(d.name), line: tr("from CQuel · {0}", formatDate(d.meta, lang)) })),
+              ...(batch.received ?? []).map((f) => ({ label: tr(f.label), line: tr("received {0}", formatDate(f.date, lang)) })),
+            ].map((item) => (
+              <li key={item.label} className="flex gap-2">
+                <span className="mt-0.5 shrink-0">
+                  <RoundTick size={14} />
+                </span>
+                <div>
+                  <p className="p6 text-text-title">{item.label}</p>
+                  <p className="p7 text-text-secondary">{item.line}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </Card>
       </div>
     </div>

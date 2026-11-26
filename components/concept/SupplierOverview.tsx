@@ -47,7 +47,7 @@ export function SupplierOverview() {
               className="absolute -right-6 -top-6 flex size-[112px] items-center justify-center rounded-full bg-white/55"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/services/cash.png" alt="" className="size-[80px] object-contain" />
+              <img src="/icons/overview/cash.png" alt="" className="size-[80px] object-contain" />
             </div>
           </section>
           {[
@@ -63,7 +63,7 @@ export function SupplierOverview() {
             >
               <Figure value={f.value} label={f.label} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/icons/services/${f.icon}.png`} alt="" className="-mr-1 size-16 shrink-0 self-start object-contain" />
+              <img src={`/icons/overview/${f.icon}.png`} alt="" className="-mr-1 size-16 shrink-0 self-start object-contain" />
             </Link>
           ))}
         </div>

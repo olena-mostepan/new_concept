@@ -675,7 +675,7 @@ function Overview({ t, onTab, onAsk, state, row }: { t: Tender; onTab: (id: TabI
 /* ------------------------------------------------------ sites & documents */
 
 /** One asset of the tender: a site, or a group of buildings sharing an asset (Hamm). */
-function assetsOf(t: Tender) {
+export function assetsOf(t: Tender) {
   const out: Array<{ key: string; name: string; address: string; rows: Tender["sites"] }> = [];
   for (const s of t.sites) {
     const key = s.group ?? s.name;
@@ -687,7 +687,7 @@ function assetsOf(t: Tender) {
 }
 
 /** "8 homes · 46 kW" → [8, 46], when a row says both. */
-function homesKw(system: string): [number, number] | null {
+export function homesKw(system: string): [number, number] | null {
   const m = system.match(/(\d+)\s*homes?\s*·\s*([\d.]+)\s*kW/);
   return m ? [Number(m[1]), Number(m[2])] : null;
 }
@@ -720,7 +720,18 @@ function AssetDrawer({ t, assetKey, onPick, onClose }: { t: Tender; assetKey: st
   return (
     <InfoDrawer
       open
+      band
       onClose={onClose}
+      footer={
+        <Button
+          type="strong"
+          icon="chevron-right"
+          iconPosition="right"
+          href={`/concept/supplier/tenders/${t.id}/assets/${encodeURIComponent(asset.key)}`}
+        >
+          Open asset page
+        </Button>
+      }
       eyebrow={`Asset ${index + 1} of ${assets.length}`}
       title={asset.name}
       subtitle={asset.address}

@@ -54,11 +54,11 @@ export function SupplierOverview() {
             <Link
               key={f.label}
               href={f.href}
-              className="flex flex-col gap-4 rounded-lg border border-border-dark bg-bg-container p-4 outline-none hover:border-black-4 focus-visible:shadow-focus"
+              className="flex items-end justify-between gap-3 rounded-lg border border-border-dark bg-bg-container p-4 outline-none hover:border-black-4 focus-visible:shadow-focus"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/icons/services/${f.icon}.png`} alt="" className="-ml-1 size-16 object-contain" />
               <Figure value={f.value} label={f.label} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/icons/services/${f.icon}.png`} alt="" className="-mr-1 size-16 shrink-0 self-start object-contain" />
             </Link>
           ))}
         </div>

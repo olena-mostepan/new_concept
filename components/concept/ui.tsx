@@ -2198,10 +2198,13 @@ export function InfoDrawer({
   items,
   children,
   footer,
+  band,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Header on the info ground (supplier asset window, as the tender rail's band). */
+  band?: boolean;
   eyebrow?: string;
   subtitle?: string;
   onPrev?: () => void;
@@ -2229,7 +2232,12 @@ export function InfoDrawer({
         className="absolute inset-y-0 right-0 flex w-[400px] max-w-full flex-col bg-bg-container shadow-overlay"
       >
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
-          <header className="flex items-start justify-between gap-3">
+          <header
+            className={cn(
+              "flex items-start justify-between gap-3",
+              band && "-mx-6 -mt-5 border-b border-status-info-border bg-status-info-bg px-6 pb-4 pt-5",
+            )}
+          >
             <div className="min-w-0">
               {eyebrow && <p className="s3 text-text-tertiary">{eyebrow}</p>}
               <h2 id="info-drawer-title" className="mt-1 h6 text-text-primary">

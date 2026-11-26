@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { BackToHomeButton } from '@/components/shared/BackToHomeButton'
+import { ViewSwitch } from '@/components/concept/ViewSwitch'
 
 /** Internal prototype control — sits above product chrome, not inside it. */
 export function GlobalHomeLink() {
@@ -12,8 +13,10 @@ export function GlobalHomeLink() {
 
   return (
     <div className="border-b border-cq-border bg-cq-bg">
-      <div className="mx-auto flex w-full max-w-screen-2xl items-center px-6 py-2 sm:px-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-screen-2xl items-center gap-6 px-6 py-2 sm:px-8 lg:px-10">
         <BackToHomeButton />
+        {/* The supplier pages have no prototype bar of their own: the view switch lives here. */}
+        {pathname.startsWith('/concept/supplier') && <ViewSwitch />}
       </div>
     </div>
   )

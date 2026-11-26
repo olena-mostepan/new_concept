@@ -46,9 +46,9 @@ export function SupplierOverview() {
             <img src="/icons/services/cash.png" alt="" className="absolute -right-3 -top-2 size-[96px] object-contain" />
           </section>
           {[
-            { icon: "delivery", value: String(live.length), label: "Projects in delivery", href: "/concept/supplier/delivery" },
+            { icon: "projects-in-delivery", value: String(live.length), label: "Projects in delivery", href: "/concept/supplier/delivery" },
             { icon: "pricing", value: short(sumProjected(claims)), label: "To invoice, next 90 days", href: "/concept/supplier/delivery" },
-            { icon: "indicative", value: String(toRaise), label: "Invoices ready to raise", href: "/concept/supplier/delivery" },
+            { icon: "invoices-ready", value: String(toRaise), label: "Invoices ready to raise", href: "/concept/supplier/delivery" },
             { icon: "tender", value: String(active), label: "Active tenders", href: "/concept/supplier/tenders" },
           ].map((f) => (
             <Link

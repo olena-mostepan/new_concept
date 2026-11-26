@@ -31,7 +31,7 @@ export function SupplierTenderAsset({ t, assetKey }: { t: Tender; assetKey: stri
     : null;
   const unit = t.unitWord === "building" ? "Buildings" : "Sites";
   const facts: FactItem[] = [
-    { label: "Tender", value: t.title, href: tenderHref },
+    { label: "Address", value: asset.address },
     { label: "Customer", value: t.customer },
     ...(grouped ? [{ label: unit, value: String(asset.rows.length) }] : [{ label: "System", value: asset.rows[0].system }]),
     ...(totals ? [{ label: "Homes", value: String(totals[0]) }, { label: "Heat load", value: `${totals[1]} kW` }] : []),
@@ -70,7 +70,6 @@ export function SupplierTenderAsset({ t, assetKey }: { t: Tender; assetKey: stri
         title={asset.name}
         facts={facts}
       />
-      <p className="-mt-2 mb-6 p6 text-text-secondary">{asset.address}</p>
 
       <div className="flex flex-col gap-4">
         {grouped && (
